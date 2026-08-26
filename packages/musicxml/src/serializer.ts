@@ -224,9 +224,14 @@ export const serializeMusicXml = (input: ScoreDocument): string => {
   ];
 
   input.parts.forEach((part, index) => {
+    if (part.name === null) {
+      throw new MusicXmlError('E2 serialization requires an explicit part name; synthetic fallback is forbidden.', 'UNSUPPORTED_MUSICXML', {
+        partIndex: index
+      });
+    }
     const partId = `P${index + 1}`;
     lines.push(`    <score-part id="${partId}">`);
-    lines.push(`      <part-name>${escapeText(part.name ?? `Part ${index + 1}`)}</part-name>`);
+    lines.push(`      <part-name>${escapeText(part.name)}</part-name>`);
     lines.push('    </score-part>');
   });
   lines.push('  </part-list>');
@@ -239,7 +244,13 @@ export const serializeMusicXml = (input: ScoreDocument): string => {
     lines.push(`  <part id="${partId}">`);
 
     referenceMeasures.forEach((referenceMeasure, measureIndex) => {
-      const measureNumber = referenceMeasure.displayNumber ?? String(referenceMeasure.ordinal);
+      if (referenceMeasure.displayNumber === null) {
+        throw new MusicXmlError('E2 serialization requires an explicit measure number; ordinal fallback is forbidden.', 'UNSUPPORTED_MUSICXML', {
+          partIndex,
+          measureIndex
+        });
+      }
+      const measureNumber = referenceMeasure.displayNumber;
       lines.push(`    <measure number="${escapeAttribute(measureNumber)}">`);
       lines.push('      <attributes>');
       lines.push(`        <divisions>${divisions}</divisions>`);
