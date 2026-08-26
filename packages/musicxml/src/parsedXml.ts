@@ -36,6 +36,30 @@ type MutableNode = {
   children: MutableNode[];
 };
 
+const ATTRIBUTE_ALLOWLIST: Readonly<Record<string, ReadonlySet<string>>> = Object.freeze({
+  'score-partwise': new Set(['version']),
+  'score-part': new Set(['id']),
+  part: new Set(['id']),
+  measure: new Set(['number'])
+});
+
+const LEAF_ELEMENTS = new Set([
+  'part-name',
+  'divisions',
+  'staves',
+  'duration',
+  'voice',
+  'staff',
+  'step',
+  'alter',
+  'octave',
+  'type',
+  'rest',
+  'chord'
+]);
+
+const EMPTY_ELEMENTS = new Set(['rest', 'chord']);
+
 const deepFreeze = <T>(value: T): Readonly<T> => {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
     for (const item of Object.values(value as Record<string, unknown>)) deepFreeze(item);
@@ -60,6 +84,38 @@ const enforceLimit = (
   observed: number
 ): void => {
   if (observed > limit) failLimit(code, field, limit, observed);
+};
+
+const enforceElementEnvelope = (
+  name: string,
+  uri: string,
+  attributes: readonly ParsedXmlAttribute[],
+  parent: MutableNode | undefined
+): void => {
+  if (uri !== '') {
+    throw new MusicXmlError('Namespaced MusicXML elements are not supported in E2.', 'UNSUPPORTED_MUSICXML', {
+      element: name,
+      uri
+    });
+  }
+
+  if (parent !== undefined && LEAF_ELEMENTS.has(parent.name)) {
+    throw new MusicXmlError('MusicXML leaf element cannot contain child elements in E2.', 'UNSUPPORTED_MUSICXML', {
+      parent: parent.name,
+      child: name
+    });
+  }
+
+  const allowedAttributes = ATTRIBUTE_ALLOWLIST[name] ?? new Set<string>();
+  for (const attribute of attributes) {
+    if (attribute.uri !== '' || !allowedAttributes.has(attribute.name)) {
+      throw new MusicXmlError('Unsupported MusicXML attribute.', 'UNSUPPORTED_MUSICXML', {
+        element: name,
+        attribute: attribute.name,
+        uri: attribute.uri
+      });
+    }
+  }
 };
 
 export interface ParsedMusicXmlResult {
@@ -101,9 +157,14 @@ export const parseMusicXmlTree = (
     attributeCount += attributes.length;
     enforceLimit('XML_ATTRIBUTE_LIMIT_EXCEEDED', 'maxAttributes', runtime.limits.maxAttributes, attributeCount);
 
+    const name = tag.local || tag.name;
+    const uri = tag.uri || '';
+    const parent = stack[stack.length - 1];
+    enforceElementEnvelope(name, uri, attributes, parent);
+
     const node: MutableNode = {
-      name: tag.local || tag.name,
-      uri: tag.uri || '',
+      name,
+      uri,
       attributes,
       text: '',
       children: []
@@ -115,7 +176,6 @@ export const parseMusicXmlTree = (
       }
       root = node;
     } else {
-      const parent = stack[stack.length - 1];
       if (parent === undefined) throw new MusicXmlError('XML parser stack became inconsistent.', 'INVALID_XML');
       parent.children.push(node);
     }
@@ -127,7 +187,14 @@ export const parseMusicXmlTree = (
     textBytes += new TextEncoder().encode(text).byteLength;
     enforceLimit('XML_TEXT_LIMIT_EXCEEDED', 'maxTextBytes', runtime.limits.maxTextBytes, textBytes);
     const current = stack[stack.length - 1];
-    if (current !== undefined) current.text += text;
+    if (current !== undefined) {
+      if (EMPTY_ELEMENTS.has(current.name) && text.trim().length > 0) {
+        throw new MusicXmlError('Empty MusicXML marker cannot contain text in E2.', 'UNSUPPORTED_MUSICXML', {
+          element: current.name
+        });
+      }
+      current.text += text;
+    }
   };
 
   parser.on('text', appendText);
