@@ -1,0 +1,43 @@
+{
+  "contract": "ST_SCORE_EDITOR_AUTHORITY_BOUNDARY",
+  "version": "1.0.0",
+  "stage": "E0",
+  "source": {
+    "immutable": true,
+    "inPlaceRewriteAllowed": false,
+    "identityRequired": true
+  },
+  "canonicalScore": {
+    "ownedByCore": true,
+    "rendererStateAuthoritative": false,
+    "browserStateAuthoritative": false
+  },
+  "edits": {
+    "stableSemanticTargetRequired": true,
+    "typedBoundedCommandRequired": true,
+    "atomicTransactionRequired": true,
+    "validationRequiredBeforeAcceptance": true,
+    "partialAuthoritativeApplyAllowed": false,
+    "staleTargetFailsClosed": true
+  },
+  "renderer": {
+    "presentationOnly": true,
+    "mayMutateCanonicalScore": false,
+    "coordinatesMayAddressAuthoritativeEditAlone": false
+  },
+  "ai": {
+    "advisoryOnly": true,
+    "mayMutateCanonicalScore": false,
+    "mayBypassValidation": false,
+    "automaticRepairAuthority": false
+  },
+  "products": {
+    "scoreMosaicAuthorityFlowsToGuitarDerivative": false,
+    "guitarDerivativeAuthorityFlowsUpstream": false
+  },
+  "production": {
+    "activatedByRepositoryMerge": false,
+    "publicWriteApiAuthorized": false,
+    "liveAiEditAuthorityAuthorized": false
+  }
+}

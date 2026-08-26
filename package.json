@@ -1,0 +1,17 @@
+{
+  "name": "st-score-editor-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Security-first semantic score editing core for ScoreMosaic and Guitar TAB workspaces.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "validate": "node scripts/validate-repo.mjs",
+    "test": "node --test",
+    "ci": "npm run validate && npm test"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
