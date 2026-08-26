@@ -54,9 +54,13 @@ for (const [name, value] of mustBeFalse) {
 const expectedStages = ['E0', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9'];
 if (JSON.stringify(architecture.stages) !== JSON.stringify(expectedStages)) fail('stage order drift');
 const stageIndex = expectedStages.indexOf(architecture.currentStage);
-if (stageIndex < 1) fail('architecture currentStage may not regress below E1');
+if (stageIndex < 2) fail('architecture currentStage may not regress below E2');
 if (architecture.musicXml?.isDirectEditorState !== false) fail('MusicXML must not be direct editor state');
 if (architecture.musicXml?.safeImportRequired !== true) fail('safe MusicXML import must remain required');
+if (architecture.musicXml?.semanticRoundTripRequiredBeforeE2Close !== true) fail('E2 semantic round trip gate must remain required');
+if (architecture.musicXml?.e2Subset?.root !== 'score-partwise') fail('E2 root boundary drift');
+if (architecture.musicXml?.e2Subset?.unsupportedSemanticsFailClosed !== true) fail('unsupported MusicXML semantics must fail closed');
+if (architecture.musicXml?.e2Subset?.sourceIdentityVerifiedByCaller !== true) fail('caller source identity boundary drift');
 
 for (const renderer of Object.values(architecture.rendererCandidates ?? {})) {
   if (renderer.admittedDependency !== false) fail('renderer dependency admitted before review');
@@ -67,10 +71,20 @@ if (admittedTypescript?.version !== '6.0.3') fail('TypeScript architecture pin d
 if (admittedTypescript?.runtime !== false) fail('TypeScript must remain build-only');
 if (admittedTypescript?.license !== 'Apache-2.0') fail('TypeScript license record drift');
 
+if (architecture.runtimeDependencies?.saxes?.version !== '6.0.0') fail('saxes architecture pin drift');
+if (architecture.runtimeDependencies?.saxes?.license !== 'ISC') fail('saxes license record drift');
+if (architecture.runtimeDependencies?.saxes?.authority !== 'XML_PARSER_ONLY') fail('saxes authority boundary drift');
+if (architecture.runtimeDependencies?.xmlchars?.version !== '2.2.0') fail('xmlchars architecture pin drift');
+if (architecture.runtimeDependencies?.xmlchars?.license !== 'MIT') fail('xmlchars license record drift');
+
 if (pkg.private !== true) fail('package must remain private during controlled development');
-if (Object.keys(pkg.dependencies ?? {}).length !== 0) fail('runtime dependencies must remain empty at E1');
+const runtimeDependencies = Object.entries(pkg.dependencies ?? {}).sort(([a], [b]) => a.localeCompare(b));
+const expectedRuntimeDependencies = [['saxes', '6.0.0'], ['xmlchars', '2.2.0']];
+if (JSON.stringify(runtimeDependencies) !== JSON.stringify(expectedRuntimeDependencies)) {
+  fail('E2 runtime dependencies must equal exact admitted parser set');
+}
 const devDependencyEntries = Object.entries(pkg.devDependencies ?? {});
-if (devDependencyEntries.length !== 1) fail('only the admitted TypeScript dev dependency is allowed at E1');
+if (devDependencyEntries.length !== 1) fail('only the admitted TypeScript dev dependency is allowed at E2');
 if (pkg.devDependencies?.typescript !== '6.0.3') fail('TypeScript package pin must equal 6.0.3');
 
-console.log('E1 repository contracts: PASS');
+console.log('E2 repository contracts: PASS');
