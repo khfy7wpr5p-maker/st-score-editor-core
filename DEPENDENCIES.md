@@ -40,6 +40,7 @@
 - admitted integration version: `2.1.1`
 - license: BSD-3-Clause
 - upstream: `opensheetmusicdisplay/opensheetmusicdisplay`
+- upstream tag: `2.1.1` → commit `c54770de13368a4f5c9150bffb16f099b7b8537b`
 - upstream release date: 2026-07-29
 - role: classical score presentation in ScoreMosaic host
 - repository dependency: **no**
@@ -53,6 +54,7 @@
 - admitted integration version: `1.8.4`
 - license: MPL-2.0
 - upstream: `CoderLine/alphaTab`
+- upstream tag: `v1.8.4` → commit `022a45c8e42370f9e12e68949d11eada370da83d`
 - upstream release date: 2026-07-05
 - role: guitar notation/TAB presentation in Guitar TAB host
 - repository dependency: **no**
