@@ -49,6 +49,10 @@ export {
 } from './serializer.js';
 
 export {
+  serializeNotationMusicXml
+} from './notationSerializer.js';
+
+export {
   areMusicSemanticsEquivalent,
   musicSemanticFingerprint
 } from './semanticEquivalence.js';
