@@ -9,6 +9,7 @@ const fail = (message) => {
 const authority = await readJson('contracts/authority-boundary-v1.json');
 const architecture = await readJson('contracts/editor-core-v1.json');
 const pkg = await readJson('package.json');
+const tsconfig = await readJson('tsconfig.json');
 
 if (authority.contract !== 'ST_SCORE_EDITOR_AUTHORITY_BOUNDARY') fail('unexpected authority contract');
 if (authority.version !== '1.0.0') fail('authority contract version drift');
@@ -86,5 +87,15 @@ if (JSON.stringify(runtimeDependencies) !== JSON.stringify(expectedRuntimeDepend
 const devDependencyEntries = Object.entries(pkg.devDependencies ?? {});
 if (devDependencyEntries.length !== 1) fail('only the admitted TypeScript dev dependency is allowed at E2');
 if (pkg.devDependencies?.typescript !== '6.0.3') fail('TypeScript package pin must equal 6.0.3');
+
+if (tsconfig.compilerOptions?.skipLibCheck !== false) fail('skipLibCheck must remain false');
+const saxesPath = tsconfig.compilerOptions?.paths?.saxes;
+if (JSON.stringify(saxesPath) !== JSON.stringify(['./types/saxes-6.0.0-compat.d.ts'])) {
+  fail('saxes TypeScript compatibility facade path drift');
+}
+const include = tsconfig.include ?? [];
+if (!Array.isArray(include) || !include.includes('types/**/*.d.ts')) {
+  fail('compatibility declaration files must remain in the compiler include set');
+}
 
 console.log('E2 repository contracts: PASS');
