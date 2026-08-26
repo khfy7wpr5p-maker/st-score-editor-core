@@ -92,6 +92,16 @@ test('wrong ancestry cannot redirect a valid event id', () => {
   );
 });
 
+test('renderer coordinates or DOM metadata cannot leak into semantic authority', () => {
+  const document = makeDocument();
+  const valid = addressEntity(document, 'note-1');
+  const forged = { ...valid, x: 120, y: 80, domId: 'svg-note-9' };
+  assert.throws(
+    () => resolveSemanticAddress(document, forged),
+    (error) => error instanceof AddressingError && error.code === 'INVALID_ADDRESS'
+  );
+});
+
 test('selection snapshot is immutable and revision-bound', () => {
   const document = makeDocument();
   const selection = createSelectionSnapshot(document, addressEntity(document, 'note-1'));
