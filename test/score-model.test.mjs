@@ -7,8 +7,6 @@ import {
   validateScoreDocument
 } from '../dist/packages/score-model/src/index.js';
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
-
 const validDocument = () => ({
   schemaVersion: '1.0.0',
   id: 'doc-1',
@@ -117,6 +115,7 @@ test('rhythmic rationals must be reduced and positive where required', () => {
 
 test('voice events with decreasing onset are rejected', () => {
   const input = validDocument();
+  input.parts[0].staves[0].measures[0].voices[0].events[0].onset = { numerator: 1, denominator: 4 };
   input.parts[0].staves[0].measures[0].voices[0].events[1].onset = { numerator: 0, denominator: 1 };
   const result = validateScoreDocument(input);
   assert.equal(result.ok, false);
