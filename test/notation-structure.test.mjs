@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { SaxesParser } from 'saxes';
 
 import { createScoreDocument } from '../dist/packages/score-model/src/index.js';
 import { addressEntity } from '../dist/packages/addressing/src/index.js';
 import { createNotationDocument, NotationError } from '../dist/packages/notation-structure/src/index.js';
-import { createMusicXmlProcessingRuntime, parseMusicXmlTree, serializeNotationMusicXml } from '../dist/packages/musicxml/src/index.js';
+import { serializeNotationMusicXml } from '../dist/packages/musicxml/src/index.js';
 
 const score = () => createScoreDocument({
   schemaVersion:'1.0.0',id:'doc-1',revision:{id:'rev-1',parentId:null},source:{sha256:'a'.repeat(64),format:'canonical',byteLength:null},
@@ -32,6 +33,16 @@ const notationFor = (s) => createNotationDocument(s, {
   ]
 });
 
+const assertWellFormedXml = (xml) => {
+  let root = null;
+  const parser = new SaxesParser({ xmlns: true });
+  parser.on('opentag', (tag) => {
+    if (root === null) root = tag.local || tag.name;
+  });
+  parser.write(xml).close();
+  assert.equal(root, 'score-partwise');
+};
+
 test('canonical notation document is revision-bound and immutable',()=>{
   const s=score();const n=notationFor(s);
   assert.equal(n.documentId,'doc-1');assert.equal(n.revisionId,'rev-1');assert.equal(Object.isFrozen(n),true);assert.equal(Object.isFrozen(n.events),true);
@@ -40,8 +51,7 @@ test('canonical notation document is revision-bound and immutable',()=>{
 test('notation-aware serializer emits core notation structures and well-formed XML',()=>{
   const s=score();const xml=serializeNotationMusicXml(s,notationFor(s));
   for(const fragment of ['<fifths>1</fifths>','<beats>6</beats>','<beat-type>8</beat-type>','<sign>G</sign>','<line>2</line>','<dot/>','<accidental>sharp</accidental>','<tie type="start"/>','<tied type="start" number="1"/>','<slur type="start" number="1"/>','<beam number="1">begin</beam>','<actual-notes>3</actual-notes>','<normal-notes>2</normal-notes>','<tuplet type="start" number="1"/>','<bar-style>light-heavy</bar-style>','<repeat direction="backward"/>']) assert.ok(xml.includes(fragment),fragment);
-  const parsed=parseMusicXmlTree(xml,createMusicXmlProcessingRuntime({}));
-  assert.equal(parsed.document.root.name,'score-partwise');
+  assertWellFormedXml(xml);
 });
 
 test('stale notation document is rejected against a new score revision',()=>{
