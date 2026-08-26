@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  foundation:
-    name: Node ${{ matrix.node }} foundation
+  core:
+    name: Node ${{ matrix.node }} core
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,7 +23,9 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node }}
+      - name: Install admitted build dependency
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: Validate repository contracts
         run: npm run validate
-      - name: Run tests
+      - name: Build and test
         run: npm test

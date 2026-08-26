@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://st.local/contracts/score-document-v1.schema.json",
+  "title": "ST ScoreDocument 1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "revision", "source", "parts"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "$ref": "#/$defs/entityId" },
+    "revision": { "$ref": "#/$defs/revision" },
+    "source": { "$ref": "#/$defs/source" },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/part" }
+    }
+  },
+  "$defs": {
+    "entityId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "parentId"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "parentId": {
+          "oneOf": [
+            { "$ref": "#/$defs/entityId" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "format", "byteLength"],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "format": { "enum": ["musicxml", "canonical", "synthetic"] },
+        "byteLength": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "rational": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {
+        "numerator": { "type": "integer" },
+        "denominator": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "pitch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "alter", "octave"],
+      "properties": {
+        "step": { "enum": ["A", "B", "C", "D", "E", "F", "G"] },
+        "alter": { "type": "integer", "minimum": -2, "maximum": 2 },
+        "octave": { "type": "integer", "minimum": -1, "maximum": 9 }
+      }
+    },
+    "noteAtom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "pitch"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "pitch": { "$ref": "#/$defs/pitch" }
+      }
+    },
+    "noteEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "onset", "duration", "note"],
+      "properties": {
+        "kind": { "const": "note" },
+        "id": { "$ref": "#/$defs/entityId" },
+        "onset": { "$ref": "#/$defs/rational" },
+        "duration": { "$ref": "#/$defs/rational" },
+        "note": { "$ref": "#/$defs/noteAtom" }
+      }
+    },
+    "restEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "onset", "duration"],
+      "properties": {
+        "kind": { "const": "rest" },
+        "id": { "$ref": "#/$defs/entityId" },
+        "onset": { "$ref": "#/$defs/rational" },
+        "duration": { "$ref": "#/$defs/rational" }
+      }
+    },
+    "chordEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "onset", "duration", "notes"],
+      "properties": {
+        "kind": { "const": "chord" },
+        "id": { "$ref": "#/$defs/entityId" },
+        "onset": { "$ref": "#/$defs/rational" },
+        "duration": { "$ref": "#/$defs/rational" },
+        "notes": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/noteAtom" }
+        }
+      }
+    },
+    "event": {
+      "oneOf": [
+        { "$ref": "#/$defs/noteEvent" },
+        { "$ref": "#/$defs/restEvent" },
+        { "$ref": "#/$defs/chordEvent" }
+      ]
+    },
+    "voice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ordinal", "events"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "ordinal": { "type": "integer", "minimum": 1 },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/event" } }
+      }
+    },
+    "measure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ordinal", "displayNumber", "voices"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "ordinal": { "type": "integer", "minimum": 1 },
+        "displayNumber": { "type": ["string", "null"] },
+        "voices": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/voice" }
+        }
+      }
+    },
+    "staff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ordinal", "measures"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "ordinal": { "type": "integer", "minimum": 1 },
+        "measures": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/measure" }
+        }
+      }
+    },
+    "part": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "staves"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "name": { "type": ["string", "null"] },
+        "staves": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/staff" }
+        }
+      }
+    }
+  }
+}
