@@ -19,10 +19,12 @@
 - runtime authority: parser only; never canonical score authority
 - license: ISC
 - upstream: `lddubeau/saxes`
-- built-in TypeScript declarations: yes
+- upstream tag: `v6.0.0` → commit `211fa0ebec9b628affc09219199639887174bfc3`
 - reason: strict namespace-aware single-pass XML parser
 - provenance: already used as exact `6.0.0` by `musicxml-to-guitar-tab-engine`; E2 adapts the first-party safety pattern rather than copying product authority
 - constraints: entity/doctype/encoding/size safety is enforced before SAX; structural and deadline limits are enforced around the SAX pass
+- TypeScript 6 compatibility: the runtime package remains unchanged; compile-time resolution is deliberately routed through `types/saxes-6.0.0-compat.d.ts`, a narrow local declaration of only the API surface used by E2
+- compiler safety: `skipLibCheck` remains `false`; CI locks the compatibility facade path so upstream declaration incompatibility cannot be hidden by globally weakening type checking
 
 ## xmlchars
 
