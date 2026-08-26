@@ -15,7 +15,8 @@
     "ci": "npm run validate && npm test"
   },
   "dependencies": {
-    "saxes": "6.0.0"
+    "saxes": "6.0.0",
+    "xmlchars": "2.2.0"
   },
   "devDependencies": {
     "typescript": "6.0.3"
