@@ -96,7 +96,12 @@ const validateRational = (
   validateKeys(value, ['numerator', 'denominator'], path, context);
   const numerator = value.numerator;
   const denominator = value.denominator;
-  if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) {
+  if (
+    typeof numerator !== 'number' ||
+    typeof denominator !== 'number' ||
+    !Number.isSafeInteger(numerator) ||
+    !Number.isSafeInteger(denominator)
+  ) {
     addIssue(context, 'INVALID_RATIONAL', path, 'numerator and denominator must be safe integers');
     return false;
   }
@@ -123,7 +128,12 @@ const canonicalRationalOrNull = (value: unknown, mode: 'onset' | 'duration'): Ra
   if (!isPlainRecord(value)) return null;
   const numerator = value.numerator;
   const denominator = value.denominator;
-  if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) return null;
+  if (
+    typeof numerator !== 'number' ||
+    typeof denominator !== 'number' ||
+    !Number.isSafeInteger(numerator) ||
+    !Number.isSafeInteger(denominator)
+  ) return null;
   if (denominator <= 0) return null;
   if (mode === 'onset' ? numerator < 0 : numerator <= 0) return null;
   if (gcd(numerator, denominator) !== 1) return null;
@@ -145,10 +155,10 @@ const validatePitch = (value: unknown, path: string, context: ValidationContext)
   if (typeof value.step !== 'string' || !PITCH_STEPS.has(value.step)) {
     addIssue(context, 'INVALID_PITCH', `${path}.step`, 'step must be A..G');
   }
-  if (!Number.isInteger(value.alter) || typeof value.alter !== 'number' || value.alter < -2 || value.alter > 2) {
+  if (typeof value.alter !== 'number' || !Number.isInteger(value.alter) || value.alter < -2 || value.alter > 2) {
     addIssue(context, 'INVALID_PITCH', `${path}.alter`, 'alter must be an integer from -2 to 2');
   }
-  if (!Number.isInteger(value.octave) || typeof value.octave !== 'number' || value.octave < -1 || value.octave > 9) {
+  if (typeof value.octave !== 'number' || !Number.isInteger(value.octave) || value.octave < -1 || value.octave > 9) {
     addIssue(context, 'INVALID_PITCH', `${path}.octave`, 'octave must be an integer from -1 to 9');
   }
 };
@@ -202,7 +212,7 @@ const validateEvent = (value: unknown, path: string, context: ValidationContext)
 };
 
 const validateOrdinal = (value: unknown, path: string, context: ValidationContext): value is number => {
-  if (!Number.isSafeInteger(value) || typeof value !== 'number' || value <= 0) {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
     addIssue(context, 'INVALID_ORDINAL', path, 'ordinal must be a positive safe integer');
     return false;
   }
@@ -338,7 +348,10 @@ const validateSource = (value: unknown, path: string, context: ValidationContext
   if (typeof value.format !== 'string' || !SOURCE_FORMATS.has(value.format)) {
     addIssue(context, 'INVALID_SOURCE_FORMAT', `${path}.format`, 'unsupported source format');
   }
-  if (value.byteLength !== null && (!Number.isSafeInteger(value.byteLength) || typeof value.byteLength !== 'number' || value.byteLength < 0)) {
+  if (
+    value.byteLength !== null &&
+    (typeof value.byteLength !== 'number' || !Number.isSafeInteger(value.byteLength) || value.byteLength < 0)
+  ) {
     addIssue(context, 'INVALID_BYTE_LENGTH', `${path}.byteLength`, 'byteLength must be a non-negative safe integer or null');
   }
 };
