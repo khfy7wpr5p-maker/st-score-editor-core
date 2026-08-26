@@ -53,7 +53,8 @@ for (const [name, value] of mustBeFalse) {
 
 const expectedStages = ['E0', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9'];
 if (JSON.stringify(architecture.stages) !== JSON.stringify(expectedStages)) fail('stage order drift');
-if (architecture.currentStage !== 'E0') fail('architecture currentStage must be E0 during foundation');
+const stageIndex = expectedStages.indexOf(architecture.currentStage);
+if (stageIndex < 1) fail('architecture currentStage may not regress below E1');
 if (architecture.musicXml?.isDirectEditorState !== false) fail('MusicXML must not be direct editor state');
 if (architecture.musicXml?.safeImportRequired !== true) fail('safe MusicXML import must remain required');
 
@@ -61,8 +62,15 @@ for (const renderer of Object.values(architecture.rendererCandidates ?? {})) {
   if (renderer.admittedDependency !== false) fail('renderer dependency admitted before review');
 }
 
-if (pkg.private !== true) fail('package must remain private during foundation');
-if (Object.keys(pkg.dependencies ?? {}).length !== 0) fail('E0 runtime dependencies must be empty');
-if (Object.keys(pkg.devDependencies ?? {}).length !== 0) fail('E0 dev dependencies must be empty');
+const admittedTypescript = architecture.buildDependencies?.typescript;
+if (admittedTypescript?.version !== '6.0.3') fail('TypeScript architecture pin drift');
+if (admittedTypescript?.runtime !== false) fail('TypeScript must remain build-only');
+if (admittedTypescript?.license !== 'Apache-2.0') fail('TypeScript license record drift');
 
-console.log('E0 repository contracts: PASS');
+if (pkg.private !== true) fail('package must remain private during controlled development');
+if (Object.keys(pkg.dependencies ?? {}).length !== 0) fail('runtime dependencies must remain empty at E1');
+const devDependencyEntries = Object.entries(pkg.devDependencies ?? {});
+if (devDependencyEntries.length !== 1) fail('only the admitted TypeScript dev dependency is allowed at E1');
+if (pkg.devDependencies?.typescript !== '6.0.3') fail('TypeScript package pin must equal 6.0.3');
+
+console.log('E1 repository contracts: PASS');
