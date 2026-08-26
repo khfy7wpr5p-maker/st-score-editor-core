@@ -8,10 +8,14 @@
     "node": ">=18"
   },
   "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
     "validate": "node scripts/validate-repo.mjs",
-    "test": "node --test",
+    "test": "npm run build && node --test",
     "ci": "npm run validate && npm test"
   },
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
 }
