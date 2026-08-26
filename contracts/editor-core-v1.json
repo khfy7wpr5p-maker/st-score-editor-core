@@ -1,0 +1,47 @@
+{
+  "contract": "ST_SCORE_EDITOR_CORE_ARCHITECTURE",
+  "version": "1.0.0",
+  "currentStage": "E0",
+  "stages": ["E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9"],
+  "plannedPackages": [
+    "score-model",
+    "musicxml",
+    "addressing",
+    "commands",
+    "history",
+    "validation",
+    "renderer-contract",
+    "analysis-contract"
+  ],
+  "initialScorePrimitives": [
+    "ScoreDocument",
+    "Part",
+    "Staff",
+    "Measure",
+    "Voice",
+    "Event",
+    "Note",
+    "Rest",
+    "Chord"
+  ],
+  "rendererCandidates": {
+    "classicalScore": {
+      "family": "OSMD-class",
+      "admittedDependency": false
+    },
+    "guitarTab": {
+      "family": "alphaTab-class",
+      "admittedDependency": false
+    },
+    "secondaryValidation": {
+      "family": "Verovio-class",
+      "admittedDependency": false
+    }
+  },
+  "musicXml": {
+    "isExchangeFormat": true,
+    "isDirectEditorState": false,
+    "safeImportRequired": true,
+    "semanticRoundTripRequiredBeforeE2Close": true
+  }
+}
