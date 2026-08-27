@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: Stage E0 foundation
+Status: Stage E7-A — UI authority contract
 
 ## 1. Purpose
 
@@ -13,57 +13,54 @@ External symbolic input
   -> import/safety boundary
   -> ScoreDocument
   -> semantic addressing
-  -> EditCommand
-  -> transaction
+  -> typed EditCommand / NotationCommand
+  -> atomic transaction
   -> validation
-  -> accepted ScoreDocument revision
+  -> accepted immutable revision
   -> serializer / typed adapter
   -> renderer adapters (presentation only)
+  -> editor UI (presentation + command intent only)
 ```
 
-Product composition:
+Product composition remains outside core authority:
 
 ```text
 ScoreMosaic
-  -> Teacher Review adapter
+  -> Teacher Review / Score Editor host
   -> ST Score Editor Core
-  -> score renderer adapter
+  -> OSMD host adapter
 
 MusicXML-to-Guitar-TAB-Engine
-  -> Guitar Workspace adapter
+  -> Guitar Workspace host
   -> ST Score Editor Core
-  -> alphaTab-class renderer adapter
+  -> alphaTab host adapter
 ```
 
-Advisory analysis:
+## 3. Implemented package boundaries through E6
 
-```text
-Score snapshot
-  -> bounded analysis request
-  -> external specialist
-  -> typed advisory result
-  -> overlay/panel
-```
+- `score-model`: immutable canonical score snapshots.
+- `musicxml`: bounded safe import and deterministic serialization.
+- `addressing`: revision-bound semantic identities.
+- `commands`: typed bounded score mutations.
+- `history`: immutable transaction history and undo/redo.
+- `notation-structure`: revision-bound notation semantics.
+- `renderer-contract`: presentation-only renderer requests and secure hit tokens.
+- `renderer-osmd`: host-injected OSMD 2.1.1 adapter.
+- `renderer-alphatab`: host-injected alphaTab 1.8.4 adapter.
 
-Analysis output cannot enter the edit path without an explicit user/system command that independently passes the same validation boundary.
+Planned E7 packages:
 
-## 3. Core packages
+- `editor-ui-contract`: UI state, editor intents and authority-safe boundaries.
+- `editor-shell`: framework-neutral editor composition state.
+- `editor-selection`: renderer-token to semantic-selection bridge.
+- `notation-commands`: typed notation mutations.
+- `editor-accessibility`: keyboard/focus/status semantics.
 
-Planned package boundaries:
-
-- `score-model`: Part, Staff, Measure, Voice, Event, Note, Rest, Chord, Tie, Beam, Tuplet and metadata.
-- `musicxml`: safe import, normalization, serialization, semantic round-trip checks.
-- `addressing`: stable document/part/staff/measure/voice/event/note identities and source binding.
-- `commands`: typed bounded mutations.
-- `history`: transactions, undo/redo and revision identity.
-- `validation`: structural, rhythmic, identity and cross-reference invariants.
-- `renderer-contract`: presentation-only renderer interface.
-- `analysis-contract`: advisory-only analysis request/response interface.
-- product adapters remain outside core authority.
+Product UI composition stays outside authoritative score state.
 
 ## 4. Identity model
 
-Renderer coordinates are unstable and forbidden as authoritative mutation addresses. A future selected note must resolve to a stable semantic address such as:
+Renderer coordinates are unstable and forbidden as authoritative mutation addresses. A selected score entity resolves through the revision-bound semantic chain:
 
 ```text
 documentId
@@ -75,7 +72,7 @@ eventId
 noteId
 ```
 
-IDs must survive re-rendering. When an edit intentionally replaces an entity, lineage must record replacement rather than silently reusing an incompatible identity.
+DOM ids, SVG ids, pixel coordinates, glyph ids and renderer-local objects can only help locate an opaque E6 render token. The token itself is revalidated against a manifest re-derived from the current canonical revision before a semantic address is returned.
 
 ## 5. Source policy
 
@@ -87,44 +84,76 @@ For Guitar TAB, derivative string/fret/fingering state cannot mutate upstream no
 
 ## 6. Edit transaction model
 
-Every edit follows:
+Every accepted score edit follows:
 
 ```text
-stable target
-  -> bounded EditCommand
+current revision
+  -> stable semantic target
+  -> typed bounded command
   -> precondition checks
   -> deterministic transform
   -> validation
-  -> accept revision OR reject without partial state
+  -> accept whole revision OR reject without partial state
 ```
 
-No partially-applied authoritative transaction is allowed.
+UI event handlers never mutate `ScoreDocument` or `NotationDocument` directly.
 
 ## 7. Renderer boundary
 
-Renderers may receive immutable score snapshots and return presentation metadata. They may not:
+Renderers may receive generated MusicXML and return presentation events. They may not choose authoritative identity, mutate canonical state, infer accepted edits from coordinates alone, become the source of truth for musical semantics, or bypass validation.
 
-- choose authoritative note identity;
-- mutate score state;
-- infer accepted edits from SVG/DOM coordinates alone;
-- become the source of truth for beams, ties, voices, pitches or durations;
-- bypass validation.
+## 8. E7 UI authority boundary
 
-## 8. AI/analysis boundary
+The UI may own only ephemeral presentation state such as:
+
+- active tool;
+- viewport/zoom;
+- hover state;
+- keyboard focus;
+- open/closed inspector sections;
+- pending form text before validation;
+- transient error/status presentation.
+
+The UI may not own authoritative musical state. In particular, toolbar selection, inspector fields, browser state, DOM/SVG state, renderer objects, drag geometry and keyboard shortcuts cannot independently authorize or commit a musical edit.
+
+The accepted flow is:
+
+```text
+browser event
+  -> renderer hit token (when applicable)
+  -> E6 token validation
+  -> E3 SemanticAddress / SelectionSnapshot
+  -> typed editor intent
+  -> E4/E7 command transaction
+  -> deterministic validation
+  -> immutable accepted revision
+  -> re-render
+```
+
+If the revision changes before intent execution, the selection/intent is stale and fails closed. No automatic re-targeting is allowed.
+
+## 9. AI/analysis boundary
 
 AI specialists may classify, rank, explain or propose. They may not create authoritative edits, silently repair score state, bypass deterministic validation, or present uncalibrated scores as probabilities.
 
-## 9. Stage map
+## 10. Stage map
 
-- E0 — architecture, safety, governance, CI foundation.
-- E1 — canonical ScoreDocument model.
-- E2 — MusicXML safe import + semantic round trip.
-- E3 — stable selection/addressing.
-- E4 — basic edit commands + transaction + undo/redo.
-- E5 — notation structure: ties, slurs, beams, tuplets, voices, signatures, clefs, barlines.
-- E6 — renderer adapters.
-- E7 — reusable editor UI primitives + ScoreMosaic product composition.
+- E0 — architecture, safety, governance, CI foundation. COMPLETE.
+- E1 — canonical ScoreDocument model. COMPLETE.
+- E2 — MusicXML safe import + semantic round trip. COMPLETE.
+- E3 — stable selection/addressing. COMPLETE.
+- E4 — atomic edit commands + transaction + undo/redo. COMPLETE.
+- E5 — canonical notation structures and notation-aware export. COMPLETE.
+- E6 — presentation-only renderer adapters. COMPLETE.
+- E7-A — UI authority contract and documentation synchronization. CURRENT.
+- E7-B — framework-neutral editor shell.
+- E7-C — renderer selection + inspector.
+- E7-D — basic score editing UI intents.
+- E7-E1 — typed notation command transaction core.
+- E7-E2 — notation editing intents/palette model.
+- E7-F — undo/redo UX, accessibility and safety state.
+- E7-G — ScoreMosaic product integration. HUMAN GATE.
 - E8 — guitar/TAB editing adapter.
 - E9 — advisory Music Intelligence overlays.
 
-Each stage must preserve the authority boundaries frozen here.
+Each stage must preserve the E0 authority boundary and cannot imply production activation.
