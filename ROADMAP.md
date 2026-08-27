@@ -1,54 +1,56 @@
 # Roadmap
 
-## Stage E0 — Architecture & Safety Foundation
+## Completed core stages
 
-Goal: freeze authority, trust boundaries, package boundaries, stage order and CI invariants before score mutation code exists.
+- **E0 — Architecture & Safety Foundation:** authority/trust boundaries, governance and CI baseline.
+- **E1 — Canonical ScoreDocument:** immutable Part/Staff/Measure/Voice/Event/Note/Rest/Chord model.
+- **E2 — Safe MusicXML Import + Semantic Round Trip:** resource-bounded parser, explicit unsupported semantics, serializer/equivalence tests.
+- **E3 — Stable Addressing / Selection:** revision/ancestry-bound semantic addresses and stale-selection rejection.
+- **E4 — Score Editing / Transactions:** typed bounded score commands, atomic validation, immutable revisions and score history.
+- **E5 — Notation Structure:** time/key/clef/barline, dots/beams/tuplets, accidentals/ties/slurs plus MusicXML export.
+- **E6 — Renderer Adapters:** presentation-only host integrations for OSMD 2.1.1 and alphaTab 1.8.4.
 
-Exit criteria:
-- architecture/safety/governance docs present;
-- machine-readable authority contract validates;
-- no runtime third-party dependencies;
-- CI checks repository contracts and tests;
-- no production/runtime activation.
+## Stage E7 — Editor Core / UI Boundary
 
-## Stage E1 — Canonical ScoreDocument Model
+### E7-A — UI Authority Contract — COMPLETE
+UI/browser/DOM/renderer state frozen as non-authoritative.
 
-Scope: immutable document snapshots and typed Part/Staff/Measure/Voice/Event/Note/Rest/Chord primitives with deterministic identity validation.
+### E7-B — Framework-neutral Editor Shell — COMPLETE
+Toolbar, parts, score viewport, inspector and status view-model composition without a UI-framework dependency.
 
-Not included: MusicXML parsing, rendering, UI or AI.
+### E7-C — Secure Selection + Inspector — COMPLETE
+Opaque renderer token → semantic selection → canonical read-only inspector.
 
-## Stage E2 — Safe MusicXML Import + Semantic Round Trip
+### E7-D — Basic Score Editing Intents — COMPLETE
+Runtime-validated pitch/duration/note-rest/chord-tone UI intents delegated exclusively to E4 transactions.
 
-Scope: resource-bounded MusicXML subset, explicit unsupported-feature reporting, serializer and semantic equivalence tests.
+### E7-E1 — Atomic Notation Transactions — COMPLETE
+Typed bounded notation mutations with a new unified score revision and notation rebinding.
 
-## Stage E3 — Stable Addressing / Selection
+### E7-E2 — Notation Editing Intents — COMPLETE
+Runtime-validated notation palette/inspector intents with deterministic semantic target derivation only.
 
-Scope: stable semantic addresses, stale-selection rejection, source/revision correlation and renderer-neutral selection contract.
+### E7-F — Undo/Redo, Accessibility and UX Safety — CURRENT FINAL AUTONOMOUS GATE
+Scope:
+- unified score+notation history;
+- fail-closed notation rebinding after score edits;
+- selection invalidation on revision navigation;
+- typed keyboard/accessibility requests;
+- accessible status announcements;
+- presentation-only dirty/persisted indicator;
+- immutable session controller composing render → select → inspect → edit → history → re-render.
 
-## Stage E4 — Basic Editing / Transactions
+### E7-G — ScoreMosaic Product Integration — HUMAN GATE / NOT AUTHORIZED
+Future scope may include product-specific layout, Teacher Review composition, OMR/source comparison and approval UX. This stage must not begin from E7-F completion alone.
 
-Scope: pitch, duration, add/remove note/rest, accidental, dot; atomic transactions; undo/redo; deterministic validation.
+## Later stages
 
-## Stage E5 — Notation Structure
+### E8 — Guitar Workspace Adapter
+String/fret/fingering/voicing derivative state and Guitar TAB Engine integration without upstream authority leakage.
 
-Scope: ties, slurs, beams, tuplets, voices, time/key signatures, clefs and barlines with explicit contract evolution.
-
-## Stage E6 — Renderer Adapters
-
-Scope: presentation-only adapters, initially evaluated for OSMD-class classical score rendering and alphaTab-class notation/TAB rendering. Dependency admission requires separate license/version review.
-
-## Stage E7 — Editor UI Composition
-
-Scope: reusable UI primitives plus ScoreMosaic Teacher Review/Score Editor composition. UI cannot become musical authority.
-
-## Stage E8 — Guitar Workspace Adapter
-
-Scope: string/fret/fingering/voicing derivative state and Guitar TAB Engine integration without upstream authority leakage.
-
-## Stage E9 — Music Intelligence Overlays
-
-Scope: typed advisory Harmony/Fingering/Orchestration analysis overlays. AI remains non-authoritative.
+### E9 — Music Intelligence Overlays
+Typed advisory Harmony/Fingering/Orchestration analysis overlays. AI remains non-authoritative.
 
 ## Development rule
 
-Stages may be prepared in parallel only when they do not weaken an earlier gate. Public/production activation is never implied by stage completion.
+Every stage preserves the E0 authority baseline. A green repository/CI state never implies public deployment, production activation, user-data ingestion, public write APIs or live AI edit authority.
