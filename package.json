@@ -10,8 +10,9 @@
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "npm run clean && tsc -p tsconfig.json",
+    "build:browser": "npm run build && node scripts/build-browser.mjs",
     "validate": "node scripts/validate-repo.mjs",
-    "test": "npm run build && node --test",
+    "test": "npm run build:browser && node --test",
     "ci": "npm run validate && npm test"
   },
   "dependencies": {
@@ -19,6 +20,7 @@
     "xmlchars": "2.2.0"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
     "typescript": "6.0.3"
   }
 }
