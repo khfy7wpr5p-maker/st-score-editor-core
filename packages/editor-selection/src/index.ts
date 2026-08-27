@@ -61,11 +61,14 @@ export const createInspectorModel = (
   }
   if (resolved.kind === 'voice') fields.push({ key:'ordinal', value:String(resolved.value.ordinal) });
   if (resolved.kind === 'event') fields.push(...eventFields(resolved.value));
-  if (resolved.kind === 'note') {
+
+  if (address.kind === 'note') {
+    if (resolved.kind !== 'note') throw new Error('semantic resolver kind mismatch');
     const pitch = resolved.value.pitch;
     fields.push({ key:'pitch', value:`${pitch.step}${pitch.alter === 0 ? '' : pitch.alter > 0 ? `+${pitch.alter}` : pitch.alter}${pitch.octave}` });
     const parent = resolveSemanticAddress(score, addressEntity(score, address.eventId));
-    if (parent.kind === 'event') fields.push(...eventFields(parent.value));
+    if (parent.kind !== 'event') throw new Error('note parent event resolution mismatch');
+    fields.push(...eventFields(parent.value));
   }
 
   return Object.freeze({
