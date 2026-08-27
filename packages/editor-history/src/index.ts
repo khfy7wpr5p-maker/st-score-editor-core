@@ -1,5 +1,6 @@
 import type { ScoreDocument } from '../../score-model/src/index.js';
 import { addressEntity } from '../../addressing/src/index.js';
+import type { EventAddress, MeasureAddress, NoteAddress } from '../../addressing/src/index.js';
 import { createNotationDocument } from '../../notation-structure/src/index.js';
 import type { NotationDocument } from '../../notation-structure/src/index.js';
 
@@ -50,6 +51,11 @@ export const redoEditorHistory=(history:EditorHistoryState):Readonly<EditorHisto
   return freezeHistory({contractVersion:EDITOR_HISTORY_VERSION,documentId:history.documentId,past:[...history.past,history.present],present:next,future:history.future.slice(1)});
 };
 
+const missingTarget=(id:string,kind:string,error:unknown):never=>{throw new EditorHistoryError('A notation target disappeared or changed kind during score edit.','NOTATION_TARGET_DISAPPEARED',{id,kind,cause:error instanceof Error?error.message:String(error)});};
+const rebindMeasure=(score:ScoreDocument,id:string):MeasureAddress=>{try{const a=addressEntity(score,id);if(a.kind!=='measure')return missingTarget(id,'measure',new Error(`observed ${a.kind}`));return a;}catch(error){return missingTarget(id,'measure',error);}};
+const rebindEvent=(score:ScoreDocument,id:string):EventAddress=>{try{const a=addressEntity(score,id);if(a.kind!=='event')return missingTarget(id,'event',new Error(`observed ${a.kind}`));return a;}catch(error){return missingTarget(id,'event',error);}};
+const rebindNote=(score:ScoreDocument,id:string):NoteAddress=>{try{const a=addressEntity(score,id);if(a.kind!=='note')return missingTarget(id,'note',new Error(`observed ${a.kind}`));return a;}catch(error){return missingTarget(id,'note',error);}};
+
 export const rebindNotationAfterScoreEdit=(
   previousScore:Readonly<ScoreDocument>,
   previousNotation:Readonly<NotationDocument>,
@@ -57,14 +63,10 @@ export const rebindNotationAfterScoreEdit=(
 ):Readonly<NotationDocument>=>{
   assertSnapshot({score:previousScore,notation:previousNotation});
   if(nextScore.id!==previousScore.id||nextScore.revision.parentId!==previousScore.revision.id)throw new EditorHistoryError('Score edit result is not a direct child of the notation base revision.','LINEAGE_MISMATCH');
-  const target=(id:string,kind:'measure'|'event'|'note')=>{
-    try {const address=addressEntity(nextScore,id);if(address.kind!==kind)throw new Error(`expected ${kind}, observed ${address.kind}`);return address;}
-    catch(error){throw new EditorHistoryError('A notation target disappeared or changed kind during score edit.','NOTATION_TARGET_DISAPPEARED',{id,kind,cause:error instanceof Error?error.message:String(error)});}
-  };
   return createNotationDocument(nextScore,{
     contractVersion:'1.0.0',documentId:nextScore.id,revisionId:nextScore.revision.id,
-    measures:previousNotation.measures.map((entry)=>({target:target(entry.target.measureId,'measure'),notation:entry.notation})),
-    events:previousNotation.events.map((entry)=>({target:target(entry.target.eventId,'event'),notation:entry.notation})),
-    notes:previousNotation.notes.map((entry)=>({target:target(entry.target.noteId,'note'),notation:entry.notation}))
+    measures:previousNotation.measures.map((entry)=>({target:rebindMeasure(nextScore,entry.target.measureId),notation:entry.notation})),
+    events:previousNotation.events.map((entry)=>({target:rebindEvent(nextScore,entry.target.eventId),notation:entry.notation})),
+    notes:previousNotation.notes.map((entry)=>({target:rebindNote(nextScore,entry.target.noteId),notation:entry.notation}))
   });
 };
