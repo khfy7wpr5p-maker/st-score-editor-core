@@ -37,7 +37,7 @@ export const createPersistenceIndicator=(history:EditorHistoryState,persistedRev
 });
 
 export const editorStatusFromError=(error:unknown):Readonly<EditorStatus>=>{
-  const record=error!==null&&typeof error==='object'?error as {code?:unknown;message?:unknown}:{};
+  const record:{code?:unknown;message?:unknown}=error!==null&&typeof error==='object'?error as {code?:unknown;message?:unknown}:{};
   const code=typeof record.code==='string'&&record.code.length<=64?record.code:'EDITOR_OPERATION_FAILED';
   const message=typeof record.message==='string'&&record.message.length>0&&record.message.length<=240?record.message:'The editor operation was rejected.';
   return Object.freeze({level:'error',code,message});
