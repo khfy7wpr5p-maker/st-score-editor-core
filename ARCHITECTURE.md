@@ -1,159 +1,161 @@
 # ST Score Editor Core — Architecture
 
-Status: Stage E7-A — UI authority contract
+Status: **Implemented through Stage E7-F. E7-G is a human gate.**
 
 ## 1. Purpose
 
-ST Score Editor Core is the shared semantic editing layer between symbolic score data and product-specific user interfaces. It is not an engraving engine, OMR engine, guitar optimizer, AI model host, or publication authority.
+ST Score Editor Core is the shared semantic editing layer between symbolic score data and product-specific user interfaces. It is not an engraving engine, OMR engine, guitar optimizer, AI model host, persistence service, or publication authority.
 
-## 2. Layering
+## 2. Authority flow
 
 ```text
 External symbolic input
-  -> import/safety boundary
-  -> ScoreDocument
-  -> semantic addressing
-  -> typed EditCommand / NotationCommand
+  -> safe import boundary
+  -> immutable ScoreDocument
+  -> revision-bound semantic addressing
+  -> typed score / notation intent
   -> atomic transaction
-  -> validation
-  -> accepted immutable revision
-  -> serializer / typed adapter
-  -> renderer adapters (presentation only)
-  -> editor UI (presentation + command intent only)
-```
-
-Product composition remains outside core authority:
-
-```text
-ScoreMosaic
-  -> Teacher Review / Score Editor host
-  -> ST Score Editor Core
-  -> OSMD host adapter
-
-MusicXML-to-Guitar-TAB-Engine
-  -> Guitar Workspace host
-  -> ST Score Editor Core
-  -> alphaTab host adapter
-```
-
-## 3. Implemented package boundaries through E6
-
-- `score-model`: immutable canonical score snapshots.
-- `musicxml`: bounded safe import and deterministic serialization.
-- `addressing`: revision-bound semantic identities.
-- `commands`: typed bounded score mutations.
-- `history`: immutable transaction history and undo/redo.
-- `notation-structure`: revision-bound notation semantics.
-- `renderer-contract`: presentation-only renderer requests and secure hit tokens.
-- `renderer-osmd`: host-injected OSMD 2.1.1 adapter.
-- `renderer-alphatab`: host-injected alphaTab 1.8.4 adapter.
-
-Planned E7 packages:
-
-- `editor-ui-contract`: UI state, editor intents and authority-safe boundaries.
-- `editor-shell`: framework-neutral editor composition state.
-- `editor-selection`: renderer-token to semantic-selection bridge.
-- `notation-commands`: typed notation mutations.
-- `editor-accessibility`: keyboard/focus/status semantics.
-
-Product UI composition stays outside authoritative score state.
-
-## 4. Identity model
-
-Renderer coordinates are unstable and forbidden as authoritative mutation addresses. A selected score entity resolves through the revision-bound semantic chain:
-
-```text
-documentId
-partId
-staffId
-measureId
-voiceId
-eventId
-noteId
-```
-
-DOM ids, SVG ids, pixel coordinates, glyph ids and renderer-local objects can only help locate an opaque E6 render token. The token itself is revalidated against a manifest re-derived from the current canonical revision before a semantic address is returned.
-
-## 5. Source policy
-
-Original source bytes are immutable. A source hash/identity is recorded at import. Editing produces derived semantic revisions; it never rewrites source bytes in place.
-
-For ScoreMosaic, an approved/validated upstream symbolic artifact is the production handoff target. Raw OMR candidates are not automatically authoritative input.
-
-For Guitar TAB, derivative string/fret/fingering state cannot mutate upstream note pitch/onset/duration authority unless an explicit score edit is separately issued.
-
-## 6. Edit transaction model
-
-Every accepted score edit follows:
-
-```text
-current revision
-  -> stable semantic target
-  -> typed bounded command
-  -> precondition checks
-  -> deterministic transform
-  -> validation
-  -> accept whole revision OR reject without partial state
-```
-
-UI event handlers never mutate `ScoreDocument` or `NotationDocument` directly.
-
-## 7. Renderer boundary
-
-Renderers may receive generated MusicXML and return presentation events. They may not choose authoritative identity, mutate canonical state, infer accepted edits from coordinates alone, become the source of truth for musical semantics, or bypass validation.
-
-## 8. E7 UI authority boundary
-
-The UI may own only ephemeral presentation state such as:
-
-- active tool;
-- viewport/zoom;
-- hover state;
-- keyboard focus;
-- open/closed inspector sections;
-- pending form text before validation;
-- transient error/status presentation.
-
-The UI may not own authoritative musical state. In particular, toolbar selection, inspector fields, browser state, DOM/SVG state, renderer objects, drag geometry and keyboard shortcuts cannot independently authorize or commit a musical edit.
-
-The accepted flow is:
-
-```text
-browser event
-  -> renderer hit token (when applicable)
-  -> E6 token validation
-  -> E3 SemanticAddress / SelectionSnapshot
-  -> typed editor intent
-  -> E4/E7 command transaction
   -> deterministic validation
-  -> immutable accepted revision
-  -> re-render
+  -> accepted unified score+notation revision
+  -> MusicXML serializer
+  -> presentation-only renderer request
+  -> editor shell / inspector
 ```
 
-If the revision changes before intent execution, the selection/intent is stale and fails closed. No automatic re-targeting is allowed.
+The browser, renderer and UI do not become score authority anywhere in this flow.
 
-## 9. AI/analysis boundary
+## 3. Implemented package layers
 
-AI specialists may classify, rank, explain or propose. They may not create authoritative edits, silently repair score state, bypass deterministic validation, or present uncalibrated scores as probabilities.
+Core symbolic and safety layers:
 
-## 10. Stage map
+- `score-model` — immutable canonical score snapshots.
+- `musicxml` — bounded safe import and deterministic serialization.
+- `addressing` — revision/ancestry-bound semantic identities.
+- `commands` — typed bounded score mutations.
+- `history` — original score-only immutable history primitive.
+- `notation-structure` — revision-bound notation semantics.
+- `notation-commands` — atomic notation transactions.
 
-- E0 — architecture, safety, governance, CI foundation. COMPLETE.
-- E1 — canonical ScoreDocument model. COMPLETE.
-- E2 — MusicXML safe import + semantic round trip. COMPLETE.
-- E3 — stable selection/addressing. COMPLETE.
-- E4 — atomic edit commands + transaction + undo/redo. COMPLETE.
-- E5 — canonical notation structures and notation-aware export. COMPLETE.
-- E6 — presentation-only renderer adapters. COMPLETE.
-- E7-A — UI authority contract and documentation synchronization. CURRENT.
-- E7-B — framework-neutral editor shell.
-- E7-C — renderer selection + inspector.
-- E7-D — basic score editing UI intents.
-- E7-E1 — typed notation command transaction core.
-- E7-E2 — notation editing intents/palette model.
-- E7-F — undo/redo UX, accessibility and safety state.
-- E7-G — ScoreMosaic product integration. HUMAN GATE.
-- E8 — guitar/TAB editing adapter.
-- E9 — advisory Music Intelligence overlays.
+Renderer boundary:
 
-Each stage must preserve the E0 authority boundary and cannot imply production activation.
+- `renderer-contract` — revision-bound requests and opaque hit manifest.
+- `renderer-osmd` — host-injected OSMD 2.1.1 adapter.
+- `renderer-alphatab` — host-injected alphaTab 1.8.4 adapter.
+
+Editor boundary:
+
+- `editor-ui-contract` — non-authoritative ephemeral UI state.
+- `editor-shell` — framework-neutral toolbar/parts/score/inspector/status view model.
+- `editor-selection` — render token → SemanticAddress → SelectionSnapshot → inspector.
+- `editor-score-intents` — runtime-validated score editing intents delegated to E4.
+- `editor-notation-intents` — runtime-validated notation intents delegated to E7-E1.
+- `editor-history` — unified ScoreDocument + NotationDocument revision snapshots.
+- `editor-accessibility` — typed keyboard/focus/status semantics.
+- `editor-session-safety` — undo/redo selection invalidation and presentation-only dirty/status state.
+- `editor-session-controller` — immutable end-to-end core session composition.
+
+## 4. Unified revision model
+
+The editor authoritative state is a pair:
+
+```text
+EditorRevisionSnapshot
+  ├─ ScoreDocument(revision R)
+  └─ NotationDocument(revision R)
+```
+
+The two documents must share exact document and revision identity.
+
+A score edit creates a new ScoreDocument revision. Existing notation is rebound only if every referenced measure/event/note still exists with the expected semantic kind. If a notation target disappeared, the operation fails closed rather than silently discarding notation.
+
+A notation edit also creates a new ScoreDocument revision even if pitch/onset/duration did not change. This keeps score semantics, notation metadata, renderer manifests, selections and undo/redo on one revision lineage.
+
+## 5. Selection and renderer boundary
+
+A renderer hit is not an edit target by itself:
+
+```text
+renderer/browser hit
+  -> opaque render token
+  -> manifest re-derived from current canonical revision
+  -> exact token/address verification
+  -> SemanticAddress
+  -> SelectionSnapshot
+```
+
+DOM ids, SVG ids, glyph objects, x/y coordinates and drag geometry are never authoritative.
+
+## 6. Editor intent boundary
+
+Score editor intents support:
+
+- pitch;
+- duration;
+- note/rest replacement;
+- chord tone add/remove.
+
+Notation editor intents support:
+
+- time signature;
+- key signature;
+- clef;
+- barline/repeat;
+- dots;
+- beams;
+- tuplets;
+- accidental display;
+- ties;
+- slurs.
+
+Untrusted UI intent objects use exact-field runtime validation. Unknown UI/DOM/coordinate fields fail before transaction creation. Stale selections and stale notation fail closed; automatic re-targeting is forbidden.
+
+## 7. History and UX safety
+
+Undo/redo operate on unified score+notation snapshots. A revision navigation invalidates the current selection instead of carrying a stale target into another revision. A new commit after undo clears the redo branch.
+
+Dirty/persisted revision indicators are presentation only. Core E7-F does not persist data and grants no persistence authority.
+
+## 8. Accessibility boundary
+
+The framework-neutral accessibility model defines five focus regions:
+
+```text
+toolbar → parts → score → inspector → status
+```
+
+Keyboard input maps only to typed accessibility/navigation requests such as `REQUEST_UNDO` and `REQUEST_REDO`; raw keyboard input never becomes a musical command directly. Error status can be represented as an assertive announcement and ordinary status as polite output.
+
+## 9. Renderer integration targets
+
+- OSMD `2.1.1`, BSD-3-Clause — host-injected classical score target.
+- alphaTab `1.8.4`, MPL-2.0 — host-injected guitar/TAB target.
+
+These packages are not installed into core. Product hosts own exact renderer pin/lock and satisfy the adapter profile.
+
+## 10. AI and product boundaries
+
+AI specialists may classify, rank, explain or propose. They cannot mutate score state or bypass the deterministic edit path.
+
+ScoreMosaic and Guitar TAB remain separate product authority domains. E7-F does not activate either product integration.
+
+## 11. Stage status
+
+- E0 — COMPLETE
+- E1 — COMPLETE
+- E2 — COMPLETE
+- E3 — COMPLETE
+- E4 — COMPLETE
+- E5 — COMPLETE
+- E6 — COMPLETE
+- E7-A — COMPLETE
+- E7-B — COMPLETE
+- E7-C — COMPLETE
+- E7-D — COMPLETE
+- E7-E1 — COMPLETE
+- E7-E2 — COMPLETE
+- E7-F — CURRENT / final autonomous core gate
+- **E7-G — ScoreMosaic product integration — HUMAN GATE / NOT AUTHORIZED**
+- E8 — guitar/TAB editing adapter — later gate
+- E9 — Music Intelligence overlays — later gate
+
+Production activation, public write APIs, live AI edit authority and ScoreMosaic product composition require separate authorization.
