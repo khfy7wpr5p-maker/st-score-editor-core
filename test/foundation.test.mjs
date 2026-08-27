@@ -21,14 +21,16 @@ test('edit acceptance remains atomic and fail-closed', async () => {
   assert.equal(authority.edits.staleTargetFailsClosed, true);
 });
 
-test('E2 admits only exact parser runtime dependencies and build-only TypeScript', async () => {
+test('E7-H keeps parser runtime dependencies exact and build tooling non-runtime', async () => {
   const pkg = await readJson('package.json');
   const architecture = await readJson('contracts/editor-core-v1.json');
   assert.deepEqual(pkg.dependencies, { saxes: '6.0.0', xmlchars: '2.2.0' });
-  assert.deepEqual(pkg.devDependencies, { typescript: '6.0.3' });
+  assert.deepEqual(pkg.devDependencies, { esbuild: '0.28.2', typescript: '6.0.3' });
   assert.equal(architecture.runtimeDependencies.saxes.authority, 'XML_PARSER_ONLY');
   assert.equal(architecture.runtimeDependencies.xmlchars.authority, 'SAXES_SUPPORT_ONLY');
   assert.equal(architecture.buildDependencies.typescript.runtime, false);
+  assert.equal(architecture.buildDependencies.esbuild.runtime, false);
+  assert.equal(architecture.buildDependencies.esbuild.authority, 'BROWSER_BUNDLING_ONLY');
   for (const candidate of Object.values(architecture.rendererCandidates)) {
     assert.equal(candidate.admittedDependency, false);
   }
