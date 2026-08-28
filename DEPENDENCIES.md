@@ -64,24 +64,22 @@
 
 ## E7 dependency rule
 
-Stages E7-A through E7-G add no new third-party runtime dependency. The editor shell, selection bridge, score intents, notation transactions/intents, unified history, accessibility model, session safety, session controller and ScoreMosaic browser host runtime use the existing first-party TypeScript packages plus the already admitted MusicXML parser dependencies.
+Stages E7-A through E7-G add no new third-party runtime dependency. E7-H admits exactly one additional **build-only** tool: `esbuild@0.28.2`, restricted to deterministic browser bundling.
 
-E7-H admits exactly one additional **build-only** tool: `esbuild@0.28.2`, restricted to deterministic browser bundling. It does not execute as a runtime dependency and does not grant network, persistence, renderer, server-revision, approval, publication or production authority.
+## E8-A / E8-B dependency rule
 
-## E8-A dependency rule
+E8-A adds `guitar-workspace-contract` and E8-B adds `guitar-workspace-projection` as first-party TypeScript packages. Neither stage adds a third-party dependency.
 
-E8-A adds `guitar-workspace-contract` as a first-party TypeScript package and adds **no third-party dependency**.
+The external repository `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` is reviewed as a contract/reference boundary at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`; it is **not** installed, vendored, fetched at runtime or invoked by E8-A/E8-B.
 
-The external repository `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` is reviewed as a contract/reference boundary at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`; it is not installed, vendored, fetched at runtime or granted write authority by E8-A.
-
-Future engine integration must undergo its own dependency/deployment/provenance review. E8-A does not authorize a network client, repository package dependency, service call, renderer dependency or production bridge.
+E8-B only creates a deterministic local MusicXML/source-map handoff object. It adds no network client, service call, renderer dependency, persistence SDK or production bridge.
 
 The core repository currently installs only:
 
 - runtime: exact `saxes@6.0.0`, exact `xmlchars@2.2.0`;
 - build/dev: exact `typescript@6.0.3`, exact `esbuild@0.28.2`.
 
-No UI framework, renderer package, persistence SDK, analytics SDK, storage client, network service, AI/model runtime, telemetry package or production activation dependency is installed through E8-A.
+No UI framework, renderer package, persistence SDK, analytics SDK, storage client, network service, AI/model runtime, telemetry package or production activation dependency is installed through E8-B.
 
 The generated browser bundle may contain the admitted runtime parser dependencies, but it requires no external browser import and no remote browser fetch.
 
