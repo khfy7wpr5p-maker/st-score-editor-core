@@ -66,21 +66,28 @@
 
 Stages E7-A through E7-G add no new third-party runtime dependency. E7-H admits exactly one additional **build-only** tool: `esbuild@0.28.2`, restricted to deterministic browser bundling.
 
-## E8-A / E8-B dependency rule
+## E8 dependency rule
 
-E8-A adds `guitar-workspace-contract` and E8-B adds `guitar-workspace-projection` as first-party TypeScript packages. Neither stage adds a third-party dependency.
+E8-A adds `guitar-workspace-contract`, E8-B adds `guitar-workspace-projection`, and E8-C adds `guitar-workspace-result` as first-party TypeScript packages. **None adds a third-party dependency.**
 
-The external repository `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` is reviewed as a contract/reference boundary at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`; it is **not** installed, vendored, fetched at runtime or invoked by E8-A/E8-B.
+The external repository `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` is reviewed as a contract/reference boundary at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`.
 
-E8-B only creates a deterministic local MusicXML/source-map handoff object. It adds no network client, service call, renderer dependency, persistence SDK or production bridge.
+Through E8-C it is still:
+
+- not installed as a package dependency;
+- not vendored;
+- not fetched at runtime by core;
+- not invoked by core;
+- not granted network/process authority;
+- not granted canonical score mutation authority.
+
+E8-C accepts only a host/test-supplied bounded JSON representation of the reviewed `CanonicalTabResult 2.0.0` contract and revalidates it against the current locally derived E8-B projection. JSON parsing uses platform `JSON.parse`; no new parser package is admitted.
 
 The core repository currently installs only:
 
 - runtime: exact `saxes@6.0.0`, exact `xmlchars@2.2.0`;
 - build/dev: exact `typescript@6.0.3`, exact `esbuild@0.28.2`.
 
-No UI framework, renderer package, persistence SDK, analytics SDK, storage client, network service, AI/model runtime, telemetry package or production activation dependency is installed through E8-B.
+No UI framework, renderer package, persistence SDK, analytics SDK, storage client, network service, AI/model runtime, telemetry package, external-engine client, subprocess library or production activation dependency is installed through E8-C.
 
-The generated browser bundle may contain the admitted runtime parser dependencies, but it requires no external browser import and no remote browser fetch.
-
-Any dependency introduced for later E8/E9 work must satisfy the normal version/license/provenance/supply-chain review and may not change ScoreMosaic vs Guitar TAB authority ownership without a human decision.
+A future E8-D host invocation boundary must undergo a separate dependency/provenance/security review. It may not be inferred from E8-C and remains human-gated.
