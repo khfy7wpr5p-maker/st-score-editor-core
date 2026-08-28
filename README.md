@@ -4,14 +4,14 @@ Security-first shared semantic score-editing core for ScoreMosaic and MusicXML-t
 
 ## Current status
 
-The architecture is implemented through **Stage E8-A — Guitar Workspace Authority Contract**.
+The architecture is implemented through **Stage E8-B — Guitar Workspace MusicXML + Source-map Projection**.
 
-Stages **E7-G** and **E7-H** remain bounded repository/browser integration work only. E8-A adds the first Guitar Workspace boundary without connecting the external engine yet:
+E8 now has two bounded foundations:
 
-- Guitar string/fret/fingering/voicing/reduction state is derivative only.
-- External engine output cannot mutate the canonical score.
-- Every future engine source event must map to a current revision-bound canonical `event` or `note` address.
-- Stale, duplicate or ambiguous source mappings fail closed.
+- **E8-A** freezes Guitar Workspace output as derivative-only and revision-bound.
+- **E8-B** generates engine-safe MusicXML and the `sourceEventId` → canonical semantic source map during the same deterministic traversal.
+
+The external Guitar TAB Engine is still **not invoked or ingested** by this repository. No guitar result can mutate the canonical score.
 
 Completed layers:
 
@@ -32,8 +32,9 @@ Completed layers:
 - E7-G — Browser Host Runtime for ScoreMosaic
 - E7-H — Browser-safe Runtime Bundle
 - E8-A — Guitar Workspace Authority + Source-map Contract
+- E8-B — Deterministic Guitar MusicXML + Source-map Projection
 
-The next safe E8 substage is a deterministic **MusicXML + source-map projection**. Full Guitar TAB Engine result integration remains unimplemented.
+The next safe E8 gate is a **validated read-only `CanonicalTabResult 2.0.0` ingestion/model boundary**. It must remain derivative-only.
 
 ## Secure editor flow
 
@@ -63,29 +64,29 @@ new RenderRequest
 
 Undo/redo restore score and notation together. Revision navigation clears selection rather than silently re-targeting it.
 
-The notation layer currently models:
-
-```text
-Measure: time signature · key signature · clef · barline/repeat
-Event:   dots · beams · tuplets
-Note:    accidental display · ties · slurs
-```
-
-Advanced notation **MusicXML import** remains deliberately fail-closed where E2 does not yet model the source semantics. E5/E7 authoring and export do not imply complete advanced MusicXML import coverage.
-
 ## Guitar Workspace boundary
 
-E8-A introduces `guitar-workspace-contract` and the revision-bound `GuitarWorkspaceSourceMap`.
-
-The reviewed Guitar TAB Engine reference is `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`. Its reviewed canonical result is `CanonicalTabResult` schema `2.0.0`, and its polyphonic source identities use:
+The reviewed Guitar TAB Engine reference is `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`. Its reviewed canonical result is `CanonicalTabResult` schema `2.0.0`; its polyphonic source identities use:
 
 ```text
 <partId>:measure:<measureIndex>:note:<sourceOrder>
 ```
 
-Because ST's MusicXML serializer does not embed internal entity IDs into MusicXML `<note>` elements, a future adapter must generate MusicXML and the source map together from one deterministic traversal. E8-A freezes that requirement but deliberately does not implement the adapter yet.
+E8-B emits a narrow MusicXML source-fact profile with:
 
-Guitar output may be displayed, reviewed or used as advisory evidence. It cannot write backwards into `ScoreDocument`; any canonical change must still enter through the ordinary semantic-selection and typed-transaction path.
+- exactly one part (`P1`);
+- one or two staves;
+- exact canonical pitch/onset/duration;
+- deterministic voice/staff streams with `backup` / `forward`;
+- chord markers;
+- rests;
+- tie start/stop facts.
+
+At the exact moment each MusicXML `<note>` is emitted, its external `sourceEventId` is paired with the current revision-bound canonical `note` or `event` address. No later pitch/coordinate/DOM heuristic is permitted.
+
+Engine-unsupported presentation notation such as key/clef/barline, dots/beams, slurs and tuplet display markers is intentionally not emitted by this engine-specific projection. Canonical state remains unchanged and the full E5 notation serializer remains separate.
+
+Guitar output may eventually be displayed, reviewed or used as advisory evidence. It cannot write backwards into `ScoreDocument`; any canonical change must still enter through semantic selection plus existing typed transactions.
 
 ## Renderer and browser boundary
 
@@ -94,7 +95,7 @@ Renderer packages are not installed into this core repository. Product hosts sup
 - `opensheetmusicdisplay@2.1.1` — BSD-3-Clause — classical score host target
 - `@coderline/alphatab@1.8.4` — MPL-2.0 — guitar/TAB host target
 
-Renderers cannot mutate canonical state or authorize edits from DOM/SVG ids or coordinates. Hit tokens are checked against a manifest re-derived from the current canonical revision.
+Renderers cannot mutate canonical state or authorize edits from DOM/SVG ids or coordinates.
 
 E7-H produces the deterministic browser artifact:
 
@@ -104,22 +105,16 @@ E7-H produces the deterministic browser artifact:
 - no external browser imports
 - no remote fetch requirement
 
-The browser runtime is host-injected and remains non-authoritative. It introduces no network, persistence, server-revision, approval or publication capability.
-
-## UI and accessibility boundary
-
-The editor shell is framework-neutral. Toolbar, viewport, hover, focus, inspector drafts and dirty indicators are presentation state only.
-
-Keyboard gestures produce typed editor/accessibility requests. They never become score commands directly. Undo/redo requests navigate already accepted immutable revisions; score/notation edits still require semantic selection and typed transactions.
+The browser runtime remains non-authoritative and introduces no network, persistence, server-revision, approval or publication capability.
 
 ## Non-negotiable rules
 
 1. Source bytes and source identity are immutable.
-2. MusicXML is an exchange format, not direct editor state.
+2. MusicXML is an exchange/projection format, not direct editor state.
 3. Renderer/browser/DOM/SVG/coordinate state is never musical authority.
 4. Edits require current semantic identity and typed bounded commands.
 5. Transactions are atomic and validated before acceptance.
-6. Score and notation revisions remain aligned in the editor history.
+6. Score and notation revisions remain aligned in editor history.
 7. Notation metadata may not be silently discarded when a score edit removes its target.
 8. Stale selections, intents, render requests, notation snapshots and Guitar Workspace source maps fail closed.
 9. Undo/redo clears selection and restores score+notation together.
@@ -137,6 +132,6 @@ Build-only:
 - `typescript@6.0.3` — Apache-2.0 — exact pin
 - `esbuild@0.28.2` — MIT — browser bundling only
 
-E8-A adds **no dependency**. No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed in core through E8-A.
+E8-A/E8-B add **no dependency**. No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed through E8-B.
 
-See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, `docs/guitar-workspace-authority-contract.md`, and `contracts/`.
+See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, `docs/guitar-workspace-authority-contract.md`, `docs/guitar-workspace-projection-contract.md`, and `contracts/`.
