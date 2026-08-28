@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **Implemented through Stage E7-F. E7-G is a human gate.**
+Status: **Implemented through Stage E7-H. Repository/browser integration is authorized; production authority is not.**
 
 ## 1. Purpose
 
@@ -20,6 +20,8 @@ External symbolic input
   -> MusicXML serializer
   -> presentation-only renderer request
   -> editor shell / inspector
+  -> host-injected browser runtime
+  -> deterministic browser bundle
 ```
 
 The browser, renderer and UI do not become score authority anywhere in this flow.
@@ -53,6 +55,17 @@ Editor boundary:
 - `editor-accessibility` — typed keyboard/focus/status semantics.
 - `editor-session-safety` — undo/redo selection invalidation and presentation-only dirty/status state.
 - `editor-session-controller` — immutable end-to-end core session composition.
+- `browser-runtime` — host-injected browser-safe surface exposing only admitted core session operations.
+
+Browser packaging:
+
+- artifact: `dist/browser/st-score-editor-core.runtime.js`;
+- manifest: `dist/browser/st-score-editor-core.runtime.manifest.json`;
+- format: IIFE;
+- target: ES2022;
+- global: `STScoreEditorCoreRuntime`;
+- external browser imports: forbidden;
+- remote browser fetch: not required.
 
 ## 4. Unified revision model
 
@@ -113,7 +126,7 @@ Untrusted UI intent objects use exact-field runtime validation. Unknown UI/DOM/c
 
 Undo/redo operate on unified score+notation snapshots. A revision navigation invalidates the current selection instead of carrying a stale target into another revision. A new commit after undo clears the redo branch.
 
-Dirty/persisted revision indicators are presentation only. Core E7-F does not persist data and grants no persistence authority.
+Dirty/persisted revision indicators are presentation only. E7-H still grants no persistence authority.
 
 ## 8. Accessibility boundary
 
@@ -132,11 +145,13 @@ Keyboard input maps only to typed accessibility/navigation requests such as `REQ
 
 These packages are not installed into core. Product hosts own exact renderer pin/lock and satisfy the adapter profile.
 
-## 10. AI and product boundaries
+## 10. Browser, AI and product boundaries
+
+The E7-G browser host runtime and E7-H browser bundle are bounded integration surfaces. They are explicitly non-networked and non-persistent inside core, and they grant no renderer mutation, server-revision, approval, publication or production authority.
 
 AI specialists may classify, rank, explain or propose. They cannot mutate score state or bypass the deterministic edit path.
 
-ScoreMosaic and Guitar TAB remain separate product authority domains. E7-F does not activate either product integration.
+ScoreMosaic and Guitar TAB remain separate product authority domains. ScoreMosaic repository/browser composition is authorized through E7-H, but production activation remains unauthorized. E8 must preserve the same separation when introducing Guitar Workspace derivative state.
 
 ## 11. Stage status
 
@@ -153,9 +168,10 @@ ScoreMosaic and Guitar TAB remain separate product authority domains. E7-F does 
 - E7-D — COMPLETE
 - E7-E1 — COMPLETE
 - E7-E2 — COMPLETE
-- E7-F — CURRENT / final autonomous core gate
-- **E7-G — ScoreMosaic product integration — HUMAN GATE / NOT AUTHORIZED**
-- E8 — guitar/TAB editing adapter — later gate
-- E9 — Music Intelligence overlays — later gate
+- E7-F — COMPLETE
+- E7-G — COMPLETE — repository-only ScoreMosaic browser host runtime
+- **E7-H — COMPLETE / CURRENT — browser-safe runtime bundle**
+- E8 — Guitar Workspace Adapter — next planned stage, not started
+- E9 — Music Intelligence overlays — later stage
 
-Production activation, public write APIs, live AI edit authority and ScoreMosaic product composition require separate authorization.
+Production activation, public write APIs and live AI edit authority still require separate authorization. Any change to ScoreMosaic vs Guitar TAB authority ownership is human-gated by `DEVELOPMENT_GOVERNANCE.md`.
