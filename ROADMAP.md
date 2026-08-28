@@ -12,70 +12,57 @@
 
 ## Stage E7 — Editor Core / UI Boundary
 
-### E7-A — UI Authority Contract — COMPLETE
-UI/browser/DOM/renderer state frozen as non-authoritative.
+- **E7-A — UI Authority Contract — COMPLETE**
+- **E7-B — Framework-neutral Editor Shell — COMPLETE**
+- **E7-C — Secure Selection + Inspector — COMPLETE**
+- **E7-D — Basic Score Editing Intents — COMPLETE**
+- **E7-E1 — Atomic Notation Transactions — COMPLETE**
+- **E7-E2 — Notation Editing Intents — COMPLETE**
+- **E7-F — Undo/Redo, Accessibility and UX Safety — COMPLETE**
+- **E7-G — ScoreMosaic Browser Host Runtime — COMPLETE**
+- **E7-H — Browser-safe Runtime Bundle — COMPLETE**
 
-### E7-B — Framework-neutral Editor Shell — COMPLETE
-Toolbar, parts, score viewport, inspector and status view-model composition without a UI-framework dependency.
-
-### E7-C — Secure Selection + Inspector — COMPLETE
-Opaque renderer token → semantic selection → canonical read-only inspector.
-
-### E7-D — Basic Score Editing Intents — COMPLETE
-Runtime-validated pitch/duration/note-rest/chord-tone UI intents delegated exclusively to E4 transactions.
-
-### E7-E1 — Atomic Notation Transactions — COMPLETE
-Typed bounded notation mutations with a new unified score revision and notation rebinding.
-
-### E7-E2 — Notation Editing Intents — COMPLETE
-Runtime-validated notation palette/inspector intents with deterministic semantic target derivation only.
-
-### E7-F — Undo/Redo, Accessibility and UX Safety — COMPLETE
-Implemented:
-- unified score+notation history;
-- fail-closed notation rebinding after score edits;
-- selection invalidation on revision navigation;
-- typed keyboard/accessibility requests;
-- accessible status announcements;
-- presentation-only dirty/persisted indicator;
-- immutable session controller composing render → select → inspect → edit → history → re-render.
-
-### E7-G — ScoreMosaic Browser Host Runtime — COMPLETE
-Repository-only ScoreMosaic integration and visual composition with no network, persistence, renderer, server-revision, approval, publication or production authority.
-
-### E7-H — Browser-safe Runtime Bundle — COMPLETE
-Implemented:
-- deterministic IIFE browser artifact at `dist/browser/st-score-editor-core.runtime.js`;
-- ES2022 target and frozen `STScoreEditorCoreRuntime` global;
-- bundled admitted runtime dependencies with no external browser imports;
-- exact build-only `esbuild@0.28.2` admission for browser bundling only;
-- CI/contracts/tests that lock packaging and authority invariants.
+E7 remains bounded to repository/browser composition. Production/public-write/live-AI authority is not granted.
 
 ## Stage E8 — Guitar Workspace Adapter
 
-### E8-A — Guitar Workspace Authority Contract — CURRENT
-Scope:
+### E8-A — Guitar Workspace Authority Contract — COMPLETE
+Implemented:
 - guitar string/fret/fingering/voicing/reduction state is derivative only;
 - external engine output has no canonical score mutation authority;
 - revision-bound `GuitarWorkspaceSourceMap` maps engine source identities to canonical `event` / `note` semantic addresses;
 - stale, duplicate, ambiguous or unsupported mappings fail closed;
 - external reference is `CanonicalTabResult 2.0.0` from `musicxml-to-guitar-tab-engine`;
-- no engine integration, production activation or new dependency is introduced.
+- no engine integration, production activation or new dependency.
 
-### E8-B — Deterministic MusicXML + Source-map Projection — NEXT SAFE GATE
+### E8-B — Deterministic MusicXML + Source-map Projection — CURRENT
+Implemented:
+- engine-safe MusicXML and source map are created in the same deterministic canonical traversal;
+- exactly one part and one/two staves admitted initially;
+- external source IDs use `P1:measure:<measureIndex>:note:<sourceOrder>`;
+- source order increments only for emitted MusicXML `<note>` elements;
+- canonical notes/chord tones map to canonical `note` addresses and rests to canonical `event` addresses;
+- exact canonical pitch and timing are preserved;
+- multi-voice/staff layout uses deterministic `backup` / `forward` cursor operations;
+- tie start/stop source facts are preserved;
+- engine-unsupported presentation notation is omitted without changing canonical state;
+- multipart, staff 3+, stale notation, missing/conflicting meter, same-voice overlap and out-of-measure events fail closed;
+- external engine invocation/result ingestion remains disabled.
+
+### E8-C — Read-only CanonicalTabResult Ingestion — NEXT SAFE GATE
 Planned scope:
-- create engine-bound MusicXML and its source map in the same deterministic traversal;
-- prove each emitted MusicXML `<note>` source order maps to exactly one canonical event/note identity;
-- start with a narrow admitted Guitar Workspace source scope;
-- fail closed on unsupported multipart/staff/notation semantics rather than guessing;
-- still no reverse canonical write authority.
+- runtime-exact validation of the reviewed `CanonicalTabResult 2.0.0` surface needed by the workspace;
+- require result provenance to match the E8-B projection/source map;
+- map external note dispositions / selected string-fret positions back only to derivative canonical targets;
+- reject unknown source IDs, stale revisions, impossible string/fret values and incompatible result contracts;
+- create immutable read-only Guitar Workspace result state;
+- still no direct canonical mutation or production authority.
 
-### Later E8 work — NOT AUTHORIZED BY E8-A ALONE
+### Later E8 work — SEPARATELY BOUNDED
 Possible later work may include:
-- validated `CanonicalTabResult 2.0.0` result ingestion;
-- derivative string/fret/fingering/shape view models;
+- fingering/shape/barre view models;
 - Guitar TAB workspace review UX;
-- typed requests that can propose ordinary canonical editor intents without bypassing E4/E7-E1.
+- typed proposal requests that can eventually enter ordinary canonical editor intents without bypassing E4/E7-E1.
 
 Any change to ScoreMosaic vs Guitar TAB authority ownership remains human-gated by `DEVELOPMENT_GOVERNANCE.md`.
 
