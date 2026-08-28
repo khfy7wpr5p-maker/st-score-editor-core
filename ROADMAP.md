@@ -30,8 +30,8 @@ Typed bounded notation mutations with a new unified score revision and notation 
 ### E7-E2 — Notation Editing Intents — COMPLETE
 Runtime-validated notation palette/inspector intents with deterministic semantic target derivation only.
 
-### E7-F — Undo/Redo, Accessibility and UX Safety — CURRENT FINAL AUTONOMOUS GATE
-Scope:
+### E7-F — Undo/Redo, Accessibility and UX Safety — COMPLETE
+Implemented:
 - unified score+notation history;
 - fail-closed notation rebinding after score edits;
 - selection invalidation on revision navigation;
@@ -40,13 +40,33 @@ Scope:
 - presentation-only dirty/persisted indicator;
 - immutable session controller composing render → select → inspect → edit → history → re-render.
 
-### E7-G — ScoreMosaic Product Integration — HUMAN GATE / NOT AUTHORIZED
-Future scope may include product-specific layout, Teacher Review composition, OMR/source comparison and approval UX. This stage must not begin from E7-F completion alone.
+### E7-G — ScoreMosaic Browser Host Runtime — COMPLETE
+Human gate was explicitly authorized for repository-only ScoreMosaic integration and visual composition. The resulting host runtime:
+- is host-injected;
+- exposes the secure editor session surface;
+- remains network- and persistence-incapable;
+- grants no renderer, browser, server-revision, approval, publication or production authority.
 
-## Later stages
+### E7-H — Browser-safe Runtime Bundle — COMPLETE / CURRENT
+Implemented:
+- deterministic IIFE browser artifact at `dist/browser/st-score-editor-core.runtime.js`;
+- ES2022 target and frozen `STScoreEditorCoreRuntime` global;
+- bundled admitted runtime dependencies with no external browser imports;
+- exact build-only `esbuild@0.28.2` admission for browser bundling only;
+- CI/contracts/tests that lock packaging and authority invariants.
 
-### E8 — Guitar Workspace Adapter
-String/fret/fingering/voicing derivative state and Guitar TAB Engine integration without upstream authority leakage.
+E7-H authorization is packaging/composition only. Production activation, public write APIs and live AI edit authority remain explicitly unauthorized.
+
+## Next planned stages
+
+### E8 — Guitar Workspace Adapter — NOT STARTED
+Planned scope:
+- string/fret/fingering/voicing as derivative workspace state;
+- MusicXML-to-Guitar-TAB-Engine integration through typed adapters;
+- no reverse authority leakage into the canonical score;
+- preserve ScoreMosaic vs Guitar TAB authority separation.
+
+Before implementation, the E8 adapter contract should be frozen. Any change to ScoreMosaic/Guitar TAB authority ownership is a human-gated decision under `DEVELOPMENT_GOVERNANCE.md`.
 
 ### E9 — Music Intelligence Overlays
 Typed advisory Harmony/Fingering/Orchestration analysis overlays. AI remains non-authoritative.

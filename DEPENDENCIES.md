@@ -11,6 +11,18 @@
 - upstream: `microsoft/TypeScript`
 - install policy: ignore lifecycle scripts; `skipLibCheck` remains `false`
 
+### esbuild
+- package: `esbuild`
+- admitted version: `0.28.2` (exact pin)
+- scope: development/build only
+- authority: browser bundling only
+- runtime authority: none
+- license: MIT
+- upstream: `evanw/esbuild`
+- admission stage: E7-H
+- packaging target: deterministic IIFE browser artifact, ES2022
+- external browser imports: forbidden by repository contract
+
 ### saxes
 - package: `saxes`
 - admitted version: `6.0.0` (exact pin)
@@ -50,15 +62,19 @@
 - authority: presentation only
 - host owns exact dependency pin/lock
 
-## E7-F dependency rule
+## E7 dependency rule
 
-Stages E7-A through E7-F add **no third-party package**. The editor shell, selection bridge, score intents, notation transactions/intents, unified history, accessibility model, session safety and session controller are implemented using the existing first-party TypeScript packages.
+Stages E7-A through E7-G add no new third-party runtime dependency. The editor shell, selection bridge, score intents, notation transactions/intents, unified history, accessibility model, session safety, session controller and ScoreMosaic browser host runtime use the existing first-party TypeScript packages plus the already admitted MusicXML parser dependencies.
 
-No UI framework, DOM abstraction, persistence SDK, analytics SDK, storage client, network service, renderer package, AI/model runtime, telemetry package or production activation dependency is admitted through E7-F.
+E7-H admits exactly one additional **build-only** tool: `esbuild@0.28.2`, restricted to deterministic browser bundling. It does not execute as a runtime dependency and does not grant network, persistence, renderer, server-revision, approval, publication or production authority.
 
-The core repository therefore continues to install only:
+The core repository currently installs only:
 
 - runtime: exact `saxes@6.0.0`, exact `xmlchars@2.2.0`;
-- build/dev: exact `typescript@6.0.3`.
+- build/dev: exact `typescript@6.0.3`, exact `esbuild@0.28.2`.
 
-E7-G ScoreMosaic product integration is a separate human gate. Any new dependency there requires its own version/license/provenance/supply-chain review before admission.
+No UI framework, renderer package, persistence SDK, analytics SDK, storage client, network service, AI/model runtime, telemetry package or production activation dependency is installed through E7-H.
+
+The generated browser bundle may contain the admitted runtime parser dependencies, but it requires no external browser import and no remote browser fetch.
+
+Any dependency introduced for E8 or later must satisfy the normal version/license/provenance/supply-chain review and may not change ScoreMosaic vs Guitar TAB authority ownership without a human decision.

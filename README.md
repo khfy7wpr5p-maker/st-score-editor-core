@@ -4,7 +4,12 @@ Security-first shared semantic score-editing core for ScoreMosaic and MusicXML-t
 
 ## Current status
 
-The core architecture is implemented through **Stage E7-F**. Stage **E7-G — ScoreMosaic product integration** remains an explicit human gate and is not authorized by core completion.
+The core architecture is implemented through **Stage E7-H**.
+
+Stages **E7-G** and **E7-H** are complete as bounded repository/browser integration work only:
+
+- E7-G authorizes the repository-only ScoreMosaic browser host runtime and visual composition boundary.
+- E7-H packages that runtime into a deterministic browser-safe bundle without adding network, persistence, publication, approval or server-revision authority.
 
 Completed layers:
 
@@ -22,6 +27,10 @@ Completed layers:
 - E7-E1 — Atomic Notation Transactions
 - E7-E2 — Typed Notation Palette / Inspector Intents
 - E7-F — Unified Score+Notation History, Accessibility and Session Safety
+- E7-G — Browser Host Runtime for ScoreMosaic
+- E7-H — Browser-safe Runtime Bundle
+
+The next planned major stage is **E8 — Guitar Workspace Adapter**. Any change to ScoreMosaic/Guitar TAB authority ownership remains human-gated by governance.
 
 ## Secure editor flow
 
@@ -61,7 +70,7 @@ Note:    accidental display · ties · slurs
 
 Advanced notation **MusicXML import** remains deliberately fail-closed where E2 does not yet model the source semantics. E5/E7 authoring and export do not imply complete advanced MusicXML import coverage.
 
-## Renderer boundary
+## Renderer and browser boundary
 
 Renderer packages are not installed into this core repository. Product hosts supply the exact admitted versions:
 
@@ -69,6 +78,16 @@ Renderer packages are not installed into this core repository. Product hosts sup
 - `@coderline/alphatab@1.8.4` — MPL-2.0 — guitar/TAB host target
 
 Renderers cannot mutate canonical state or authorize edits from DOM/SVG ids or coordinates. Hit tokens are checked against a manifest re-derived from the current canonical revision.
+
+E7-H also produces the deterministic browser artifact:
+
+- `dist/browser/st-score-editor-core.runtime.js`
+- global: `STScoreEditorCoreRuntime`
+- format: IIFE, target: ES2022
+- no external browser imports
+- no remote fetch requirement
+
+The browser runtime is host-injected and remains non-authoritative. It introduces no network, persistence, server-revision, approval or publication capability.
 
 ## UI and accessibility boundary
 
@@ -89,7 +108,7 @@ Keyboard gestures produce typed editor/accessibility requests. They never become
 9. Undo/redo clears selection and restores score+notation together.
 10. AI/OMR output remains evidence/advice only.
 11. No production/public-write/live-AI-edit authority is granted by repository merges.
-12. E7-G ScoreMosaic product composition requires a separate human authorization.
+12. E7-G/E7-H authorization is bounded to repository/browser composition and packaging; it does not authorize production activation.
 
 ## Installed dependencies
 
@@ -99,7 +118,8 @@ Runtime:
 
 Build-only:
 - `typescript@6.0.3` — Apache-2.0 — exact pin
+- `esbuild@0.28.2` — MIT — browser bundling only
 
-No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed in core through E7-F.
+No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed in core through E7-H.
 
 See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, and `contracts/`.
