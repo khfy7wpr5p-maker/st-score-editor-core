@@ -68,13 +68,21 @@ Stages E7-A through E7-G add no new third-party runtime dependency. The editor s
 
 E7-H admits exactly one additional **build-only** tool: `esbuild@0.28.2`, restricted to deterministic browser bundling. It does not execute as a runtime dependency and does not grant network, persistence, renderer, server-revision, approval, publication or production authority.
 
+## E8-A dependency rule
+
+E8-A adds `guitar-workspace-contract` as a first-party TypeScript package and adds **no third-party dependency**.
+
+The external repository `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` is reviewed as a contract/reference boundary at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`; it is not installed, vendored, fetched at runtime or granted write authority by E8-A.
+
+Future engine integration must undergo its own dependency/deployment/provenance review. E8-A does not authorize a network client, repository package dependency, service call, renderer dependency or production bridge.
+
 The core repository currently installs only:
 
 - runtime: exact `saxes@6.0.0`, exact `xmlchars@2.2.0`;
 - build/dev: exact `typescript@6.0.3`, exact `esbuild@0.28.2`.
 
-No UI framework, renderer package, persistence SDK, analytics SDK, storage client, network service, AI/model runtime, telemetry package or production activation dependency is installed through E7-H.
+No UI framework, renderer package, persistence SDK, analytics SDK, storage client, network service, AI/model runtime, telemetry package or production activation dependency is installed through E8-A.
 
 The generated browser bundle may contain the admitted runtime parser dependencies, but it requires no external browser import and no remote browser fetch.
 
-Any dependency introduced for E8 or later must satisfy the normal version/license/provenance/supply-chain review and may not change ScoreMosaic vs Guitar TAB authority ownership without a human decision.
+Any dependency introduced for later E8/E9 work must satisfy the normal version/license/provenance/supply-chain review and may not change ScoreMosaic vs Guitar TAB authority ownership without a human decision.

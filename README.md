@@ -4,12 +4,14 @@ Security-first shared semantic score-editing core for ScoreMosaic and MusicXML-t
 
 ## Current status
 
-The core architecture is implemented through **Stage E7-H**.
+The architecture is implemented through **Stage E8-A — Guitar Workspace Authority Contract**.
 
-Stages **E7-G** and **E7-H** are complete as bounded repository/browser integration work only:
+Stages **E7-G** and **E7-H** remain bounded repository/browser integration work only. E8-A adds the first Guitar Workspace boundary without connecting the external engine yet:
 
-- E7-G authorizes the repository-only ScoreMosaic browser host runtime and visual composition boundary.
-- E7-H packages that runtime into a deterministic browser-safe bundle without adding network, persistence, publication, approval or server-revision authority.
+- Guitar string/fret/fingering/voicing/reduction state is derivative only.
+- External engine output cannot mutate the canonical score.
+- Every future engine source event must map to a current revision-bound canonical `event` or `note` address.
+- Stale, duplicate or ambiguous source mappings fail closed.
 
 Completed layers:
 
@@ -29,8 +31,9 @@ Completed layers:
 - E7-F — Unified Score+Notation History, Accessibility and Session Safety
 - E7-G — Browser Host Runtime for ScoreMosaic
 - E7-H — Browser-safe Runtime Bundle
+- E8-A — Guitar Workspace Authority + Source-map Contract
 
-The next planned major stage is **E8 — Guitar Workspace Adapter**. Any change to ScoreMosaic/Guitar TAB authority ownership remains human-gated by governance.
+The next safe E8 substage is a deterministic **MusicXML + source-map projection**. Full Guitar TAB Engine result integration remains unimplemented.
 
 ## Secure editor flow
 
@@ -70,6 +73,20 @@ Note:    accidental display · ties · slurs
 
 Advanced notation **MusicXML import** remains deliberately fail-closed where E2 does not yet model the source semantics. E5/E7 authoring and export do not imply complete advanced MusicXML import coverage.
 
+## Guitar Workspace boundary
+
+E8-A introduces `guitar-workspace-contract` and the revision-bound `GuitarWorkspaceSourceMap`.
+
+The reviewed Guitar TAB Engine reference is `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine` at main SHA `93abe9735a4ed70ad8362ac24ec39869ea34607f`. Its reviewed canonical result is `CanonicalTabResult` schema `2.0.0`, and its polyphonic source identities use:
+
+```text
+<partId>:measure:<measureIndex>:note:<sourceOrder>
+```
+
+Because ST's MusicXML serializer does not embed internal entity IDs into MusicXML `<note>` elements, a future adapter must generate MusicXML and the source map together from one deterministic traversal. E8-A freezes that requirement but deliberately does not implement the adapter yet.
+
+Guitar output may be displayed, reviewed or used as advisory evidence. It cannot write backwards into `ScoreDocument`; any canonical change must still enter through the ordinary semantic-selection and typed-transaction path.
+
 ## Renderer and browser boundary
 
 Renderer packages are not installed into this core repository. Product hosts supply the exact admitted versions:
@@ -79,7 +96,7 @@ Renderer packages are not installed into this core repository. Product hosts sup
 
 Renderers cannot mutate canonical state or authorize edits from DOM/SVG ids or coordinates. Hit tokens are checked against a manifest re-derived from the current canonical revision.
 
-E7-H also produces the deterministic browser artifact:
+E7-H produces the deterministic browser artifact:
 
 - `dist/browser/st-score-editor-core.runtime.js`
 - global: `STScoreEditorCoreRuntime`
@@ -104,11 +121,11 @@ Keyboard gestures produce typed editor/accessibility requests. They never become
 5. Transactions are atomic and validated before acceptance.
 6. Score and notation revisions remain aligned in the editor history.
 7. Notation metadata may not be silently discarded when a score edit removes its target.
-8. Stale selections, intents, render requests and notation snapshots fail closed.
+8. Stale selections, intents, render requests, notation snapshots and Guitar Workspace source maps fail closed.
 9. Undo/redo clears selection and restores score+notation together.
-10. AI/OMR output remains evidence/advice only.
+10. AI/OMR and Guitar TAB engine output remain evidence/advice/derivative state only.
 11. No production/public-write/live-AI-edit authority is granted by repository merges.
-12. E7-G/E7-H authorization is bounded to repository/browser composition and packaging; it does not authorize production activation.
+12. ScoreMosaic and Guitar TAB authority ownership may not be changed implicitly by adapter work.
 
 ## Installed dependencies
 
@@ -120,6 +137,6 @@ Build-only:
 - `typescript@6.0.3` — Apache-2.0 — exact pin
 - `esbuild@0.28.2` — MIT — browser bundling only
 
-No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed in core through E7-H.
+E8-A adds **no dependency**. No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed in core through E8-A.
 
-See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, and `contracts/`.
+See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, `docs/guitar-workspace-authority-contract.md`, and `contracts/`.
