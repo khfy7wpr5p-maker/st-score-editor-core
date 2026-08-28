@@ -1,9 +1,9 @@
 {
   "contract": "ST_SCORE_EDITOR_CORE_ARCHITECTURE",
   "version": "1.0.0",
-  "currentStage": "E8-B",
-  "stages": ["E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7-A", "E7-B", "E7-C", "E7-D", "E7-E1", "E7-E2", "E7-F", "E7-G", "E7-H", "E8-A", "E8-B", "E8", "E9"],
-  "plannedPackages": ["score-model", "musicxml", "addressing", "commands", "history", "validation", "renderer-contract", "analysis-contract", "notation-structure", "renderer-osmd", "renderer-alphatab", "editor-ui-contract", "editor-shell", "editor-selection", "editor-score-intents", "notation-commands", "editor-notation-intents", "editor-history", "editor-accessibility", "editor-session-safety", "editor-session-controller", "browser-runtime", "guitar-workspace-contract", "guitar-workspace-projection"],
+  "currentStage": "E8-C",
+  "stages": ["E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7-A", "E7-B", "E7-C", "E7-D", "E7-E1", "E7-E2", "E7-F", "E7-G", "E7-H", "E8-A", "E8-B", "E8-C", "E8", "E9"],
+  "plannedPackages": ["score-model", "musicxml", "addressing", "commands", "history", "validation", "renderer-contract", "analysis-contract", "notation-structure", "renderer-osmd", "renderer-alphatab", "editor-ui-contract", "editor-shell", "editor-selection", "editor-score-intents", "notation-commands", "editor-notation-intents", "editor-history", "editor-accessibility", "editor-session-safety", "editor-session-controller", "browser-runtime", "guitar-workspace-contract", "guitar-workspace-projection", "guitar-workspace-result"],
   "initialScorePrimitives": ["ScoreDocument", "Part", "Staff", "Measure", "Voice", "Event", "Note", "Rest", "Chord"],
   "rendererCandidates": {
     "classicalScore": {"family":"OSMD-class","integrationPackage":"opensheetmusicdisplay","integrationVersion":"2.1.1","license":"BSD-3-Clause","admittedIntegration":true,"admittedDependency":false,"hostInjected":true,"authority":"PRESENTATION_ONLY"},
@@ -36,7 +36,7 @@
   },
   "guitarWorkspace": {
     "contractVersion": "1.0.0",
-    "stage": "E8-B",
+    "stage": "E8-C",
     "authority": "DERIVATIVE_ONLY",
     "derivativeStateOnly": true,
     "sourceRevisionRequired": true,
@@ -69,6 +69,33 @@
       "reverseCanonicalWriteAuthority": false,
       "productionAuthority": false
     },
+    "resultEvidence": {
+      "version": "1.0.0",
+      "inputBoundary": "BOUNDED_JSON_STRING",
+      "maximumJsonBytes": 16777216,
+      "projectionArgumentAccepted": false,
+      "rederivesProjectionBeforeAcceptance": true,
+      "sourceFactsMustMatchCurrentCanonicalRevision": true,
+      "exactCanonicalTabResultContractRequired": true,
+      "canonicalTabResultDocumentType": "CanonicalTabResult",
+      "canonicalTabResultSchemaVersion": "2.0.0",
+      "engineName": "musicxml-to-guitar-tab-engine",
+      "sourceDocumentType": "PolyphonicSourceModel",
+      "sourceContractVersion": "1.0.0",
+      "finalSelectionPolicy": "STATIC_ATTACK_PATH_LEXICOGRAPHIC_1.0",
+      "finalSelectionVersion": "1.0.0",
+      "simultaneousGroupsExact": true,
+      "arrangementCoverageExact": true,
+      "noteDispositionOrderExact": true,
+      "selectedShapeCoverageExact": true,
+      "guitarPositionRoundTripRequired": true,
+      "resultStateDerivativeOnly": true,
+      "readOnly": true,
+      "engineInvocation": false,
+      "reverseCanonicalWriteAuthority": false,
+      "teacherReviewMutationAuthority": false,
+      "productionAuthority": false
+    },
     "externalEngine": {
       "repository": "khfy7wpr5p-maker/musicxml-to-guitar-tab-engine",
       "reviewedMainSha": "93abe9735a4ed70ad8362ac24ec39869ea34607f",
@@ -76,7 +103,8 @@
       "canonicalResultSchemaVersion": "2.0.0",
       "polyphonicSourceModelVersion": "1.0.0",
       "sourceEventIdentity": "<partId>:measure:<measureIndex>:note:<sourceOrder>",
-      "integrationImplemented": false
+      "directEngineInvocationImplemented": false,
+      "readOnlyResultEvidenceImplemented": true
     }
   },
   "musicXml": {"isExchangeFormat":true,"isDirectEditorState":false,"safeImportRequired":true,"semanticRoundTripRequiredBeforeE2Close":true,"e2Subset":{"root":"score-partwise","supported":["part-list","part-name","part","measure","divisions","staves","note","pitch","rest","chord","duration","voice","staff","type","backup","forward"],"unsupportedSemanticsFailClosed":true,"sourceIdentityVerifiedByCaller":true},"e5NotationExport":{"supported":["time-signature","key-signature","clef","barline","dot","accidental","tie","slur","beam","tuplet"],"wellFormednessValidated":true,"advancedNotationImportStillFailClosed":true}},
@@ -116,6 +144,7 @@
     "E7-H": {"required":true,"scope":"Browser-safe core packaging and presentation-only OSMD host composition","authorized":true},
     "productionActivation": {"required":true,"authorized":false},
     "publicWriteApi": {"required":true,"authorized":false},
-    "liveAiEditAuthority": {"required":true,"authorized":false}
+    "liveAiEditAuthority": {"required":true,"authorized":false},
+    "directExternalEngineInvocation": {"required":true,"authorized":false}
   }
 }
