@@ -1,10 +1,10 @@
 # ST Score Editor Core — Architecture
 
-Status: **Implemented through Stage E8-B. Guitar Workspace authority and deterministic source projection are implemented; external engine result ingestion is not.**
+Status: **Implemented through Stage E8-C. Guitar Workspace source projection and read-only result evidence are implemented; direct external-engine invocation is not authorized.**
 
 ## 1. Purpose
 
-ST Score Editor Core is the shared semantic editing layer between symbolic score data and product-specific user interfaces. It is not an engraving engine, OMR engine, guitar optimizer, AI model host, persistence service, or publication authority.
+ST Score Editor Core is the shared semantic editing layer between symbolic score data and product-specific user interfaces. It is not an engraving engine, OMR engine, guitar optimizer, AI model host, persistence service, external-engine runner, or publication authority.
 
 ## 2. Authority flow
 
@@ -19,17 +19,20 @@ External symbolic input
   -> accepted unified score+notation revision
   -> presentation/rendering surfaces
 
-Guitar Workspace path through E8-B:
+Guitar Workspace path through E8-C:
 ScoreDocument + NotationDocument (same revision)
   -> E8-B deterministic projection
        ├─ engine-safe MusicXML
        └─ sourceEventId -> canonical event/note source map
-  -> future external Guitar TAB engine gate
-  -> future derivative result gate
+  -> host-supplied CanonicalTabResult 2.0.0 JSON artifact
+  -> E8-C bounded JSON parse
+  -> current E8-B projection re-derived internally
+  -> exact source/policy/group/decision/disposition/shape verification
+  -> immutable derivative GuitarWorkspaceResult
   -X-> no reverse canonical mutation authority
 ```
 
-Browser, renderer, Guitar TAB engine data and UI do not become score authority anywhere in this flow.
+Browser, renderer, Guitar TAB result data and UI do not become score authority anywhere in this flow.
 
 ## 3. Implemented package layers
 
@@ -39,33 +42,23 @@ Core symbolic and safety layers:
 - `musicxml` — bounded safe import and deterministic full notation serialization.
 - `addressing` — revision/ancestry-bound semantic identities.
 - `commands` — typed bounded score mutations.
-- `history` — original score-only immutable history primitive.
+- `history` — immutable history primitives.
 - `notation-structure` — revision-bound notation semantics.
 - `notation-commands` — atomic notation transactions.
 
-Renderer boundary:
+Renderer/editor boundary:
 
-- `renderer-contract` — revision-bound requests and opaque hit manifest.
-- `renderer-osmd` — host-injected OSMD 2.1.1 adapter.
-- `renderer-alphatab` — host-injected alphaTab 1.8.4 adapter.
-
-Editor boundary:
-
-- `editor-ui-contract` — non-authoritative ephemeral UI state.
-- `editor-shell` — framework-neutral toolbar/parts/score/inspector/status view model.
-- `editor-selection` — render token → SemanticAddress → SelectionSnapshot → inspector.
-- `editor-score-intents` — runtime-validated score editing intents delegated to E4.
-- `editor-notation-intents` — runtime-validated notation intents delegated to E7-E1.
-- `editor-history` — unified ScoreDocument + NotationDocument revision snapshots.
-- `editor-accessibility` — typed keyboard/focus/status semantics.
-- `editor-session-safety` — undo/redo selection invalidation and presentation-only dirty/status state.
-- `editor-session-controller` — immutable end-to-end core session composition.
-- `browser-runtime` — host-injected browser-safe surface exposing only admitted core session operations.
+- `renderer-contract`, `renderer-osmd`, `renderer-alphatab` — presentation-only render surfaces.
+- `editor-ui-contract`, `editor-shell`, `editor-selection` — framework-neutral non-authoritative editor surface.
+- `editor-score-intents`, `editor-notation-intents` — runtime-validated typed intents.
+- `editor-history`, `editor-accessibility`, `editor-session-safety`, `editor-session-controller` — revision/history/UX composition.
+- `browser-runtime` — bounded host-injected browser-safe editor runtime.
 
 Guitar Workspace boundary:
 
-- `guitar-workspace-contract` — derivative-only authority profile plus revision-bound external-source → canonical semantic address mapping.
-- `guitar-workspace-projection` — deterministic engine MusicXML + source-map projection from one/two-staff canonical source state.
+- `guitar-workspace-contract` — derivative-only authority profile plus revision-bound source mapping.
+- `guitar-workspace-projection` — deterministic engine MusicXML + source-map projection.
+- `guitar-workspace-result` — bounded JSON-string ingestion plus exact current-revision result evidence validation.
 
 ## 4. Unified revision model
 
@@ -77,111 +70,89 @@ EditorRevisionSnapshot
   └─ NotationDocument(revision R)
 ```
 
-The two documents must share exact document and revision identity.
+The two documents must share exact document and revision identity. Score and notation edits create new unified revisions through admitted transactions. Stale notation/selection/render/Guitar Workspace evidence is rejected rather than re-targeted silently.
 
-A score edit creates a new ScoreDocument revision. Existing notation is rebound only if every referenced measure/event/note still exists with the expected semantic kind. If a notation target disappeared, the operation fails closed.
-
-A notation edit also creates a new ScoreDocument revision even if pitch/onset/duration did not change. This keeps score semantics, notation metadata, renderer manifests, selections and undo/redo on one revision lineage.
-
-Guitar Workspace source maps and projections are bound to that same canonical document/revision identity. They become stale after any canonical revision change and may not be silently re-targeted.
+E8-C does not trust an externally supplied projection object. It re-derives the E8-B projection from the current `ScoreDocument + NotationDocument` pair every time result evidence is accepted.
 
 ## 5. Selection and renderer boundary
 
-A renderer hit is not an edit target by itself:
-
-```text
-renderer/browser hit
-  -> opaque render token
-  -> manifest re-derived from current canonical revision
-  -> exact token/address verification
-  -> SemanticAddress
-  -> SelectionSnapshot
-```
-
-DOM ids, SVG ids, glyph objects, x/y coordinates and drag geometry are never authoritative.
+Renderer/browser hits are resolved through opaque render tokens to revision-bound `SemanticAddress` values. DOM ids, SVG ids, glyph objects, coordinates and drag geometry are never authoritative edit identities.
 
 ## 6. Editor intent boundary
 
 Score editor intents support pitch, duration, note/rest replacement and chord-tone add/remove. Notation intents support time/key/clef/barline, dots/beams/tuplets, accidental display, ties and slurs.
 
-Untrusted UI intent objects use exact-field runtime validation. Stale selections and stale notation fail closed; automatic re-targeting is forbidden.
+A Guitar Workspace result may eventually be used to create a user-visible proposal, but string/fret/fingering/shape data itself is never a canonical edit command. Any canonical mutation must still enter the existing semantic-selection plus E4/E7-E1 typed transaction path.
 
-A future Guitar Workspace suggestion may only request one of the ordinary validated edit paths. String/fret/fingering data itself is never a canonical edit command.
+## 7. Guitar Workspace external reference
 
-## 7. Guitar Workspace authority and source identity
+Reviewed external repository:
 
-The reviewed Guitar TAB Engine reference is:
+- `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine`
+- reviewed main SHA: `93abe9735a4ed70ad8362ac24ec39869ea34607f`
+- result document: `CanonicalTabResult 2.0.0`
+- source model: `PolyphonicSourceModel 1.0.0`
+- source event identity: `<partId>:measure:<measureIndex>:note:<sourceOrder>`
+- final-selection policy: `STATIC_ATTACK_PATH_LEXICOGRAPHIC_1.0` / version `1.0.0`
 
-- repository: `khfy7wpr5p-maker/musicxml-to-guitar-tab-engine`;
-- reviewed main SHA: `93abe9735a4ed70ad8362ac24ec39869ea34607f`;
-- `CanonicalTabResult` schema: `2.0.0`;
-- polyphonic source model: `1.0.0`.
-
-Its deterministic source event identity is:
-
-```text
-<partId>:measure:<measureIndex>:note:<sourceOrder>
-```
-
-ST core semantic IDs are intentionally not embedded in MusicXML `<note>` elements. E8-A therefore introduced a one-to-one, revision-bound `GuitarWorkspaceSourceMap` from external source IDs to canonical `note`/`event` addresses.
-
-E8-B removes the remaining reconstruction ambiguity by generating engine MusicXML and source-map entries in the same traversal. Each emitted source `<note>` receives its external `sourceEventId` at emission time and is paired immediately with its canonical target.
+The external result does not carry ST `documentId`, ST `revisionId`, or an ST projection hash. Therefore source ids alone are insufficient proof that a result belongs to the current score revision.
 
 ## 8. E8-B projection profile
 
-The initial projection admits:
+E8-B admits exactly one canonical part, one/two staves, at most 2,000 measures, at most 50,000 source note/rest events and divisions at most 16,384. Exact canonical pitch/timing and tie facts are preserved. Deterministic `backup` / `forward` operations represent multiple voices/staves. Unsupported engine notation is omitted only from the engine-specific projection; canonical state and the normal E5 serializer remain unchanged.
 
-- exactly one canonical part;
-- one or two canonical staves;
-- at most 2,000 measures;
-- at most 50,000 emitted source notes/rests;
-- deterministic engine part id `P1`;
-- divisions at most 16,384;
-- exact canonical pitch and rational timing;
-- deterministic `forward` and `backup` cursor operations;
-- canonical chord events encoded with `<chord/>` on later tones;
-- rest source events;
-- tie start/stop source facts;
-- active time signature from the revision-bound notation document.
+E8-B does not call the external engine.
 
-The projection fails closed on multipart input, staff 3+, misaligned staves, missing/conflicting meter, stale notation, same-voice overlap, events outside the active measure and unrepresentable timing.
+## 9. E8-C result-evidence boundary
 
-The external engine's current semantic profile does not model all ST notation. E8-B therefore omits key signature, clef, barline/repeat, accidental-display metadata, dots, beams, tuplets/time-modification markers and slurs from the **engine-specific** MusicXML projection. Canonical pitch/timing remain exact, canonical state is unchanged, and the normal E5 full notation serializer remains separate.
+E8-C accepts only a bounded JSON string (maximum 16 MiB). Arbitrary JavaScript object graphs are not accepted at the result boundary, preventing accessors/proxies/shared object identity from becoming part of the trust surface.
 
-E8-B does not call the engine and does not ingest an engine result.
+After JSON parsing, E8-C requires exact root and nested contract field sets and verifies current engine/source/policy identities. It then re-derives the E8-B projection from the current canonical revision and checks the returned source model against current facts:
 
-## 9. History and UX safety
+- measure identity/order/number/divisions/time signature;
+- source event identity/order;
+- note/rest type;
+- voice/staff;
+- onset/duration;
+- pitch spelling/MIDI;
+- tie start/stop;
+- chord-with-previous source fact;
+- exact simultaneous attack groups;
+- exact arrangement-decision order and complete note coverage;
+- exact disposition order and decision linkage;
+- target pitch octave-shift rules;
+- selected string/fret round-trip under admitted tuning;
+- duplicate simultaneous string rejection;
+- exact required selected-shape coverage;
+- finger and barre invariants;
+- physical status `PLAYABLE_WITHIN_POLICY`.
 
-Undo/redo operate on unified score+notation snapshots. Revision navigation invalidates current selection rather than carrying a stale target into another revision. A new commit after undo clears the redo branch.
+Any mismatch fails closed. Output retains only immutable derivative evidence bound to the current ST document/revision and canonical note addresses.
 
-Dirty/persisted indicators are presentation only. Guitar Workspace projection/result state must be recomputed or revalidated after canonical revision changes.
+A `teacherReviewStatus` value is copied as evidence only. `APPROVED` does not authorize score mutation, publication or persistence.
 
-## 10. Accessibility boundary
+## 10. History and revision changes
 
-The framework-neutral accessibility model defines five focus regions:
-
-```text
-toolbar → parts → score → inspector → status
-```
-
-Keyboard input maps only to typed accessibility/navigation requests; raw keyboard input never becomes a musical command directly.
+Undo/redo operate on unified score+notation snapshots and clear selection on revision navigation. Guitar Workspace source maps, projections and result evidence must be re-derived/revalidated after any canonical revision change. A result produced for an older score is rejected if its source facts no longer match the current revision.
 
 ## 11. Renderer integration targets
 
 - OSMD `2.1.1`, BSD-3-Clause — host-injected classical score target.
 - alphaTab `1.8.4`, MPL-2.0 — host-injected guitar/TAB presentation target.
 
-These packages are not installed into core. Product hosts own exact renderer pin/lock. alphaTab rendering remains separate from the Guitar TAB Engine source/result boundary.
+Neither renderer is canonical authority. alphaTab presentation remains separate from Guitar TAB Engine result evidence.
 
-## 12. Browser, AI and product boundaries
+## 12. External engine invocation gate
 
-The E7-G browser host runtime and E7-H browser bundle remain non-networked and non-persistent inside core and grant no renderer mutation, server-revision, approval, publication or production authority.
+Direct invocation of `musicxml-to-guitar-tab-engine` is **not implemented or authorized in core**. A future E8-D must separately freeze the host boundary, exact engine version/provenance, resource budgets, cancellation/timeout ownership, request/result size limits and stale-revision behavior.
 
-AI specialists may classify, rank, explain or propose. They cannot mutate score state or bypass deterministic edit transactions.
+No E8-C code creates network, process, package-install, persistence or production authority.
 
-ScoreMosaic and Guitar TAB remain separate product authority domains. E8-A/E8-B preserve that boundary: Guitar Workspace data is derivative and cannot flow backwards into canonical authority.
+## 13. Browser, AI and product boundaries
 
-## 13. Stage status
+E7 browser packaging remains non-networked and non-persistent inside core. AI specialists remain advisory only. ScoreMosaic and Guitar TAB remain separate product authority domains.
+
+## 14. Stage status
 
 - E0 — COMPLETE
 - E1 — COMPLETE
@@ -200,8 +171,9 @@ ScoreMosaic and Guitar TAB remain separate product authority domains. E8-A/E8-B 
 - E7-G — COMPLETE
 - E7-H — COMPLETE
 - E8-A — COMPLETE — Guitar Workspace derivative authority + source-map contract
-- **E8-B — CURRENT — deterministic engine MusicXML + source-map projection**
-- E8-C — next safe gate: read-only validated `CanonicalTabResult 2.0.0` ingestion
+- E8-B — COMPLETE — deterministic engine MusicXML + source-map projection
+- **E8-C — CURRENT — read-only current-revision CanonicalTabResult evidence**
+- E8-D — HUMAN-GATED / NOT AUTHORIZED — direct host invocation boundary
 - E9 — Music Intelligence overlays — later stage
 
-Production activation, public write APIs and live AI edit authority still require separate authorization. Any change to ScoreMosaic vs Guitar TAB authority ownership is human-gated by `DEVELOPMENT_GOVERNANCE.md`.
+Production activation, public write APIs, live AI edit authority and direct external-engine invocation still require separate authorization. Any change to ScoreMosaic vs Guitar TAB authority ownership is human-gated by `DEVELOPMENT_GOVERNANCE.md`.
