@@ -41,13 +41,9 @@ Implemented:
 - immutable session controller composing render → select → inspect → edit → history → re-render.
 
 ### E7-G — ScoreMosaic Browser Host Runtime — COMPLETE
-Human gate was explicitly authorized for repository-only ScoreMosaic integration and visual composition. The resulting host runtime:
-- is host-injected;
-- exposes the secure editor session surface;
-- remains network- and persistence-incapable;
-- grants no renderer, browser, server-revision, approval, publication or production authority.
+Repository-only ScoreMosaic integration and visual composition with no network, persistence, renderer, server-revision, approval, publication or production authority.
 
-### E7-H — Browser-safe Runtime Bundle — COMPLETE / CURRENT
+### E7-H — Browser-safe Runtime Bundle — COMPLETE
 Implemented:
 - deterministic IIFE browser artifact at `dist/browser/st-score-editor-core.runtime.js`;
 - ES2022 target and frozen `STScoreEditorCoreRuntime` global;
@@ -55,20 +51,36 @@ Implemented:
 - exact build-only `esbuild@0.28.2` admission for browser bundling only;
 - CI/contracts/tests that lock packaging and authority invariants.
 
-E7-H authorization is packaging/composition only. Production activation, public write APIs and live AI edit authority remain explicitly unauthorized.
+## Stage E8 — Guitar Workspace Adapter
 
-## Next planned stages
+### E8-A — Guitar Workspace Authority Contract — CURRENT
+Scope:
+- guitar string/fret/fingering/voicing/reduction state is derivative only;
+- external engine output has no canonical score mutation authority;
+- revision-bound `GuitarWorkspaceSourceMap` maps engine source identities to canonical `event` / `note` semantic addresses;
+- stale, duplicate, ambiguous or unsupported mappings fail closed;
+- external reference is `CanonicalTabResult 2.0.0` from `musicxml-to-guitar-tab-engine`;
+- no engine integration, production activation or new dependency is introduced.
 
-### E8 — Guitar Workspace Adapter — NOT STARTED
+### E8-B — Deterministic MusicXML + Source-map Projection — NEXT SAFE GATE
 Planned scope:
-- string/fret/fingering/voicing as derivative workspace state;
-- MusicXML-to-Guitar-TAB-Engine integration through typed adapters;
-- no reverse authority leakage into the canonical score;
-- preserve ScoreMosaic vs Guitar TAB authority separation.
+- create engine-bound MusicXML and its source map in the same deterministic traversal;
+- prove each emitted MusicXML `<note>` source order maps to exactly one canonical event/note identity;
+- start with a narrow admitted Guitar Workspace source scope;
+- fail closed on unsupported multipart/staff/notation semantics rather than guessing;
+- still no reverse canonical write authority.
 
-Before implementation, the E8 adapter contract should be frozen. Any change to ScoreMosaic/Guitar TAB authority ownership is a human-gated decision under `DEVELOPMENT_GOVERNANCE.md`.
+### Later E8 work — NOT AUTHORIZED BY E8-A ALONE
+Possible later work may include:
+- validated `CanonicalTabResult 2.0.0` result ingestion;
+- derivative string/fret/fingering/shape view models;
+- Guitar TAB workspace review UX;
+- typed requests that can propose ordinary canonical editor intents without bypassing E4/E7-E1.
 
-### E9 — Music Intelligence Overlays
+Any change to ScoreMosaic vs Guitar TAB authority ownership remains human-gated by `DEVELOPMENT_GOVERNANCE.md`.
+
+## Stage E9 — Music Intelligence Overlays
+
 Typed advisory Harmony/Fingering/Orchestration analysis overlays. AI remains non-authoritative.
 
 ## Development rule
