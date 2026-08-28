@@ -1,1 +1,1 @@
-export * from './strict.js';
+export * from './validated.js';
