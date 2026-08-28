@@ -4,14 +4,15 @@ Security-first shared semantic score-editing core for ScoreMosaic and MusicXML-t
 
 ## Current status
 
-The architecture is implemented through **Stage E8-B — Guitar Workspace MusicXML + Source-map Projection**.
+The architecture is implemented through **Stage E8-C — Read-only Guitar Result Evidence**.
 
-E8 now has two bounded foundations:
+E8 now has three bounded foundations:
 
 - **E8-A** freezes Guitar Workspace output as derivative-only and revision-bound.
 - **E8-B** generates engine-safe MusicXML and the `sourceEventId` → canonical semantic source map during the same deterministic traversal.
+- **E8-C** accepts only bounded `CanonicalTabResult 2.0.0` JSON, re-derives the current E8-B projection, cross-validates source facts against the current canonical revision, and exposes only immutable derivative guitar evidence.
 
-The external Guitar TAB Engine is still **not invoked or ingested** by this repository. No guitar result can mutate the canonical score.
+The external Guitar TAB Engine is still **not invoked by this repository**. E8-C validates result artifacts supplied by a host/test boundary; it does not create network/service authority and cannot mutate the canonical score.
 
 Completed layers:
 
@@ -33,8 +34,9 @@ Completed layers:
 - E7-H — Browser-safe Runtime Bundle
 - E8-A — Guitar Workspace Authority + Source-map Contract
 - E8-B — Deterministic Guitar MusicXML + Source-map Projection
+- E8-C — Read-only CanonicalTabResult Evidence
 
-The next safe E8 gate is a **validated read-only `CanonicalTabResult 2.0.0` ingestion/model boundary**. It must remain derivative-only.
+The next safe E8 step is a **host-side invocation boundary design**. Direct external-engine invocation remains human-gated and unauthorized inside core.
 
 ## Secure editor flow
 
@@ -72,21 +74,22 @@ The reviewed Guitar TAB Engine reference is `khfy7wpr5p-maker/musicxml-to-guitar
 <partId>:measure:<measureIndex>:note:<sourceOrder>
 ```
 
-E8-B emits a narrow MusicXML source-fact profile with:
+E8-B emits a narrow MusicXML source-fact profile with exactly one part (`P1`), one/two staves, exact canonical pitch/onset/duration, deterministic voice/staff cursor operations, chord markers, rests and tie start/stop facts. At emission time each external source id is paired with a current canonical semantic address.
 
-- exactly one part (`P1`);
-- one or two staves;
-- exact canonical pitch/onset/duration;
-- deterministic voice/staff streams with `backup` / `forward`;
-- chord markers;
-- rests;
-- tie start/stop facts.
+E8-C does **not** trust `sourceEventId` alone. `CanonicalTabResult 2.0.0` does not carry ST `documentId`, ST `revisionId`, or a projection hash, so the result adapter re-derives the current projection and verifies:
 
-At the exact moment each MusicXML `<note>` is emitted, its external `sourceEventId` is paired with the current revision-bound canonical `note` or `event` address. No later pitch/coordinate/DOM heuristic is permitted.
+- exact result/document/source/policy contract identities;
+- exact measure/event source facts;
+- pitch, timing, voice/staff, tie and chord-source facts;
+- exact simultaneous-group coverage/order;
+- exact arrangement-decision coverage/order;
+- note-disposition ordering and decision consistency;
+- selected string/fret → target-MIDI round-trip;
+- exact required selected-shape coverage and finger/barre invariants.
 
-Engine-unsupported presentation notation such as key/clef/barline, dots/beams, slurs and tuplet display markers is intentionally not emitted by this engine-specific projection. Canonical state remains unchanged and the full E5 notation serializer remains separate.
+Input is a bounded JSON string rather than an arbitrary JavaScript object. This keeps accessors/proxies outside the result-ingestion boundary.
 
-Guitar output may eventually be displayed, reviewed or used as advisory evidence. It cannot write backwards into `ScoreDocument`; any canonical change must still enter through semantic selection plus existing typed transactions.
+A reported teacher review state (`NOT_REVIEWED`, `APPROVED`, `REJECTED`) is preserved as evidence only; it does not grant canonical mutation authority.
 
 ## Renderer and browser boundary
 
@@ -116,10 +119,10 @@ The browser runtime remains non-authoritative and introduces no network, persist
 5. Transactions are atomic and validated before acceptance.
 6. Score and notation revisions remain aligned in editor history.
 7. Notation metadata may not be silently discarded when a score edit removes its target.
-8. Stale selections, intents, render requests, notation snapshots and Guitar Workspace source maps fail closed.
+8. Stale selections, intents, render requests, notation snapshots and Guitar Workspace evidence fail closed.
 9. Undo/redo clears selection and restores score+notation together.
 10. AI/OMR and Guitar TAB engine output remain evidence/advice/derivative state only.
-11. No production/public-write/live-AI-edit authority is granted by repository merges.
+11. No production/public-write/live-AI/direct-engine-invocation authority is granted by repository merges.
 12. ScoreMosaic and Guitar TAB authority ownership may not be changed implicitly by adapter work.
 
 ## Installed dependencies
@@ -132,6 +135,6 @@ Build-only:
 - `typescript@6.0.3` — Apache-2.0 — exact pin
 - `esbuild@0.28.2` — MIT — browser bundling only
 
-E8-A/E8-B add **no dependency**. No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed through E8-B.
+E8-A/E8-B/E8-C add **no dependency**. No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed through E8-C.
 
-See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, `docs/guitar-workspace-authority-contract.md`, `docs/guitar-workspace-projection-contract.md`, and `contracts/`.
+See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, `docs/guitar-workspace-authority-contract.md`, `docs/guitar-workspace-projection-contract.md`, `docs/guitar-workspace-result-evidence-contract.md`, and `contracts/`.

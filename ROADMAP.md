@@ -35,34 +35,56 @@ Implemented:
 - external reference is `CanonicalTabResult 2.0.0` from `musicxml-to-guitar-tab-engine`;
 - no engine integration, production activation or new dependency.
 
-### E8-B — Deterministic MusicXML + Source-map Projection — CURRENT
+### E8-B — Deterministic MusicXML + Source-map Projection — COMPLETE
 Implemented:
 - engine-safe MusicXML and source map are created in the same deterministic canonical traversal;
 - exactly one part and one/two staves admitted initially;
 - external source IDs use `P1:measure:<measureIndex>:note:<sourceOrder>`;
 - source order increments only for emitted MusicXML `<note>` elements;
 - canonical notes/chord tones map to canonical `note` addresses and rests to canonical `event` addresses;
-- exact canonical pitch and timing are preserved;
-- multi-voice/staff layout uses deterministic `backup` / `forward` cursor operations;
-- tie start/stop source facts are preserved;
-- engine-unsupported presentation notation is omitted without changing canonical state;
-- multipart, staff 3+, stale notation, missing/conflicting meter, same-voice overlap and out-of-measure events fail closed;
-- external engine invocation/result ingestion remains disabled.
+- exact canonical pitch/timing and tie source facts are preserved;
+- deterministic multi-voice/staff `backup` / `forward` cursor operations;
+- unsupported engine notation omitted without changing canonical state;
+- unsupported/stale source structures fail closed;
+- no external engine invocation.
 
-### E8-C — Read-only CanonicalTabResult Ingestion — NEXT SAFE GATE
-Planned scope:
-- runtime-exact validation of the reviewed `CanonicalTabResult 2.0.0` surface needed by the workspace;
-- require result provenance to match the E8-B projection/source map;
-- map external note dispositions / selected string-fret positions back only to derivative canonical targets;
-- reject unknown source IDs, stale revisions, impossible string/fret values and incompatible result contracts;
-- create immutable read-only Guitar Workspace result state;
-- still no direct canonical mutation or production authority.
+### E8-C — Read-only CanonicalTabResult Evidence — CURRENT
+Implemented:
+- bounded JSON-string ingestion only;
+- exact `CanonicalTabResult 2.0.0` document/source/guitar/policy contract identities;
+- no caller-supplied projection object is trusted;
+- current E8-B projection is re-derived internally before acceptance;
+- result measure/event source facts must match current canonical pitch, timing, voice/staff, tie, chord and source-order facts;
+- exact simultaneous-group count/order/membership;
+- exact arrangement-decision source coverage/order;
+- exact note-disposition source order and decision consistency;
+- selected string/fret must round-trip to target MIDI under the admitted six-string tuning;
+- exact required selected-shape coverage plus finger/barre/playability invariants;
+- output is immutable, read-only, derivative Guitar Workspace evidence;
+- teacher review state is evidence only and grants no mutation authority;
+- no direct external-engine invocation, production activation, persistence or public write authority.
+
+### E8-D — Host Invocation Boundary — HUMAN-GATED / NOT AUTHORIZED
+The next architectural question is how a product host may invoke `musicxml-to-guitar-tab-engine` and return a bounded `CanonicalTabResult 2.0.0` artifact to E8-C.
+
+Before implementation, freeze:
+- local package vs service/process boundary;
+- exact engine version/provenance pin;
+- timeout/cancellation/resource-budget ownership;
+- maximum request/result sizes;
+- no implicit network authority inside core;
+- no raw engine object graph crossing into E8-C;
+- canonical revision changed while engine runs → result rejected/recomputed;
+- errors remain typed/non-authoritative;
+- no production activation by repository merge.
+
+`directExternalEngineInvocation` remains an explicit human gate and is currently unauthorized.
 
 ### Later E8 work — SEPARATELY BOUNDED
 Possible later work may include:
-- fingering/shape/barre view models;
-- Guitar TAB workspace review UX;
-- typed proposal requests that can eventually enter ordinary canonical editor intents without bypassing E4/E7-E1.
+- Guitar Workspace view models;
+- fingering/shape/barre inspector UX;
+- explicit proposal requests that may enter ordinary canonical editor intents without bypassing E4/E7-E1.
 
 Any change to ScoreMosaic vs Guitar TAB authority ownership remains human-gated by `DEVELOPMENT_GOVERNANCE.md`.
 
@@ -72,4 +94,4 @@ Typed advisory Harmony/Fingering/Orchestration analysis overlays. AI remains non
 
 ## Development rule
 
-Every stage preserves the E0 authority baseline. A green repository/CI state never implies public deployment, production activation, user-data ingestion, public write APIs or live AI edit authority.
+Every stage preserves the E0 authority baseline. A green repository/CI state never implies public deployment, production activation, user-data ingestion, public write APIs, live AI edit authority or external-engine invocation authority.
