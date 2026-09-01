@@ -1,0 +1,77 @@
+{
+  "handoff": "ST_SCORE_RENDERING_LAYER_JSON2_INTEGRATION_REQUIREMENTS",
+  "version": "1.0.0",
+  "date": "2026-09-01",
+  "sourceRepository": "khfy7wpr5p-maker/st-score-editor-core",
+  "targetRepository": "khfy7wpr5p-maker/st-score-rendering-layer",
+  "editorBridgeContract": "ST_EDITOR_RENDERER_SELECTION_BRIDGE/1.0.0-draft",
+  "requiredInputFromEditor": {
+    "renderRequestVersion": "1.0.0",
+    "renderManifestVersion": "1.0.0",
+    "requiredFacts": ["documentId", "revisionId", "renderer profile", "MusicXML", "opaque hit manifest"]
+  },
+  "rendererResponsibilities": [
+    "render only the supplied revision-bound request",
+    "perform exact visual hit testing inside the rendered revision",
+    "associate an unambiguous visual hit with exactly one opaque token already present in the supplied manifest",
+    "preserve the opaque token byte-for-byte",
+    "return no target when hit identity is missing or ambiguous",
+    "invalidate or discard hit state after a new render revision becomes current"
+  ],
+  "hostReturnEnvelope": {
+    "contractVersion": "1.0.0-draft",
+    "exactFields": [
+      "contractVersion",
+      "documentId",
+      "revisionId",
+      "rendererFamily",
+      "renderRequestVersion",
+      "renderManifestVersion",
+      "opaqueHitToken"
+    ],
+    "editorBrowserEntryPoint": "STScoreEditorCoreRuntime.selectRendererHit(session, externalHitEnvelope)"
+  },
+  "forbiddenAsCanonicalIdentity": [
+    "ScoreNoteRef",
+    "screen coordinates",
+    "page coordinates",
+    "SVG coordinates",
+    "DOM id",
+    "SVG id",
+    "renderer object identity",
+    "glyph name",
+    "glyph codepoint",
+    "nearest visual note"
+  ],
+  "editorResolutionRule": "Only Editor Core may resolve the returned opaque token against the exact current RenderRequest and produce SemanticAddress/SelectionSnapshot.",
+  "failureRules": {
+    "staleRevision": "NO_SELECTION",
+    "unknownToken": "NO_SELECTION",
+    "ambiguousHit": "NO_TOKEN",
+    "missingHit": "NO_TOKEN",
+    "tokenMappingMismatch": "FAIL_CLOSED",
+    "rendererFamilyMismatch": "FAIL_CLOSED"
+  },
+  "keypadHandoff": {
+    "manifestSource": "Editor Core getEditorKeypadManifest()",
+    "semanticAuthority": "actionId",
+    "glyphAuthority": false,
+    "smuflGlyphNameIsPresentationHintOnly": true,
+    "accessibleLabelKeyRequiredEvenWhenGlyphUnavailable": true,
+    "simpleCommitEntryPoint": "browser runtime commitKeypadAction(session, action, identity)",
+    "advancedCommitEntryPoint": "browser runtime commitKeypadAction(session, action, identity, explicitTarget)",
+    "advancedTargetKinds": ["EVENT_RANGE", "NOTE_PAIR"],
+    "rendererMayInferAdvancedTarget": false
+  },
+  "knownEditorLimitation": {
+    "tripletCreationFromOrdinarySpacing": "BLOCKED",
+    "tripletRemovalRequiringCanonicalRetiming": "BLOCKED",
+    "reason": "Current E4 command set has no admitted onset-mutation primitive; Editor Core will not fake timing changes through notation metadata."
+  },
+  "authority": {
+    "renderingLayerCanonicalMutationAuthority": false,
+    "renderingLayerSelectionAuthority": false,
+    "renderingLayerProductionActivationAuthority": false,
+    "editorCoreImportsRenderingLayer": false
+  }
+}

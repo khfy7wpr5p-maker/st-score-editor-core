@@ -4,6 +4,7 @@ import { getEditorKeypadManifest } from '../../editor-keypad/src/index.js';
 import {
   createEditorSession,
   selectSessionRenderToken,
+  selectSessionExternalRendererHit,
   commitSessionScoreIntent,
   commitSessionNotationIntent,
   commitSessionKeypadAction,
@@ -37,7 +38,8 @@ export const browserRuntimeProfile = Object.freeze({
   publicationAuthority: false,
   keypadManifestAvailable: true,
   keypadLocalCommitAvailable: true,
-  keypadExplicitTargetAvailable: true
+  keypadExplicitTargetAvailable: true,
+  rendererHitBridgeAvailable: true
 });
 
 const browserKeypadError = (error: unknown): Readonly<BrowserKeypadError> => {
@@ -67,6 +69,7 @@ export const createBrowserRuntime = () => Object.freeze({
   emptyNotationDocument,
   createEditorSession,
   selectSessionRenderToken,
+  selectRendererHit: selectSessionExternalRendererHit,
   commitSessionScoreIntent,
   commitSessionNotationIntent,
   navigateSessionHistory,

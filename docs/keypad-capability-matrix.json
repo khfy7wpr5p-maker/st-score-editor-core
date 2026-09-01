@@ -1,94 +1,101 @@
 {
   "program": "SEC-SMUFL-KEYPAD-01",
-  "workPackage": "SEC-KP-00",
   "version": "1.0.0",
-  "baseline": {
+  "realityDate": "2026-09-01",
+  "baselineBeforePRE": {
     "branch": "main",
-    "sha": "63bfede0fc8e42ba3c6e86d29a9991bd69add269",
-    "freshReadDate": "2026-09-01"
+    "sha": "7c8117435e0c8ca8d99e0a41b5123f0f3c9c0b8c",
+    "ci": "GREEN"
   },
+  "mode": "EXISTING_SCORE_CORRECTION",
   "canonicalDuration": {
     "authority": "ScoreEvent.duration",
     "unit": "whole-note rational",
     "simpleValues": {
-      "whole": { "numerator": 1, "denominator": 1 },
-      "half": { "numerator": 1, "denominator": 2 },
-      "quarter": { "numerator": 1, "denominator": 4 },
-      "eighth": { "numerator": 1, "denominator": 8 },
-      "16th": { "numerator": 1, "denominator": 16 },
-      "32nd": { "numerator": 1, "denominator": 32 }
+      "whole": {"numerator":1,"denominator":1},
+      "half": {"numerator":1,"denominator":2},
+      "quarter": {"numerator":1,"denominator":4},
+      "eighth": {"numerator":1,"denominator":8},
+      "16th": {"numerator":1,"denominator":16},
+      "32nd": {"numerator":1,"denominator":32}
     },
-    "includesEffectiveDotTiming": true,
-    "measureFillValidatedByScoreModel": false,
-    "sameVoiceOverlapRejectedByScoreModel": false,
-    "sameVoiceOverlapRejectedByNotationSerializer": true
-  },
-  "notation": {
-    "dots": {
-      "authority": "presentation metadata",
-      "range": [0, 1, 2, 3],
-      "changesCanonicalTimingByItself": false
-    },
-    "tuplet": {
-      "authority": "notation/time-modification metadata",
-      "fields": ["actualNotes", "normalNotes", "marks"],
-      "changesCanonicalTimingByItself": false,
-      "explicitGroupRequiredForKeypad": true
-    },
-    "accidental": {
-      "authority": "display metadata",
-      "changesCanonicalPitchByItself": false
-    }
+    "dotsAreMetadata": true,
+    "tupletsAreMetadataWithCanonicalTimingStillAuthoritative": true
   },
   "actions": [
-    { "id": "duration.whole", "status": "READY_FOR_KEYPAD_MAPPING", "scorePrimitive": "SET_DURATION", "notationPrimitive": null },
-    { "id": "duration.half", "status": "READY_FOR_KEYPAD_MAPPING", "scorePrimitive": "SET_DURATION", "notationPrimitive": null },
-    { "id": "duration.quarter", "status": "READY_FOR_KEYPAD_MAPPING", "scorePrimitive": "SET_DURATION", "notationPrimitive": null },
-    { "id": "duration.eighth", "status": "READY_FOR_KEYPAD_MAPPING", "scorePrimitive": "SET_DURATION", "notationPrimitive": null },
-    { "id": "duration.16th", "status": "READY_FOR_KEYPAD_MAPPING", "scorePrimitive": "SET_DURATION", "notationPrimitive": null },
-    { "id": "duration.32nd", "status": "READY_FOR_KEYPAD_MAPPING", "scorePrimitive": "SET_DURATION", "notationPrimitive": null },
-    { "id": "rest.whole", "status": "NEEDS_SCORE_COMPOSITION", "scorePrimitives": ["REPLACE_WITH_REST", "SET_DURATION"] },
-    { "id": "rest.half", "status": "NEEDS_SCORE_COMPOSITION", "scorePrimitives": ["REPLACE_WITH_REST", "SET_DURATION"] },
-    { "id": "rest.quarter", "status": "NEEDS_SCORE_COMPOSITION", "scorePrimitives": ["REPLACE_WITH_REST", "SET_DURATION"] },
-    { "id": "rest.eighth", "status": "NEEDS_SCORE_COMPOSITION", "scorePrimitives": ["REPLACE_WITH_REST", "SET_DURATION"] },
-    { "id": "rest.16th", "status": "NEEDS_SCORE_COMPOSITION", "scorePrimitives": ["REPLACE_WITH_REST", "SET_DURATION"] },
-    { "id": "rest.32nd", "status": "NEEDS_SCORE_COMPOSITION", "scorePrimitives": ["REPLACE_WITH_REST", "SET_DURATION"] },
-    { "id": "accidental.flat", "status": "NEEDS_CROSS_LAYER_COMPOSITE", "canonicalAlter": -1, "notationDisplay": "flat" },
-    { "id": "accidental.natural", "status": "NEEDS_CROSS_LAYER_COMPOSITE", "canonicalAlter": 0, "notationDisplay": "natural" },
-    { "id": "accidental.sharp", "status": "NEEDS_CROSS_LAYER_COMPOSITE", "canonicalAlter": 1, "notationDisplay": "sharp" },
-    { "id": "dot.set.0", "status": "NEEDS_DURATION_CONSISTENCY", "notationPrimitive": "SET_DOTS" },
-    { "id": "dot.set.1", "status": "NEEDS_DURATION_CONSISTENCY", "notationPrimitive": "SET_DOTS" },
-    { "id": "dot.set.2", "status": "NEEDS_DURATION_CONSISTENCY", "notationPrimitive": "SET_DOTS" },
-    { "id": "dot.set.3", "status": "NEEDS_DURATION_CONSISTENCY", "notationPrimitive": "SET_DOTS" },
-    { "id": "tuplet.triplet", "status": "BLOCKED_PENDING_EXPLICIT_GROUP_CONTRACT", "notationPrimitive": "SET_TUPLET" },
-    { "id": "tie.edit", "status": "BLOCKED_PENDING_EXPLICIT_ENDPOINT_CONTRACT", "notationPrimitive": "SET_TIES" },
-    { "id": "slur.edit", "status": "BLOCKED_PENDING_EXPLICIT_ENDPOINT_CONTRACT", "notationPrimitive": "SET_SLURS" }
+    {"id":"duration.whole","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"duration.half","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"duration.quarter","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"duration.eighth","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"duration.16th","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"duration.32nd","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"rest.whole","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"rest.half","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"rest.quarter","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"rest.eighth","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"rest.16th","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"rest.32nd","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"accidental.flat","status":"IMPLEMENTED_ATOMIC","canonicalAlter":-1,"display":"flat"},
+    {"id":"accidental.natural","status":"IMPLEMENTED_ATOMIC","canonicalAlter":0,"display":"natural"},
+    {"id":"accidental.sharp","status":"IMPLEMENTED_ATOMIC","canonicalAlter":1,"display":"sharp"},
+    {"id":"dot.set.0","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"dot.set.1","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"dot.set.2","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"dot.set.3","status":"IMPLEMENTED_ATOMIC"},
+    {"id":"tuplet.triplet","status":"IMPLEMENTED_BOUNDED_EXISTING_CANONICAL_3_TO_2_TIMING_ONLY","explicitTarget":"EVENT_RANGE","retimingOrdinarySpacing":"BLOCKED_NO_ONSET_MUTATION","removalRequiringRetiming":"BLOCKED_NO_ONSET_MUTATION"},
+    {"id":"tie.edit","status":"IMPLEMENTED_ATOMIC_EXPLICIT_PAIR","explicitTarget":"NOTE_PAIR"},
+    {"id":"slur.edit","status":"IMPLEMENTED_ATOMIC_EXPLICIT_PAIR","explicitTarget":"NOTE_PAIR"}
   ],
   "transactionReality": {
-    "scoreTransactionsAtomic": true,
-    "notationTransactionsAtomic": true,
-    "scoreAndNotationSingleSharedRevisionAvailable": false,
-    "compositeLayerRequired": true,
+    "oneKeypadActionOneUnifiedRevision": true,
+    "scoreCandidateUsesE4Validation": true,
+    "notationCandidateUsesE7E1Validation": true,
     "partialCommitAllowed": false
   },
   "selectionReality": {
-    "selectionClearedAfterScoreCommit": true,
-    "selectionClearedAfterNotationCommit": true,
-    "selectionClearedAfterUndoRedo": true,
-    "safeRebindRequiredForRepeatedKeypadEditing": true,
-    "oldRevisionAddressReuseAllowed": false
+    "keypadSurvivingEntityDeterministicallyRebound": true,
+    "oldRevisionAddressReuseAllowed": false,
+    "missingOrKindChangedEntityClearsSelection": true,
+    "undoRedoClearsSelection": true
+  },
+  "browserRuntime": {
+    "manifestAvailable": true,
+    "boundedCommitAvailable": true,
+    "typedErrors": true,
+    "networkCapable": false,
+    "persistenceCapable": false,
+    "rendererAuthority": false
+  },
+  "rendererBridge": {
+    "contract": "ST_EDITOR_RENDERER_SELECTION_BRIDGE/1.0.0-draft",
+    "opaqueHitTokenOnly": true,
+    "semanticAddressReturnedByRenderer": false,
+    "scoreNoteRefCanonicalIdentity": false,
+    "coordinatesCanonicalIdentity": false,
+    "domSvgCanonicalIdentity": false
+  },
+  "accessibility": {
+    "accessibleLabelKeyRequiredForEveryGroup": true,
+    "accessibleLabelKeyRequiredForEveryAction": true,
+    "glyphAvailabilityChangesSemantics": false
+  },
+  "smufl": {
+    "glyphNameMetadataOnly": true,
+    "rawCodepointsFrozen": false,
+    "fontAssetsBundled": false,
+    "bravuraDependency": false
   },
   "authority": {
     "rendererMusicalAuthority": false,
     "domSvgCoordinateMusicalAuthority": false,
-    "glyphCodepointMutationAuthority": false,
+    "glyphMutationAuthority": false,
     "aiOmrMutationAuthority": false,
-    "guitarWorkspaceCanonicalMutationAuthority": false
+    "guitarWorkspaceCanonicalMutationAuthority": false,
+    "productionActivationAuthority": false
   },
   "dependencies": {
     "newDependencyRequired": false,
-    "bravuraBundledByCore": false,
-    "vexflowRequired": false,
-    "smoosicRequired": false
+    "runtime": ["saxes@6.0.0","xmlchars@2.2.0"],
+    "buildOnly": ["typescript@6.0.3","esbuild@0.28.2"]
   }
 }

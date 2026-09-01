@@ -1,0 +1,37 @@
+{
+  "program": "SEC-SMUFL-KEYPAD-01",
+  "workPackage": "SEC-KP-10",
+  "version": "1.0.0",
+  "baselineBeforePRE": "7c8117435e0c8ca8d99e0a41b5123f0f3c9c0b8c",
+  "testMatrix": [
+    {"requirement":"quarter -> eighth -> undo","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"eighth -> 16th -> undo","status":"COVERED","evidence":["test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"note -> eighth-rest -> undo","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"rest duration correction","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs"]},
+    {"requirement":"natural <-> sharp","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"natural <-> flat","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"one dot / two dots where admitted","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"triplet valid explicit group","status":"COVERED_BOUNDED","evidence":["test/editor-keypad-advanced.test.mjs"],"note":"Only already-canonical exact 3:2 timing is admitted; ordinary spacing is not retimed."},
+    {"requirement":"triplet ambiguous group rejection","status":"COVERED","evidence":["test/editor-keypad-advanced.test.mjs"]},
+    {"requirement":"triplet explicit removal","status":"BLOCKED_BY_CURRENT_E4_AUTHORITY","evidence":["contracts/editor-keypad-advanced-v1.json"],"note":"Removal that changes canonical timing requires an onset-mutation primitive that does not currently exist. No metadata-only fake is allowed."},
+    {"requirement":"tie explicit endpoint success","status":"COVERED","evidence":["test/editor-keypad-advanced.test.mjs"]},
+    {"requirement":"slur explicit endpoint success","status":"COVERED","evidence":["test/editor-keypad-advanced.test.mjs"]},
+    {"requirement":"stale selection rejection after revision change","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs"]},
+    {"requirement":"selection deterministic rebind after surviving note edit","status":"COVERED","evidence":["test/editor-keypad-session-browser.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"selection clear after non-surviving/replaced identity","status":"COVERED","evidence":["test/editor-keypad-session-browser.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"invalid/unknown keypad action rejection","status":"COVERED","evidence":["test/editor-keypad.test.mjs","test/editor-keypad-session-browser.test.mjs"]},
+    {"requirement":"glyph metadata missing does not change action semantics","status":"COVERED","evidence":["test/editor-keypad.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"requirement":"MusicXML semantic round trip","status":"COVERED_FOR_ADMITTED_CANONICAL_IMPORT_SUBSET","evidence":["test/musicxml.test.mjs"],"note":"Advanced notation import remains intentionally fail-closed; keypad notation export semantics are separately covered by execution/advanced tests."},
+    {"requirement":"MusicXML keypad notation export consistency","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-advanced.test.mjs"]},
+    {"requirement":"undo/redo unified score+notation state","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-final-regression.test.mjs","test/editor-history-accessibility.test.mjs"]},
+    {"requirement":"external renderer exact hit identity","status":"COVERED","evidence":["test/editor-renderer-selection-bridge.test.mjs"]}
+  ],
+  "mustNotRegress": [
+    {"invariant":"source byte/source identity immutability","status":"COVERED","evidence":["test/editor-keypad-final-regression.test.mjs","existing source identity tests"]},
+    {"invariant":"canonical revision safety","status":"COVERED","evidence":["test/editor-keypad-execution.test.mjs","test/editor-keypad-session-browser.test.mjs"]},
+    {"invariant":"E8 Guitar Workspace derivative-only authority","status":"COVERED","evidence":["test/editor-keypad-final-regression.test.mjs","repository contract validator"]},
+    {"invariant":"browser runtime no-network property","status":"COVERED","evidence":["test/editor-keypad-final-regression.test.mjs","test/browser-runtime.test.mjs"]},
+    {"invariant":"renderer non-authority","status":"COVERED","evidence":["test/editor-renderer-selection-bridge.test.mjs","test/editor-keypad-final-regression.test.mjs"]},
+    {"invariant":"AI/OMR non-authority","status":"COVERED","evidence":["test/editor-keypad-final-regression.test.mjs","repository contract validator"]}
+  ]
+}
