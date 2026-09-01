@@ -1,0 +1,43 @@
+{
+  "contract": "ST_EDITOR_RENDERER_PROFILE_COMPATIBILITY",
+  "version": "1.0.0",
+  "workPackage": "STI-03",
+  "targetRepository": "khfy7wpr5p-maker/st-score-rendering-layer",
+  "reviewedTargetRevision": "a8961e0e68a950cbe980162e23c09f23f0ce5d0a",
+  "rendererContractVersion": "0.2.0",
+  "admittedProfile": {
+    "family": "osmd",
+    "packageName": "opensheetmusicdisplay",
+    "packageVersion": "2.1.2",
+    "license": "BSD-3-Clause"
+  },
+  "legacyProfilePreserved": {
+    "family": "osmd",
+    "packageName": "opensheetmusicdisplay",
+    "packageVersion": "2.1.1",
+    "license": "BSD-3-Clause",
+    "defaultCreateEditorSessionBehaviorUnchanged": true
+  },
+  "integrationEntryPoint": "createEditorSessionWithRendererProfile",
+  "browserRuntimeEntryPoint": "createEditorSessionWithRendererProfile",
+  "rules": [
+    "The host must pass the actual admitted renderer profile; OSMD 2.1.2 must never be represented as 2.1.1.",
+    "Renderer profile is presentation provenance only and grants no canonical mutation authority.",
+    "The admitted profile must be preserved across selection, edit, rerender request generation and history navigation.",
+    "Unreviewed renderer versions fail closed with INVALID_RENDERER_PROFILE.",
+    "Existing createEditorSession(score, notation, 'osmd') remains pinned to the legacy reviewed OSMD 2.1.1 profile.",
+    "This addendum creates no dependency from Editor Core to ST Score Rendering Layer."
+  ],
+  "authority": {
+    "rendererAuthority": false,
+    "canonicalEditAuthority": "EDITOR_CORE",
+    "teacherApprovalAuthority": false,
+    "publicationAuthority": false,
+    "networkAuthority": false,
+    "persistenceAuthority": false
+  },
+  "dependencies": {
+    "newRuntimeDependency": false,
+    "newBuildDependency": false
+  }
+}
