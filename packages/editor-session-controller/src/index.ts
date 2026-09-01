@@ -6,6 +6,7 @@ import { createRendererRequest } from '../../renderer-contract/src/index.js';
 import type { RendererFamily, RendererRequest } from '../../renderer-contract/src/index.js';
 import { createInspectorModel, selectRenderToken } from '../../editor-selection/src/index.js';
 import type { InspectorModel } from '../../editor-selection/src/index.js';
+import { resolveExternalRendererHit } from '../../editor-renderer-selection-bridge/src/index.js';
 import { executeEditorScoreIntent } from '../../editor-score-intents/src/index.js';
 import type { EditorCommitIdentity } from '../../editor-score-intents/src/index.js';
 import { executeEditorNotationIntent } from '../../editor-notation-intents/src/index.js';
@@ -76,6 +77,11 @@ export const createEditorSession=(score:Readonly<ScoreDocument>,notation:Readonl
 
 export const selectSessionRenderToken=(session:EditorSessionState,token:string):Readonly<EditorSessionState>=>{
   const selected=selectRenderToken(session.history.present.score,session.renderRequest,token);
+  return makeState(session.rendererFamily,session.history,selected.selection,selected.inspector,Object.freeze({level:'info',code:'SELECTION_CHANGED',message:`Selected ${selected.inspector.targetKind}.`}));
+};
+
+export const selectSessionExternalRendererHit=(session:EditorSessionState,rawHit:unknown):Readonly<EditorSessionState>=>{
+  const selected=resolveExternalRendererHit(session.history.present.score,session.renderRequest,rawHit);
   return makeState(session.rendererFamily,session.history,selected.selection,selected.inspector,Object.freeze({level:'info',code:'SELECTION_CHANGED',message:`Selected ${selected.inspector.targetKind}.`}));
 };
 
