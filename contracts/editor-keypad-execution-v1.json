@@ -1,0 +1,81 @@
+{
+  "contract": "ST_SCORE_EDITOR_KEYPAD_EXECUTION",
+  "version": "1.0.0",
+  "workPackages": ["SEC-KP-02", "SEC-KP-03", "SEC-KP-04"],
+  "mode": "EXISTING_SCORE_CORRECTION",
+  "executionBoundary": {
+    "currentRevisionSelectionRequired": true,
+    "currentRevisionNotationRequired": true,
+    "automaticRetargetingAllowed": false,
+    "oneUserActionOneUnifiedRevision": true,
+    "partialHistoryCommitAllowed": false,
+    "scoreCandidateValidatedByE4": true,
+    "notationCandidateValidatedByE7E1": true,
+    "sameBaseRevisionRequired": true,
+    "sameNextRevisionIdRequired": true,
+    "notationReboundToAcceptedEditedScoreBeforeResult": true
+  },
+  "commitIdentity": {
+    "version": "1.0.0",
+    "exactFields": ["version", "transactionId", "nextRevisionId"],
+    "transactionIdMaximumLength": 96,
+    "nextRevisionIdMaximumLength": 128,
+    "internalCommandIdsDerivedDeterministically": true
+  },
+  "durationActions": {
+    "duration.whole": { "numerator": 1, "denominator": 1 },
+    "duration.half": { "numerator": 1, "denominator": 2 },
+    "duration.quarter": { "numerator": 1, "denominator": 4 },
+    "duration.eighth": { "numerator": 1, "denominator": 8 },
+    "duration.16th": { "numerator": 1, "denominator": 16 },
+    "duration.32nd": { "numerator": 1, "denominator": 32 },
+    "resetDotsToZero": true
+  },
+  "restActions": {
+    "supported": ["rest.whole", "rest.half", "rest.quarter", "rest.eighth", "rest.16th", "rest.32nd"],
+    "pitchedEventReplacementAndDurationAtomic": true,
+    "eventIdentityPreserved": true,
+    "onsetPreserved": true,
+    "resetDotsToZero": true,
+    "deletedNoteSidecarPolicy": "DROP_ONLY_NOTE_NOTATION_FOR_NOTE_IDENTITIES_EXPLICITLY_REMOVED_BY_THE_TARGET_EVENT_REPLACEMENT",
+    "unrelatedNotationTargetLossFailsClosed": true
+  },
+  "accidentalActions": {
+    "accidental.flat": { "canonicalAlter": -1, "display": "flat" },
+    "accidental.natural": { "canonicalAlter": 0, "display": "natural" },
+    "accidental.sharp": { "canonicalAlter": 1, "display": "sharp" },
+    "stepChangedByAction": false,
+    "octaveChangedByAction": false,
+    "enharmonicRespellingGuessAllowed": false,
+    "canonicalAndDisplayUpdateAtomic": true
+  },
+  "dotActions": {
+    "supportedCounts": [0, 1, 2, 3],
+    "canonicalDurationIsTimingAuthority": true,
+    "notationDotsAreMetadata": true,
+    "factors": {
+      "0": { "numerator": 1, "denominator": 1 },
+      "1": { "numerator": 3, "denominator": 2 },
+      "2": { "numerator": 7, "denominator": 4 },
+      "3": { "numerator": 15, "denominator": 8 }
+    },
+    "baseValueRecoveryPolicy": "CURRENT_DURATION_DIVIDED_BY_CURRENT_DOT_FACTOR",
+    "admittedBaseValues": ["whole", "half", "quarter", "eighth", "16th", "32nd"],
+    "inconsistentOrUnsupportedBaseFailsClosed": true,
+    "canonicalDurationAndDotMetadataUpdateAtomic": true
+  },
+  "notYetImplemented": ["tuplet.triplet", "tie.edit", "slur.edit"],
+  "authority": {
+    "glyphMetadataMutationAuthority": false,
+    "rendererMutationAuthority": false,
+    "domSvgCoordinateMutationAuthority": false,
+    "aiOmrMutationAuthority": false,
+    "guitarWorkspaceCanonicalMutationAuthority": false
+  },
+  "dependencies": {
+    "newRuntimeDependency": false,
+    "newBuildDependency": false
+  },
+  "browserRuntimeExposure": false,
+  "selectionContinuityAfterCommit": false
+}
