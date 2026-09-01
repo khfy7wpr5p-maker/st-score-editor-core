@@ -28,7 +28,8 @@
       "renderRequestVersion",
       "renderManifestVersion",
       "opaqueHitToken"
-    ]
+    ],
+    "editorBrowserEntryPoint": "STScoreEditorCoreRuntime.selectRendererHit(session, externalHitEnvelope)"
   },
   "forbiddenAsCanonicalIdentity": [
     "ScoreNoteRef",
