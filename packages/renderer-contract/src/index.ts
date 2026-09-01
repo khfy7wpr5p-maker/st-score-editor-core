@@ -7,6 +7,7 @@ import type { SemanticAddress } from '../../addressing/src/index.js';
 export const RENDER_REQUEST_VERSION = '1.0.0' as const;
 export const RENDER_MANIFEST_VERSION = '1.0.0' as const;
 export type RendererFamily = 'osmd' | 'alphatab';
+export type RendererIntegrationTarget = 'st-score-rendering-layer';
 
 export interface RendererProfile {
   readonly family: RendererFamily;
@@ -39,17 +40,36 @@ export class RendererContractError extends Error {
   }
 }
 
-const exactProfiles: Readonly<Record<RendererFamily, RendererProfile>> = Object.freeze({
+const legacyProfiles: Readonly<Record<RendererFamily, RendererProfile>> = Object.freeze({
   osmd:Object.freeze({family:'osmd',packageName:'opensheetmusicdisplay',packageVersion:'2.1.1',license:'BSD-3-Clause'}),
   alphatab:Object.freeze({family:'alphatab',packageName:'@coderline/alphatab',packageVersion:'1.8.4',license:'MPL-2.0'})
 });
-export const rendererProfile=(family:RendererFamily):RendererProfile=>exactProfiles[family];
-export const assertRendererProfile=(profile:RendererProfile):void=>{
-  const expected=exactProfiles[profile.family];
-  if(expected===undefined||profile.packageName!==expected.packageName||profile.packageVersion!==expected.packageVersion||profile.license!==expected.license){
-    throw new RendererContractError('Renderer host profile does not match the admitted exact integration target.','INVALID_RENDERER_PROFILE',{family:profile.family,packageName:profile.packageName,packageVersion:profile.packageVersion,license:profile.license});
+const integrationProfiles: Readonly<Record<RendererIntegrationTarget, RendererProfile>> = Object.freeze({
+  'st-score-rendering-layer':Object.freeze({family:'osmd',packageName:'opensheetmusicdisplay',packageVersion:'2.1.2',license:'BSD-3-Clause'})
+});
+const admittedProfiles: readonly RendererProfile[] = Object.freeze([
+  legacyProfiles.osmd,
+  legacyProfiles.alphatab,
+  integrationProfiles['st-score-rendering-layer']
+]);
+
+export const rendererProfile=(family:RendererFamily):RendererProfile=>legacyProfiles[family];
+export const rendererProfileForIntegration=(target:RendererIntegrationTarget):RendererProfile=>integrationProfiles[target];
+
+const admittedRendererProfile=(profile:RendererProfile):RendererProfile=>{
+  const expected=admittedProfiles.find((candidate)=>
+    profile.family===candidate.family&&
+    profile.packageName===candidate.packageName&&
+    profile.packageVersion===candidate.packageVersion&&
+    profile.license===candidate.license
+  );
+  if(expected===undefined){
+    throw new RendererContractError('Renderer host profile does not match an admitted exact integration target.','INVALID_RENDERER_PROFILE',{family:profile.family,packageName:profile.packageName,packageVersion:profile.packageVersion,license:profile.license});
   }
+  return expected;
 };
+
+export const assertRendererProfile=(profile:RendererProfile):void=>{void admittedRendererProfile(profile);};
 
 const tokenFor=(index:number):string=>`stse-r1-${index.toString(36)}`;
 export const createRenderManifest=(score:ScoreDocument):Readonly<RenderManifest>=>{
@@ -58,14 +78,17 @@ export const createRenderManifest=(score:ScoreDocument):Readonly<RenderManifest>
   return Object.freeze({contractVersion:RENDER_MANIFEST_VERSION,documentId:score.id,revisionId:score.revision.id,entries:Object.freeze(entries)});
 };
 
-export const createRendererRequest=(score:ScoreDocument,notation:NotationDocument,family:RendererFamily):Readonly<RendererRequest>=>Object.freeze({
+export const createRendererRequestWithProfile=(score:ScoreDocument,notation:NotationDocument,profile:RendererProfile):Readonly<RendererRequest>=>Object.freeze({
   contractVersion:RENDER_REQUEST_VERSION,
-  renderer:rendererProfile(family),
+  renderer:admittedRendererProfile(profile),
   documentId:score.id,
   revisionId:score.revision.id,
   musicXml:serializeNotationMusicXml(score,notation),
   manifest:createRenderManifest(score)
 });
+
+export const createRendererRequest=(score:ScoreDocument,notation:NotationDocument,family:RendererFamily):Readonly<RendererRequest>=>
+  createRendererRequestWithProfile(score,notation,rendererProfile(family));
 
 const exactObjectKeys=(value:unknown,expected:readonly string[],label:string):Record<string,unknown>=>{
   if(value===null||typeof value!=='object'||Array.isArray(value))throw new RendererContractError(`${label} must be an object.`,'INVALID_RENDER_REQUEST');

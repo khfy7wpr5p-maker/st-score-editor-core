@@ -3,6 +3,7 @@ import { emptyNotationDocument } from '../../notation-structure/src/index.js';
 import { getEditorKeypadManifest } from '../../editor-keypad/src/index.js';
 import {
   createEditorSession,
+  createEditorSessionWithRendererProfile,
   selectSessionRenderToken,
   selectSessionExternalRendererHit,
   commitSessionScoreIntent,
@@ -68,6 +69,7 @@ export const createBrowserRuntime = () => Object.freeze({
   createScoreDocument,
   emptyNotationDocument,
   createEditorSession,
+  createEditorSessionWithRendererProfile,
   selectSessionRenderToken,
   selectRendererHit: selectSessionExternalRendererHit,
   commitSessionScoreIntent,
