@@ -36,7 +36,8 @@ export const browserRuntimeProfile = Object.freeze({
   approvalAuthority: false,
   publicationAuthority: false,
   keypadManifestAvailable: true,
-  keypadLocalCommitAvailable: true
+  keypadLocalCommitAvailable: true,
+  keypadExplicitTargetAvailable: true
 });
 
 const browserKeypadError = (error: unknown): Readonly<BrowserKeypadError> => {
@@ -49,10 +50,11 @@ const browserKeypadError = (error: unknown): Readonly<BrowserKeypadError> => {
 export const commitBrowserKeypadAction = (
   session: EditorSessionState,
   rawAction: unknown,
-  rawIdentity: unknown
+  rawIdentity: unknown,
+  rawTarget: unknown = null
 ): Readonly<BrowserKeypadCommitResult> => {
   try {
-    return Object.freeze({ ok: true, session: commitSessionKeypadAction(session, rawAction, rawIdentity) });
+    return Object.freeze({ ok: true, session: commitSessionKeypadAction(session, rawAction, rawIdentity, rawTarget) });
   } catch (error) {
     return Object.freeze({ ok: false, error: browserKeypadError(error) });
   }
