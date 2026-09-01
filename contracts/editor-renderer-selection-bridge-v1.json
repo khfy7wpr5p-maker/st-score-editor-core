@@ -37,6 +37,16 @@
     "Editor Core re-resolves the opaque token against a canonically re-derived current manifest",
     "Editor Core creates the revision-bound SemanticAddress, SelectionSnapshot and InspectorModel"
   ],
+  "browserRuntime": {
+    "available": true,
+    "method": "selectRendererHit",
+    "selectionOnly": true,
+    "usesCurrentSessionRenderRequest": true,
+    "rendererMutationAuthority": false,
+    "browserMutationAuthority": false,
+    "networkAuthority": false,
+    "persistenceAuthority": false
+  },
   "failurePolicy": {
     "staleHitFailsClosed": true,
     "unknownTokenFailsClosed": true,
