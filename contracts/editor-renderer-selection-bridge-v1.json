@@ -1,0 +1,77 @@
+{
+  "contract": "ST_EDITOR_RENDERER_SELECTION_BRIDGE",
+  "version": "1.0.0-draft",
+  "workPackage": "SEC-KP-09",
+  "editorOutput": {
+    "renderRequestVersion": "1.0.0",
+    "renderManifestVersion": "1.0.0",
+    "musicXmlFromCanonicalState": true,
+    "manifestRevisionBound": true,
+    "manifestEntryFields": ["token", "address"],
+    "tokenOpaqueToRenderer": true
+  },
+  "externalHitEnvelope": {
+    "exactFields": [
+      "contractVersion",
+      "documentId",
+      "revisionId",
+      "rendererFamily",
+      "renderRequestVersion",
+      "renderManifestVersion",
+      "opaqueHitToken"
+    ],
+    "maximumOpaqueHitTokenLength": 256,
+    "semanticAddressAcceptedFromRenderer": false,
+    "scoreNoteRefAccepted": false,
+    "coordinatesAccepted": false,
+    "domIdAccepted": false,
+    "svgIdAccepted": false,
+    "rendererObjectAccepted": false
+  },
+  "resolutionFlow": [
+    "Editor Core emits revision-bound RendererRequest and opaque manifest",
+    "Rendering Layer performs exact visual hit testing without canonical authority",
+    "Host associates the visual hit with one opaque token from the current manifest",
+    "Host returns only the exact external hit envelope",
+    "Editor Core verifies document, revision, renderer family and render contract versions",
+    "Editor Core re-resolves the opaque token against a canonically re-derived current manifest",
+    "Editor Core creates the revision-bound SemanticAddress, SelectionSnapshot and InspectorModel"
+  ],
+  "failurePolicy": {
+    "staleHitFailsClosed": true,
+    "unknownTokenFailsClosed": true,
+    "tokenPathMismatchFailsClosed": true,
+    "rendererFamilyMismatchFailsClosed": true,
+    "extraFieldsFailClosed": true,
+    "ambiguousVisualHitMustNotProduceToken": true,
+    "nearestNoteFallbackAllowed": false,
+    "automaticRetargetingAllowed": false
+  },
+  "authority": {
+    "semanticAddressOwner": "EDITOR_CORE",
+    "rendererHitTestAuthority": "PRESENTATION_ONLY",
+    "rendererMayMutateCanonicalScore": false,
+    "rendererMayInventSemanticIdentity": false,
+    "scoreNoteRefCanonicalIdentity": false,
+    "coordinatesCanonicalIdentity": false,
+    "domSvgCanonicalIdentity": false,
+    "glyphCanonicalIdentity": false
+  },
+  "consumerHandoff": {
+    "targetRepository": "khfy7wpr5p-maker/st-score-rendering-layer",
+    "implementationOwnedByTargetRepository": true,
+    "editorCoreImportsTargetRepository": false,
+    "requiredRendererBehavior": [
+      "consume the exact current RenderRequest supplied by the host",
+      "perform exact hit testing within that rendered revision",
+      "return or associate exactly one existing opaque manifest token for an unambiguous hit",
+      "return no edit target for ambiguous or missing hits",
+      "preserve opaque token bytes exactly",
+      "never send ScoreNoteRef, coordinates, DOM/SVG ids or renderer objects as canonical edit identity"
+    ]
+  },
+  "dependencies": {
+    "newRuntimeDependency": false,
+    "newBuildDependency": false
+  }
+}
