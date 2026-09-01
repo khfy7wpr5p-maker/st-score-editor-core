@@ -4,7 +4,7 @@ Security-first shared semantic score-editing core for ScoreMosaic and MusicXML-t
 
 ## Current status
 
-The architecture is implemented through **Stage E8-C — Read-only Guitar Result Evidence**. In addition, the bounded **SEC-SMUFL-KEYPAD-01 existing-score correction program** is implemented through SEC-KP-09/10 on top of the existing E4/E5/E7 foundations, without changing E8 authority.
+The architecture is implemented through **Stage E8-C — Read-only Guitar Result Evidence**. In addition, the bounded **SEC-SMUFL-KEYPAD-01 existing-score correction program** is implemented through SEC-KP-10 on top of the existing E4/E5/E7 foundations, without changing E8 authority.
 
 E8 has three bounded foundations:
 
@@ -76,7 +76,7 @@ Editor Core
   -> SemanticAddress + SelectionSnapshot
 ```
 
-The bridge does not accept renderer-supplied `SemanticAddress`, `ScoreNoteRef`, screen/page/SVG coordinates, DOM/SVG ids, renderer objects or glyph identities as canonical edit identity. Unknown/stale/mismatched hits fail closed. Integration requirements for the companion rendering-layer program are frozen in `docs/st-score-rendering-layer-json2-integration-requirements.json`.
+The bridge does not accept renderer-supplied `SemanticAddress`, `ScoreNoteRef`, screen/page/SVG coordinates, DOM/SVG ids, renderer objects or glyph identities as canonical edit identity. Unknown/stale/mismatched hits fail closed. The browser-safe runtime exposes the same selection-only boundary as `selectRendererHit(session, externalHitEnvelope)` and resolves it only against that session's current render request. Integration requirements for the companion rendering-layer program are frozen in `docs/st-score-rendering-layer-json2-integration-requirements.json`.
 
 ## Secure editor flow
 
@@ -136,7 +136,7 @@ E7-H produces the deterministic browser artifact:
 - no external browser imports
 - no remote fetch requirement
 
-The browser runtime exposes a frozen keypad manifest and a bounded `commitKeypadAction` entry point while remaining non-authoritative and introducing no network, persistence, server-revision, approval or publication capability.
+The browser runtime exposes a frozen keypad manifest, bounded `commitKeypadAction`, and selection-only `selectRendererHit` bridge while remaining non-authoritative and introducing no network, persistence, server-revision, approval or publication capability.
 
 ## MusicXML verification scope
 
