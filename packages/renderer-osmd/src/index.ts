@@ -34,6 +34,13 @@ export class OsmdAdapterError extends Error {
 }
 
 const assertHost = (host: OsmdRendererHost): void => {
+  if (
+    host.packageName !== 'opensheetmusicdisplay' ||
+    host.packageVersion !== OSMD_INTEGRATION_VERSION ||
+    host.license !== 'BSD-3-Clause'
+  ) {
+    throw new OsmdAdapterError('OSMD host does not match exact direct-adapter version/license profile.', 'INVALID_OSMD_HOST');
+  }
   try {
     assertRendererProfile({
       family: 'osmd',
@@ -58,6 +65,13 @@ export const renderWithOsmd = async (
     throw new OsmdAdapterError('OSMD adapter received a request for another renderer family.', 'WRONG_RENDERER_FAMILY');
   }
   assertRendererProfile(request.renderer);
+  if (
+    request.renderer.packageName !== host.packageName ||
+    request.renderer.packageVersion !== host.packageVersion ||
+    request.renderer.license !== host.license
+  ) {
+    throw new OsmdAdapterError('OSMD request profile does not match the exact direct-adapter host profile.', 'INVALID_OSMD_HOST');
+  }
   try {
     await host.instance.load(request.musicXml);
   } catch {
