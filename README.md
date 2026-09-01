@@ -4,9 +4,9 @@ Security-first shared semantic score-editing core for ScoreMosaic and MusicXML-t
 
 ## Current status
 
-The architecture is implemented through **Stage E8-C — Read-only Guitar Result Evidence**.
+The architecture is implemented through **Stage E8-C — Read-only Guitar Result Evidence**. In addition, the bounded **SEC-SMUFL-KEYPAD-01 existing-score correction program** is implemented through SEC-KP-09/10 on top of the existing E4/E5/E7 foundations, without changing E8 authority.
 
-E8 now has three bounded foundations:
+E8 has three bounded foundations:
 
 - **E8-A** freezes Guitar Workspace output as derivative-only and revision-bound.
 - **E8-B** generates engine-safe MusicXML and the `sourceEventId` → canonical semantic source map during the same deterministic traversal.
@@ -36,7 +36,47 @@ Completed layers:
 - E8-B — Deterministic Guitar MusicXML + Source-map Projection
 - E8-C — Read-only CanonicalTabResult Evidence
 
-The next safe E8 step is a **host-side invocation boundary design**. Direct external-engine invocation remains human-gated and unauthorized inside core.
+## Correction keypad program
+
+The framework-neutral keypad is designed for **existing-score correction**, not unrestricted Sibelius-style note entry or page layout.
+
+Implemented keypad groups:
+
+- whole/half/quarter/eighth/16th/32nd duration correction;
+- equivalent rest correction, including atomic note/chord → requested rest duration;
+- flat/natural/sharp canonical pitch alteration plus matching accidental-display metadata;
+- 0–3 augmentation dots with canonical duration consistency;
+- explicit-range triplet metadata when the selected three events already have exact canonical 3:2 timing;
+- explicit-endpoint tie and slur create/remove;
+- deterministic selection continuity after safe keypad edits;
+- bounded browser keypad manifest and commit entry point.
+
+Every keypad action is identified by a stable semantic `actionId`. Optional SMuFL glyph names and host primitive hints are presentation metadata only. Editor Core includes no Bravura font binary, raw guessed glyph codepoints, CSS, VexFlow or Smoosic dependency. Every action and group has an accessible label key independent of glyph availability.
+
+A single keypad press commits one unified score+notation revision or none. Stale selection, inconsistent duration/dot state, ambiguous advanced targets and invalid actions fail closed.
+
+### Bounded triplet limitation
+
+The current E4 score-command set has no admitted onset-mutation primitive. Therefore Editor Core does **not** silently transform ordinary note spacing into triplet timing and does not remove an existing triplet when removal would require canonical retiming. `tuplet.triplet` v1 is admitted only for an explicit three-event range whose canonical durations/onsets already prove exact contiguous 3:2 timing. Expanding onset-mutation authority requires a separately reviewed additive contract.
+
+## Editor ↔ renderer exact-selection bridge
+
+The editor-side bridge contract is `ST_EDITOR_RENDERER_SELECTION_BRIDGE/1.0.0-draft`.
+
+```text
+Editor Core
+  -> revision-bound RenderRequest + opaque manifest
+Rendering Layer
+  -> exact visual hit test, presentation only
+Host bridge
+  -> current document/revision + renderer family + opaque manifest token
+Editor Core
+  -> verify envelope
+  -> re-resolve opaque token against current canonical manifest
+  -> SemanticAddress + SelectionSnapshot
+```
+
+The bridge does not accept renderer-supplied `SemanticAddress`, `ScoreNoteRef`, screen/page/SVG coordinates, DOM/SVG ids, renderer objects or glyph identities as canonical edit identity. Unknown/stale/mismatched hits fail closed. Integration requirements for the companion rendering-layer program are frozen in `docs/st-score-rendering-layer-json2-integration-requirements.json`.
 
 ## Secure editor flow
 
@@ -53,9 +93,10 @@ SemanticAddress + SelectionSnapshot
         ↓
 read-only canonical inspector
         ↓
-validated editor intent
-        ├─ score intent → E4 transaction
-        └─ notation intent → E7-E1 transaction
+validated editor intent / keypad action
+        ├─ ordinary score intent → E4 transaction
+        ├─ ordinary notation intent → E7-E1 transaction
+        └─ keypad composite → validated unified score+notation revision
         ↓
 accepted unified revision
         ↓
@@ -64,7 +105,7 @@ score + notation history
 new RenderRequest
 ```
 
-Undo/redo restore score and notation together. Revision navigation clears selection rather than silently re-targeting it.
+Ordinary score/notation commits retain their existing selection-clearing behavior. Successful keypad commits may deterministically re-resolve the exact surviving entity against the new revision; old `SemanticAddress` values are never reused. Undo/redo clears selection and restores score+notation together.
 
 ## Guitar Workspace boundary
 
@@ -76,20 +117,7 @@ The reviewed Guitar TAB Engine reference is `khfy7wpr5p-maker/musicxml-to-guitar
 
 E8-B emits a narrow MusicXML source-fact profile with exactly one part (`P1`), one/two staves, exact canonical pitch/onset/duration, deterministic voice/staff cursor operations, chord markers, rests and tie start/stop facts. At emission time each external source id is paired with a current canonical semantic address.
 
-E8-C does **not** trust `sourceEventId` alone. `CanonicalTabResult 2.0.0` does not carry ST `documentId`, ST `revisionId`, or a projection hash, so the result adapter re-derives the current projection and verifies:
-
-- exact result/document/source/policy contract identities;
-- exact measure/event source facts;
-- pitch, timing, voice/staff, tie and chord-source facts;
-- exact simultaneous-group coverage/order;
-- exact arrangement-decision coverage/order;
-- note-disposition ordering and decision consistency;
-- selected string/fret → target-MIDI round-trip;
-- exact required selected-shape coverage and finger/barre invariants.
-
-Input is a bounded JSON string rather than an arbitrary JavaScript object. This keeps accessors/proxies outside the result-ingestion boundary.
-
-A reported teacher review state (`NOT_REVIEWED`, `APPROVED`, `REJECTED`) is preserved as evidence only; it does not grant canonical mutation authority.
+E8-C does **not** trust `sourceEventId` alone. `CanonicalTabResult 2.0.0` does not carry ST `documentId`, ST `revisionId`, or a projection hash, so the result adapter re-derives the current projection and verifies exact source, timing, arrangement, disposition and selected-shape facts. A reported teacher review state remains evidence only and grants no canonical mutation authority.
 
 ## Renderer and browser boundary
 
@@ -108,22 +136,27 @@ E7-H produces the deterministic browser artifact:
 - no external browser imports
 - no remote fetch requirement
 
-The browser runtime remains non-authoritative and introduces no network, persistence, server-revision, approval or publication capability.
+The browser runtime exposes a frozen keypad manifest and a bounded `commitKeypadAction` entry point while remaining non-authoritative and introducing no network, persistence, server-revision, approval or publication capability.
+
+## MusicXML verification scope
+
+Canonical E2 import/serialize/re-import semantic round-trip remains tested for the admitted import subset. E5/keypad notation export tests cover dots, accidental display, ties, slurs and tuplets. **Advanced notation import remains intentionally fail-closed**, so the repository does not claim a round-trip capability for unsupported advanced notation syntax.
 
 ## Non-negotiable rules
 
 1. Source bytes and source identity are immutable.
 2. MusicXML is an exchange/projection format, not direct editor state.
-3. Renderer/browser/DOM/SVG/coordinate state is never musical authority.
-4. Edits require current semantic identity and typed bounded commands.
+3. Renderer/browser/DOM/SVG/coordinate/glyph state is never musical authority.
+4. Edits require current semantic identity and typed bounded commands/actions.
 5. Transactions are atomic and validated before acceptance.
-6. Score and notation revisions remain aligned in editor history.
-7. Notation metadata may not be silently discarded when a score edit removes its target.
-8. Stale selections, intents, render requests, notation snapshots and Guitar Workspace evidence fail closed.
-9. Undo/redo clears selection and restores score+notation together.
-10. AI/OMR and Guitar TAB engine output remain evidence/advice/derivative state only.
-11. No production/public-write/live-AI/direct-engine-invocation authority is granted by repository merges.
-12. ScoreMosaic and Guitar TAB authority ownership may not be changed implicitly by adapter work.
+6. One keypad user action produces one unified score+notation revision or none.
+7. Score and notation revisions remain aligned in editor history.
+8. Notation metadata may not be silently discarded when a score edit removes its target.
+9. Stale selections, intents, render requests, notation snapshots and Guitar Workspace evidence fail closed.
+10. Undo/redo clears selection and restores score+notation together.
+11. AI/OMR and Guitar TAB engine output remain evidence/advice/derivative state only.
+12. No production/public-write/live-AI/direct-engine-invocation authority is granted by repository merges.
+13. ScoreMosaic, Rendering Layer and Guitar TAB authority ownership may not be changed implicitly by adapter work.
 
 ## Installed dependencies
 
@@ -135,6 +168,6 @@ Build-only:
 - `typescript@6.0.3` — Apache-2.0 — exact pin
 - `esbuild@0.28.2` — MIT — browser bundling only
 
-E8-A/E8-B/E8-C add **no dependency**. No UI framework, renderer package, persistence SDK, network service or AI/model dependency is installed through E8-C.
+The correction keypad and editor-side renderer bridge add **no dependency**. No UI framework, renderer package, font binary, persistence SDK, network service or AI/model dependency is installed by these packages.
 
-See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, `docs/guitar-workspace-authority-contract.md`, `docs/guitar-workspace-projection-contract.md`, `docs/guitar-workspace-result-evidence-contract.md`, and `contracts/`.
+See `DEPENDENCIES.md`, `ARCHITECTURE.md`, `SAFETY.md`, `ROADMAP.md`, `DEVELOPMENT_GOVERNANCE.md`, `docs/keypad-current-reality.md`, `docs/keypad-capability-matrix.json`, `docs/keypad-final-regression-matrix.json`, `docs/st-score-rendering-layer-json2-integration-requirements.json`, `docs/guitar-workspace-authority-contract.md`, `docs/guitar-workspace-projection-contract.md`, `docs/guitar-workspace-result-evidence-contract.md`, and `contracts/`.
