@@ -13,13 +13,15 @@ const action=(actionId)=>({version:'1.0.0',actionId});
 const identity=(transactionId,nextRevisionId)=>({version:'1.0.0',transactionId,nextRevisionId});
 const eventRange=(score,...ids)=>({version:'1.0.0',kind:'EVENT_RANGE',targets:ids.map((id)=>addressEntity(score,id))});
 const notePair=(score,start,stop)=>({version:'1.0.0',kind:'NOTE_PAIR',start:addressEntity(score,start),stop:addressEntity(score,stop)});
+const gcd=(a,b)=>b===0?Math.abs(a):gcd(b,a%b);
+const doubled=(value)=>{const numerator=value.numerator*2;const divisor=gcd(numerator,value.denominator);return {numerator:numerator/divisor,denominator:value.denominator/divisor};};
 
 const tripletScore=(duration={numerator:1,denominator:12})=>createScoreDocument({
   schemaVersion:'1.0.0',id:'doc-triplet',revision:{id:'rev-1',parentId:null},source:{sha256:'e'.repeat(64),format:'synthetic',byteLength:null},
   parts:[{id:'part-1',name:'Part',staves:[{id:'staff-1',ordinal:1,measures:[{id:'measure-1',ordinal:1,displayNumber:'1',voices:[{id:'voice-1',ordinal:1,events:[
     {id:'event-1',kind:'note',onset:{numerator:0,denominator:1},duration,note:{id:'note-1',pitch:{step:'C',alter:0,octave:4}}},
     {id:'event-2',kind:'note',onset:duration,duration,note:{id:'note-2',pitch:{step:'D',alter:0,octave:4}}},
-    {id:'event-3',kind:'note',onset:{numerator:duration.numerator*2,denominator:duration.denominator},duration,note:{id:'note-3',pitch:{step:'E',alter:0,octave:4}}}
+    {id:'event-3',kind:'note',onset:doubled(duration),duration,note:{id:'note-3',pitch:{step:'E',alter:0,octave:4}}}
   ]}]}]}]}]
 });
 
