@@ -1,5 +1,5 @@
 import { createScoreDocument } from '../../score-model/src/index.js';
-import { emptyNotationDocument } from '../../notation-structure/src/index.js';
+import { createNotationDocument, emptyNotationDocument } from '../../notation-structure/src/index.js';
 import { getEditorKeypadManifest } from '../../editor-keypad/src/index.js';
 import {
   createEditorSession,
@@ -67,6 +67,7 @@ export const createBrowserRuntime = () => Object.freeze({
   runtimeVersion: BROWSER_RUNTIME_VERSION,
   profile: browserRuntimeProfile,
   createScoreDocument,
+  createNotationDocument,
   emptyNotationDocument,
   createEditorSession,
   createEditorSessionWithRendererProfile,
