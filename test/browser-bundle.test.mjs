@@ -48,6 +48,7 @@ test('E7-H bundle installs one frozen fail-closed runtime global', async () => {
   assert.equal(runtime.profile.serverRevisionAuthority, false);
   assert.equal(runtime.profile.approvalAuthority, false);
   assert.equal(runtime.profile.publicationAuthority, false);
+  assert.equal(typeof runtime.createNotationDocument, 'function');
   assert.equal(Object.isFrozen(runtime), true);
   assert.equal(Object.isFrozen(runtime.profile), true);
 
