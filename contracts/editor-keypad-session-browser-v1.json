@@ -1,7 +1,7 @@
 {
   "contract": "ST_SCORE_EDITOR_KEYPAD_SESSION_BROWSER",
   "version": "1.0.0",
-  "workPackages": ["SEC-KP-07", "SEC-KP-08"],
+  "workPackages": ["SEC-KP-07", "SEC-KP-08", "SEC-KP-05", "SEC-KP-06"],
   "selectionContinuity": {
     "keypadCommitsOnly": true,
     "oldRevisionAddressReuseAllowed": false,
@@ -18,6 +18,8 @@
   "browserRuntime": {
     "manifestReadMethod": "getEditorKeypadManifest",
     "boundedCommitMethod": "commitKeypadAction",
+    "optionalAdvancedTargetParameter": true,
+    "advancedTargetContract": "ST_SCORE_EDITOR_KEYPAD_ADVANCED/1.0.0",
     "rawKeypadExecutorExposed": false,
     "rawSessionKeypadCommitExposed": false,
     "typedResultVersion": "1.0.0",
@@ -36,6 +38,8 @@
     "rendererMaySelectCanonicalTargetDirectly": false,
     "glyphMaySelectCanonicalTarget": false,
     "browserMayBypassTypedKeypadAction": false,
+    "advancedTargetMustContainRevisionBoundSemanticAddresses": true,
+    "browserMayInferNearestAdvancedTarget": false,
     "browserMayPublishOrPersist": false
   },
   "dependencies": {
