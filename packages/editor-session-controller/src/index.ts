@@ -2,8 +2,8 @@ import type { ScoreDocument } from '../../score-model/src/index.js';
 import { addressEntity, createSelectionSnapshot } from '../../addressing/src/index.js';
 import type { SelectionSnapshot, SemanticAddress } from '../../addressing/src/index.js';
 import type { NotationDocument } from '../../notation-structure/src/index.js';
-import { createRendererRequest } from '../../renderer-contract/src/index.js';
-import type { RendererFamily, RendererRequest } from '../../renderer-contract/src/index.js';
+import { createRendererRequestWithProfile, rendererProfile } from '../../renderer-contract/src/index.js';
+import type { RendererFamily, RendererProfile, RendererRequest } from '../../renderer-contract/src/index.js';
 import { createInspectorModel, selectRenderToken } from '../../editor-selection/src/index.js';
 import type { InspectorModel } from '../../editor-selection/src/index.js';
 import { resolveExternalRendererHit } from '../../editor-renderer-selection-bridge/src/index.js';
@@ -36,11 +36,11 @@ export interface EditorSessionState {
   readonly status:Readonly<EditorStatus>;
 }
 
-const makeState=(rendererFamily:RendererFamily,history:Readonly<EditorHistoryState>,selection:Readonly<SelectionSnapshot>|null,inspector:Readonly<InspectorModel>|null,status:Readonly<EditorStatus>):Readonly<EditorSessionState>=>Object.freeze({
+const makeState=(profile:RendererProfile,history:Readonly<EditorHistoryState>,selection:Readonly<SelectionSnapshot>|null,inspector:Readonly<InspectorModel>|null,status:Readonly<EditorStatus>):Readonly<EditorSessionState>=>Object.freeze({
   version:EDITOR_SESSION_CONTROLLER_VERSION,
-  rendererFamily,
+  rendererFamily:profile.family,
   history,
-  renderRequest:createRendererRequest(history.present.score,history.present.notation,rendererFamily),
+  renderRequest:createRendererRequestWithProfile(history.present.score,history.present.notation,profile),
   selection,
   inspector,
   status
@@ -73,16 +73,19 @@ const rebindKeypadSelection=(previous:SelectionSnapshot,nextScore:ScoreDocument)
 };
 
 export const createEditorSession=(score:Readonly<ScoreDocument>,notation:Readonly<NotationDocument>,rendererFamily:RendererFamily='osmd'):Readonly<EditorSessionState>=>
-  makeState(rendererFamily,createEditorHistory(score,notation),null,null,Object.freeze({level:'idle',code:null,message:''}));
+  makeState(rendererProfile(rendererFamily),createEditorHistory(score,notation),null,null,Object.freeze({level:'idle',code:null,message:''}));
+
+export const createEditorSessionWithRendererProfile=(score:Readonly<ScoreDocument>,notation:Readonly<NotationDocument>,profile:RendererProfile):Readonly<EditorSessionState>=>
+  makeState(profile,createEditorHistory(score,notation),null,null,Object.freeze({level:'idle',code:null,message:''}));
 
 export const selectSessionRenderToken=(session:EditorSessionState,token:string):Readonly<EditorSessionState>=>{
   const selected=selectRenderToken(session.history.present.score,session.renderRequest,token);
-  return makeState(session.rendererFamily,session.history,selected.selection,selected.inspector,Object.freeze({level:'info',code:'SELECTION_CHANGED',message:`Selected ${selected.inspector.targetKind}.`}));
+  return makeState(session.renderRequest.renderer,session.history,selected.selection,selected.inspector,Object.freeze({level:'info',code:'SELECTION_CHANGED',message:`Selected ${selected.inspector.targetKind}.`}));
 };
 
 export const selectSessionExternalRendererHit=(session:EditorSessionState,rawHit:unknown):Readonly<EditorSessionState>=>{
   const selected=resolveExternalRendererHit(session.history.present.score,session.renderRequest,rawHit);
-  return makeState(session.rendererFamily,session.history,selected.selection,selected.inspector,Object.freeze({level:'info',code:'SELECTION_CHANGED',message:`Selected ${selected.inspector.targetKind}.`}));
+  return makeState(session.renderRequest.renderer,session.history,selected.selection,selected.inspector,Object.freeze({level:'info',code:'SELECTION_CHANGED',message:`Selected ${selected.inspector.targetKind}.`}));
 };
 
 export const commitSessionScoreIntent=(session:EditorSessionState,rawIntent:unknown,identity:EditorCommitIdentity):Readonly<EditorSessionState>=>{
@@ -91,7 +94,7 @@ export const commitSessionScoreIntent=(session:EditorSessionState,rawIntent:unkn
   const nextScore=executeEditorScoreIntent(base.score,session.selection,rawIntent,identity);
   const nextNotation=rebindNotationAfterScoreEdit(base.score,base.notation,nextScore);
   const history=commitEditorHistory(session.history,nextScore,nextNotation);
-  return makeState(session.rendererFamily,history,null,null,Object.freeze({level:'success',code:'SCORE_EDIT_COMMITTED',message:'Score edit committed.'}));
+  return makeState(session.renderRequest.renderer,history,null,null,Object.freeze({level:'success',code:'SCORE_EDIT_COMMITTED',message:'Score edit committed.'}));
 };
 
 export const commitSessionNotationIntent=(session:EditorSessionState,rawIntent:unknown,identity:NotationIntentCommitIdentity):Readonly<EditorSessionState>=>{
@@ -99,7 +102,7 @@ export const commitSessionNotationIntent=(session:EditorSessionState,rawIntent:u
   const base=session.history.present;
   const result=executeEditorNotationIntent(base.score,base.notation,session.selection,rawIntent,identity);
   const history=commitEditorHistory(session.history,result.score,result.notation);
-  return makeState(session.rendererFamily,history,null,null,Object.freeze({level:'success',code:'NOTATION_EDIT_COMMITTED',message:'Notation edit committed.'}));
+  return makeState(session.renderRequest.renderer,history,null,null,Object.freeze({level:'success',code:'NOTATION_EDIT_COMMITTED',message:'Notation edit committed.'}));
 };
 
 export const commitSessionKeypadAction=(
@@ -123,7 +126,7 @@ export const commitSessionKeypadAction=(
   const history=commitEditorHistory(session.history,result.score,result.notation);
   const rebound=rebindKeypadSelection(session.selection,result.score);
   return makeState(
-    session.rendererFamily,
+    session.renderRequest.renderer,
     history,
     rebound?.selection??null,
     rebound?.inspector??null,
@@ -133,5 +136,5 @@ export const commitSessionKeypadAction=(
 
 export const navigateSessionHistory=(session:EditorSessionState,action:EditorHistoryAction):Readonly<EditorSessionState>=>{
   const transition=navigateEditorHistory(session.history,session.selection,action);
-  return makeState(session.rendererFamily,transition.history,null,null,transition.status);
+  return makeState(session.renderRequest.renderer,transition.history,null,null,transition.status);
 };
