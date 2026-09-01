@@ -1,0 +1,111 @@
+{
+  "contract": "ST_SCORE_EDITOR_KEYPAD",
+  "version": "1.0.0",
+  "mode": "EXISTING_SCORE_CORRECTION",
+  "frameworkNeutral": true,
+  "semanticAuthority": "ACTION_ID_ONLY",
+  "actionEnvelope": {
+    "name": "EditorKeypadAction",
+    "exactFields": ["version", "actionId"],
+    "runtimeValidated": true,
+    "unknownActionFailsClosed": true,
+    "containsTargetIdentity": false,
+    "containsRendererIdentity": false,
+    "containsGlyphCodepoint": false
+  },
+  "actionIds": [
+    "duration.whole",
+    "duration.half",
+    "duration.quarter",
+    "duration.eighth",
+    "duration.16th",
+    "duration.32nd",
+    "rest.whole",
+    "rest.half",
+    "rest.quarter",
+    "rest.eighth",
+    "rest.16th",
+    "rest.32nd",
+    "accidental.flat",
+    "accidental.natural",
+    "accidental.sharp",
+    "dot.set.0",
+    "dot.set.1",
+    "dot.set.2",
+    "dot.set.3",
+    "tuplet.triplet",
+    "tie.edit",
+    "slur.edit"
+  ],
+  "groups": ["duration", "rests", "accidentals", "dots", "tuplets", "connections"],
+  "accessibility": {
+    "labelKeyRequiredForEveryGroup": true,
+    "labelKeyRequiredForEveryAction": true,
+    "glyphAvailabilityRequiredForUnderstanding": false
+  },
+  "smufl": {
+    "metadataOnly": true,
+    "glyphNamePreferred": true,
+    "rawCodepointContractAllowed": false,
+    "fontAssetBundled": false,
+    "fontFamilyAuthority": false,
+    "verifiedGlyphNames": [
+      "noteWhole",
+      "noteHalfUp",
+      "noteQuarterUp",
+      "note8thUp",
+      "note16thUp",
+      "note32ndUp",
+      "restWhole",
+      "restHalf",
+      "restQuarter",
+      "rest8th",
+      "rest16th",
+      "rest32nd",
+      "accidentalFlat",
+      "accidentalNatural",
+      "accidentalSharp",
+      "augmentationDot",
+      "tuplet3"
+    ],
+    "officialVerification": {
+      "source": "Standard Music Font Layout (SMuFL)",
+      "verifiedOn": "2026-09-01",
+      "pages": [
+        "https://smufl.formats.music/latest/tables/individual-notes.html",
+        "https://smufl.formats.music/latest/tables/rests.html",
+        "https://smufl.formats.music/latest/tables/standard-accidentals-12-edo.html",
+        "https://smufl.formats.music/latest/tables/tuplets.html"
+      ]
+    }
+  },
+  "hostPresentation": {
+    "admittedSmuflFontSuppliedByHost": true,
+    "initialFontMayBeBravura": true,
+    "bravuraRequiredByCore": false,
+    "cssOwnedByCore": false,
+    "vexflowRequired": false,
+    "smoosicRequired": false,
+    "tieSlurMayUseHostPrimitive": true,
+    "glyphFailureMayChangeSemanticAction": false
+  },
+  "authority": {
+    "glyphMetadataMayMutateCanonicalScore": false,
+    "glyphNameMayAddressMusicalTarget": false,
+    "domSvgCoordinatesMayAddressMusicalTargetAlone": false,
+    "rendererObjectsMayAddressMusicalTarget": false,
+    "aiOmrMayBypassTypedTransactions": false
+  },
+  "execution": {
+    "implementedInThisContract": false,
+    "targetResolutionImplementedInThisContract": false,
+    "scoreMutationImplementedInThisContract": false,
+    "notationMutationImplementedInThisContract": false,
+    "browserRuntimeExposureImplementedInThisContract": false
+  },
+  "dependencies": {
+    "newRuntimeDependency": false,
+    "newBuildDependency": false,
+    "fontDependency": false
+  }
+}
