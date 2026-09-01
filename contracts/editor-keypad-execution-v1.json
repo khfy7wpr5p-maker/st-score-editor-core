@@ -1,7 +1,7 @@
 {
   "contract": "ST_SCORE_EDITOR_KEYPAD_EXECUTION",
   "version": "1.0.0",
-  "workPackages": ["SEC-KP-02", "SEC-KP-03", "SEC-KP-04"],
+  "workPackages": ["SEC-KP-02", "SEC-KP-03", "SEC-KP-04", "SEC-KP-05", "SEC-KP-06"],
   "mode": "EXISTING_SCORE_CORRECTION",
   "executionBoundary": {
     "currentRevisionSelectionRequired": true,
@@ -64,7 +64,13 @@
     "inconsistentOrUnsupportedBaseFailsClosed": true,
     "canonicalDurationAndDotMetadataUpdateAtomic": true
   },
-  "notYetImplemented": ["tuplet.triplet", "tie.edit", "slur.edit"],
+  "advancedActions": {
+    "implemented": ["tuplet.triplet", "tie.edit", "slur.edit"],
+    "explicitRevisionBoundTargetRequired": true,
+    "implementationContract": "ST_SCORE_EDITOR_KEYPAD_ADVANCED/1.0.0",
+    "tripletRetimingWithoutExistingCanonical3To2TimingAllowed": false,
+    "tieSlurNearestTargetInferenceAllowed": false
+  },
   "authority": {
     "glyphMetadataMutationAuthority": false,
     "rendererMutationAuthority": false,
@@ -76,6 +82,8 @@
     "newRuntimeDependency": false,
     "newBuildDependency": false
   },
-  "browserRuntimeExposure": false,
-  "selectionContinuityAfterCommit": false
+  "browserRuntimeExposure": true,
+  "browserRuntimeExposureMode": "BOUNDED_SESSION_COMMIT_ONLY",
+  "selectionContinuityAfterCommit": true,
+  "selectionContinuityContract": "ST_SCORE_EDITOR_KEYPAD_SESSION_BROWSER/1.0.0"
 }

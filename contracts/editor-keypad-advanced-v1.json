@@ -1,0 +1,78 @@
+{
+  "contract": "ST_SCORE_EDITOR_KEYPAD_ADVANCED",
+  "version": "1.0.0",
+  "workPackages": ["SEC-KP-05", "SEC-KP-06"],
+  "targetContract": {
+    "revisionBoundSemanticAddressesRequired": true,
+    "automaticNearestEventInferenceAllowed": false,
+    "automaticNearestNoteInferenceAllowed": false,
+    "eventRange": {
+      "kind": "EVENT_RANGE",
+      "tripletExactCount": 3,
+      "samePartStaffMeasureVoiceRequired": true,
+      "consecutiveScoreOrderRequired": true
+    },
+    "notePair": {
+      "kind": "NOTE_PAIR",
+      "explicitStartAndStopRequired": true,
+      "currentSelectionMustEqualStart": true
+    }
+  },
+  "triplet": {
+    "actionId": "tuplet.triplet",
+    "actualNotes": 3,
+    "normalNotes": 2,
+    "canonicalTimingAuthority": true,
+    "metadataOnlyRetimingAllowed": false,
+    "onsetMutationAvailable": false,
+    "creationPolicy": "ADMIT_ONLY_IF_THREE_EXPLICIT_EVENTS_ALREADY_HAVE_EXACT_CONTIGUOUS_3_IN_THE_TIME_OF_2_CANONICAL_TIMING",
+    "equalEventDurationsRequired": true,
+    "admittedWrittenBases": ["whole", "half", "quarter", "eighth", "16th", "32nd"],
+    "augmentationDotsCombinedInV1": false,
+    "existingTupletToggleRemoval": false,
+    "existingTupletOrRequiredRetimingFailsClosed": true,
+    "boundaryNumber": 1,
+    "musicXmlTimeModificationProduced": true
+  },
+  "tie": {
+    "actionId": "tie.edit",
+    "explicitNotePairRequired": true,
+    "samePartStaffRequired": true,
+    "sameVoiceOrdinalRequired": true,
+    "consecutiveCanonicalEventsRequired": true,
+    "exactCanonicalPitchEqualityRequired": true,
+    "createRemoveToggleForExactPair": true,
+    "multipleMatchingRelationsFailClosed": true,
+    "conflictingOutgoingOrIncomingTieFailsClosed": true,
+    "boundaryNumberAllocation": "LOWEST_UNUSED_1_TO_16_ON_EXPLICIT_ENDPOINTS"
+  },
+  "slur": {
+    "actionId": "slur.edit",
+    "explicitNotePairRequired": true,
+    "samePartStaffRequired": true,
+    "sameVoiceOrdinalRequired": true,
+    "forwardCanonicalOrderRequired": true,
+    "samePitchRequired": false,
+    "consecutiveEventsRequired": false,
+    "createRemoveToggleForExactPair": true,
+    "multipleMatchingRelationsFailClosed": true,
+    "boundaryNumberAllocation": "LOWEST_UNUSED_1_TO_16_ON_EXPLICIT_ENDPOINTS"
+  },
+  "atomicity": {
+    "oneActionOneNotationTransaction": true,
+    "oneUnifiedRevision": true,
+    "partialApplyAllowed": false,
+    "selectionRebindUsesSEC_KP_07": true
+  },
+  "authority": {
+    "rendererMayChooseTargets": false,
+    "glyphMayChooseTargets": false,
+    "domSvgCoordinatesMayChooseTargets": false,
+    "aiOmrMayChooseTargets": false,
+    "hostMustSupplyRevisionBoundSemanticTargets": true
+  },
+  "dependencies": {
+    "newRuntimeDependency": false,
+    "newBuildDependency": false
+  }
+}

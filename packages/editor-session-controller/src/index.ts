@@ -10,7 +10,13 @@ import { executeEditorScoreIntent } from '../../editor-score-intents/src/index.j
 import type { EditorCommitIdentity } from '../../editor-score-intents/src/index.js';
 import { executeEditorNotationIntent } from '../../editor-notation-intents/src/index.js';
 import type { NotationIntentCommitIdentity } from '../../editor-notation-intents/src/index.js';
+import { parseEditorKeypadAction } from '../../editor-keypad/src/index.js';
 import { executeEditorKeypadAction } from '../../editor-keypad-execution/src/index.js';
+import {
+  EditorKeypadAdvancedError,
+  executeAdvancedEditorKeypadAction,
+  isAdvancedEditorKeypadActionId
+} from '../../editor-keypad-advanced/src/index.js';
 import { commitEditorHistory, createEditorHistory, rebindNotationAfterScoreEdit } from '../../editor-history/src/index.js';
 import type { EditorHistoryState } from '../../editor-history/src/index.js';
 import { navigateEditorHistory } from '../../editor-session-safety/src/index.js';
@@ -90,10 +96,24 @@ export const commitSessionNotationIntent=(session:EditorSessionState,rawIntent:u
   return makeState(session.rendererFamily,history,null,null,Object.freeze({level:'success',code:'NOTATION_EDIT_COMMITTED',message:'Notation edit committed.'}));
 };
 
-export const commitSessionKeypadAction=(session:EditorSessionState,rawAction:unknown,rawIdentity:unknown):Readonly<EditorSessionState>=>{
+export const commitSessionKeypadAction=(
+  session:EditorSessionState,
+  rawAction:unknown,
+  rawIdentity:unknown,
+  rawTarget:unknown=null
+):Readonly<EditorSessionState>=>{
   if(session.selection===null)throw new Error('A current semantic selection is required.');
   const base=session.history.present;
-  const result=executeEditorKeypadAction(base.score,base.notation,session.selection,rawAction,rawIdentity);
+  const action=parseEditorKeypadAction(rawAction);
+  let result;
+  if(isAdvancedEditorKeypadActionId(action.actionId)){
+    result=executeAdvancedEditorKeypadAction(base.score,base.notation,session.selection,action,rawIdentity,rawTarget);
+  }else{
+    if(rawTarget!==null&&rawTarget!==undefined){
+      throw new EditorKeypadAdvancedError('Explicit advanced target may not be attached to a simple keypad action.','INVALID_TARGET_SPEC',{actionId:action.actionId});
+    }
+    result=executeEditorKeypadAction(base.score,base.notation,session.selection,action,rawIdentity);
+  }
   const history=commitEditorHistory(session.history,result.score,result.notation);
   const rebound=rebindKeypadSelection(session.selection,result.score);
   return makeState(
