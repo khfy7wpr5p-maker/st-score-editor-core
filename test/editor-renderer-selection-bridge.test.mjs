@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createScoreDocument } from '../dist/packages/score-model/src/index.js';
 import { emptyNotationDocument } from '../dist/packages/notation-structure/src/index.js';
 import { createRendererRequest } from '../dist/packages/renderer-contract/src/index.js';
+import { createBrowserRuntime } from '../dist/packages/browser-runtime/src/index.js';
 import {
   EditorRendererSelectionBridgeError,
   createExternalRendererHit,
@@ -32,6 +33,21 @@ test('SEC-KP-09 external hit resolves only through the current opaque manifest t
   assert.equal(result.selection.primary.noteId,'note-1');
   assert.equal(result.selection.primary.revisionId,'rev-1');
   assert.equal(result.inspector.targetId,'note-1');
+});
+
+test('SEC-KP-09 browser runtime exposes the same selection-only bridge without renderer mutation authority',()=>{
+  const runtime=createBrowserRuntime();
+  const s=score();
+  let session=runtime.createEditorSession(s,runtime.emptyNotationDocument(s),'osmd');
+  const token=noteToken(session.renderRequest);assert.ok(token);
+  const hit=createExternalRendererHit(session.renderRequest,token);
+  session=runtime.selectRendererHit(session,hit);
+  assert.equal(runtime.profile.rendererHitBridgeAvailable,true);
+  assert.equal(runtime.profile.rendererAuthority,false);
+  assert.equal(runtime.profile.browserMutationAuthority,false);
+  assert.equal(session.selection.primary.kind,'note');
+  assert.equal(session.selection.primary.noteId,'note-1');
+  assert.equal(session.selection.primary.revisionId,'rev-1');
 });
 
 test('SEC-KP-09 coordinates DOM/SVG ids SemanticAddress and ScoreNoteRef-shaped fields are rejected at the bridge boundary',()=>{
