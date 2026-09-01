@@ -1,14 +1,16 @@
 import type { ScoreDocument } from '../../score-model/src/index.js';
-import type { SelectionSnapshot } from '../../addressing/src/index.js';
+import { addressEntity, createSelectionSnapshot } from '../../addressing/src/index.js';
+import type { SelectionSnapshot, SemanticAddress } from '../../addressing/src/index.js';
 import type { NotationDocument } from '../../notation-structure/src/index.js';
 import { createRendererRequest } from '../../renderer-contract/src/index.js';
 import type { RendererFamily, RendererRequest } from '../../renderer-contract/src/index.js';
-import { selectRenderToken } from '../../editor-selection/src/index.js';
+import { createInspectorModel, selectRenderToken } from '../../editor-selection/src/index.js';
 import type { InspectorModel } from '../../editor-selection/src/index.js';
 import { executeEditorScoreIntent } from '../../editor-score-intents/src/index.js';
 import type { EditorCommitIdentity } from '../../editor-score-intents/src/index.js';
 import { executeEditorNotationIntent } from '../../editor-notation-intents/src/index.js';
 import type { NotationIntentCommitIdentity } from '../../editor-notation-intents/src/index.js';
+import { executeEditorKeypadAction } from '../../editor-keypad-execution/src/index.js';
 import { commitEditorHistory, createEditorHistory, rebindNotationAfterScoreEdit } from '../../editor-history/src/index.js';
 import type { EditorHistoryState } from '../../editor-history/src/index.js';
 import { navigateEditorHistory } from '../../editor-session-safety/src/index.js';
@@ -37,6 +39,32 @@ const makeState=(rendererFamily:RendererFamily,history:Readonly<EditorHistorySta
   status
 });
 
+const targetEntityId=(address:SemanticAddress):string=>{
+  switch(address.kind){
+    case 'document':return address.documentId;
+    case 'part':return address.partId;
+    case 'staff':return address.staffId;
+    case 'measure':return address.measureId;
+    case 'voice':return address.voiceId;
+    case 'event':return address.eventId;
+    case 'note':return address.noteId;
+  }
+};
+
+const rebindKeypadSelection=(previous:SelectionSnapshot,nextScore:ScoreDocument):Readonly<{selection:Readonly<SelectionSnapshot>;inspector:Readonly<InspectorModel>}>|null=>{
+  if(previous.primary===null)return null;
+  try{
+    const nextAddress=addressEntity(nextScore,targetEntityId(previous.primary));
+    if(nextAddress.kind!==previous.primary.kind)return null;
+    return Object.freeze({
+      selection:createSelectionSnapshot(nextScore,nextAddress),
+      inspector:createInspectorModel(nextScore,nextAddress)
+    });
+  }catch{
+    return null;
+  }
+};
+
 export const createEditorSession=(score:Readonly<ScoreDocument>,notation:Readonly<NotationDocument>,rendererFamily:RendererFamily='osmd'):Readonly<EditorSessionState>=>
   makeState(rendererFamily,createEditorHistory(score,notation),null,null,Object.freeze({level:'idle',code:null,message:''}));
 
@@ -60,6 +88,21 @@ export const commitSessionNotationIntent=(session:EditorSessionState,rawIntent:u
   const result=executeEditorNotationIntent(base.score,base.notation,session.selection,rawIntent,identity);
   const history=commitEditorHistory(session.history,result.score,result.notation);
   return makeState(session.rendererFamily,history,null,null,Object.freeze({level:'success',code:'NOTATION_EDIT_COMMITTED',message:'Notation edit committed.'}));
+};
+
+export const commitSessionKeypadAction=(session:EditorSessionState,rawAction:unknown,rawIdentity:unknown):Readonly<EditorSessionState>=>{
+  if(session.selection===null)throw new Error('A current semantic selection is required.');
+  const base=session.history.present;
+  const result=executeEditorKeypadAction(base.score,base.notation,session.selection,rawAction,rawIdentity);
+  const history=commitEditorHistory(session.history,result.score,result.notation);
+  const rebound=rebindKeypadSelection(session.selection,result.score);
+  return makeState(
+    session.rendererFamily,
+    history,
+    rebound?.selection??null,
+    rebound?.inspector??null,
+    Object.freeze({level:'success',code:'KEYPAD_EDIT_COMMITTED',message:'Keypad edit committed.'})
+  );
 };
 
 export const navigateSessionHistory=(session:EditorSessionState,action:EditorHistoryAction):Readonly<EditorSessionState>=>{

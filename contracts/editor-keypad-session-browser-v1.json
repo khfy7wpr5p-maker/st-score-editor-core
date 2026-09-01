@@ -1,0 +1,45 @@
+{
+  "contract": "ST_SCORE_EDITOR_KEYPAD_SESSION_BROWSER",
+  "version": "1.0.0",
+  "workPackages": ["SEC-KP-07", "SEC-KP-08"],
+  "selectionContinuity": {
+    "keypadCommitsOnly": true,
+    "oldRevisionAddressReuseAllowed": false,
+    "stableEntityIdUsedOnlyAsReResolutionKey": true,
+    "sameAddressKindRequired": true,
+    "survivingExactEntityReboundToNewRevision": true,
+    "missingEntityClearsSelection": true,
+    "kindChangeClearsSelection": true,
+    "ambiguityClearsSelection": true,
+    "undoRedoClearsSelection": true,
+    "ordinaryScoreIntentCommitBehaviorChanged": false,
+    "ordinaryNotationIntentCommitBehaviorChanged": false
+  },
+  "browserRuntime": {
+    "manifestReadMethod": "getEditorKeypadManifest",
+    "boundedCommitMethod": "commitKeypadAction",
+    "rawKeypadExecutorExposed": false,
+    "rawSessionKeypadCommitExposed": false,
+    "typedResultVersion": "1.0.0",
+    "successShape": ["ok", "session"],
+    "errorShape": ["ok", "error"],
+    "errorFields": ["version", "code", "message"],
+    "networkCapable": false,
+    "persistenceCapable": false,
+    "rendererAuthority": false,
+    "browserMutationAuthority": false,
+    "serverRevisionAuthority": false,
+    "approvalAuthority": false,
+    "publicationAuthority": false
+  },
+  "authority": {
+    "rendererMaySelectCanonicalTargetDirectly": false,
+    "glyphMaySelectCanonicalTarget": false,
+    "browserMayBypassTypedKeypadAction": false,
+    "browserMayPublishOrPersist": false
+  },
+  "dependencies": {
+    "newRuntimeDependency": false,
+    "newBuildDependency": false
+  }
+}
