@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **Implemented through Stage E8-C. The additive SEC-SMUFL-KEYPAD-01 existing-score correction program is implemented through SEC-KP-09/10 without changing E8 authority. Direct external-engine invocation remains unauthorized.**
+Status: **Implemented through Stage E8-C. The additive SEC-SMUFL-KEYPAD-01 existing-score correction program is implemented through SEC-KP-10 without changing E8 authority. Direct external-engine invocation remains unauthorized.**
 
 ## 1. Purpose
 
@@ -91,6 +91,8 @@ The SEC-KP-09 bridge freezes the external return envelope to:
 - opaque hit token.
 
 The bridge rejects extra fields. A renderer therefore cannot submit `SemanticAddress`, `ScoreNoteRef`, coordinates, DOM/SVG ids, renderer objects or glyph identity as an edit target. Editor Core validates the envelope and delegates the token to the existing canonical manifest resolver, which re-derives the current manifest and produces the `SelectionSnapshot` and inspector.
+
+The session controller exposes this as `selectSessionExternalRendererHit`; the browser-safe runtime exposes the same selection-only operation as `selectRendererHit(session, externalHitEnvelope)`. Both resolve only against the exact current session score and `RenderRequest`; neither grants renderer or browser mutation authority.
 
 Stale, unknown, renderer-mismatched or path-mismatched hits fail closed. Ambiguous or absent visual hits must result in no token rather than nearest-note inference.
 
@@ -192,7 +194,7 @@ No keypad or renderer-bridge code creates network, process, persistence or produ
 
 ## 15. Browser, AI and product boundaries
 
-Browser packaging remains non-networked and non-persistent inside core. The browser runtime exposes the keypad manifest and bounded keypad commit result but owns no renderer, server revision, approval, publication or production authority. AI specialists remain advisory only. ScoreMosaic, Rendering Layer and Guitar TAB remain separate product authority domains.
+Browser packaging remains non-networked and non-persistent inside core. The browser runtime exposes the keypad manifest, bounded keypad commit result and selection-only renderer-hit bridge but owns no renderer, server revision, approval, publication or production authority. AI specialists remain advisory only. ScoreMosaic, Rendering Layer and Guitar TAB remain separate product authority domains.
 
 ## 16. Stage/status summary
 
@@ -216,7 +218,7 @@ Correction keypad program:
 - SEC-KP-06 — COMPLETE — explicit tie/slur endpoints
 - SEC-KP-07 — COMPLETE — safe keypad selection continuity
 - SEC-KP-08 — COMPLETE — bounded browser runtime exposure
-- SEC-KP-09 — editor-side bridge contract in final PR-E
-- SEC-KP-10 — regression/accessibility/docs/consumer handoff in final PR-E
+- SEC-KP-09 — COMPLETE — editor-side exact-selection bridge plus selection-only browser runtime entry point
+- SEC-KP-10 — COMPLETE — regression/accessibility/docs/consumer handoff
 
 Production activation, public write APIs, live AI edit authority, canonical onset-authority expansion and direct external-engine invocation remain separately human-gated.
