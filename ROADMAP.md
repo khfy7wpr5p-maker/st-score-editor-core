@@ -24,6 +24,28 @@
 
 E7 remains bounded to repository/browser composition. Production/public-write/live-AI authority is not granted.
 
+## SEC-SMUFL-KEYPAD-01 — Sibelius-style correction keypad — IMPLEMENTED WITH ONE EXPLICIT LIMITATION
+
+The editor-side keypad program is implemented through SEC-KP-10:
+
+- **SEC-KP-00 — COMPLETE:** fresh-read semantic freeze and capability matrix.
+- **SEC-KP-01 — COMPLETE:** framework-neutral keypad action manifest plus verified SMuFL glyph-name metadata; no font assets or raw guessed codepoints.
+- **SEC-KP-02 — COMPLETE:** whole/half/quarter/eighth/16th/32nd duration and rest corrections through atomic unified revisions.
+- **SEC-KP-03 — COMPLETE:** flat/natural/sharp corrections update canonical pitch alteration plus display accidental atomically.
+- **SEC-KP-04 — COMPLETE:** dot counts 0..3 keep canonical effective duration and notation metadata consistent.
+- **SEC-KP-05 — BOUNDED COMPLETE:** triplet metadata can be applied only to an explicit three-event range whose canonical timing already proves exact contiguous 3:2 timing. Ordinary event spacing is not silently retimed because E4 has no admitted onset-mutation primitive.
+- **SEC-KP-06 — COMPLETE:** tie/slur correction uses explicit revision-bound note endpoints; nearest-note inference is forbidden.
+- **SEC-KP-07 — COMPLETE:** repeated keypad edits safely rebind a surviving exact semantic target to the new revision; target loss clears selection; undo/redo still clears selection.
+- **SEC-KP-08 — COMPLETE:** browser runtime exposes immutable keypad metadata and a typed bounded local commit surface without network/persistence/production authority.
+- **SEC-KP-09 — COMPLETE (EDITOR SIDE):** editor-renderer selection bridge accepts only a current render-request identity plus opaque hit token; renderer coordinates, DOM/SVG ids, renderer objects and foreign semantic addresses are not edit authority.
+- **SEC-KP-10 — COMPLETE:** regression matrix, accessibility invariants, architecture/docs synchronization and Rendering Layer JSON2 handoff requirements.
+
+Remaining keypad limitation requiring a separately authorized architectural change:
+
+- creating/removing tuplets when canonical onset/duration retiming is required remains fail-closed until an explicit onset-mutation primitive is admitted into the canonical transaction layer.
+
+The host remains responsible for visual glyph rendering with an admitted SMuFL font such as Bravura. Editor Core does not bundle Bravura, CSS, VexFlow, Smoosic, renderer packages or production UI code.
+
 ## Stage E8 — Guitar Workspace Adapter
 
 ### E8-A — Guitar Workspace Authority Contract — COMPLETE
