@@ -99,7 +99,7 @@ const validateAddress = <T extends SemanticAddress>(score: ScoreDocument, raw: u
       cause: error instanceof Error ? error.message : String(error)
     });
   }
-  return Object.freeze({ ...candidate });
+  return Object.freeze({ ...candidate } as T) as Readonly<T>;
 };
 
 export const parseEditorKeypadAdvancedTarget = (score: ScoreDocument, input: unknown): Readonly<EditorKeypadAdvancedTarget> => {
@@ -206,7 +206,7 @@ const applyNotationCommands = (
   notation: NotationDocument,
   identity: EditorKeypadCommitIdentity,
   commands: readonly NotationCommand[]
-): Readonly<EditorKeypadExecutionResult>['score' | 'notation'] extends never ? never : { readonly score: Readonly<ScoreDocument>; readonly notation: Readonly<NotationDocument> } => {
+): { readonly score: Readonly<ScoreDocument>; readonly notation: Readonly<NotationDocument> } => {
   const transaction: NotationTransaction = Object.freeze({
     contractVersion: NOTATION_TRANSACTION_VERSION,
     transactionId: notationTransactionId(identity),
@@ -243,7 +243,11 @@ const tripletResult = (
   const voiceResolved = resolveSemanticAddress(score, voiceAddress);
   if (voiceResolved.kind !== 'voice') throw new EditorKeypadAdvancedError('Triplet voice could not be resolved.', 'RANGE_NOT_EXACT');
   const indices = target.targets.map((item) => voiceResolved.value.events.findIndex((event) => event.id === item.eventId));
-  if (indices[0] < 0 || indices[1] !== indices[0] + 1 || indices[2] !== indices[1] + 1) {
+  const [firstIndex, secondIndex, thirdIndex] = indices;
+  if (
+    firstIndex === undefined || secondIndex === undefined || thirdIndex === undefined ||
+    firstIndex < 0 || secondIndex !== firstIndex + 1 || thirdIndex !== secondIndex + 1
+  ) {
     throw new EditorKeypadAdvancedError('Triplet range must contain exactly three consecutive events in score order.', 'RANGE_NOT_EXACT', { indices });
   }
 
