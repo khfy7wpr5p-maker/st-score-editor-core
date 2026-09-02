@@ -1,50 +1,72 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE is complete. SSE-00–04 are merged; SSE-05 adds relation-safe ornament authoring as a merge candidate.**
+Status: **SEC-NE is complete. SSE-00–05 are merged; SSE-06 adds bounded MusicXML v2 semantic round trip as a merge candidate.**
 
 ## Authority
 
-Each v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. Grace identity/order/anchor/written value live in canonical score state. Articulations and ornaments are same-revision notation semantics. Renderer/SesliTab remain noncanonical.
+Each v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. Grace identity/order/anchor/written value live in canonical score state. Articulations and ornaments are same-revision notation semantics. MusicXML remains exchange/projection data. Renderer/SesliTab remain noncanonical.
 
-## Ornament authoring profiles
+## SSE-06 MusicXML v2 boundary
 
-### Local profile
+Legacy MusicXML APIs remain deliberately narrow. SSE-06 does not widen `parseMusicXmlTree`, `importMusicXml`, `importMusicXmlWithMeasureSemantics` or `importNotationMusicXml`.
 
-Exact current normal `event` or `grace-event` targets may add/toggle/remove typed simple ornaments or a single-note tremolo. The local API explicitly refuses wavy-line and tremolo start/stop endpoints, so it cannot create a broken spanning relation.
-
-### Spanning relation profile
+Instead, `packages/musicxml-v2` owns a separate bounded profile:
 
 ```text
-exact ordered normal pitched events
+untrusted MusicXML v2 input
         |
-whole-relation intent
+separate safe v2 parser
+(existing byte/depth/element/attribute/text/deadline budgets)
         |
-same part/staff/measure/voice scope check
+original source identity validation
         |
-canonical event-order + relation-number checks
+noncanonical internal v1-compatible timed projection
         |
-all endpoints/members written atomically
+existing proven v1 notation importer
         |
-NotationDocumentV2 relation validation
+one deterministic v1 -> v2 migration
         |
-EditorHistoryStateV2 atomic commit
+rebind v2-only semantics from original parsed tree
+        |
+ScoreDocumentV2 + sparse same-revision NotationDocumentV2
 ```
 
-Two-note tremolo is created/removed with start and stop together. Wavy-line is created/removed as one ordered start/continue/stop chain. The bounded profile does not infer cross-measure, cross-voice, grace-spanning or rest-member relations.
+The internal projection strips grace material plus v2-only articulation/ornament elements only for reuse of the existing timed-score importer. It is never exposed as canonical state or a public downgrade. Final canonical source identity belongs to the original MusicXML input, not the internal projection.
 
-## Validation / safety
+## Admitted v2 round-trip semantics
 
-Targets are revision-bound and must be unique and strictly increasing in canonical event order. Spanning relation members must be pitched normal events. Relation numbers are collision-checked within the relation kind. Removal requires the exact current member list/endpoints. Stale, reversed, ambiguous or unsupported-scope relations fail closed.
+The bounded serializer/importer preserves:
 
-Ornament edits do not alter pitch, onset, duration, normal measure occupancy or grace identity. Unified editor history advances one direct-child score revision and one same-revision notation document; there is no independent notation timeline.
+- existing normal timed score and v1 notation semantics;
+- grace note/rest/chord events outside normal measure occupancy;
+- grace written value, slash and bounded playback metadata;
+- grace event dots/beams and grace-note accidental/tie/slur notation;
+- finite typed articulations on normal/grace events;
+- finite simple ornaments plus accidental marks;
+- single-note tremolo;
+- numbered spanning tremolo start/stop;
+- numbered wavy-line start/continue/stop.
 
-## Rendering / MusicXML boundary
+Notation remains sparse: default normal-event, grace-event and grace-note notation is not materialized merely because XML was re-imported.
 
-V2 semantic manifests already expose the exact target identities. Until SSE-06 supplies vNext MusicXML semantics, any ornament-bearing pair remains `VNEXT_XML_PENDING` with `musicXml = null` rather than emitting a lossy v1 projection.
+## Fail-closed rules
+
+- unknown or unsupported v2 XML elements/attributes reject;
+- legacy importers continue to reject v2-only XML;
+- source format/byte-length mismatch rejects before canonical output;
+- unsupported/ambiguous grace placement-playback combinations reject rather than being normalized silently;
+- broken ornament relations are rejected by `NotationDocumentV2` validation;
+- no renderer geometry, DOM/SVG identity or host state participates in import authority;
+- no silent v2 -> v1 semantic loss is admitted.
+
+## Rendering boundary
+
+SSE-06 provides direct bounded `serializeNotationMusicXmlV2` / `importNotationMusicXmlV2` exchange support. `renderer-contract-v2` is intentionally not widened in this stage. V2-only renderer requests may therefore continue to expose `VNEXT_XML_PENDING` / `musicXml = null` until SSE-07 wires the proven v2 projection into renderer/SesliTab compatibility.
 
 ## Next stages
 
-- SSE-06 — bounded v2 MusicXML round trip for grace/articulation/ornament semantics;
-- SSE-07 — product renderer/SesliTab v2 compatibility.
+- **SSE-07 — NEXT:** renderer + SesliTab v2 compatibility while retaining opaque semantic tokens and no host dual-write.
+- **SSE-08 — HUMAN-GATED DESIGN:** staff/part topology contract.
+- **SSE-09+** remain gated by the frozen topology/cross-staff design sequence.
 
-Staff/part topology and cross-staff remain separate SSE-08+ gates. No dependency, renderer/host authority, persistence/network authority or production activation is added by SSE-05.
+No dependency, renderer/host authority, persistence/network authority or production activation is added by SSE-06.
