@@ -15,38 +15,43 @@ This file records repository reality. Planned or human-gated capability is not p
 - **SEC-NE-08 — COMPLETE / MERGED:** derivative Guitar/TAB authoring companion.
 - **SEC-NE-09 — COMPLETE / MERGED:** single-session SesliTab host integration.
 
-## SEC-NE-09 exact capability
+## SCORE-SCHEMA-EXPANSION
 
-`seslitab-editor-host/1.0.0` composes the product-host boundary around one existing `EditorSessionState`.
+- **SSE-00 — IN PROGRESS / DESIGN BRANCH:** vNext public contract design; no runtime schema change.
+- **SSE-01 — HUMAN-GATED PENDING VNEXT CONTRACT APPROVAL:** dual-version types, validators and migration substrate.
+- **SSE-02 — NOT STARTED:** canonical session v2 cutover without parallel mutable authorities.
+- **SSE-03 — NOT STARTED:** grace-note authoring.
+- **SSE-04 — NOT STARTED:** articulation authoring.
+- **SSE-05 — NOT STARTED:** ornament authoring.
+- **SSE-06 — NOT STARTED:** vNext MusicXML semantic round trip.
+- **SSE-07 — NOT STARTED:** renderer + SesliTab compatibility for new semantic address kinds.
+- **SSE-08 — HUMAN-GATED DESIGN:** whole staff/part topology contract.
+- **SSE-09 — NOT STARTED:** staff/part topology authoring.
+- **SSE-10 — NOT STARTED:** cross-staff canonical relation model.
 
-- one canonical editor session only;
-- exact current render token selection;
-- score/notation/keypad/note-entry/history delegation to existing session-controller paths;
-- pointer/keyboard/touch converge on identical semantic operations;
-- rejected operations return typed errors and do not create fallback mutation;
-- playback ownership is separate from editor admission;
-- no renderer/DOM coordinate mutation authority;
-- no host dual-write;
-- no network/persistence/server-revision/publication/production authority.
+### SSE-00 design decision
 
-## Human-gated future work
+The vNext candidate does not weaken v1 timing rules. Grace notes are canonical but live in voice-owned `graceGroups` anchored to an exact normal event; they are not zero-duration `Voice.events` and do not consume normal measure occupancy.
 
-The bounded autonomous authoring program is complete. Remaining work requires explicit public-contract/product authority decisions:
+Articulations and ornaments extend typed event-level notation. Unsupported external semantics fail closed rather than being stored as arbitrary `other-*` strings.
 
-- grace-note identity/timing schema;
-- articulations;
-- ornaments;
-- whole staff/part topology and cross-staff correspondence;
-- E8-D direct external Guitar engine invocation;
-- production/public-write, persistence and deployment activation.
+Proposed public versions are `ScoreDocumentV2 2.0.0` and `NotationDocumentV2 2.0.0`. Existing 1.0.0 runtime behavior remains unchanged until later approval and implementation.
+
+## Migration gate
+
+v1 -> v2 must be deterministic and lossless. v2 -> v1 is permitted only when every v2-only semantic is empty; otherwise a typed `DOWNGRADE_UNREPRESENTABLE` result is required.
+
+No editor session may hold parallel mutable v1 and v2 canonical states.
 
 ## Still fail-closed
 
-- schema-absent advanced notation;
+- v2 schema input to current v1 runtime validators;
+- schema-absent grace/articulation/ornament authoring on main;
+- silent v2 -> v1 data loss;
 - reverse Guitar/TAB write into canonical score;
 - stale result/address reuse;
 - renderer-coordinate authoring;
 - host dual-write;
 - production activation by merge.
 
-`ScoreDocument` remains canonical; notation is same-revision authority; Guitar state remains derivative-only; renderer and host state remain noncanonical.
+`ScoreDocument` 1.0.0 remains current canonical runtime authority until an approved v2 cutover stage is merged.
