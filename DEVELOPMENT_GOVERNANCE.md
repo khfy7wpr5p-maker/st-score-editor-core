@@ -11,7 +11,7 @@
 
 ### Autonomous-safe
 
-May proceed without a new human decision when already inside an approved stage:
+May proceed without a new human decision when already inside an approved, frozen stage:
 
 - non-breaking additive internal packages;
 - typed intents, validators and read-only analyzers;
@@ -23,14 +23,13 @@ May proceed without a new human decision when already inside an approved stage:
 - CI fixes that do not reduce coverage, validation or fail-closed behavior;
 - green non-breaking PR merge after exact diff review.
 
-SEC-NE examples currently autonomous-safe include additive timing evidence, explicit-rest validators and documentation synchronization so long as canonical authority and public schemas are not broken.
-
 ### Human-gated
 
 Stop before:
 
 - breaking/versioning `ScoreDocument` after downstream use;
 - breaking/versioning `NotationDocument` after downstream use;
+- changing the frozen vNext authority/migration model;
 - weakening source immutability;
 - weakening fail-closed validation or canonical validation;
 - enabling production/public write authority;
@@ -42,7 +41,24 @@ Stop before:
 - admitting rights-unclear training/test assets;
 - enabling AI/OMR output as direct canonical mutation authority.
 
-If SEC-NE-04B1 cannot preserve pickup/incomplete-measure evidence additively and requires a breaking public score/notation schema change, development must stop at this gate.
+## SCORE-SCHEMA-EXPANSION gate record
+
+On 2026-09-02, work was approved to **design** the next schema expansion after completion of the bounded SEC-NE program.
+
+`SSE-00` is therefore autonomous-safe as a documentation/contract-design stage because it does not modify runtime schemas.
+
+The draft contract proposes:
+
+- `ScoreDocumentV2 2.0.0`;
+- `NotationDocumentV2 2.0.0`;
+- canonical voice-owned grace groups outside normal timed occupancy;
+- typed articulation/ornament notation;
+- lossless v1 -> v2 migration;
+- fail-closed v2 -> v1 downgrade.
+
+This design approval is **not** implicit authorization to merge breaking/versioned runtime APIs. Before SSE-01/SSE-02 changes public score/notation contracts, the frozen vNext contract must receive explicit acceptance. Once that contract is accepted, implementation that exactly follows it may proceed autonomously stage-by-stage until another listed human gate is reached.
+
+Whole staff/part topology remains a separate design/approval gate even after the grace/articulation/ornament vNext contract is accepted.
 
 ## Architecture documentation gate
 
@@ -63,7 +79,8 @@ Do not:
 - describe planned functionality as production-ready;
 - describe a work branch as a `main` capability;
 - leave diagrams that imply deprecated authority flow;
-- blur Editor Core vs Rendering Layer vs SesliTab vs OMR/Guitar boundaries.
+- blur Editor Core vs Rendering Layer vs SesliTab vs OMR/Guitar boundaries;
+- describe a draft schema as active before its validator/cutover stage is merged.
 
 ## Evidence
 
@@ -75,7 +92,16 @@ Every stage closure should record:
 - dependency state;
 - known limitations;
 - public contracts changed;
-- whether canonical/runtime/production authority changed (normally `false`).
+- whether canonical/runtime/production authority changed.
+
+For schema-versioning stages additionally record:
+
+- accepted schema versions;
+- migration direction and loss behavior;
+- downgrade failures;
+- mixed-version rejection behavior;
+- MusicXML compatibility profile;
+- downstream session/renderer/host compatibility evidence.
 
 ## Dependency policy
 
@@ -103,6 +129,7 @@ Never make CI green by:
 - deleting or weakening legitimate regression tests;
 - broadening fail-open fallback;
 - silently ignoring unsupported MusicXML semantics;
-- disabling canonical validation.
+- disabling canonical validation;
+- silently dropping vNext fields during migration/downgrade.
 
 Do not merge with failing required checks or unresolved blocking review comments.
