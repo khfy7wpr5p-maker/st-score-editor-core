@@ -7,10 +7,10 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 The repository has three distinct capability lines:
 
 1. **Core E0–E8-C** — canonical score model, bounded MusicXML import/export, semantic addressing, atomic edits/history, notation sidecar, renderer/browser contracts and read-only Guitar Workspace evidence.
-2. **SEC-SMUFL-KEYPAD-01** — existing-score correction keypad, complete through SEC-KP-10; general onset retiming remains intentionally absent.
-3. **SEC-NE Sibelius-style authoring expansion** — complete through SEC-NE-04A, 04C, 04B1 and the bounded 04B2 implicit-gap materialization stage.
+2. **SEC-SMUFL-KEYPAD-01** — existing-score correction keypad, complete through SEC-KP-10.
+3. **SEC-NE Sibelius-style authoring expansion** — complete through SEC-NE-05 for bounded score authoring and fail-closed retiming.
 
-### SEC-NE current state
+### SEC-NE completed state
 
 - **SEC-NE-01 — COMPLETE / MERGED:** exact selected-rest note entry.
 - **SEC-NE-02 — COMPLETE / MERGED:** selected-rest entry through unified history/session/browser composition.
@@ -19,30 +19,27 @@ The repository has three distinct capability lines:
 - **SEC-NE-04C — COMPLETE / MERGED:** low-level explicit-rest position note-entry primitive.
 - **SEC-NE-04B1 — COMPLETE / MERGED:** revision-bound MusicXML measure/time evidence.
 - **SEC-NE-04B2 — COMPLETE / MERGED:** conservative legal implicit-silence assessment and deterministic full-gap explicit-rest materialization.
+- **SEC-NE-05 — COMPLETE / MERGED:** bounded canonical event onset movement plus atomic retiming of the already-supported exact 3:2 three-event triplet profile.
 
-04B2 does **not** treat an empty-looking span as immediately writable. Materialization is admitted only when:
+### SEC-NE-05 retiming boundary
 
-- the requested window is already classified by 04A as one target-voice `IMPLICIT_GAP_UNADMITTED` span;
-- current 04B1 evidence exists for the exact canonical measure/staff;
-- 04B1 effective meter equals 04A timing meter;
-- the source measure is not `implicit="yes"`;
-- the source measure is not `non-controlling="yes"`;
-- the requested window lies fully inside one exact target-voice implicit gap.
+`editor-event-retiming` admits `MOVE_EVENT/1.0.0` only for a current event inside its existing measure/voice. The target keeps its event/note identities, duration and pitch; only onset changes. The result is independently rechecked by SEC-NE-04A timing/occupancy validation.
 
-When admitted, the **entire containing gap** becomes one fresh canonical rest. Existing event IDs and onsets are unchanged. Another gap in the same voice is not materialized accidentally.
+Single-event movement fails closed when the target carries beam/tuplet/tie/slur coupling, or when the move crosses another event carrying such relation-sensitive notation. This prevents event-order changes from silently corrupting notation relationships.
 
-04B2 remains low-level and adds no second browser/session cursor-write API. After same-revision notation rebinding, the new rest is an ordinary `EXPLICIT_REST_SLOT`, so existing explicit-rest authoring authority can be composed on top without renderer or host inference.
+`editor-triplet-retiming` separately admits one atomic current **3:2 three-event triplet** range. All three events move as one revision and preserve their current triplet notation. The profile requires three consecutive equal-duration contiguous events with exact start/middle/stop tuplet evidence. Beam or tie/slur coupling remains unsupported in this v1 group-retiming profile.
+
+For MusicXML-derived scores, retiming requires current SEC-NE-04B1 evidence for the exact measure. Pickup/incomplete (`implicit="yes"`), non-controlling and unknown-meter measures remain fail-closed.
 
 ### Next stages
 
-- **SEC-NE-05:** canonical onset movement/retiming.
 - **SEC-NE-06:** structural authoring.
 - **SEC-NE-07:** advanced note/notation authoring.
 - **SEC-NE-XML-ROUNDTRIP:** broader golden preservation/equivalence hardening.
 - **SEC-NE-08:** guitar/TAB authoring composition.
 - **SEC-NE-09:** SesliTab product integration.
 
-The repository still does **not** support arbitrary note dragging/retiming, automatic voice creation, pickup/non-controlling implicit-gap authoring, or renderer-coordinate gap authority.
+The repository still does **not** authorize cross-measure drag, independent movement of relation-coupled events, automatic voice creation, pickup/non-controlling implicit-gap authoring, or renderer-coordinate edit authority.
 
 ## Canonical authority
 
@@ -57,7 +54,7 @@ SemanticAddress / Selection / InsertionPosition
         ↓
 04A timing + 04B1 measure evidence
         ↓
-typed bounded authoring primitive
+typed bounded authoring / retiming primitive
         ↓
 atomic validated child revision
         ↓
@@ -78,11 +75,11 @@ Legacy `importMusicXml` remains the narrow E2 score-only profile and rejects new
 
 Short measure length alone is never pickup proof. `.mxl` remains unadmitted.
 
-## Insertion and implicit-gap safety
+## Insertion and retiming safety
 
-`editor-measure-timing` remains the first timing veto. Its base classifications remain unchanged. 04B2 does not weaken `IMPLICIT_GAP_UNADMITTED`; instead a separate `editor-implicit-gap-materialization` primitive may convert one specifically proven normal-measure gap into an explicit rest.
+`editor-measure-timing` remains the independent timing veto for both insertion and retiming. 04B2 may convert one specifically proven normal-measure implicit gap into an explicit rest. 05 may move admitted canonical events only if the final whole voice remains non-overlapping and inside the active measure span.
 
-Pickup/implicit and non-controlling/multimetric measures remain fail-closed in the first 04B2 profile.
+Relation coupling is never guessed from renderer geometry or nearest-neighbor order. Unsupported relation-coupled retiming rejects instead of degrading notation.
 
 ## Renderer, host and Guitar boundaries
 
@@ -100,7 +97,7 @@ Build-only:
 - `typescript@6.0.3`
 - `esbuild@0.28.2`
 
-SEC-NE-01/02/03/04A/04C/04B1/04B2 add no third-party dependency.
+SEC-NE through 05 adds no third-party dependency.
 
 ## Documentation
 

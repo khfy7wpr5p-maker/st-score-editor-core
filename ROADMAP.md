@@ -14,7 +14,6 @@ This file records merged/in-progress/not-started repository reality. Planned sta
 ## SEC-SMUFL-KEYPAD-01
 
 - **SEC-KP-00–10 — COMPLETE.**
-- General onset retiming remains unavailable until SEC-NE-05.
 
 ## SEC-NE — Sibelius-style authoring expansion
 
@@ -28,52 +27,59 @@ This file records merged/in-progress/not-started repository reality. Planned sta
 - **SEC-NE-04C — COMPLETE / MERGED:** low-level explicit-rest position note-entry.
 - **SEC-NE-04B1 — COMPLETE / MERGED:** bounded revision-bound MusicXML time/measure evidence.
 - **SEC-NE-04B2 — COMPLETE / MERGED:** conservative normal-measure implicit-silence assessment and deterministic full-gap rest materialization.
+- **SEC-NE-05 — COMPLETE / MERGED:** bounded canonical onset movement and atomic current 3:2 triplet-group retiming.
 
-### SEC-NE-04B2 exact capability
+### SEC-NE-05 exact capability
 
-04B2 admits materialization only when all of the following are true:
+05 has two first-party low-level primitives:
 
-- current 04B1 evidence validates against the current score revision;
-- current 04A window classification is `IMPLICIT_GAP_UNADMITTED` for the exact target voice;
-- the requested window lies fully inside one target-voice implicit gap;
-- 04B1 effective meter equals 04A timing meter;
-- source `implicit` is absent/no, never `yes`;
-- source `non-controlling` is absent/no, never `yes`.
+1. `editor-event-retiming` / `MOVE_EVENT/1.0.0`
+   - exact current `EventAddress`;
+   - same measure/voice only;
+   - only onset changes;
+   - deterministic voice-order rebuild;
+   - independent 04A overlap/overflow veto;
+   - target beam/tuplet/tie/slur coupling rejects;
+   - crossing another relation-coupled event rejects.
 
-If admitted, the entire containing gap becomes one fresh canonical rest. Existing events are not retimed, other gaps remain untouched, and the candidate must pass canonical score validation.
+2. `editor-triplet-retiming` / `MOVE_TRIPLET_GROUP/1.0.0`
+   - exactly three current consecutive events;
+   - equal canonical durations and contiguous canonical timing;
+   - explicit 3:2 start/middle/stop tuplet evidence;
+   - all three onsets move atomically in one child revision;
+   - beam/tie/slur coupling remains fail-closed in v1;
+   - independent 04A timing veto after mutation.
 
-04B2 is low-level. It does not directly enter a pitch and does not add a new browser/session cursor-write API. After notation rebind, the new rest is an ordinary 04A `EXPLICIT_REST_SLOT` for existing explicit-rest authoring composition.
+MusicXML-derived retiming additionally requires current 04B1 measure evidence and rejects `implicit="yes"`, `non-controlling="yes"` and unknown-meter measures.
 
 ### Next dependency order
 
-1. **SEC-NE-05 — NOT STARTED:** canonical onset mutation / retiming.
-2. **SEC-NE-06 — NOT STARTED:** structural score authoring.
-3. **SEC-NE-07 — NOT STARTED:** advanced notation/note-entry authoring.
-4. **SEC-NE-XML-ROUNDTRIP — BOUNDED SUBSET / HARDENING CONTINUES:** golden preservation/equivalence coverage for new semantics.
-5. **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
-6. **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
+1. **SEC-NE-06 — NOT STARTED:** structural score authoring.
+2. **SEC-NE-07 — NOT STARTED:** advanced notation/note-entry authoring.
+3. **SEC-NE-XML-ROUNDTRIP — BOUNDED SUBSET / HARDENING CONTINUES:** golden preservation/equivalence coverage for new semantics.
+4. **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
+5. **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
 
-## SEC-NE-05 gate
+## SEC-NE-06 gate
 
-Onset movement/retiming must be a separately typed authority. It requires:
+Structural authoring must remain explicitly typed and identity-safe. Initial admitted order:
 
-- exact current semantic target;
-- exact overlap validation;
-- measure-boundary validation;
-- frozen tie/slur/beam/tuplet coupling policy;
-- atomic tuplet retiming;
-- unified history atomicity;
-- stale selection/insertion rejection or deterministic re-resolution;
-- no nearest-target inference.
+- add/remove measure;
+- add/remove voice;
+- set current measure time/key/clef/barline through notation authority;
+- copy/paste only with fresh canonical identities;
+- staff/part mutation only after separate bounded review.
+
+Removal may not silently orphan notation, relation endpoints or derivative evidence.
 
 ## Still fail-closed
 
 - pickup / `implicit="yes"` gap materialization;
 - non-controlling / multimetric gap materialization;
-- unknown or mismatched meter evidence;
-- cross-voice gap proof;
-- arbitrary onset movement;
-- automatic voice creation;
+- cross-measure retiming;
+- independent movement of beam/tuplet/tie/slur-coupled events;
+- arbitrary unsupported tuplet-group retiming;
+- automatic voice creation before SEC-NE-06;
 - renderer-coordinate authoring;
 - host dual-write;
 - production/public-write activation by merge.
@@ -82,7 +88,8 @@ Onset movement/retiming must be a separately typed authority. It requires:
 
 - `ScoreDocument` remains canonical.
 - MusicXML and measure evidence are not live editor state.
-- 04B2 write authority is limited to adding one explicit rest into a proven target-voice gap; it cannot move existing events.
+- Retiming may not bypass independent timing/occupancy validation.
+- Relation semantics may not be inferred from renderer/event proximity.
 - Renderer/DOM/SVG coordinates never become musical authority.
 - SesliTab may not dual-write score state.
 - OMR/AI output is advisory/evidence only.

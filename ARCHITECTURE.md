@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **Core remains implemented through E8-C. SEC-SMUFL-KEYPAD-01 is complete through SEC-KP-10. SEC-NE is COMPLETE / MERGED through 04A/04C/04B1 and the bounded 04B2 legal implicit-gap materialization stage. Canonical onset mutation and direct external-engine invocation remain unadmitted.**
+Status: **Core remains implemented through E8-C. SEC-SMUFL-KEYPAD-01 is complete through SEC-KP-10. SEC-NE is COMPLETE / MERGED through SEC-NE-05 for bounded insertion, legal-gap materialization and fail-closed onset retiming. Structural and advanced authoring remain later stages.**
 
 ## 1. Purpose
 
@@ -20,7 +20,7 @@ SemanticAddress / SelectionSnapshot / InsertionPosition
         ↓
 04A exact timing + 04B1 measure semantics
         ↓
-typed bounded edit / authoring primitive
+typed bounded edit / authoring / retiming primitive
         ↓
 independent validation
         ↓
@@ -59,13 +59,6 @@ Core:
 - `addressing` — revision-bound semantic identity;
 - `commands`, `history`, `notation-structure`, `notation-commands` — bounded mutation/history/notation foundations.
 
-Editor/render boundary:
-
-- `renderer-contract`, renderer adapters — presentation-only;
-- `editor-ui-contract`, `editor-shell`, `editor-selection` — non-authoritative UI/selection;
-- editor intents/history/session/browser runtime — unified composition;
-- keypad and renderer-selection bridge — existing-score correction / opaque-hit composition.
-
 SEC-NE authoring:
 
 - `editor-note-entry` — SEC-NE-01 selected-rest entry;
@@ -74,7 +67,11 @@ SEC-NE authoring:
 - `editor-measure-timing` — SEC-NE-04A timing/occupancy veto;
 - `editor-position-note-entry` — SEC-NE-04C explicit-rest position mutation;
 - `musicxml-measure-semantics` / `importMusicXmlWithMeasureSemantics` — SEC-NE-04B1 evidence;
-- `editor-implicit-gap-materialization` — SEC-NE-04B2 conservative implicit-silence assessment/materialization.
+- `editor-implicit-gap-materialization` — SEC-NE-04B2 conservative legal-gap rest materialization;
+- `editor-event-retiming` — SEC-NE-05 relation-safe single-event onset movement;
+- `editor-triplet-retiming` — SEC-NE-05 atomic current 3:2 triplet-group movement.
+
+Editor/render boundary remains presentation-only and uses semantic selection/history/session/browser packages without granting renderer authority.
 
 ## 5. Unified revision model
 
@@ -82,140 +79,105 @@ Authoritative editor history stores same-revision score + notation snapshots. Ac
 
 Revision-bound evidence used for an authoring decision must validate against the exact current score revision. Old `SelectionSnapshot`, `InsertionPosition`, RenderRequest or measure evidence cannot be replayed as current authority.
 
-## 6. SEC-NE explicit-rest authoring
+## 6. Bounded note-entry and legal-gap authoring
 
-### SEC-NE-01 / 02 — COMPLETE / MERGED
-Exact selected rest → note, with bounded trailing-rest split and unified session/history/browser composition.
+SEC-NE-01/02 provide exact selected-rest entry and unified composition. SEC-NE-03 defines semantic cursor identity. SEC-NE-04A independently derives effective meter and exact target-voice occupancy. SEC-NE-04C writes only inside one explicit rest.
 
-### SEC-NE-03 — COMPLETE / MERGED
-`InsertionPosition` is semantic cursor state bound to document/revision/part/staff/measure/voice/onset. It is never a renderer coordinate.
+SEC-NE-04B1 adds evidence authority, not mutation authority. It preserves admitted MusicXML meter, `implicit`, `non-controlling` and exact `backup`/`forward` cursor evidence.
 
-### SEC-NE-04A — COMPLETE / MERGED
-`editor-measure-timing` validates same-revision notation, derives effective meter and exact measure duration, calculates target-voice occupancy, rejects overlap/overflow and classifies windows as:
+SEC-NE-04B2 may convert one independently proven normal-measure target-voice implicit gap into one fresh explicit rest. Pickup/implicit and non-controlling measures remain fail-closed.
 
-- `EXPLICIT_REST_SLOT`;
-- `BLOCKED_PITCHED`;
-- `OUTSIDE_MEASURE`;
-- `IMPLICIT_GAP_UNADMITTED`;
-- `MIXED_UNADMITTED`.
+## 7. SEC-NE-05 onset mutation / retiming — COMPLETE / MERGED
 
-Only `EXPLICIT_REST_SLOT` is directly writable by 04C.
+### 7.1 Single-event authority
 
-### SEC-NE-04C — COMPLETE / MERGED
-Low-level position note entry inside one admitted explicit rest. Supports rest start/middle/end, exact fill and deterministic leading/trailing rest splits. Existing unrelated event onsets are not moved. No parallel cursor-position browser/session API was added.
+`editor-event-retiming` exposes `MOVE_EVENT/1.0.0`.
 
-## 7. SEC-NE-04B1 measure evidence — COMPLETE / MERGED
+The target must be one exact current `EventAddress` and remain inside the same measure/voice. The primitive changes only canonical onset and preserves event/note IDs, duration and pitch. Canonical event order is rebuilt deterministically.
 
-`importMusicXmlWithMeasureSemantics` returns same-revision score, notation and `MusicXmlMeasureSemanticsDocument`.
+Before acceptance:
 
-The evidence records canonical measure/staff target, source part/measure/staff provenance, `implicit`, `non-controlling`, declared/effective meter chain and exact-rational `backup`/`forward` cursor operations.
+- current notation is revalidated;
+- target beam/tuplet/tie/slur coupling causes rejection;
+- crossing another relation-coupled event causes rejection;
+- MusicXML-derived scores require current 04B1 measure evidence;
+- `implicit="yes"`, `non-controlling="yes"` and unknown-meter MusicXML measures reject;
+- the candidate notation is rebound to the candidate revision;
+- SEC-NE-04A re-analyzes the complete target voice and vetoes overlap/overflow.
 
-The evidence validator independently checks cursor arithmetic, source-measure uniqueness and meter inheritance consistency. Legacy `importMusicXml` still rejects these newly meaningful semantics rather than silently dropping them. Short measure length alone is not pickup proof.
+This is real canonical onset authority, but deliberately not unrestricted geometric drag authority.
 
-## 8. SEC-NE-04B2 legal implicit silence — COMPLETE / MERGED
+### 7.2 Atomic current 3:2 triplet authority
 
-04B2 introduces a **separate conservative admission layer**. It does not change 04A classifications and does not infer writable time from geometry or spacing alone.
+`editor-triplet-retiming` exposes `MOVE_TRIPLET_GROUP/1.0.0`.
 
-### 8.1 Assessment requirements
+The admitted profile is exactly the current keypad-supported 3:2 three-event triplet:
 
-`assessImplicitGapMaterialization` requires:
+- exactly three distinct consecutive events in one measure/voice;
+- equal canonical durations;
+- current canonical contiguity;
+- all three carry `actualNotes=3`, `normalNotes=2`;
+- first has one start boundary, middle no boundary, third matching stop boundary;
+- no beam coupling in v1;
+- no tie/slur coupling in v1.
 
-1. current valid 04B1 measure evidence;
-2. current revision-bound `InsertionPosition`;
-3. current same-revision notation;
-4. a positive requested duration;
-5. 04A classification exactly `IMPLICIT_GAP_UNADMITTED` for the target voice/window;
-6. exact 04B1 evidence for the same canonical part/staff/measure;
-7. non-null 04B1 effective meter equal to the independent 04A timing meter;
-8. source measure `implicit` not `yes`;
-9. source measure `non-controlling` not `yes`;
-10. requested window fully contained in one exact target-voice implicit-gap interval.
+The operation accepts one new group start onset, derives the second and third onsets from existing equal durations, and creates one atomic child revision. Partial triplet retiming is impossible. Final whole-voice timing is independently revalidated by 04A.
 
-MusicXML 4.0 defaults absent `implicit` and `non-controlling` attributes to `no`; therefore absent/no values may enter this conservative normal-measure profile. Explicit `yes` remains blocked.
+### 7.3 Coupling policy
 
-### 8.2 Materialization rule
+The frozen 05 policy is fail-closed:
 
-If admitted, `executeImplicitGapMaterialization` represents the **entire containing target-voice gap** as exactly one fresh canonical rest:
+- relation-free single events may move;
+- an existing admitted 3:2 triplet may move only as its exact atomic group;
+- independently moving beamed, tied, slurred or tupletted members is forbidden;
+- relation meaning is never inferred from nearest event, coordinates or new event order;
+- broader relation-aware retiming requires a later explicit contract.
 
-```text
-implicit gap [G0, G1)
-        ↓
-rest(id=fresh, onset=G0, duration=G1-G0)
-```
-
-No existing event ID, onset, duration or pitch is changed. Other implicit gaps remain implicit. Cross-voice occupation neither proves nor disproves silence in the target voice; admission is exact-target-voice.
-
-The candidate must pass canonical `ScoreDocument` validation and becomes one direct child revision or no mutation.
-
-### 8.3 Composition boundary
-
-04B2 is low-level. It does not directly create a pitched note and does not expose a new browser/session cursor API.
-
-After same-revision notation rebinding, the materialized rest becomes an ordinary 04A `EXPLICIT_REST_SLOT`; existing 04C authoring semantics can then be composed without introducing another score model or renderer authority.
-
-Undo/redo composition is proven through existing unified history. A future product-level one-gesture composition must preserve one semantic command path and must not create hidden dual-write state.
-
-### 8.4 Intentionally blocked
-
-- `implicit="yes"` measures, including pickup/mid-measure-repeat-like cases;
-- `non-controlling="yes"` multimetric measures;
-- unknown/mismatched meter evidence;
-- stale/missing measure evidence;
-- explicit-rest/pitched/mixed/outside-measure windows;
-- cross-voice inference;
-- renderer-coordinate inference;
-- arbitrary onset movement.
-
-## 9. Remaining authoring gates
-
-### SEC-NE-05 — NOT STARTED
-Canonical onset movement/retiming. Must freeze exact overlap/measure validation and tie/slur/beam/tuplet coupling; tuplets retime atomically.
+## 8. Remaining authoring gates
 
 ### SEC-NE-06 — NOT STARTED
-Structural score authoring.
+Structural score authoring. Measure/voice changes come first; staff/part changes require separately bounded admission. Removal cannot orphan notation or relation targets.
 
 ### SEC-NE-07 — NOT STARTED
-Advanced note/notation authoring.
+Advanced note/notation authoring. Reuse existing correction-keypad semantics instead of duplicating notation meaning where possible.
 
 ### SEC-NE-XML-ROUNDTRIP — HARDENING CONTINUES
-Broader golden preservation/equivalence coverage for newly admitted measure semantics and future authoring.
+Broader golden preservation/equivalence coverage for newly admitted measure, retiming, structural and advanced semantics.
 
 ### SEC-NE-08 / 09 — NOT STARTED
 Guitar/TAB authoring composition and SesliTab product integration.
 
-## 10. MusicXML boundary
+## 9. MusicXML boundary
 
 MusicXML is exchange/projection data, not live editor state. An importer must import a semantic, preserve it as bounded evidence, or reject it. Silent destructive loss is forbidden where musical meaning or authoring safety changes.
 
-04B2 relies only on admitted current 04B1 evidence and independent 04A canonical timing; it does not re-interpret raw XML in the mutation primitive. `.mxl` remains unadmitted.
+Retiming does not reinterpret raw XML. For MusicXML-derived scores, it consumes only current validated 04B1 measure evidence and independent canonical timing.
 
-## 11. Renderer / host / Guitar boundary
+`.mxl` remains unadmitted.
 
-Renderer packages remain presentation-only. SesliTab remains orchestration-only. Guitar Workspace remains derivative-only. Direct external-engine invocation remains human-gated.
+## 10. Dependencies
 
-## 12. Dependencies
+Runtime remains `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`. SEC-NE-05 adds no third-party dependency.
 
-Runtime remains `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`. SEC-NE-04B2 adds no third-party dependency.
-
-## 13. Non-negotiable invariants
+## 11. Non-negotiable invariants
 
 1. `ScoreDocument` is the single musical edit authority.
 2. MusicXML and sidecar evidence are not live edit state.
-3. Evidence cannot mutate canonical state by itself.
-4. Renderer/browser/DOM/SVG/coordinate state is never canonical authority.
-5. Current revision validation is mandatory.
-6. Stale selection/insertion/evidence fails closed.
-7. Timing/overlap/measure safety is an independent veto.
-8. 04B2 may only materialize a proven target-voice gap; it may not move existing events.
+3. Renderer/browser/DOM/SVG/coordinate state is never canonical authority.
+4. Current revision validation is mandatory.
+5. Stale selection/insertion/evidence fails closed.
+6. Timing/overlap/measure safety is an independent veto.
+7. Relation-coupled notation cannot be silently damaged by reorder/retiming.
+8. Partial tuplets are never independently retimed.
 9. Partial authoritative commits are forbidden.
 10. Source identity remains immutable.
 11. No production/public-write/direct-engine authority is granted by merge.
 12. No new runtime dependency is admitted implicitly.
 
-## 14. Current status
+## 12. Current status
 
 - E0–E7-H — COMPLETE
 - E8-A/B/C — IMPLEMENTED; E8-D HUMAN-GATED
 - SEC-KP-00–10 — COMPLETE
-- SEC-NE-00/01/02/03/04A/04C/04B1/04B2 — COMPLETE / MERGED
-- SEC-NE-05/06/07/08/09 — NOT STARTED
+- SEC-NE-00/01/02/03/04A/04C/04B1/04B2/05 — COMPLETE / MERGED
+- SEC-NE-06/07/08/09 — NOT STARTED

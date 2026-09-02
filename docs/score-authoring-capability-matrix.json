@@ -1,116 +1,50 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "document_type": "score_authoring_capability_matrix",
   "project": "ST Score Editor Core",
-  "as_of_stage": "SEC-NE-04B2",
+  "as_of_stage": "SEC-NE-05",
   "canonical_authority": "ScoreDocument",
   "status_values": ["COMPLETE_MERGED", "IN_PROGRESS", "NOT_STARTED", "HUMAN_GATED"],
   "capabilities": [
+    {"id":"SEC-NE-01","status":"COMPLETE_MERGED","capability":"selected explicit-rest note entry","public_surface":true},
+    {"id":"SEC-NE-02","status":"COMPLETE_MERGED","capability":"unified session/history/browser composition for selected-rest entry"},
+    {"id":"SEC-NE-03","status":"COMPLETE_MERGED","capability":"revision-bound canonical InsertionPosition","renderer_coordinate_authority":false},
+    {"id":"SEC-NE-04A","status":"COMPLETE_MERGED","capability":"measure timing, target-voice occupancy and explicit-rest admission","authoring_safe_classes":["EXPLICIT_REST_SLOT"]},
+    {"id":"SEC-NE-04C","status":"COMPLETE_MERGED","capability":"explicit-rest position note-entry primitive","public_surface":false,"browser_session_surface":false},
+    {"id":"SEC-NE-04B1","status":"COMPLETE_MERGED","capability":"revision-bound MusicXML time and measure-semantics evidence","evidence_contract":"MusicXmlMeasureSemanticsDocument/1.0.0","short_measure_pickup_inference":false},
+    {"id":"SEC-NE-04B2","status":"COMPLETE_MERGED","capability":"deterministic normal-measure target-voice implicit-gap rest materialization","implicit_gap_authority":"BOUNDED_REST_MATERIALIZATION_ONLY","pickup_gap_authority":false,"non_controlling_gap_authority":false},
     {
-      "id": "SEC-NE-01",
-      "status": "COMPLETE_MERGED",
-      "capability": "selected explicit-rest note entry",
-      "public_surface": true,
-      "browser_session_surface": true
+      "id":"SEC-NE-05",
+      "status":"COMPLETE_MERGED",
+      "capability":"bounded canonical onset movement and atomic supported-triplet retiming",
+      "packages":["editor-event-retiming","editor-triplet-retiming"],
+      "single_event_contract":"MOVE_EVENT/1.0.0",
+      "triplet_group_contract":"MOVE_TRIPLET_GROUP/1.0.0",
+      "single_event_same_measure_voice_only":true,
+      "independent_timing_veto":true,
+      "single_event_coupled_notation_rejected":["beam","tuplet","tie","slur"],
+      "crossing_coupled_event_rejected":true,
+      "supported_atomic_tuplet_profile":"3:2_THREE_CONSECUTIVE_EQUAL_DURATION_EVENTS",
+      "triplet_beam_tie_slur_coupling":false,
+      "musicxml_measure_evidence_required":true,
+      "pickup_retiming_authority":false,
+      "non_controlling_retiming_authority":false,
+      "cross_measure_retiming":false,
+      "new_runtime_dependency":false
     },
-    {
-      "id": "SEC-NE-02",
-      "status": "COMPLETE_MERGED",
-      "capability": "unified session/history/browser composition for selected-rest entry"
-    },
-    {
-      "id": "SEC-NE-03",
-      "status": "COMPLETE_MERGED",
-      "capability": "revision-bound canonical InsertionPosition",
-      "renderer_coordinate_authority": false
-    },
-    {
-      "id": "SEC-NE-04A",
-      "status": "COMPLETE_MERGED",
-      "capability": "measure timing, target-voice occupancy and explicit-rest admission",
-      "authoring_safe_classes": ["EXPLICIT_REST_SLOT"],
-      "fail_closed_classes": ["BLOCKED_PITCHED", "OUTSIDE_MEASURE", "IMPLICIT_GAP_UNADMITTED", "MIXED_UNADMITTED"]
-    },
-    {
-      "id": "SEC-NE-04C",
-      "status": "COMPLETE_MERGED",
-      "capability": "explicit-rest position note-entry primitive",
-      "public_surface": false,
-      "browser_session_surface": false,
-      "integration_mode": "LOW_LEVEL_FIRST_PARTY_PRIMITIVE",
-      "supports": ["rest_start", "rest_middle", "rest_end", "exact_rest_fill", "leading_rest_split", "trailing_rest_split"]
-    },
-    {
-      "id": "SEC-NE-04B1",
-      "status": "COMPLETE_MERGED",
-      "capability": "revision-bound MusicXML time and measure-semantics evidence",
-      "evidence_contract": "MusicXmlMeasureSemanticsDocument/1.0.0",
-      "legacy_import_musicxml_behavior_changed": false,
-      "short_measure_pickup_inference": false,
-      "evidence_mutation_authority": false,
-      "new_runtime_dependency": false
-    },
-    {
-      "id": "SEC-NE-04B2",
-      "status": "COMPLETE_MERGED",
-      "capability": "deterministic normal-measure target-voice implicit-gap rest materialization",
-      "package": "editor-implicit-gap-materialization",
-      "public_browser_session_surface": false,
-      "admission_requires": [
-        "current_04b1_evidence",
-        "current_insertion_position",
-        "04a_implicit_gap_unadmitted_window",
-        "single_target_voice_gap_containment",
-        "04b1_meter_equals_04a_meter",
-        "measure_implicit_not_yes",
-        "measure_non_controlling_not_yes"
-      ],
-      "materialization": "ENTIRE_CONTAINING_GAP_TO_ONE_FRESH_REST",
-      "existing_event_onset_mutation": false,
-      "cross_voice_inference": false,
-      "pickup_gap_authority": false,
-      "non_controlling_gap_authority": false,
-      "direct_pitched_note_entry": false,
-      "implicit_gap_authority": "BOUNDED_REST_MATERIALIZATION_ONLY",
-      "new_runtime_dependency": false
-    },
-    {
-      "id": "SEC-NE-05",
-      "status": "NOT_STARTED",
-      "capability": "canonical onset movement and retiming",
-      "unlocks": ["drag_move_note", "general_triplet_creation_removal", "rhythmic_restructuring"]
-    },
-    {
-      "id": "SEC-NE-06",
-      "status": "NOT_STARTED",
-      "capability": "structural score authoring"
-    },
-    {
-      "id": "SEC-NE-07",
-      "status": "NOT_STARTED",
-      "capability": "advanced notation and note-entry authoring"
-    },
-    {
-      "id": "SEC-NE-08",
-      "status": "NOT_STARTED",
-      "capability": "guitar/TAB authoring composition",
-      "guitar_state_authority": "DERIVATIVE_ONLY"
-    },
-    {
-      "id": "SEC-NE-09",
-      "status": "NOT_STARTED",
-      "capability": "SesliTab product integration",
-      "host_dual_write_allowed": false
-    }
+    {"id":"SEC-NE-06","status":"NOT_STARTED","capability":"structural score authoring"},
+    {"id":"SEC-NE-07","status":"NOT_STARTED","capability":"advanced notation and note-entry authoring"},
+    {"id":"SEC-NE-08","status":"NOT_STARTED","capability":"guitar/TAB authoring composition","guitar_state_authority":"DERIVATIVE_ONLY"},
+    {"id":"SEC-NE-09","status":"NOT_STARTED","capability":"SesliTab product integration","host_dual_write_allowed":false}
   ],
   "global_invariants": {
     "musicxml_live_edit_state": false,
     "renderer_canonical_authority": false,
     "host_canonical_authority": false,
-    "measure_semantics_evidence_mutation_authority": false,
     "stale_targets_fail_closed": true,
     "stale_evidence_fails_closed": true,
     "source_immutable": true,
+    "relation_semantics_never_inferred_from_geometry": true,
     "new_runtime_dependency_for_sec_ne": false
   }
 }
