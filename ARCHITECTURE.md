@@ -1,58 +1,50 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE is complete. SSE-00/01 are merged; SSE-02 provides the v2-native canonical session cutover as a merge candidate.**
+Status: **SEC-NE is complete. SSE-00–02 are merged; SSE-03 adds canonical grace authoring as a merge candidate.**
 
 ## Authority
 
-Each editor session has exactly one canonical versioned score+notation pair. Renderer/SesliTab remain presentation/orchestration only; MusicXML/OMR/Guitar remain exchange/evidence/derivative state.
+Each v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. Grace identity/order/anchor/written value live in canonical score state; grace visual notation lives in same-revision notation state. Renderer/SesliTab remain noncanonical.
 
-## V2 runtime path
-
-```text
-optional v1 input
-   |
-   | explicit lossless migration once
-   v
-ScoreDocumentV2 + NotationDocumentV2
-   |
-EditorHistoryStateV2
-   |
-RendererRequestV2 + RenderManifestV2
-   |
-opaque v2 semantic token
-   |
-SelectionSnapshotV2 / InspectorModelV2
-```
-
-The v2 session never stores a parallel mutable v1 copy. Mixed-version score/notation input rejects.
-
-## History and notation rebinding
-
-`editor-history-v2/2.0.0` stores one atomic score+notation snapshot per revision and requires direct-child revision lineage. Rebinding after score edits resolves every surviving notation target against the new v2 revision, including `grace-event` and `grace-note`; missing targets reject rather than orphaning notation.
-
-## Renderer boundary before SSE-06
-
-`renderer-contract-v2/2.0.0` always derives an exact v2 semantic manifest. If a v2 pair contains no v2-only semantic, it may be losslessly downgraded for the existing serializer and reports `V1_COMPATIBLE_XML`.
-
-If grace/articulation/ornament content would be lost, downgrade is not attempted as presentation truth. The request reports:
+## Grace authoring flow
 
 ```text
-projectionStatus = VNEXT_XML_PENDING
-musicXml = null
+exact current v2 semantic target
+        |
+GraceAuthoringIntentV2 + fresh nextRevisionId
+        |
+canonical candidate mutation
+        |
+ScoreDocumentV2 validation
+        |
+normal Voice.events occupancy fingerprint unchanged
+        |
+NotationDocumentV2 rebind / orphan veto
+        |
+EditorHistoryStateV2 atomic commit
+        |
+deterministic semantic selection
 ```
 
-This preserves semantic authority until SSE-06 supplies the bounded v2 MusicXML serializer/importer.
+Admitted operations are group create/remove, grace event add/remove/reorder, event replacement with stable event ID, and exact grace-note pitch edits. Added grace events may be note, rest or chord.
 
-## V2 selection
+## Safety
 
-Opaque render tokens resolve through the current request/revision and may target normal document/part/staff/measure/voice/event/note entities plus canonical grace group/event/note identities. No geometry is canonical.
+Grace groups remain anchored to exact normal events in the same voice. The v2 validator prevents missing anchors and duplicate identities. The authoring layer independently confirms that normal timed event ID/kind/onset/duration occupancy is unchanged.
 
-## Stage boundary
+Removing the last grace event is rejected; group removal must be explicit. Replacing or deleting a grace entity that still has notation targets is rejected by v2 notation rebinding rather than silently discarding notation.
 
-SSE-02 establishes runtime identity/history infrastructure only. Grace, articulation and ornament mutation remain closed until SSE-03/04/05. This prevents authoring semantics from being added before a single-version history and selection model exists.
+All targets are revision-bound. Old addresses cannot be replayed after a commit.
 
-## Compatibility
+## Rendering / MusicXML boundary
 
-V1 packages remain available and unchanged for existing consumers. V2 is a separate explicit path. Existing SEC-NE regressions remain required throughout the expansion.
+V2 render manifests already expose exact grace group/event/note identities. Until SSE-06, a score containing grace semantics reports `VNEXT_XML_PENDING` and no lossy MusicXML projection.
 
-Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`. No renderer/host authority, Guitar reverse-write, persistence/network authority or production activation is added.
+## Next stages
+
+- SSE-04 — typed articulation authoring for normal/grace event notation;
+- SSE-05 — ornament authoring with relation-safe spanning forms;
+- SSE-06 — bounded v2 MusicXML round trip;
+- SSE-07 — product renderer/SesliTab compatibility.
+
+Staff/part topology and cross-staff remain separate SSE-08+ gates. No dependency, renderer/host authority, persistence/network authority or production activation is added by SSE-03.

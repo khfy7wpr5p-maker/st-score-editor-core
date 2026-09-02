@@ -4,25 +4,28 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-The SEC-NE bounded program is complete. SCORE-SCHEMA-EXPANSION is implemented through the **SSE-02 v2-native session cutover** on this merge candidate.
+SCORE-SCHEMA-EXPANSION is implemented through **SSE-03 canonical grace authoring** on this merge candidate.
 
-- **SSE-00 — COMPLETE / MERGED:** vNext contract frozen and approved.
-- **SSE-01 — COMPLETE / MERGED:** additive v2 score/notation/addressing and migration substrate.
-- **SSE-02 — COMPLETE / MERGE CANDIDATE:** one canonical v2 session/history/render/selection path.
-- **SSE-03 — NEXT:** grace-note authoring.
+- **SSE-00–02 — COMPLETE / MERGED:** approved v2 contract, dual-version substrate and single canonical v2 session/history/render/selection path.
+- **SSE-03 — COMPLETE / MERGE CANDIDATE:** typed grace group/event/pitch authoring.
+- **SSE-04 — NEXT:** articulation authoring.
 
-## SSE-02 session cutover
+## SSE-03 grace authoring
 
-`editor-session-controller-v2/2.0.0` owns one `ScoreDocumentV2 + NotationDocumentV2` pair. V1 input may enter only through explicit `createEditorSessionV2FromV1`, which performs the approved lossless migration once; the resulting session retains no parallel mutable v1 state.
+`editor-grace-authoring-v2/1.0.0` operates only on exact current v2 semantic addresses. It can create/remove grace groups, add/remove/reorder grace events, author note/rest/chord grace content, replace an event while preserving its event identity and edit a grace note/chord-tone pitch.
 
-`editor-history-v2` stores atomic same-version score+notation snapshots, enforces direct-child revision lineage and rebinds normal plus grace notation targets. Disappearing targets fail closed.
+Every accepted edit creates one direct-child `ScoreDocumentV2` revision, rebinds same-revision `NotationDocumentV2`, and commits through `EditorHistoryStateV2`. The session deterministically selects a created or surviving entity after commit.
 
-`renderer-contract-v2` always produces a v2 semantic manifest. A v2 pair that can be losslessly represented by the existing v1 MusicXML serializer receives `V1_COMPATIBLE_XML`. If v2-only content exists before SSE-06, the request returns `VNEXT_XML_PENDING` with `musicXml: null` instead of silently dropping semantics.
+Safety rules include:
 
-`editor-selection-v2` resolves opaque v2 render tokens and supports normal plus `grace-group`, `grace-event` and `grace-note` identity.
-
-SSE-02 intentionally adds no grace/articulation/ornament mutation command; authoring begins in SSE-03–05 after this single-version session boundary is established.
+- grace edits may not alter normal timed `Voice.events` occupancy;
+- anchors remain exact normal events in the same voice;
+- fresh IDs are checked by canonical validation;
+- stale targets fail closed;
+- the final event cannot be removed without explicit group removal;
+- delete/replace operations that would orphan existing grace notation reject;
+- grace content remains `VNEXT_XML_PENDING` until SSE-06 rather than being silently omitted from MusicXML.
 
 ## Authority and dependencies
 
-Canonical authority is one versioned ScoreDocument per session; notation is same-version/same-revision. Renderer and SesliTab remain noncanonical. MusicXML/OMR/Guitar remain exchange/evidence/derivative state. Runtime dependencies remain only `saxes@6.0.0` and `xmlchars@2.2.0`; no production/public-write, persistence/network, E8-D or staff/part topology authority is activated.
+One v2 score+notation pair remains canonical per v2 session. Renderer/SesliTab remain noncanonical and Guitar remains derivative-only. Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`; no production/public-write, persistence/network, E8-D or staff/part topology authority is activated.

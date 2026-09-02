@@ -1,28 +1,30 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
-  "stage": "SSE-02",
+  "stage": "SSE-03",
   "status": "COMPLETE_MERGE_CANDIDATE",
-  "vnext_contract_approval": "APPROVED",
   "canonical_session_version": "2.0.0",
-  "legacy_v1_supported": true,
-  "session_boundary": {
-    "v1_to_v2_migration_at_creation": true,
-    "parallel_mutable_v1_v2": false,
-    "mixed_version_pair_allowed": false,
+  "sse_03": {
+    "grace_group_create_remove": true,
+    "grace_event_kinds": ["note", "rest", "chord"],
+    "grace_event_add_remove_reorder": true,
+    "grace_event_replace_preserves_event_id": true,
+    "grace_note_pitch_edit": true,
+    "normal_timed_occupancy_mutation": false,
+    "stale_targets_fail_closed": true,
+    "notation_orphan_allowed": false,
     "atomic_v2_history": true,
-    "grace_target_rebinding": true,
-    "v2_render_manifest": true,
-    "v2_only_xml_before_sse06": "VNEXT_XML_PENDING"
+    "deterministic_post_edit_selection": true,
+    "musicxml_status_until_sse06": "VNEXT_XML_PENDING"
   },
   "stages": [
     {"id":"SSE-00","status":"COMPLETE_MERGED"},
     {"id":"SSE-01","status":"COMPLETE_MERGED"},
-    {"id":"SSE-02","status":"COMPLETE_MERGE_CANDIDATE"},
-    {"id":"SSE-03","status":"NEXT"},
-    {"id":"SSE-04","status":"NOT_STARTED"},
+    {"id":"SSE-02","status":"COMPLETE_MERGED"},
+    {"id":"SSE-03","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"SSE-04","status":"NEXT"},
     {"id":"SSE-05","status":"NOT_STARTED"},
     {"id":"SSE-06","status":"NOT_STARTED"},
     {"id":"SSE-07","status":"NOT_STARTED"},
@@ -32,15 +34,15 @@
   ],
   "global_invariants": {
     "source_immutable": true,
-    "same_version_same_revision_score_notation": true,
+    "single_v2_score_notation_authority": true,
     "stale_revision_fails_closed": true,
     "single_atomic_score_notation_history": true,
+    "normal_timing_unchanged_by_grace_authoring": true,
     "renderer_canonical_authority": false,
     "host_dual_write": false,
     "musicxml_silent_loss": false,
-    "guitar_result_canonical_authority": false,
     "production_activation_by_merge": false,
     "new_runtime_dependency": false
   },
-  "next_stage": "SSE-03"
+  "next_stage": "SSE-04"
 }
