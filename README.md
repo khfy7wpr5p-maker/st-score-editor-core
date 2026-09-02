@@ -18,7 +18,7 @@ The repository has three distinct capability lines:
 - **SEC-NE-04A — COMPLETE / MERGED:** exact measure timing/target-voice occupancy and explicit-rest admission.
 - **SEC-NE-04C — COMPLETE / MERGED:** low-level explicit-rest position note-entry primitive.
 - **SEC-NE-04B1 — COMPLETE / MERGED:** revision-bound MusicXML measure/time evidence.
-- **SEC-NE-04B2 — COMPLETE IN THIS PR:** conservative legal implicit-silence assessment and deterministic full-gap explicit-rest materialization.
+- **SEC-NE-04B2 — COMPLETE / MERGED:** conservative legal implicit-silence assessment and deterministic full-gap explicit-rest materialization.
 
 04B2 does **not** treat an empty-looking span as immediately writable. Materialization is admitted only when:
 
