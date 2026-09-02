@@ -2,130 +2,69 @@
 
 Date: 2026-09-02
 
-Goal: evolve ST Score Editor Core from bounded correction into a general-purpose score-authoring core without changing canonical authority, renderer independence, source immutability or production/public-write policy.
-
-## Architectural rule
-
-```text
-MusicXML import/export
-        ↕
-Canonical ScoreDocument + revision-bound notation/evidence
-        ↕
-SemanticAddress / Selection / InsertionPosition
-        ↕
-04A timing + 04B1 measure semantics + typed authoring/retiming intent
-        ↕
-Atomic canonical revision
-        ↕
-Unified score+notation history
-        ↕
-RenderRequest / opaque selection bridge
-        ↕
-Presentation-only renderer / host
-```
+Goal: evolve ST Score Editor Core into a general-purpose renderer-independent score-authoring core while preserving canonical authority, source immutability and fail-closed semantics.
 
 ## Completed foundation
 
-- **SEC-NE-00 — COMPLETE:** external editor taxonomy; reference-only by default.
-- **SEC-NE-01 — COMPLETE / MERGED:** exact selected-rest note entry.
-- **SEC-NE-02 — COMPLETE / MERGED:** selected-rest entry through unified history/session/browser composition.
-- **SEC-NE-03 — COMPLETE / MERGED:** revision-bound canonical `InsertionPosition`; coordinates are non-authoritative.
-- **SEC-NE-04A — COMPLETE / MERGED:** exact effective-meter and target-voice occupancy analysis.
-- **SEC-NE-04C — COMPLETE / MERGED:** low-level position note entry inside an admitted explicit rest.
-- **SEC-NE-04B1 — COMPLETE / MERGED:** revision-bound MusicXML measure/time evidence.
-- **SEC-NE-04B2 — COMPLETE / MERGED:** proven normal-measure implicit gap → one deterministic explicit rest.
+SEC-NE-00 through SEC-NE-05 are COMPLETE / MERGED within their documented bounded profiles.
 
-## SEC-NE-05 — COMPLETE / MERGED
+## SEC-NE-06 — COMPLETE / MERGED
 
-**Goal achieved for bounded current authority:** admit canonical onset movement without allowing event-order changes to silently corrupt notation relationships.
+**Bounded structural goal achieved without opening unsafe topology inference.**
 
 Implemented:
 
-### Single event
+- `editor-structural-authoring/1.0.0`;
+- add measure after exact current measure with fresh measure + initial voice IDs;
+- remove only fully empty non-last measure with no measure-notation orphan;
+- add empty voice;
+- remove only empty non-last voice;
+- deterministic measure/voice ordinal normalization;
+- globally fresh identities;
+- same-revision notation rebind or rejection;
+- existing notation-command authority reused for time/key/clef/barline rather than duplicated;
+- `editor-copy-paste/1.0.0`;
+- relation-free source voice → exact empty target voice;
+- explicit fresh destination identity for every event/note;
+- exact onset/duration/pitch preservation;
+- safe notation cloning;
+- beam/tuplet/tie/slur-coupled source rejection;
+- independent target timing veto;
+- current safe 04B1 evidence required for MusicXML-derived targets;
+- unified history composition covered by regression tests.
 
-- additive `editor-event-retiming` package;
-- `MOVE_EVENT/1.0.0` contract;
-- exact current `EventAddress` required;
-- same measure/voice only;
-- canonical non-negative new onset;
-- event/note identity, duration and pitch preserved;
-- deterministic canonical event reorder;
-- final target voice independently revalidated by 04A;
-- MusicXML-derived scores require current 04B1 evidence;
-- `implicit="yes"`, `non-controlling="yes"` and unknown-meter measures rejected;
-- target beam/tuplet/tie/slur coupling rejected;
-- crossing another relation-coupled event rejected;
-- unified history undo/redo composition tested.
+### Structural topology not guessed
 
-### Existing supported triplet
-
-- additive `editor-triplet-retiming` package;
-- `MOVE_TRIPLET_GROUP/1.0.0` contract;
-- exact three current consecutive equal-duration events;
-- canonical contiguity required;
-- explicit existing 3:2 tuplet notation required;
-- exact start/middle/stop boundary evidence required;
-- all three onsets derived from one new group start and moved atomically;
-- partial triplet movement impossible;
-- beam and tie/slur coupling remain fail-closed in v1;
-- final whole voice independently revalidated by 04A;
-- unified history composition tested.
-
-SEC-NE-05 does not expose renderer-coordinate drag authority or a new browser/session movement surface. UI composition must route an exact semantic target into these canonical primitives.
+Staff/part add/remove remains a separate topology gate because current contracts do not explicitly encode cross-staff measure correspondence, staff alignment policy or safe relationship ownership. This is an intentional fail-closed boundary, not an incomplete implementation disguised as support.
 
 ## Next autonomous sequence
 
-### SEC-NE-06 — NOT STARTED
-
-**Goal:** structural score authoring without breaking identity, notation or history safety.
-
-Initial order:
-
-1. add/remove measure;
-2. add/remove voice;
-3. set measure-level time/key/clef/barline through notation authority;
-4. copy/paste with fresh canonical identities;
-5. staff/part mutation only after separate bounded review.
-
-Required:
-
-- typed structural intents;
-- globally fresh IDs;
-- deterministic ordinals;
-- no notation target orphaning;
-- no relation endpoint orphaning;
-- exact revision lineage;
-- one unified history transaction;
-- no implicit production/public-write authority.
-
 ### SEC-NE-07 — NOT STARTED
 
-Advanced authoring: chord entry, grace-note policy, broader tuplets, tie/slur during entry, articulations/ornaments, enharmonic spelling, transposition and multi-measure paste. Existing correction-keypad semantics should be reused instead of duplicated where they already express the required notation meaning.
+Use current canonical/notation capabilities to expose advanced authoring without duplicating semantics already present in commands/keypad packages.
+
+Priority:
+
+1. chord construction/removal through canonical chord commands;
+2. pitch/duration transformation with current timing veto;
+3. accidental/dot/beam/tuplet/tie/slur authoring by composing existing notation contracts;
+4. bounded transposition/enharmonic operations representable by current pitch model;
+5. multi-event/paste composition only through fresh identities and existing safety gates.
+
+Grace notes, articulations and ornaments are not present in public `ScoreDocument`/`NotationDocument` 1.0.0. Adding them requires a public schema expansion and therefore remains a human-gated design decision rather than an autonomous silent schema break.
 
 ### SEC-NE-XML-ROUNDTRIP — HARDENING CONTINUES
 
-E2 bounded semantic round trip exists. Newly admitted time/measure semantics, retiming and later structural/advanced capabilities require golden preservation/export/re-import equivalence tests before broader claims.
+Build a golden first-party/public-domain corpus for every admitted import/edit/export/re-import semantic. No unsupported semantic may disappear silently.
 
 ### SEC-NE-08 — NOT STARTED
 
-Guitar/TAB authoring composition; standard notation remains canonical and fingering remains derivative unless separately admitted.
+Compose guitar/TAB authoring on top of generic Editor Core. Standard notation stays canonical; string/fret/fingering stays derivative unless separately admitted.
 
 ### SEC-NE-09 — NOT STARTED
 
-SesliTab integration; no dual-write, same semantic command path for pointer/keyboard/mobile, renderer remains presentation-only.
-
-## Still not admitted
-
-- pickup / `implicit="yes"` writable-gap materialization;
-- non-controlling/multimetric writable-gap materialization;
-- cross-measure retiming;
-- independent movement of beam/tuplet/tie/slur-coupled events;
-- arbitrary unsupported tuplet group retiming;
-- automatic voice creation before 06;
-- renderer-coordinate edit authority;
-- host dual-write state;
-- production/public-write activation by merge.
+Compose SesliTab host/UI around one canonical Editor Core state and one renderer presentation path. No dual-write, no renderer-owned edit state, playback independent from OMR completeness where possible.
 
 ## Definition of done
 
-Each stage records exact base/head/merge SHA, supported Node CI, package-boundary regression tests, contracts changed, dependency/license state, known limitations, current-reality docs and explicit authority-change status.
+Every stage requires exact PR/head/merge identity, supported Node CI, package-boundary regressions, synchronized current-reality docs, no hidden dependency/license change and explicit authority-change recording.
