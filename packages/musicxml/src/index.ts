@@ -46,6 +46,13 @@ export type {
 } from './importer.js';
 
 export {
+  importNotationMusicXml
+} from './notationImporter.js';
+export type {
+  NotationMusicXmlImportResult
+} from './notationImporter.js';
+
+export {
   MAX_SERIALIZED_DIVISIONS,
   serializeMusicXml
 } from './serializer.js';
