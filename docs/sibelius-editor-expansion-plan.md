@@ -4,54 +4,54 @@ Date: 2026-09-02
 
 Goal: evolve ST Score Editor Core into a renderer-independent general score-authoring core without weakening canonical authority, source immutability or fail-closed validation.
 
-## Completed autonomous authoring foundation
+## Completed foundation
 
-SEC-NE-00 through SEC-NE-06 are COMPLETE / MERGED within their bounded contracts.
+The original SEC-NE program and its bounded MusicXML round-trip work are COMPLETE / MERGED. The approved SCORE-SCHEMA-EXPANSION program has subsequently moved the canonical editor session to v2 and implemented:
 
-## SEC-NE-07 — COMPLETE / MERGED for current public schemas
+- **SSE-00–02 — COMPLETE / MERGED:** vNext contract, dual-version substrate and one canonical v2 session/history/render/selection state;
+- **SSE-03 — COMPLETE / MERGED:** canonical grace-note authoring;
+- **SSE-04 — COMPLETE / MERGED:** typed articulation authoring;
+- **SSE-05 — COMPLETE / MERGED:** relation-safe ornament authoring;
+- **SSE-06 — COMPLETE / MERGE CANDIDATE:** bounded isolated MusicXML v2 semantic round trip.
 
-`editor-advanced-authoring/1.0.0` composes existing canonical edit commands with same-revision notation safety and independent timing validation.
+The earlier statement that grace notes, articulations and ornaments required a future schema is historical: that schema design was approved at SSE-00 and is now implemented as `ScoreDocumentV2` / `NotationDocumentV2` 2.0.0.
 
-Implemented/reused capability:
+## Current MusicXML capability
 
-- pitch mutation;
-- rest ↔ note replacement;
-- chord tone add/remove;
-- duration change with 04A timing veto;
-- duration rejection when written dots/beams/tuplet metadata would be silently desynchronized;
-- notation orphan prevention after entity-changing score edits;
-- current safe 04B1 measure evidence for MusicXML-derived duration edits;
-- existing notation commands for accidentals, dots, beams, meter/key/clef/barlines;
-- existing explicit-target advanced keypad semantics for current 3:2 triplets, ties and slurs;
-- SEC-NE-05 for admitted relation-safe movement;
-- SEC-NE-06 fresh-ID copy/paste for relation-free content.
+SSE-06 adds a separate v2 parser/importer/serializer rather than widening legacy v1 acceptance. The admitted round trip preserves canonical grace note/rest/chord semantics, bounded grace playback/written-value notation, typed articulations, simple ornaments, single/spanning tremolo and numbered wavy-line relations. Unsupported or ambiguous forms reject rather than disappear.
 
-No duplicate score or notation semantics were introduced.
+MusicXML remains exchange/projection data; it never becomes live editor authority. The internal v1-compatible timed projection used by the v2 importer is noncanonical and exists only to reuse the proven timed-score importer.
 
-## Human-gated advanced schema program
+## Next autonomous stage
 
-The following cannot be implemented correctly without changing public schemas:
+### SSE-07 — Renderer + SesliTab v2 compatibility — NEXT
 
-- grace-note canonical identity/timing;
-- articulations;
-- ornaments.
+Connect the proven v2 projection to the product rendering boundary without giving renderer or host state mutation authority. Required work includes:
 
-A future schema version must define validation, MusicXML import/export mapping, round-trip semantics, renderer contract impact and migration/compatibility. Whole staff/part topology likewise requires a separately frozen structural contract.
+- v2-only renderer request projection instead of permanent `VNEXT_XML_PENDING` where the bounded v2 serializer can represent the pair;
+- opaque token coverage for normal and grace address kinds;
+- exact revision-bound hit/selection continuity after rerender;
+- pointer/keyboard/touch convergence on editor-owned semantic intents;
+- playback/edit-admission separation;
+- no SesliTab host dual-write;
+- fail-closed behavior for stale/mismatched renderer requests and unsupported projection profiles.
 
-## Next autonomous sequence
+SSE-07 must not broaden canonical score authority or silently downgrade v2 semantics.
 
-### SEC-NE-XML-ROUNDTRIP — NEXT
+## Later human-gated sequence
 
-Create first-party synthetic golden fixtures and semantic-equivalence regression covering admitted MusicXML and current score/notation editing. Focus on preservation, not byte identity. Unsupported forms must reject rather than disappear.
+### SSE-08 — Staff/part topology contract — HUMAN-GATED DESIGN
 
-### SEC-NE-08 — NOT STARTED
+Freeze part/staff identity lifecycle, aligned-measure correspondence, notation ownership, instrument/TAB staff semantics, migration, source-map and renderer impacts before authoring is implemented.
 
-Compose Guitar Workspace/TAB proposals with generic Editor Core authoring. Standard notation remains canonical. Guitar string/fret/fingering stays derivative unless separately admitted; no guitar-specific bypass of timing/history/identity safety.
+### SSE-09 — Staff/part topology authoring — NOT STARTED
 
-### SEC-NE-09 — NOT STARTED
+Only after SSE-08 approval.
 
-Compose SesliTab around one Editor Core canonical state, one presentation renderer path and revision-bound semantic hit/selection state. No host dual-write and no playback lock caused merely by incomplete OMR when playable canonical content exists.
+### SSE-10 — Cross-staff canonical relation model — NOT STARTED
+
+Requires separately approved ownership, editing and MusicXML-preservation rules.
 
 ## Completion rule
 
-Autonomous work may complete current-contract capabilities and hardening. Public schema breaks, whole staff/part topology authority, direct external-engine invocation and production/public-write activation remain explicit human gates.
+Autonomous work may continue through SSE-07 under existing authority invariants. Public schema breaks beyond the approved v2 contract, whole staff/part topology authority, cross-staff ownership, direct external-engine invocation and production/public-write activation remain explicit human gates.
