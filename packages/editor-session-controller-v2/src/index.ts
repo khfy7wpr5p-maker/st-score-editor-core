@@ -25,6 +25,11 @@ import {
   type GraceAuthoringIdentityV2,
   type GraceAuthoringIntentV2
 } from '../../editor-grace-authoring-v2/src/index.js';
+import {
+  executeArticulationAuthoringV2,
+  type ArticulationAuthoringIdentityV2,
+  type ArticulationAuthoringIntentV2
+} from '../../editor-articulation-authoring-v2/src/index.js';
 import type { EditorStatus } from '../../editor-ui-contract/src/index.js';
 
 export const EDITOR_SESSION_CONTROLLER_V2_VERSION = '2.0.0' as const;
@@ -120,6 +125,26 @@ export const commitSessionGraceIntentV2 = (
     selection,
     inspector,
     editorStatus('success', 'GRACE_EDIT_COMMITTED', 'Grace edit committed.')
+  );
+};
+
+export const commitSessionArticulationIntentV2 = (
+  session: EditorSessionStateV2,
+  intent: ArticulationAuthoringIntentV2,
+  identity: ArticulationAuthoringIdentityV2
+): Readonly<EditorSessionStateV2> => {
+  const base = session.history.present;
+  const result = executeArticulationAuthoringV2(base.score, base.notation, intent, identity);
+  const history = commitEditorHistoryV2(session.history, result.score, result.notation);
+  const nextAddress = addressEntityV2(result.score, result.selectionEntityId);
+  const selection = createSelectionSnapshotV2(result.score, nextAddress);
+  const inspector = createInspectorModelV2(result.score, nextAddress);
+  return state(
+    session.renderRequest.renderer,
+    history,
+    selection,
+    inspector,
+    editorStatus('success', 'ARTICULATION_EDIT_COMMITTED', 'Articulation edit committed.')
   );
 };
 
