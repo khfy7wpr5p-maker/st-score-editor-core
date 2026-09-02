@@ -1,33 +1,27 @@
 {
-  "schema_version":"1.6.0",
+  "schema_version":"1.7.0",
   "document_type":"score_authoring_capability_matrix",
   "project":"ST Score Editor Core",
-  "as_of_stage":"SEC-NE-XML-ROUNDTRIP",
+  "as_of_stage":"SEC-NE-08",
   "canonical_authority":"ScoreDocument",
   "capabilities":[
-    {"id":"SEC-NE-01-06","status":"COMPLETE_MERGED","capability":"bounded note entry, timing/evidence, legal-gap materialization, retiming, measure/voice structure and relation-safe copy/paste"},
+    {"id":"SEC-NE-01-07","status":"COMPLETE_MERGED","capability":"bounded current-schema score and notation authoring"},
+    {"id":"SEC-NE-XML-ROUNDTRIP","status":"COMPLETE_MERGED","capability":"bounded notation serializer-profile semantic export/re-import","import_surface":"importNotationMusicXml","export_surface":"serializeNotationMusicXml"},
     {
-      "id":"SEC-NE-07",
-      "status":"COMPLETE_MERGED",
-      "capability":"advanced authoring representable by public ScoreDocument/NotationDocument 1.0.0",
-      "package":"editor-advanced-authoring/1.0.0",
-      "reuses":["commands","notation-commands","editor-keypad-advanced","editor-measure-timing"],
-      "grace_notes":"HUMAN_GATED_SCHEMA_EXPANSION",
-      "articulations":"HUMAN_GATED_SCHEMA_EXPANSION",
-      "ornaments":"HUMAN_GATED_SCHEMA_EXPANSION"
-    },
-    {
-      "id":"SEC-NE-XML-ROUNDTRIP",
+      "id":"SEC-NE-08",
       "status":"COMPLETE_MERGE_CANDIDATE",
-      "capability":"bounded notation serializer-profile semantic export/re-import",
-      "import_surface":"importNotationMusicXml",
-      "export_surface":"serializeNotationMusicXml",
-      "roundtrip_semantics":["pitch","chord","rest","onset","duration","voice","staff","time","key","clef","barline","repeat","dots","accidental","beams","current_tuplet","tie","slur","04b1_measure_evidence"],
-      "legacy_importer_broadened":false,
-      "safe_parser_budget_preserved":true,
+      "capability":"revision-bound derivative Guitar/TAB authoring companion",
+      "package":"editor-guitar-authoring/1.0.0",
+      "reuses":["guitar-workspace-projection","guitar-workspace-result","editor-advanced-authoring"],
+      "guitar_state_authority":"DERIVATIVE_ONLY",
+      "validated_current_result_required":true,
+      "reverse_canonical_write":false,
+      "teacher_review_grants_write":false,
+      "canonical_edit_invalidates_guitar_result":true,
+      "post_edit_status":"REQUIRES_RECOMPUTE",
+      "direct_external_engine_invocation":false,
       "new_runtime_dependency":false
     },
-    {"id":"SEC-NE-08","status":"NOT_STARTED","capability":"guitar/TAB authoring composition","guitar_state_authority":"DERIVATIVE_ONLY"},
     {"id":"SEC-NE-09","status":"NOT_STARTED","capability":"SesliTab product integration","host_dual_write_allowed":false}
   ],
   "human_gates":{
@@ -41,9 +35,9 @@
     "renderer_canonical_authority":false,
     "host_canonical_authority":false,
     "musicxml_live_edit_authority":false,
+    "guitar_result_canonical_authority":false,
     "source_immutable":true,
     "stale_targets_fail_closed":true,
-    "independent_timing_veto":true,
     "new_runtime_dependency_for_sec_ne":false
   }
 }
