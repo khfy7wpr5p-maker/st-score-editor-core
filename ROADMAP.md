@@ -17,41 +17,42 @@ This file records repository reality. Planned or human-gated capability is not p
 
 ## SCORE-SCHEMA-EXPANSION
 
-- **SSE-00 — IN PROGRESS / DESIGN BRANCH:** vNext public contract design; no runtime schema change.
-- **SSE-01 — HUMAN-GATED PENDING VNEXT CONTRACT APPROVAL:** dual-version types, validators and migration substrate.
-- **SSE-02 — NOT STARTED:** canonical session v2 cutover without parallel mutable authorities.
+- **SSE-00 — COMPLETE / MERGED:** vNext contract frozen and explicitly approved.
+- **SSE-01 — COMPLETE / MERGE CANDIDATE:** dual-version score/notation/addressing validation plus lossless migration and guarded downgrade.
+- **SSE-02 — NEXT:** canonical session v2 cutover without parallel mutable authorities.
 - **SSE-03 — NOT STARTED:** grace-note authoring.
 - **SSE-04 — NOT STARTED:** articulation authoring.
 - **SSE-05 — NOT STARTED:** ornament authoring.
 - **SSE-06 — NOT STARTED:** vNext MusicXML semantic round trip.
-- **SSE-07 — NOT STARTED:** renderer + SesliTab compatibility for new semantic address kinds.
+- **SSE-07 — NOT STARTED:** renderer + SesliTab compatibility for v2 semantic identities.
 - **SSE-08 — HUMAN-GATED DESIGN:** whole staff/part topology contract.
 - **SSE-09 — NOT STARTED:** staff/part topology authoring.
 - **SSE-10 — NOT STARTED:** cross-staff canonical relation model.
 
-### SSE-00 design decision
+## SSE-01 exact capability
 
-The vNext candidate does not weaken v1 timing rules. Grace notes are canonical but live in voice-owned `graceGroups` anchored to an exact normal event; they are not zero-duration `Voice.events` and do not consume normal measure occupancy.
+Additive packages:
 
-Articulations and ornaments extend typed event-level notation. Unsupported external semantics fail closed rather than being stored as arbitrary `other-*` strings.
+- `score-model-v2`: strict `ScoreDocumentV2 2.0.0` validation; normal timed-event semantics remain unchanged; canonical `VoiceV2.graceGroups` are non-occupancy material anchored to exact same-voice normal events.
+- `addressing-v2`: separate semantic-address contract `2.0.0`, including exact `grace-group`, `grace-event`, `grace-note` identity.
+- `notation-structure-v2`: strict `NotationDocumentV2 2.0.0`; finite typed articulation and ornament vocabulary; grace event/note notation; relation endpoint validation for admitted spanning ornaments.
+- `schema-migration-v1-v2`: deterministic v1 -> v2 conversion and typed `DOWNGRADE_UNREPRESENTABLE` on any lossy v2 -> v1 request.
 
-Proposed public versions are `ScoreDocumentV2 2.0.0` and `NotationDocumentV2 2.0.0`. Existing 1.0.0 runtime behavior remains unchanged until later approval and implementation.
+Existing v1 score/notation/addressing packages remain unchanged and continue to reject v2 input.
 
-## Migration gate
+## Session boundary
 
-v1 -> v2 must be deterministic and lossless. v2 -> v1 is permitted only when every v2-only semantic is empty; otherwise a typed `DOWNGRADE_UNREPRESENTABLE` result is required.
-
-No editor session may hold parallel mutable v1 and v2 canonical states.
+SSE-01 does not make v2 the active editor session model. Existing SEC-NE session/browser/SesliTab runtime remains v1 until SSE-02. Version conversion is explicit; parallel mutable v1/v2 canonical state in one session remains forbidden.
 
 ## Still fail-closed
 
-- v2 schema input to current v1 runtime validators;
-- schema-absent grace/articulation/ornament authoring on main;
-- silent v2 -> v1 data loss;
-- reverse Guitar/TAB write into canonical score;
-- stale result/address reuse;
+- mixed v1 score + v2 notation or v2 score + v1 notation;
+- v2 -> v1 downgrade with grace/articulation/ornament content;
+- v2 authoring before SSE-03/04/05;
+- unsupported MusicXML v2-only semantics before SSE-06;
 - renderer-coordinate authoring;
 - host dual-write;
-- production activation by merge.
+- E8-D direct external Guitar engine invocation;
+- production/public-write activation by merge.
 
-`ScoreDocument` 1.0.0 remains current canonical runtime authority until an approved v2 cutover stage is merged.
+Staff/part topology and cross-staff remain separately human-gated at SSE-08+.

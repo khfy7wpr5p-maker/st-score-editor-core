@@ -1,19 +1,38 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
-  "stage": "SSE-00",
-  "status": "DESIGN_FREEZE_CANDIDATE",
-  "base_main_sha": "df8402ab7ba29e4a05e7d09be24ba006c71830c3",
-  "runtime_schema_changed": false,
-  "proposed_versions": {
-    "score_document": "2.0.0",
-    "notation_document": "2.0.0"
+  "stage": "SSE-01",
+  "status": "COMPLETE_MERGE_CANDIDATE",
+  "vnext_contract_approval": "APPROVED",
+  "runtime_session_version": "1.0.0_UNTIL_SSE_02",
+  "available_schema_substrate": ["1.0.0", "2.0.0"],
+  "versions": {
+    "score_document_v1": "1.0.0",
+    "notation_document_v1": "1.0.0",
+    "semantic_address_v1": "1.0.0",
+    "score_document_v2": "2.0.0",
+    "notation_document_v2": "2.0.0",
+    "semantic_address_v2": "2.0.0",
+    "migration": "1.0.0"
+  },
+  "sse_01": {
+    "score_model_v2": true,
+    "notation_structure_v2": true,
+    "addressing_v2": true,
+    "v1_to_v2_lossless_deterministic": true,
+    "v2_to_v1_silent_loss_allowed": false,
+    "downgrade_error": "DOWNGRADE_UNREPRESENTABLE",
+    "downgrade_reports_exact_paths": true,
+    "v1_packages_broadened": false,
+    "v2_authoring_enabled": false,
+    "v2_session_cutover": false,
+    "new_runtime_dependency": false
   },
   "authority": {
-    "canonical_score": "ScoreDocumentV2",
-    "notation": "NotationDocumentV2",
+    "canonical_score": "ONE_VERSIONED_SCORE_DOCUMENT_PER_SESSION",
+    "notation": "SAME_VERSION_SAME_REVISION_NOTATION_DOCUMENT",
     "renderer_canonical": false,
     "host_canonical": false,
     "musicxml_live_state": false,
@@ -26,10 +45,8 @@
       "container": "VoiceV2.graceGroups",
       "anchoring": "EXACT_NORMAL_EVENT_SAME_VOICE",
       "placements": ["before", "after"],
-      "grace_event_kinds": ["note", "rest", "chord"],
       "normal_measure_occupancy": false,
-      "zero_duration_hack_allowed": false,
-      "renderer_only_attachment_allowed": false
+      "zero_duration_hack_allowed": false
     },
     "articulations": {
       "authority": "NotationDocumentV2.EventNotationV2",
@@ -39,21 +56,14 @@
     "ornaments": {
       "authority": "NotationDocumentV2.EventNotationV2",
       "typed_discriminated_union": true,
-      "supports_relation_aware_wavy_line": true,
-      "supports_relation_aware_tremolo": true,
+      "relation_endpoints_validated": true,
       "arbitrary_other_fallback": false
-    },
-    "migration": {
-      "v1_to_v2": "LOSSLESS_DETERMINISTIC",
-      "v2_to_v1": "ONLY_WHEN_NO_V2_ONLY_SEMANTICS",
-      "silent_loss_allowed": false,
-      "downgrade_error": "DOWNGRADE_UNREPRESENTABLE"
     }
   },
   "stages": [
-    {"id":"SSE-00","name":"Contract freeze","status":"IN_PROGRESS","runtime_change":false},
-    {"id":"SSE-01","name":"Dual-version substrate","status":"HUMAN_GATED_PENDING_CONTRACT_APPROVAL"},
-    {"id":"SSE-02","name":"Canonical session v2 cutover","status":"NOT_STARTED"},
+    {"id":"SSE-00","name":"Contract freeze","status":"COMPLETE_MERGED","runtime_change":false},
+    {"id":"SSE-01","name":"Dual-version substrate","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"SSE-02","name":"Canonical session v2 cutover","status":"NEXT"},
     {"id":"SSE-03","name":"Grace note authoring","status":"NOT_STARTED"},
     {"id":"SSE-04","name":"Articulation authoring","status":"NOT_STARTED"},
     {"id":"SSE-05","name":"Ornament authoring","status":"NOT_STARTED"},
@@ -67,14 +77,11 @@
     "source_immutable": true,
     "stale_revision_fails_closed": true,
     "single_atomic_score_notation_history": true,
-    "no_mixed_version_score_notation_pair": true,
-    "legacy_v1_validation_stable_during_v2_introduction": true,
-    "production_activation_by_merge": false,
-    "new_runtime_dependency_required_by_design": false
+    "parallel_mutable_v1_v2_session": false,
+    "legacy_v1_validation_stable": true,
+    "renderer_canonical_authority": false,
+    "host_dual_write": false,
+    "production_activation_by_merge": false
   },
-  "next_gate": {
-    "name": "VNEXT_CONTRACT_APPROVAL",
-    "required_before": ["SSE-01", "SSE-02"],
-    "approval_scope": "public ScoreDocumentV2/NotationDocumentV2 contract and migration semantics"
-  }
+  "next_stage": "SSE-02"
 }
