@@ -1,17 +1,23 @@
 import { createScoreDocument } from '../../score-model/src/index.js';
+import type { Pitch, Rational, ScoreDocument, SourceIdentity } from '../../score-model/src/index.js';
+import { addressEntity } from '../../addressing/src/index.js';
+import { createNotationDocument } from '../../notation-structure/src/index.js';
+import type { NotationDocument, TimeSignature } from '../../notation-structure/src/index.js';
+import {
+  createMusicXmlMeasureSemanticsDocument,
+  MUSICXML_MEASURE_SEMANTICS_VERSION
+} from '../../musicxml-measure-semantics/src/index.js';
 import type {
-  Pitch,
-  Rational,
-  ScoreDocument,
-  SourceIdentity
-} from '../../score-model/src/index.js';
+  MusicXmlCursorOperationEvidence,
+  MusicXmlMeasureSemanticsDocument,
+  MusicXmlTimeSignatureSource,
+  MusicXmlYesNoEvidence
+} from '../../musicxml-measure-semantics/src/index.js';
 
 import { MusicXmlError } from './errors.js';
 import { parseMusicXmlTree } from './parsedXml.js';
 import type { ParsedXmlNode } from './parsedXml.js';
-import {
-  createMusicXmlProcessingRuntime
-} from './processing.js';
+import { createMusicXmlProcessingRuntime } from './processing.js';
 import type { MusicXmlProcessingOptions } from './processing.js';
 import type { MusicXmlInput } from './xmlSafety.js';
 
@@ -21,6 +27,13 @@ export interface MusicXmlImportOptions extends MusicXmlProcessingOptions {
   readonly revisionId?: string;
 }
 
+export interface MusicXmlMeasureSemanticsImportResult {
+  readonly score: Readonly<ScoreDocument>;
+  readonly notation: Readonly<NotationDocument>;
+  readonly measureSemantics: Readonly<MusicXmlMeasureSemanticsDocument>;
+}
+
+type ImportProfile = 'E2_SCORE_ONLY' | 'SEC_NE_04B1_MEASURE_SEMANTICS';
 type RawNote = { readonly pitch: Pitch };
 type RawEvent =
   | { kind: 'note'; onset: Rational; duration: Rational; note: RawNote }
@@ -35,13 +48,25 @@ type RawStream = {
 
 type RawMeasure = {
   readonly displayNumber: string | null;
+  readonly implicit: MusicXmlYesNoEvidence;
+  readonly nonControlling: MusicXmlYesNoEvidence;
+  declaredTimeSignature: TimeSignature | null;
+  effectiveTimeSignature: TimeSignature | null;
+  timeSignatureSource: MusicXmlTimeSignatureSource;
+  readonly cursorOperations: MusicXmlCursorOperationEvidence[];
   readonly streams: Map<string, RawStream>;
 };
 
 type RawPart = {
+  readonly sourceId: string;
   readonly name: string | null;
   readonly measures: RawMeasure[];
   readonly maxStaff: number;
+};
+
+type ParsedImport = {
+  readonly score: Readonly<ScoreDocument>;
+  readonly rawParts: readonly RawPart[];
 };
 
 const elementChildren = (node: ParsedXmlNode, name?: string): readonly ParsedXmlNode[] =>
@@ -105,17 +130,11 @@ const text = (node: ParsedXmlNode, path: string): string => {
 const positiveIntText = (node: ParsedXmlNode, path: string): number => {
   const value = text(node, path);
   if (!/^[1-9][0-9]*$/.test(value)) {
-    throw new MusicXmlError('MusicXML value must be a positive integer.', 'INVALID_MUSICXML_SEMANTICS', {
-      path,
-      value
-    });
+    throw new MusicXmlError('MusicXML value must be a positive integer.', 'INVALID_MUSICXML_SEMANTICS', { path, value });
   }
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed)) {
-    throw new MusicXmlError('MusicXML integer exceeds safe range.', 'INVALID_MUSICXML_SEMANTICS', {
-      path,
-      value
-    });
+    throw new MusicXmlError('MusicXML integer exceeds safe range.', 'INVALID_MUSICXML_SEMANTICS', { path, value });
   }
   return parsed;
 };
@@ -132,15 +151,20 @@ const integerText = (node: ParsedXmlNode, path: string): number => {
   return parsed;
 };
 
+const yesNoAttribute = (node: ParsedXmlNode, name: string, path: string): MusicXmlYesNoEvidence => {
+  const value = attribute(node, name);
+  if (value === undefined) return null;
+  if (value !== 'yes' && value !== 'no') {
+    throw new MusicXmlError('MusicXML yes/no attribute is invalid.', 'INVALID_MUSICXML_SEMANTICS', { path, attribute: name, value });
+  }
+  return value;
+};
+
 const absBig = (value: bigint): bigint => value < 0n ? -value : value;
 const gcdBig = (left: bigint, right: bigint): bigint => {
   let a = absBig(left);
   let b = absBig(right);
-  while (b !== 0n) {
-    const next = a % b;
-    a = b;
-    b = next;
-  }
+  while (b !== 0n) [a, b] = [b, a % b];
   return a;
 };
 
@@ -158,10 +182,7 @@ const rational = (numerator: bigint, denominator: bigint, path: string): Rationa
   ) {
     throw new MusicXmlError('MusicXML rational exceeds canonical safe range.', 'INVALID_MUSICXML_SEMANTICS', { path });
   }
-  return {
-    numerator: Number(normalizedNumerator),
-    denominator: Number(normalizedDenominator)
-  };
+  return { numerator: Number(normalizedNumerator), denominator: Number(normalizedDenominator) };
 };
 
 const add = (left: Rational, right: Rational, path: string): Rational => rational(
@@ -198,13 +219,25 @@ const parsePitch = (node: ParsedXmlNode, path: string): Pitch => {
   const alter = alterNode === null ? 0 : integerText(alterNode, `${path}.alter`);
   const octave = integerText(octaveNode, `${path}.octave`);
   if (alter < -2 || alter > 2 || octave < -1 || octave > 9) {
-    throw new MusicXmlError('Pitch is outside the admitted canonical range.', 'INVALID_MUSICXML_SEMANTICS', {
-      path,
-      alter,
-      octave
-    });
+    throw new MusicXmlError('Pitch is outside the admitted canonical range.', 'INVALID_MUSICXML_SEMANTICS', { path, alter, octave });
   }
   return { step: step as Pitch['step'], alter, octave };
+};
+
+const parseTimeSignature = (node: ParsedXmlNode, path: string): TimeSignature => {
+  ensureAttributes(node, [], path);
+  ensureChildren(node, ['beats', 'beat-type'], path);
+  const beatsNode = singleChild(node, 'beats', path);
+  const beatTypeNode = singleChild(node, 'beat-type', path);
+  if (beatsNode === null || beatTypeNode === null) {
+    throw new MusicXmlError('Time signature is incomplete.', 'INVALID_MUSICXML_SEMANTICS', { path });
+  }
+  const beats = positiveIntText(beatsNode, `${path}.beats`);
+  const beatType = positiveIntText(beatTypeNode, `${path}.beat-type`);
+  if (beats > 32 || ![1, 2, 4, 8, 16, 32, 64].includes(beatType)) {
+    throw new MusicXmlError('Time signature is outside the admitted notation range.', 'UNSUPPORTED_MUSICXML', { path, beats, beatType });
+  }
+  return Object.freeze({ beats, beatType });
 };
 
 const streamKey = (staff: number, voice: number): string => `${staff}:${voice}`;
@@ -246,7 +279,9 @@ const parsePartList = (root: ParsedXmlNode): Map<string, string | null> => {
 const parsePart = (
   partNode: ParsedXmlNode,
   partIndex: number,
+  sourcePartId: string,
   partName: string | null,
+  profile: ImportProfile,
   runtime: ReturnType<typeof createMusicXmlProcessingRuntime>,
   counters: { measures: number; events: number }
 ): RawPart => {
@@ -257,6 +292,7 @@ const parsePart = (
   let currentDivisions: number | null = null;
   let currentStaves = 1;
   let maxStaff = 1;
+  let currentTimeSignature: TimeSignature | null = null;
   const measures: RawMeasure[] = [];
 
   for (const [measureIndex, measureNode] of elementChildren(partNode, 'measure').entries()) {
@@ -270,15 +306,26 @@ const parsePart = (
     }
 
     const measurePath = `${partPath}.measure[${measureIndex}]`;
-    ensureAttributes(measureNode, ['number'], measurePath);
+    if (profile === 'E2_SCORE_ONLY') {
+      ensureAttributes(measureNode, ['number'], measurePath);
+    } else {
+      ensureAttributes(measureNode, ['number', 'implicit', 'non-controlling'], measurePath);
+    }
     ensureChildren(measureNode, ['attributes', 'note', 'backup', 'forward'], measurePath);
 
     const rawMeasure: RawMeasure = {
       displayNumber: attribute(measureNode, 'number') ?? null,
+      implicit: profile === 'SEC_NE_04B1_MEASURE_SEMANTICS' ? yesNoAttribute(measureNode, 'implicit', measurePath) : null,
+      nonControlling: profile === 'SEC_NE_04B1_MEASURE_SEMANTICS' ? yesNoAttribute(measureNode, 'non-controlling', measurePath) : null,
+      declaredTimeSignature: null,
+      effectiveTimeSignature: null,
+      timeSignatureSource: 'UNKNOWN',
+      cursorOperations: [],
       streams: new Map()
     };
     let cursor: Rational = { numerator: 0, denominator: 1 };
     let lastNote: { staff: number; voice: number; event: RawEvent } | null = null;
+    let timelineStarted = false;
 
     for (const [childIndex, child] of measureNode.children.entries()) {
       runtime.checkpoint('musicxml:measure-child');
@@ -286,17 +333,33 @@ const parsePart = (
 
       if (child.name === 'attributes') {
         ensureAttributes(child, [], childPath);
-        ensureChildren(child, ['divisions', 'staves'], childPath);
+        ensureChildren(child, profile === 'E2_SCORE_ONLY' ? ['divisions', 'staves'] : ['divisions', 'staves', 'time'], childPath);
         const divisionsNode = singleChild(child, 'divisions', childPath, false);
         const stavesNode = singleChild(child, 'staves', childPath, false);
+        const timeNode = profile === 'SEC_NE_04B1_MEASURE_SEMANTICS' ? singleChild(child, 'time', childPath, false) : null;
         if (divisionsNode !== null) currentDivisions = positiveIntText(divisionsNode, `${childPath}.divisions`);
         if (stavesNode !== null) {
           currentStaves = positiveIntText(stavesNode, `${childPath}.staves`);
+          if (currentStaves > 128) {
+            throw new MusicXmlError('MusicXML staves count exceeds admitted range.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath, currentStaves });
+          }
           maxStaff = Math.max(maxStaff, currentStaves);
+        }
+        if (timeNode !== null) {
+          if (timelineStarted) {
+            throw new MusicXmlError('Mid-measure time-signature changes are not admitted in SEC-NE-04B1.', 'UNSUPPORTED_MUSICXML', { path: childPath });
+          }
+          if (rawMeasure.declaredTimeSignature !== null) {
+            throw new MusicXmlError('Multiple time-signature declarations in one measure are not admitted.', 'UNSUPPORTED_MUSICXML', { path: childPath });
+          }
+          rawMeasure.declaredTimeSignature = parseTimeSignature(timeNode, `${childPath}.time`);
+          currentTimeSignature = rawMeasure.declaredTimeSignature;
         }
         lastNote = null;
         continue;
       }
+
+      timelineStarted = true;
 
       if (child.name === 'backup' || child.name === 'forward') {
         ensureAttributes(child, [], childPath);
@@ -305,11 +368,23 @@ const parsePart = (
           throw new MusicXmlError('divisions must be established before backup/forward.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
         }
         const durationNode = singleChild(child, 'duration', childPath);
-        if (durationNode === null) throw new MusicXmlError('duration is required.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
+        if (durationNode === null) {
+          throw new MusicXmlError('duration is required.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
+        }
         const delta = durationRational(positiveIntText(durationNode, `${childPath}.duration`), currentDivisions, childPath);
+        const cursorBefore = cursor;
         cursor = child.name === 'backup' ? subtract(cursor, delta, childPath) : add(cursor, delta, childPath);
         if (cursor.numerator < 0) {
           throw new MusicXmlError('backup moves before measure start.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
+        }
+        if (profile === 'SEC_NE_04B1_MEASURE_SEMANTICS') {
+          rawMeasure.cursorOperations.push(Object.freeze({
+            sourceOrder: childIndex,
+            kind: child.name,
+            duration: delta,
+            cursorBefore,
+            cursorAfter: cursor
+          }));
         }
         lastNote = null;
         continue;
@@ -342,7 +417,9 @@ const parsePart = (
         throw new MusicXmlError('note must contain exactly one pitch or rest.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
       }
       if (restNode !== null) ensureAttributes(restNode, [], `${childPath}.rest`);
-      if (durationNode === null) throw new MusicXmlError('note duration is required.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
+      if (durationNode === null) {
+        throw new MusicXmlError('note duration is required.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
+      }
 
       const voice = voiceNode === null ? 1 : positiveIntText(voiceNode, `${childPath}.voice`);
       const staff = staffNode === null ? 1 : positiveIntText(staffNode, `${childPath}.staff`);
@@ -368,7 +445,9 @@ const parsePart = (
         const pitch = parsePitch(pitchNode, `${childPath}.pitch`);
         if (lastNote.event.kind === 'note') {
           const index = stream.events.lastIndexOf(lastNote.event);
-          if (index < 0) throw new MusicXmlError('chord predecessor is not in active stream.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
+          if (index < 0) {
+            throw new MusicXmlError('chord predecessor is not in active stream.', 'INVALID_MUSICXML_SEMANTICS', { path: childPath });
+          }
           const chord: RawEvent = {
             kind: 'chord',
             onset: lastNote.event.onset,
@@ -394,13 +473,19 @@ const parsePart = (
       lastNote = event.kind === 'rest' ? null : { staff, voice, event };
     }
 
+    rawMeasure.effectiveTimeSignature = currentTimeSignature;
+    rawMeasure.timeSignatureSource = rawMeasure.declaredTimeSignature !== null
+      ? 'DECLARED_HERE'
+      : currentTimeSignature !== null
+        ? 'INHERITED'
+        : 'UNKNOWN';
     measures.push(rawMeasure);
   }
 
   if (measures.length === 0) {
     throw new MusicXmlError('part must contain at least one measure.', 'INVALID_MUSICXML_SEMANTICS', { path: partPath });
   }
-  return { name: partName, measures, maxStaff };
+  return { sourceId: sourcePartId, name: partName, measures, maxStaff };
 };
 
 const materializeScoreDocument = (
@@ -476,18 +561,17 @@ const materializeScoreDocument = (
   });
 };
 
-export const importMusicXml = (
+const parseImport = (
   input: MusicXmlInput,
-  options: MusicXmlImportOptions
-): Readonly<ScoreDocument> => {
+  options: MusicXmlImportOptions,
+  profile: ImportProfile
+): ParsedImport => {
   const runtime = createMusicXmlProcessingRuntime(options);
   const { normalizedInput, document: parsed } = parseMusicXmlTree(input, runtime);
   runtime.checkpoint('musicxml:semantic:start');
 
   if (options.source.format !== 'musicxml') {
-    throw new MusicXmlError('MusicXML import requires source.format=musicxml.', 'SOURCE_IDENTITY_MISMATCH', {
-      format: options.source.format
-    });
+    throw new MusicXmlError('MusicXML import requires source.format=musicxml.', 'SOURCE_IDENTITY_MISMATCH', { format: options.source.format });
   }
   if (options.source.byteLength === null || options.source.byteLength !== normalizedInput.byteLength) {
     throw new MusicXmlError('Source byteLength does not match imported bytes.', 'SOURCE_IDENTITY_MISMATCH', {
@@ -523,16 +607,91 @@ export const importMusicXml = (
       throw new MusicXmlError('part id must map exactly once to part-list.', 'INVALID_MUSICXML_SEMANTICS', { index, id });
     }
     seenPartIds.add(id);
-    return parsePart(partNode, index, partNames.get(id) ?? null, runtime, counters);
+    return parsePart(partNode, index, id, partNames.get(id) ?? null, profile, runtime, counters);
   });
 
   const suffix = options.source.sha256.slice(0, 16);
-  const result = materializeScoreDocument(
+  const score = materializeScoreDocument(
     rawParts,
     options.source,
     options.documentId ?? `doc-${suffix}`,
     options.revisionId ?? `rev-${suffix}-0`
   );
   runtime.checkpoint('musicxml:semantic:complete');
-  return result;
+  return Object.freeze({ score, rawParts: Object.freeze(rawParts) });
+};
+
+const canonicalMeasureAddress = (score: ScoreDocument, id: string) => {
+  const target = addressEntity(score, id);
+  if (target.kind !== 'measure') {
+    throw new MusicXmlError('Deterministic imported measure id did not resolve as a measure.', 'INVALID_MUSICXML_SEMANTICS', { id, observed: target.kind });
+  }
+  return target;
+};
+
+export const importMusicXml = (
+  input: MusicXmlInput,
+  options: MusicXmlImportOptions
+): Readonly<ScoreDocument> => parseImport(input, options, 'E2_SCORE_ONLY').score;
+
+export const importMusicXmlWithMeasureSemantics = (
+  input: MusicXmlInput,
+  options: MusicXmlImportOptions
+): Readonly<MusicXmlMeasureSemanticsImportResult> => {
+  const parsed = parseImport(input, options, 'SEC_NE_04B1_MEASURE_SEMANTICS');
+  const score = parsed.score;
+
+  const measureNotation = [];
+  const semanticsEntries = [];
+
+  for (const [partIndex, rawPart] of parsed.rawParts.entries()) {
+    const p = partIndex + 1;
+    for (let staff = 1; staff <= rawPart.maxStaff; staff += 1) {
+      for (const [measureIndex, rawMeasure] of rawPart.measures.entries()) {
+        const m = measureIndex + 1;
+        const target = canonicalMeasureAddress(score, `measure-${p}-${staff}-${m}`);
+        if (rawMeasure.declaredTimeSignature !== null) {
+          measureNotation.push(Object.freeze({
+            target,
+            notation: Object.freeze({
+              timeSignature: rawMeasure.declaredTimeSignature,
+              keySignature: null,
+              clef: null,
+              barlines: Object.freeze([])
+            })
+          }));
+        }
+        semanticsEntries.push(Object.freeze({
+          target,
+          sourcePartId: rawPart.sourceId,
+          sourceMeasureIndex: measureIndex,
+          sourceStaffOrdinal: staff,
+          sourceMeasureNumber: rawMeasure.displayNumber,
+          implicit: rawMeasure.implicit,
+          nonControlling: rawMeasure.nonControlling,
+          declaredTimeSignature: rawMeasure.declaredTimeSignature,
+          effectiveTimeSignature: rawMeasure.effectiveTimeSignature,
+          timeSignatureSource: rawMeasure.timeSignatureSource,
+          cursorOperations: Object.freeze([...rawMeasure.cursorOperations])
+        }));
+      }
+    }
+  }
+
+  const notation = createNotationDocument(score, {
+    contractVersion: '1.0.0',
+    documentId: score.id,
+    revisionId: score.revision.id,
+    measures: measureNotation,
+    events: [],
+    notes: []
+  });
+  const measureSemantics = createMusicXmlMeasureSemanticsDocument(score, {
+    contractVersion: MUSICXML_MEASURE_SEMANTICS_VERSION,
+    documentId: score.id,
+    revisionId: score.revision.id,
+    measures: semanticsEntries
+  });
+
+  return Object.freeze({ score, notation, measureSemantics });
 };
