@@ -2,51 +2,44 @@
 
 ## Mandatory controls
 
-The active versioned `ScoreDocument` remains canonical; source identity is immutable; all edit/notation/evidence targets are revision-bound; unsupported or ambiguous operations fail closed; independent timing validation remains a veto; renderer/host coordinates never become canonical; relation semantics may not be silently damaged; accepted edits create one child revision or none; production/public-write is never activated by merge.
+The active versioned score remains canonical; notation is same-document/same-revision; source identity is immutable; stale targets fail closed; unsupported or ambiguous semantics are never guessed; renderer/host coordinates never become mutation authority; accepted mutations create one direct-child revision or none; production/public-write is never activated by merge.
 
-## Current v2 schema safety
+## V2 safety remains active
 
-Grace notes, articulations and ornaments are no longer future hidden semantics: they are explicitly versioned in the approved and implemented `ScoreDocumentV2` / `NotationDocumentV2` 2.0.0 contracts.
+Grace, articulation and ornament semantics remain explicitly versioned in V2. Bounded MusicXML, renderer projection, opaque tokens, SesliTab no-dual-write and playback/edit-admission separation remain unchanged.
 
-SSE-00–07 preserve these controls:
+## SSE-09 V3 topology safety
 
-- one canonical v2 score+notation pair per v2 session;
-- same-document/same-revision notation;
-- lossless-only downgrade to v1;
-- bounded MusicXML v2 import/export;
-- fail-closed renderer projection when a canonical pair is not representable;
-- opaque revision-bound renderer tokens;
-- no SesliTab host dual-write;
-- playback admission remains separate from editor admission.
+V3 topology authoring is admitted only through the frozen SSE-08 model.
 
-## SSE-08 topology design safety
+- `measureFrames` are explicit aligned-measure authority; first-staff inference is not canonical.
+- V2 -> V3 migration rejects measure misalignment and frame-level notation conflicts rather than repairing them.
+- Part/staff IDs remain stable while ordinals are normalized after reorder.
+- New topology identities are caller-supplied and globally validated for collisions.
+- New standard/percussion staff content is not copied from neighboring staffs. Effective frame meter must be known; only then is one explicit full-frame rest initialized for each frame.
+- Missing meter is a veto.
+- Removing the final part or final content-bearing staff is forbidden.
+- Any removal that would orphan event/note/grace/staff-measure notation rejects.
+- Linked TAB owns no canonical measures/events/notes and can reference only a standard staff in the same part.
+- A linked TAB source staff cannot be removed by implicit cascade; the link must be explicitly removed first.
+- String/fret/fingering/voicing remains derivative Guitar state.
+- V3 history stores one atomic score+notation snapshot and accepts only direct-child commits.
+- V3 session migration is one-way at session creation; parallel mutable V2/V3 authority is forbidden.
 
-SSE-08 freezes design only. The active runtime remains v2; no `ScoreDocumentV3` implementation or topology mutation authority is activated by this stage.
+## Renderer / MusicXML safety
 
-The frozen v3 target requires:
+V3 renderer projection is lossless-only. When a V3 pair can safely use the proven V2 projection it may emit `V2_COMPATIBLE_XML`. If topology metadata would be lost or the bounded MusicXML serializer cannot represent the pair, the renderer request remains `V3_XML_PENDING` with no XML.
 
-- document-global stable measure-frame identity instead of implicit first-staff alignment;
-- explicit stable part ordinals and instrument identity;
-- exact staff roles: `standard`, `percussion`, `tablature-linked`;
-- linked TAB as derivative presentation only, with no independent canonical event/note stream;
-- v3 notation ownership split between frame-level time/barlines and staff-measure key/clef;
-- exact measure-frame-aware semantic addressing;
-- deterministic lossless-only v2 -> v3 migration with rejection of misaligned measures/conflicting ownership;
-- lossless-only v3 -> v2 downgrade;
-- no rhythmic invention when adding a content staff.
+A projection gap does not roll back or alter a valid canonical topology edit. It only blocks lossy renderer output. SSE-09 does not claim V3-native topology MusicXML round trip.
 
-A linked TAB staff must resolve to a standard source staff in the same part. String/fret/fingering/voicing remains derivative Guitar state. Removing a source staff cannot silently orphan or retarget its linked TAB presentation.
+## Product boundary
 
-## Topology implementation gate
-
-SSE-09 may not bypass the frozen SSE-08 contract. Before v3 authoring/session cutover is admitted it must prove validators, deterministic migration, exact addressing, atomic history, orphan-safe topology operations, measure-frame alignment, renderer/MusicXML fail-closed behavior and Node 18/20/22 CI.
-
-Cross-staff ownership is still not admitted. Polymeter/non-controlling topology, cross-staff note/beam/tie/slur/tuplet/ornament semantics, arbitrary instrument transposition, layout geometry and production activation remain separate gates.
-
-## Prior stage safety remains active
-
-04A timing veto, 04B1 evidence validation, 04B2 legal-gap proof, 05 relation-safe retiming, 06 copy/orphan protection, v2 schema validation, MusicXML safety and SSE-07 renderer/host isolation are cumulative. Later stages may not bypass them.
+SSE-09 adds no SesliTab V3 product cutover, network/persistence/server revision authority, publication or production write authority. Existing product hosts remain noncanonical.
 
 ## Human gates
 
-Human approval is required before any new public score/notation schema is activated, before staff/part topology implementation deviates from the frozen SSE-08 design, before cross-staff canonical ownership is introduced, before source immutability/fail-closed validation is weakened, before material dependency/license risk is added, before AI/renderer/host gains canonical authority, or before production/public-write services are activated.
+Human approval remains required before cross-staff canonical ownership, polymeter/non-controlling topology, part groups, arbitrary transposition/percussion maps, V3-native topology exchange if it expands semantics materially, material dependency/license risk, AI/renderer/host canonical authority, E8-D invocation, or production/public-write activation.
+
+## Next gate
+
+SSE-10 is the explicit cross-staff design gate. No cross-staff note relocation, beam, tie, slur, tuplet or ornament ownership is admitted by SSE-09.
