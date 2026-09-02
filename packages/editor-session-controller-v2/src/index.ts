@@ -30,6 +30,11 @@ import {
   type ArticulationAuthoringIdentityV2,
   type ArticulationAuthoringIntentV2
 } from '../../editor-articulation-authoring-v2/src/index.js';
+import {
+  executeOrnamentAuthoringV2,
+  type OrnamentAuthoringIdentityV2,
+  type OrnamentAuthoringIntentV2
+} from '../../editor-ornament-authoring-v2/src/index.js';
 import type { EditorStatus } from '../../editor-ui-contract/src/index.js';
 
 export const EDITOR_SESSION_CONTROLLER_V2_VERSION = '2.0.0' as const;
@@ -145,6 +150,26 @@ export const commitSessionArticulationIntentV2 = (
     selection,
     inspector,
     editorStatus('success', 'ARTICULATION_EDIT_COMMITTED', 'Articulation edit committed.')
+  );
+};
+
+export const commitSessionOrnamentIntentV2 = (
+  session: EditorSessionStateV2,
+  intent: OrnamentAuthoringIntentV2,
+  identity: OrnamentAuthoringIdentityV2
+): Readonly<EditorSessionStateV2> => {
+  const base = session.history.present;
+  const result = executeOrnamentAuthoringV2(base.score, base.notation, intent, identity);
+  const history = commitEditorHistoryV2(session.history, result.score, result.notation);
+  const nextAddress = addressEntityV2(result.score, result.selectionEntityId);
+  const selection = createSelectionSnapshotV2(result.score, nextAddress);
+  const inspector = createInspectorModelV2(result.score, nextAddress);
+  return state(
+    session.renderRequest.renderer,
+    history,
+    selection,
+    inspector,
+    editorStatus('success', 'ORNAMENT_EDIT_COMMITTED', 'Ornament edit committed.')
   );
 };
 
