@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "document_type": "score_authoring_capability_matrix",
   "project": "ST Score Editor Core",
-  "as_of_main_sha": "8e486617fdc6eefad3586f2c4fdcc7db7c04b889",
+  "as_of_stage": "SEC-NE-04B1",
   "canonical_authority": "ScoreDocument",
   "status_values": ["COMPLETE_MERGED", "IN_PROGRESS", "NOT_STARTED", "HUMAN_GATED"],
   "capabilities": [
@@ -48,16 +48,34 @@
     },
     {
       "id": "SEC-NE-04B1",
-      "status": "NOT_STARTED",
-      "capability": "MusicXML time/pickup/incomplete-measure evidence",
-      "preferred_design": "ADDITIVE_VERSIONED_MEASURE_SEMANTICS_EVIDENCE",
-      "breaking_schema_change": "HUMAN_GATED"
+      "status": "COMPLETE_MERGED",
+      "capability": "revision-bound MusicXML time and measure-semantics evidence",
+      "design": "ADDITIVE_VERSIONED_MEASURE_SEMANTICS_EVIDENCE",
+      "breaking_score_schema_change": false,
+      "breaking_notation_schema_change": false,
+      "legacy_import_musicxml_behavior_changed": false,
+      "additive_import_surface": "importMusicXmlWithMeasureSemantics",
+      "evidence_contract": "MusicXmlMeasureSemanticsDocument/1.0.0",
+      "preserves": [
+        "declared_simple_time_signature",
+        "effective_time_signature_inheritance",
+        "time_signature_changes",
+        "measure_implicit_yes_no",
+        "measure_non_controlling_yes_no",
+        "backup_forward_exact_rational_cursor_evidence",
+        "source_part_measure_staff_provenance"
+      ],
+      "short_measure_pickup_inference": false,
+      "implicit_gap_authority": false,
+      "rest_materialization_authority": false,
+      "new_runtime_dependency": false
     },
     {
       "id": "SEC-NE-04B2",
       "status": "NOT_STARTED",
       "capability": "deterministic legal implicit-silence rest materialization",
-      "depends_on": ["SEC-NE-04B1"]
+      "depends_on": ["SEC-NE-04B1"],
+      "implicit_gap_authority": "PENDING"
     },
     {
       "id": "SEC-NE-05",
@@ -92,7 +110,9 @@
     "musicxml_live_edit_state": false,
     "renderer_canonical_authority": false,
     "host_canonical_authority": false,
+    "measure_semantics_evidence_mutation_authority": false,
     "stale_targets_fail_closed": true,
+    "stale_evidence_fails_closed": true,
     "source_immutable": true,
     "new_runtime_dependency_for_sec_ne": false
   }
