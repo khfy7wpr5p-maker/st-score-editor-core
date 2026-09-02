@@ -2,7 +2,7 @@
 
 ## Threat model
 
-Potentially untrusted inputs include MusicXML/other symbolic files, upstream OMR output, renderer metadata, browser events, insertion/cursor state, revision-bound sidecar evidence, AI analysis, external datasets, third-party package behavior and downstream service responses.
+Potentially untrusted inputs include MusicXML/other symbolic files, upstream OMR output, renderer metadata, browser events, insertion/cursor state, revision-bound sidecar evidence, retiming targets, AI analysis, external datasets, third-party package behavior and downstream service responses.
 
 ## Mandatory controls
 
@@ -13,58 +13,68 @@ Potentially untrusted inputs include MusicXML/other symbolic files, upstream OMR
 5. **Revision binding** — addresses, selections, insertion positions, notation, measure evidence and render requests must match the current revision.
 6. **Atomic mutation** — validation failure leaves authoritative state unchanged.
 7. **Fail closed** — unsupported, ambiguous, stale or identity-mismatched operations reject.
-8. **Independent timing veto** — a mutation primitive cannot establish writable time by assertion.
-9. **Evidence is not authority by itself** — 04B1 evidence must be independently cross-checked against current canonical timing before 04B2 can materialize anything.
-10. **Renderer isolation** — presentation only.
-11. **AI/OMR isolation** — advisory/evidence only unless separately admitted.
-12. **Product authority separation** — Editor Core, Rendering Layer, SesliTab, OMR Correction Engine and Guitar Workspace cannot silently absorb each other's authority.
-13. **Provenance** — imported sources, transformations, commands and revisions require versioned identity/provenance.
-14. **Supply-chain gate** — new dependencies require pin/license/provenance/security/CI review.
-15. **No user-data fixtures** — fixtures must be synthetic/public-domain/appropriately licensed or explicitly approved.
-16. **No production-by-merge** — merge does not activate public upload, persistence, publication, AI authority or production services.
+8. **Independent timing veto** — mutation primitives cannot establish writable time by assertion.
+9. **Evidence is not authority by itself** — 04B1 evidence must be cross-checked against canonical timing.
+10. **Relation preservation** — beam, tuplet, tie and slur semantics may not be silently changed by event-order mutation.
+11. **Renderer isolation** — presentation only.
+12. **AI/OMR isolation** — advisory/evidence only unless separately admitted.
+13. **Product authority separation** — Editor Core, Rendering Layer, SesliTab, OMR Correction Engine and Guitar Workspace cannot silently absorb each other's authority.
+14. **Provenance** — imported sources, transformations, commands and revisions require versioned identity/provenance.
+15. **Supply-chain gate** — new dependencies require pin/license/provenance/security/CI review.
+16. **No user-data fixtures** — fixtures must be synthetic/public-domain/appropriately licensed or explicitly approved.
+17. **No production-by-merge** — merge does not activate public upload, persistence, publication, AI authority or production services.
 
-## Explicit-rest authoring safety
+## Explicit-rest and implicit-gap safety
 
-04A directly authorizes only `EXPLICIT_REST_SLOT` windows. 04C may then replace/split that one explicit rest without moving unrelated events.
+04A directly authorizes only `EXPLICIT_REST_SLOT` windows. 04C may replace/split that one explicit rest without moving unrelated events. 04B2 may materialize exactly one proven normal-measure target-voice implicit gap into one fresh explicit rest after current 04B1 evidence and independent 04A timing agree.
 
-Pitched overlap, measure overflow, stale state, mixed windows, invalid rationals and duplicate identities remain fail-closed.
+Pickup/`implicit="yes"`, non-controlling, unknown-meter, cross-voice inference and renderer-geometry gap authority remain fail-closed.
 
-## SEC-NE-04B1 evidence safety
+## SEC-NE-05 retiming safety
 
-04B1 preserves bounded source measure/time semantics and independently validates evidence structure, cursor arithmetic, source-measure uniqueness and meter inheritance consistency.
+SEC-NE-05 adds canonical onset mutation only through explicit low-level contracts.
 
-A short measure alone is never pickup evidence. `implicit` and `non-controlling` remain distinct facts.
+### Single-event movement
 
-## SEC-NE-04B2 implicit-gap safety
+`MOVE_EVENT/1.0.0` requires an exact current `EventAddress`, a canonical non-negative new onset and one same-measure/same-voice target. The operation preserves event/note identity, duration and pitch.
 
-04B2 adds a deliberately narrow mutation authority: **add exactly one explicit rest into one proven target-voice implicit gap**.
+It rejects when:
 
-Materialization is allowed only when:
+- target event has beam or tuplet notation;
+- any note inside target event has tie or slur marks;
+- moving the target across another event would cross beam/tuplet/tie/slur-sensitive notation;
+- the result overlaps another event;
+- the event would extend beyond the active measure;
+- MusicXML measure evidence is missing/stale/unsafe;
+- the source measure is `implicit="yes"`, `non-controlling="yes"`, or unknown-meter;
+- target/notation/identity is stale or malformed.
 
-- the 04B1 evidence document is valid and current;
-- the insertion position and notation are current;
-- 04A independently classifies the requested window as target-voice `IMPLICIT_GAP_UNADMITTED`;
-- the requested window is contained by one exact implicit-gap interval;
-- evidence meter equals independently derived 04A meter;
-- `implicit` is not `yes`;
-- `non-controlling` is not `yes`;
-- the new rest ID is globally fresh;
-- the final canonical score validates.
+After mutation, the complete target voice is independently re-analyzed by SEC-NE-04A. The primitive does not trust its own reorder calculation as proof of safety.
 
-The transformation materializes the **entire containing gap**. This avoids arbitrary partial gap segmentation and guarantees a deterministic result.
+### Atomic current 3:2 triplet movement
 
-04B2 may not:
+`MOVE_TRIPLET_GROUP/1.0.0` may move the currently supported triplet profile only as one atomic group. It requires:
 
-- infer a pickup from measure length or event spacing;
-- materialize `implicit="yes"` measures;
-- materialize `non-controlling="yes"` measures;
-- use another voice to prove the target voice is empty;
-- move, shorten, extend or delete an existing event;
-- infer from renderer geometry;
-- bypass 04A or 04B1;
-- directly create a pitched note.
+- three distinct consecutive events in one current measure/voice;
+- equal canonical durations;
+- contiguous canonical timing;
+- explicit `actualNotes=3`, `normalNotes=2` notation on all three;
+- one exact start mark, marker-free middle, matching stop mark;
+- no beam coupling in v1;
+- no tie/slur coupling in v1.
 
-After materialization, previous 04B1 evidence is stale because the canonical revision changed. It must be re-derived/rebound as required before any later evidence-dependent operation.
+The three new onsets are derived deterministically from one new group start and existing equal durations. Partial tuplets cannot be retimed. The final whole voice is revalidated by SEC-NE-04A.
+
+### Intentionally unsupported retiming
+
+- cross-measure movement;
+- independent movement of a tuplet member;
+- independent movement of beamed/tied/slurred events;
+- arbitrary tuplet ratios or ranges outside the admitted current 3:2 profile;
+- relation rewrites inferred from event proximity;
+- renderer-coordinate drag authority.
+
+These cases reject rather than silently alter musical semantics.
 
 ## History safety
 
@@ -77,7 +87,7 @@ When a low-level mutation is composed into editor history:
 - old semantic/insertion/evidence identities are never reused as current;
 - RenderRequest is regenerated only from accepted state.
 
-04B2 regression proves unified history undo/redo composition without creating a parallel history path.
+05 regressions prove both single-event and atomic triplet retiming compose as one unified revision.
 
 ## Security-sensitive human gates
 
