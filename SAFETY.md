@@ -1,108 +1,55 @@
 # Safety and Trust Boundaries
 
-## Threat model
-
-Potentially untrusted inputs include MusicXML/other symbolic files, upstream OMR output, renderer metadata, browser events, insertion/cursor state, revision-bound sidecar evidence, retiming targets, AI analysis, external datasets, third-party package behavior and downstream service responses.
-
 ## Mandatory controls
 
-1. **Immutable source** — original bytes and source identity are never rewritten.
-2. **Bounded parsing** — importers enforce byte/depth/element/count/text budgets and disable unsafe external entity/network behavior.
-3. **Single canonical authority** — `ScoreDocument` is musical edit authority; MusicXML, evidence, renderer objects and host state are not.
-4. **Stable semantic targets** — edits cannot target DOM/SVG coordinates alone.
-5. **Revision binding** — addresses, selections, insertion positions, notation, measure evidence and render requests must match the current revision.
-6. **Atomic mutation** — validation failure leaves authoritative state unchanged.
-7. **Fail closed** — unsupported, ambiguous, stale or identity-mismatched operations reject.
-8. **Independent timing veto** — mutation primitives cannot establish writable time by assertion.
-9. **Evidence is not authority by itself** — 04B1 evidence must be cross-checked against canonical timing.
-10. **Relation preservation** — beam, tuplet, tie and slur semantics may not be silently changed by event-order mutation.
-11. **Renderer isolation** — presentation only.
-12. **AI/OMR isolation** — advisory/evidence only unless separately admitted.
-13. **Product authority separation** — Editor Core, Rendering Layer, SesliTab, OMR Correction Engine and Guitar Workspace cannot silently absorb each other's authority.
-14. **Provenance** — imported sources, transformations, commands and revisions require versioned identity/provenance.
-15. **Supply-chain gate** — new dependencies require pin/license/provenance/security/CI review.
-16. **No user-data fixtures** — fixtures must be synthetic/public-domain/appropriately licensed or explicitly approved.
-17. **No production-by-merge** — merge does not activate public upload, persistence, publication, AI authority or production services.
+1. Source bytes/identity remain immutable.
+2. `ScoreDocument` remains the single musical edit authority.
+3. All semantic targets, notation and evidence must be current-revision bound.
+4. Unsupported, ambiguous, stale or identity-conflicting operations fail closed.
+5. Timing/overlap validation remains an independent veto.
+6. Renderer/DOM/SVG/coordinates never become canonical authority.
+7. Beam/tuplet/tie/slur relationships may not be silently damaged by retiming, copy or structure changes.
+8. Accepted mutations create one direct child revision or none; score and notation remain aligned.
+9. Third-party dependencies remain separately gated.
+10. Repository merge never activates production/public-write authority.
 
-## Explicit-rest and implicit-gap safety
+## SEC-NE-04/05 safety baseline
 
-04A directly authorizes only `EXPLICIT_REST_SLOT` windows. 04C may replace/split that one explicit rest without moving unrelated events. 04B2 may materialize exactly one proven normal-measure target-voice implicit gap into one fresh explicit rest after current 04B1 evidence and independent 04A timing agree.
+04A independently validates target-voice timing. 04B1 preserves bounded measure evidence. 04B2 materializes only independently proven normal-measure silence. 05 admits same-measure relation-safe onset movement and atomic exact supported 3:2 triplet movement. Pickup/non-controlling and unsupported relation cases remain fail-closed.
 
-Pickup/`implicit="yes"`, non-controlling, unknown-meter, cross-voice inference and renderer-geometry gap authority remain fail-closed.
+## SEC-NE-06 structural safety
 
-## SEC-NE-05 retiming safety
+`editor-structural-authoring` deliberately limits destructive operations.
 
-SEC-NE-05 adds canonical onset mutation only through explicit low-level contracts.
+- New measure and voice IDs must be globally fresh.
+- A new measure is explicit and starts with exactly one fresh empty voice.
+- Removing a measure is allowed only if every voice is empty, the staff retains another measure, and no measure-level notation entry would be orphaned.
+- Removing a voice is allowed only when it is empty and the measure retains another voice.
+- Sibling ordinals are normalized deterministically after structural mutation.
+- Existing semantic IDs are preserved.
+- Same-revision notation rebinding must succeed; otherwise the candidate rejects.
 
-### Single-event movement
+Whole staff/part mutation is not admitted because cross-staff correspondence, measure alignment and topology ownership are not yet explicit enough to remove or synthesize safely.
 
-`MOVE_EVENT/1.0.0` requires an exact current `EventAddress`, a canonical non-negative new onset and one same-measure/same-voice target. The operation preserves event/note identity, duration and pitch.
+## SEC-NE-06 copy/paste safety
 
-It rejects when:
+`COPY_VOICE_TO_EMPTY_VOICE/1.0.0` is a bounded clone operation, not arbitrary paste.
 
-- target event has beam or tuplet notation;
-- any note inside target event has tie or slur marks;
-- moving the target across another event would cross beam/tuplet/tie/slur-sensitive notation;
-- the result overlaps another event;
-- the event would extend beyond the active measure;
-- MusicXML measure evidence is missing/stale/unsafe;
-- the source measure is `implicit="yes"`, `non-controlling="yes"`, or unknown-meter;
-- target/notation/identity is stale or malformed.
+- Source and target are exact current `VoiceAddress` values.
+- Target voice must be empty.
+- Every source event and note requires one explicit fresh destination identity in exact source order.
+- Event/note identity collisions fail closed.
+- Source onset, duration and pitch are copied exactly; originals remain unchanged.
+- Safe event/note notation may be copied, but any beam/tuplet/tie/slur coupling rejects in v1.
+- The complete pasted target voice is independently revalidated by 04A.
+- MusicXML-derived targets require current 04B1 evidence and reject pickup/incomplete, non-controlling or unknown-meter measures.
 
-After mutation, the complete target voice is independently re-analyzed by SEC-NE-04A. The primitive does not trust its own reorder calculation as proof of safety.
+This prevents copy/paste from creating hidden relation endpoints, timing overflow or identity aliases.
 
-### Atomic current 3:2 triplet movement
+## History and evidence safety
 
-`MOVE_TRIPLET_GROUP/1.0.0` may move the currently supported triplet profile only as one atomic group. It requires:
+After any accepted structural/copy mutation, old revision-bound measure evidence is stale by design. A later evidence-dependent operation must use evidence derived/rebound for the new revision. Undo/redo restores score+notation together.
 
-- three distinct consecutive events in one current measure/voice;
-- equal canonical durations;
-- contiguous canonical timing;
-- explicit `actualNotes=3`, `normalNotes=2` notation on all three;
-- one exact start mark, marker-free middle, matching stop mark;
-- no beam coupling in v1;
-- no tie/slur coupling in v1.
+## Human gates
 
-The three new onsets are derived deterministically from one new group start and existing equal durations. Partial tuplets cannot be retimed. The final whole voice is revalidated by SEC-NE-04A.
-
-### Intentionally unsupported retiming
-
-- cross-measure movement;
-- independent movement of a tuplet member;
-- independent movement of beamed/tied/slurred events;
-- arbitrary tuplet ratios or ranges outside the admitted current 3:2 profile;
-- relation rewrites inferred from event proximity;
-- renderer-coordinate drag authority.
-
-These cases reject rather than silently alter musical semantics.
-
-## History safety
-
-When a low-level mutation is composed into editor history:
-
-- score and notation share one revision;
-- accepted score edits rebind notation or fail closed;
-- history requires direct parent lineage;
-- undo/redo restores score+notation together;
-- old semantic/insertion/evidence identities are never reused as current;
-- RenderRequest is regenerated only from accepted state.
-
-05 regressions prove both single-event and atomic triplet retiming compose as one unified revision.
-
-## Security-sensitive human gates
-
-Human approval remains required before:
-
-- repository license policy changes;
-- rights-unclear datasets/fixtures;
-- material new dependency/license uncertainty;
-- AI-generated canonical edit authority;
-- live production/public write activation;
-- weakening source immutability, validation or fail-closed behavior;
-- renderer/host canonical authority;
-- breaking public ScoreDocument/NotationDocument contracts;
-- OMR/Guitar ownership boundary changes.
-
-## Validation doctrine
-
-Independent validation is a veto gate. Builders/transformers cannot establish their own correctness by assertion. Cross-format and renderer tests add evidence but never replace semantic validation.
+Human approval remains required before breaking public `ScoreDocument`/`NotationDocument` contracts, enabling whole staff/part topology without frozen invariants, adding material dependencies/license risk, granting AI canonical edit authority, weakening validation/source immutability, granting renderer/host canonical authority, or activating production/public-write services.
