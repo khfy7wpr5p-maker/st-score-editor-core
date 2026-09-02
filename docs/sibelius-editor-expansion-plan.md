@@ -89,9 +89,9 @@ Implemented invariants:
 
 ### SEC-NE-04 — Measure timing and gap authority — PARTIAL
 
-#### SEC-NE-04A — Time signature, occupancy and explicit-rest admission — IMPLEMENTED ON WORK BRANCH
+#### SEC-NE-04A — Time signature, occupancy and explicit-rest admission — COMPLETE / MERGED
 
-A read-only timing analyzer now establishes the safe subset required before free insertion.
+A read-only timing analyzer establishes the safe subset required before free insertion.
 
 Implemented behavior:
 
@@ -107,20 +107,63 @@ Implemented behavior:
 - implicit gaps remain fail-closed because pickup/incomplete-measure semantics are not represented canonically;
 - no score mutation, onset mutation or rest materialization is performed.
 
-#### SEC-NE-04B — Pickup/incomplete measure semantics + implicit-gap materialization — NOT STARTED
+#### SEC-NE-04C — Explicit-rest position note entry — COMPLETE IN THIS STAGE
+
+A revision-bound `InsertionPosition` may author a note only when SEC-NE-04A classifies the entire requested window as one admitted explicit-rest slot.
+
+Implemented behavior:
+
+- SEC-NE-04A remains the sole timing/admission authority;
+- insertion at rest start, middle and end is supported;
+- exact rest fill is supported;
+- a middle insertion atomically splits the explicit rest into leading rest + note + trailing rest;
+- leading-only and trailing-only split forms are supported;
+- the original authorized rest event id is preserved as the inserted note event id;
+- new note/rest ids are caller-supplied, bounded and rejected on collision with existing canonical ids;
+- invalid/zero/negative/non-reduced duration rationals fail closed;
+- stale insertion positions and stale notation evidence fail closed;
+- pitched overlap, implicit gaps and measure overflow remain unauthorized;
+- the resulting `ScoreDocument` must pass canonical validation;
+- the primitive composes with notation rebinding, unified score+notation history, undo/redo and a revision-synchronized `RenderRequest`.
+
+Integration decision for this stage:
+
+- `editor-position-note-entry` remains a **low-level first-party primitive**;
+- this stage does **not** add a second cursor-entry path to `editor-session-controller` or `browser-runtime`;
+- the existing selected-rest `commitNoteEntry` surface from SEC-NE-02 remains unchanged;
+- a future public cursor-entry surface must compose this primitive through the existing unified history and browser/session authority model rather than introducing parallel edit state.
+
+This bounded decision avoids scope drift while preserving a safe canonical primitive for later product composition.
+
+#### SEC-NE-04B1 — MusicXML time / pickup / incomplete-measure evidence — NOT STARTED
 
 Required before an implicit gap can become authoring authority:
 
-- preserve or introduce an explicit non-breaking representation of pickup/incomplete-measure semantics;
-- distinguish legal implicit silence from incomplete/pickup span;
-- define deterministic rest materialization for admitted implicit gaps;
-- cover multi-voice implications and measure completeness rules.
+- import time-signature evidence additively;
+- preserve time-signature inheritance/change evidence;
+- preserve MusicXML measure `implicit="yes"` evidence where admitted;
+- do not confuse non-controlling measure semantics with pickup semantics;
+- preserve `backup` / `forward` timing evidence where required;
+- do not infer pickup merely because a measure is short;
+- fail closed on ambiguous unsupported semantics;
+- prefer a versioned additive measure-semantics/notation evidence contract rather than breaking public ScoreDocument/NotationDocument schemas.
 
-A breaking change to an existing public notation contract must remain human-gated. Prefer an additive contract if the required semantics can be represented safely.
+A breaking public schema change remains human-gated.
 
-No unrestricted free insertion is admitted until SEC-NE-04B is complete.
+#### SEC-NE-04B2 — Legal implicit-silence materialization — NOT STARTED
 
-### SEC-NE-05 — Onset mutation / retiming
+After SEC-NE-04B1 provides sufficient measure semantics evidence:
+
+- distinguish legal implicit silence from pickup/incomplete-measure span;
+- prove writable gaps per voice without cross-voice false inference;
+- deterministically materialize explicit rests for admitted legal silence;
+- preserve no-overlap and measure-span invariants;
+- commit through one unified history transaction;
+- never infer writable time from renderer coordinates.
+
+No unrestricted free insertion is admitted until SEC-NE-04B1 and SEC-NE-04B2 are complete.
+
+### SEC-NE-05 — Onset mutation / retiming — NOT STARTED
 
 Introduce separately reviewed onset mutation only after notation coupling is frozen.
 
@@ -131,11 +174,12 @@ Required invariants:
 - tuplets are retimed atomically with canonical events;
 - ties/slurs/beams and notation metadata cannot silently become stale;
 - unified score+notation history remains one transaction;
-- stale selection/insertion positions fail closed.
+- stale selection/insertion positions fail closed;
+- no nearest-target inference.
 
 This stage also unlocks ordinary triplet creation/removal currently blocked by the correction keypad.
 
-### SEC-NE-06 — Structural score authoring
+### SEC-NE-06 — Structural score authoring — NOT STARTED
 
 Add bounded operations for:
 
@@ -148,7 +192,7 @@ Add bounded operations for:
 
 Each structural operation requires deterministic identity creation and rollback-safe validation.
 
-### SEC-NE-07 — Advanced note entry
+### SEC-NE-07 — Advanced note entry — NOT STARTED
 
 Add:
 
@@ -161,7 +205,7 @@ Add:
 - transposition;
 - multi-measure paste.
 
-### SEC-NE-08 — Guitar authoring surface
+### SEC-NE-08 — Guitar authoring surface — NOT STARTED
 
 Compose canonical notation entry with Guitar Workspace evidence:
 
@@ -170,7 +214,7 @@ Compose canonical notation entry with Guitar Workspace evidence:
 - TAB can propose fingering/voicing without bypassing canonical score edits;
 - guitar-specific entry can request ordinary Editor Core intents.
 
-### SEC-NE-09 — Product integration
+### SEC-NE-09 — Product integration — NOT STARTED
 
 Host integration order:
 
@@ -188,6 +232,7 @@ The host orchestrates. It does not create a second canonical model or dual-write
 - unrestricted note insertion into occupied or implicit time;
 - pickup/incomplete-measure inference from event spacing;
 - renderer-coordinate gap authority;
+- public cursor-position note-entry surface in browser/session for SEC-NE-04C;
 - Smoosic/VexFlow dependency;
 - renderer-owned edits;
 - production/public-write activation.
