@@ -2,9 +2,9 @@
 
 ## Current source of truth
 
-This file records merged/in-progress/not-started repository reality. Planned capability is not production capability.
+This file records repository reality. Planned or human-gated capability is not production capability.
 
-## Baseline
+## Completed bounded program
 
 - **E0–E7-H — COMPLETE**
 - **E8-A/B/C — IMPLEMENTED**
@@ -12,40 +12,41 @@ This file records merged/in-progress/not-started repository reality. Planned cap
 - **SEC-KP-00–10 — COMPLETE**
 - **SEC-NE-00–07 — COMPLETE / MERGED** within documented bounded profiles.
 - **SEC-NE-XML-ROUNDTRIP — COMPLETE / MERGED.**
-- **SEC-NE-08 — COMPLETE / MERGE CANDIDATE:** derivative Guitar/TAB authoring composition.
+- **SEC-NE-08 — COMPLETE / MERGED:** derivative Guitar/TAB authoring companion.
+- **SEC-NE-09 — COMPLETE / MERGE CANDIDATE:** single-session SesliTab host integration.
 
-## SEC-NE-08 exact capability
+## SEC-NE-09 exact capability
 
-`editor-guitar-authoring/1.0.0` requires an exact-current E8-C validated `CanonicalTabResult` and exposes only revision-bound derivative guitar annotations.
+`seslitab-editor-host/1.0.0` composes the product-host boundary around one existing `EditorSessionState`.
 
-- standard score remains canonical;
-- string/fret/finger/shape and KEEP/OMIT are derivative views;
-- teacher review state does not grant canonical write authority;
-- canonical score changes use existing Editor Core typed authoring only;
-- an accepted canonical edit deterministically invalidates the old guitar result as `REQUIRES_RECOMPUTE`;
-- replay of the old result against the new revision fails current source-fact validation;
-- direct external engine invocation remains E8-D human-gated.
+- one canonical editor session only;
+- exact current render token selection;
+- score/notation/keypad/note-entry/history delegation to existing session-controller paths;
+- pointer/keyboard/touch converge on identical semantic operations;
+- rejected operations return typed errors and do not create fallback mutation;
+- playback ownership is separate from editor admission;
+- no renderer/DOM coordinate mutation authority;
+- no host dual-write;
+- no network/persistence/server-revision/publication/production authority.
 
-## Human-gated public/schema boundaries
+## Human-gated future work
 
-- grace-note identity/timing model;
+The bounded autonomous authoring program is complete. Remaining work requires explicit public-contract/product authority decisions:
+
+- grace-note identity/timing schema;
 - articulations;
 - ornaments;
-- whole staff/part topology with cross-staff rules;
-- E8-D direct external engine invocation;
-- production/public-write activation.
-
-## Next autonomous sequence
-
-1. **SEC-NE-09 — NEXT:** SesliTab product integration around one canonical editor state.
+- whole staff/part topology and cross-staff correspondence;
+- E8-D direct external Guitar engine invocation;
+- production/public-write, persistence and deployment activation.
 
 ## Still fail-closed
 
-- reverse write from Guitar/TAB result into canonical score;
-- stale guitar result reuse after a canonical revision change;
+- schema-absent advanced notation;
+- reverse Guitar/TAB write into canonical score;
+- stale result/address reuse;
 - renderer-coordinate authoring;
 - host dual-write;
-- unsupported/schema-absent notation semantics;
-- production/public-write activation by merge.
+- production activation by merge.
 
-`ScoreDocument` remains canonical; guitar state remains derivative-only; renderer/host state remains noncanonical; source evidence remains immutable.
+`ScoreDocument` remains canonical; notation is same-revision authority; Guitar state remains derivative-only; renderer and host state remain noncanonical.

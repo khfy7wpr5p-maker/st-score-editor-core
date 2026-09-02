@@ -1,43 +1,52 @@
 {
-  "schema_version":"1.7.0",
+  "schema_version":"1.8.0",
   "document_type":"score_authoring_capability_matrix",
   "project":"ST Score Editor Core",
-  "as_of_stage":"SEC-NE-08",
+  "as_of_stage":"SEC-NE-09",
+  "bounded_autonomous_program":"COMPLETE_MERGE_CANDIDATE",
   "canonical_authority":"ScoreDocument",
   "capabilities":[
     {"id":"SEC-NE-01-07","status":"COMPLETE_MERGED","capability":"bounded current-schema score and notation authoring"},
-    {"id":"SEC-NE-XML-ROUNDTRIP","status":"COMPLETE_MERGED","capability":"bounded notation serializer-profile semantic export/re-import","import_surface":"importNotationMusicXml","export_surface":"serializeNotationMusicXml"},
+    {"id":"SEC-NE-XML-ROUNDTRIP","status":"COMPLETE_MERGED","capability":"bounded notation serializer-profile semantic export/re-import"},
+    {"id":"SEC-NE-08","status":"COMPLETE_MERGED","capability":"revision-bound derivative Guitar/TAB authoring companion","guitar_state_authority":"DERIVATIVE_ONLY","reverse_canonical_write":false,"direct_external_engine_invocation":false},
     {
-      "id":"SEC-NE-08",
+      "id":"SEC-NE-09",
       "status":"COMPLETE_MERGE_CANDIDATE",
-      "capability":"revision-bound derivative Guitar/TAB authoring companion",
-      "package":"editor-guitar-authoring/1.0.0",
-      "reuses":["guitar-workspace-projection","guitar-workspace-result","editor-advanced-authoring"],
-      "guitar_state_authority":"DERIVATIVE_ONLY",
-      "validated_current_result_required":true,
-      "reverse_canonical_write":false,
-      "teacher_review_grants_write":false,
-      "canonical_edit_invalidates_guitar_result":true,
-      "post_edit_status":"REQUIRES_RECOMPUTE",
-      "direct_external_engine_invocation":false,
+      "capability":"single-session SesliTab product-host integration",
+      "package":"seslitab-editor-host/1.0.0",
+      "canonical_session_count":1,
+      "host_dual_write_allowed":false,
+      "selection_input":"CURRENT_OPAQUE_RENDER_TOKEN",
+      "input_modes":["pointer","keyboard","touch"],
+      "input_modes_same_semantic_path":true,
+      "typed_rejection":true,
+      "unified_history":true,
+      "editor_admission_controls_playback":false,
+      "network_authority":false,
+      "persistence_authority":false,
+      "server_revision_authority":false,
+      "publication_authority":false,
+      "production_authority":false,
       "new_runtime_dependency":false
-    },
-    {"id":"SEC-NE-09","status":"NOT_STARTED","capability":"SesliTab product integration","host_dual_write_allowed":false}
+    }
   ],
   "human_gates":{
     "public_score_notation_schema_break":true,
     "grace_articulation_ornament_model":true,
     "whole_staff_part_topology":true,
     "direct_external_engine_invocation":true,
+    "persistence_network_server_authority":true,
     "production_public_write_activation":true
   },
   "global_invariants":{
     "renderer_canonical_authority":false,
     "host_canonical_authority":false,
+    "host_dual_write":false,
     "musicxml_live_edit_authority":false,
     "guitar_result_canonical_authority":false,
     "source_immutable":true,
     "stale_targets_fail_closed":true,
+    "unified_editor_history":true,
     "new_runtime_dependency_for_sec_ne":false
   }
 }

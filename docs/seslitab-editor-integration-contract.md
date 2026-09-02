@@ -1,92 +1,74 @@
 # SesliTab Editor Integration Contract
 
-Status: architecture boundary for future SEC-NE-09 product integration.
+Status: **SEC-NE-09 bounded Editor Core integration implemented. Production/persistence/deployment authority remains unactivated.**
 
 ## Ownership
 
-SesliTab is the product host/orchestrator. It is not a second canonical score authority.
+SesliTab is a product host/orchestrator. `seslitab-editor-host/1.0.0` contains exactly one `EditorSessionState`; it does not create another mutable musical model.
 
 ```text
 MusicXML / OMR evidence
-  -> ST Score Editor Core canonical state
-  -> RenderRequest
-  -> ST Score Rendering Layer
-  -> SesliTab interaction/playback UI
+  -> ScoreDocument + NotationDocument
+  -> EditorSessionState + unified history
+  -> RenderRequest / opaque token manifest
+  -> ST Score Rendering Layer / SesliTab UI
 ```
 
-Guitar Workspace, OMR Correction Engine and playback may supply evidence or product behavior, but canonical score edits must return through Editor Core typed semantic operations.
+Canonical edits return through existing Editor Core semantic operations.
+
+## Implemented SEC-NE-09 adapter
+
+The adapter supports:
+
+- one current editor session;
+- current render-token selection;
+- score-intent delegation;
+- notation-intent delegation;
+- keypad delegation, including existing exact-target advanced actions;
+- existing selected-rest note-entry delegation;
+- unified undo/redo;
+- typed product-facing rejection results;
+- pointer, keyboard and touch provenance using the same semantic paths.
+
+Input mode is not mutation authority. A touch gesture and a keyboard gesture that express the same admitted semantic operation reach the same Editor Core path.
 
 ## Forbidden dual-write
 
-SesliTab must not maintain a second mutable musical model that is independently edited in parallel with `ScoreDocument`.
+SesliTab must not:
 
-Forbidden patterns include:
-
-- mutating renderer objects and separately mutating Editor Core;
-- editing MusicXML text as the live state while also editing `ScoreDocument`;
-- applying an OMR/Guitar result directly to host score state without a canonical Editor Core intent;
-- storing a stale semantic address and replaying it after revision change;
-- using DOM/SVG coordinates as direct mutation targets.
-
-## Renderer interaction
-
-Visual hit testing belongs to the Rendering Layer. The host returns only an exact current render-request identity and opaque hit token through the editor selection bridge.
-
-Renderer resize, reflow, orientation changes and mobile DOM replacement may change geometry, but must not change canonical semantic identity.
-
-If a visual entity cannot be resolved unambiguously after rerender, the host must expose no target rather than guess a nearest note.
-
-## Pointer, keyboard and mobile
-
-Desktop pointer, keyboard and iPhone/touch flows must converge on the same semantic Editor Core intent path.
-
-Platform-specific gesture code may derive a candidate action or insertion location, but mutation is admitted only after current semantic identity and revision checks.
-
-## Current note-entry integration
-
-Today the bounded public session/browser note-entry surface is the SEC-NE-02 exact selected-rest path.
-
-SEC-NE-04C provides a merged low-level `InsertionPosition` + explicit-rest primitive, but there is no second public cursor-position session/browser API yet. SesliTab must not bypass this boundary by calling low-level score mutation from UI code and maintaining separate history.
-
-A future cursor-entry UI should compose 04C through the existing unified session/history architecture.
+- mutate renderer objects as musical state;
+- edit MusicXML as live state alongside `ScoreDocument`;
+- apply OMR/Guitar results directly to a second host score;
+- reuse stale semantic addresses after revision change;
+- use DOM/SVG coordinates as direct mutation targets;
+- create a last-write-wins shadow score outside Editor Core history.
 
 ## Selection continuity
 
-After accepted mutations:
+Canonical selection is revision-bound semantic state. Renderer reflow, resize, orientation change or DOM replacement does not independently erase canonical identity. The host may re-present a still-current selection from the session; if a current token cannot resolve exactly, selection must fail rather than guess.
 
-- selection may be deterministically rebound to a surviving canonical entity on the new revision; or
-- selection must be cleared safely.
-
-Renderer rerender itself must not delete semantic selection merely because DOM nodes were recreated. The host should retain semantic selection state and ask the current renderer to present it again.
+Accepted operations use the existing session-controller rebound/clear policies. History transitions remain within the same session.
 
 ## Playback boundary
 
-Playback availability is a product/media capability, not canonical authoring authority.
+Playback is a product/media capability, not editor mutation authority.
 
-Incomplete OMR or unavailable editing capability should not automatically disable playback unless playback itself lacks sufficient safe source data. Playback errors and edit-admission errors should remain separate typed product states.
+`sesliTabEditorHostProfile.editorAdmissionControlsPlayback` is `false`. Therefore an incomplete OMR result, unavailable edit feature or rejected score mutation does not by itself authorize the Editor Core adapter to disable playback. Playback must be decided from playback-specific source/data readiness and its errors should remain distinct from editor-admission errors.
 
-Playback cursor/highlight state may reference current canonical semantic identity but cannot mutate score state.
-
-## OMR boundary
-
-OMR output is source/evidence. Corrections from `st-omr-correction-engine` remain reversible proposals and must enter Editor Core through admitted semantic edit operations.
-
-Original OMR/source evidence remains immutable and auditable.
+Playback cursor/highlight may reference current semantic identity but cannot mutate score state.
 
 ## Guitar/TAB boundary
 
-Standard score semantics remain canonical. String/fret/fingering/voicing output remains derivative unless a future explicit contract admits additional canonical guitar semantics.
+SEC-NE-08 keeps string/fret/fingering/voicing derivative. A canonical score edit invalidates old Guitar state; Guitar results never bypass generic Editor Core authoring. Direct external engine invocation remains E8-D human-gated.
 
-TAB UI must not bypass generic Editor Core authoring operations.
+## OMR boundary
 
-## Autosave/versioning
+OMR is evidence/source. Corrections must enter through admitted semantic edit paths. Original source evidence remains immutable.
 
-Product persistence should store/version accepted canonical revisions or an explicitly versioned serialization of them. Autosave must not create a parallel mutation authority.
+## Persistence/versioning boundary
 
-Stale server/client revisions require explicit conflict handling; silent last-write-wins over a different canonical revision is not an editor-core assumption.
+SEC-NE-09 adds no network, persistence or server revision authority. A future product persistence layer must store/version accepted canonical revisions and define conflict handling explicitly. Silent last-write-wins is not admitted by this contract.
 
 ## Production gate
 
-This document defines a boundary; it does not activate SesliTab production integration, public write APIs, persistence or deployment.
-
-SEC-NE-09 remains NOT STARTED until earlier authoring stages and an explicit product-integration PR satisfy their own gates.
+The bounded Editor Core integration is implemented and CI-verified, but merge does not activate public write APIs, persistence, production services or deployment. Those remain separate human-gated product decisions.
