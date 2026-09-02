@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **The bounded SEC-NE autonomous authoring program is implemented through SEC-NE-09. Current public ScoreDocument/NotationDocument 1.0.0 contracts remain authoritative; schema-absent and production capabilities remain explicit human gates.**
+Status: **The bounded SEC-NE autonomous authoring program is COMPLETE / MERGED through SEC-NE-09. `ScoreDocument` / `NotationDocument` 1.0.0 remain the active runtime contracts. SSE-00 is a design-only vNext contract stage.**
 
 ## Canonical authority
 
@@ -19,49 +19,109 @@ Status: **The bounded SEC-NE autonomous authoring program is implemented through
 - SEC-NE-08 — derivative Guitar/TAB authoring companion.
 - SEC-NE-09 — single-session SesliTab host integration.
 
-## SesliTab host integration
+## SSE-00 vNext architecture candidate
 
-`seslitab-editor-host/1.0.0` wraps one `EditorSessionState` and does not introduce a second score model.
+The next public-schema expansion is deliberately versioned rather than hidden inside v1 exact-key objects.
 
 ```text
-source / admitted evidence
-        ↓
-ScoreDocument + NotationDocument
-        ↓
-EditorSessionState + unified history
-        ↓
-RenderRequest / opaque render tokens
-        ↓
-SesliTab host adapter
-        ↓
-pointer | keyboard | touch
-        ↓
-existing semantic session-controller operations
+current runtime
+ScoreDocument 1.0.0 + NotationDocument 1.0.0
+        |
+        | explicit lossless migration only
+        v
+proposed vNext
+ScoreDocumentV2 2.0.0 + NotationDocumentV2 2.0.0
 ```
 
-Selection enters through exact current render tokens. Supported score, notation, keypad and note-entry changes delegate to existing session-controller functions; undo/redo remains the same unified history. Input modality is recorded only as provenance and cannot change semantic mutation rules.
+SSE-00 changes documentation only. Current validators must continue rejecting version 2 input until a later approved implementation stage introduces explicit dual-version handling.
 
-The host adapter converts rejected operations into typed product-facing errors. It does not guess a nearest note, does not mutate renderer/DOM state as musical state and does not maintain hidden fallback score state.
+### Grace-note authority
 
-Playback remains outside canonical authoring authority. `editorAdmissionControlsPlayback=false` documents that an edit-admission failure is not itself a playback-disable signal. Playback implementation/data sufficiency remains a separate product concern.
+Current `ScoreEvent` timing requires a positive duration and participates in normal measure occupancy. A grace note therefore cannot safely be represented as a zero-duration normal event.
 
-## Guitar/TAB boundary
+The vNext candidate adds voice-owned canonical grace groups:
 
-SEC-NE-08 validates exact-current E8-C results and exposes derivative annotations. Canonical changes continue through Editor Core; any accepted canonical revision invalidates prior Guitar state as `REQUIRES_RECOMPUTE`. E8-D direct engine invocation remains human-gated.
+```text
+VoiceV2
+  events[]       -> normal timed score events
+  graceGroups[]  -> non-occupancy canonical grace material
+                      |
+                      +-- exact anchorEventId in same voice
+                      +-- before | after
+                      +-- ordered grace note/rest/chord events
+```
 
-## MusicXML boundary
+Grace events have stable IDs and written durations but no normal timeline onset/duration. Their normalized playback-steal/make-time policy is canonical grace semantics; slash/beams/dots remain notation.
 
-Legacy score-only, 04B1 evidence and bounded notation-aware import profiles remain distinct. MusicXML never becomes live editor state.
+Anchor deletion cannot silently orphan a grace group. Copy/move/delete must resolve the relationship atomically or reject.
 
-## Human-gated future boundaries
+### Articulation / ornament authority
 
-- grace-note canonical schema;
-- articulations and ornaments;
-- whole staff/part topology and cross-staff rules;
-- direct external Guitar engine invocation;
-- persistence/network/server-revision authority;
-- production/public-write/deployment activation.
+Articulations and ornaments extend event-level notation rather than creating a second score event identity.
+
+`EventNotationV2` adds typed `articulations[]` and `ornaments[]`. Grace events receive equivalent grace-event notation collections. Arbitrary `other-articulation` / `other-ornament` values are not canonical escape hatches in the initial contract.
+
+Numbered or spanning ornament forms such as wavy lines and double-note tremolo require explicit validated relation semantics. Renderer geometry cannot establish those relations.
+
+### Addressing
+
+The vNext semantic address space adds explicit identity kinds:
+
+- `grace-group`;
+- `grace-event`;
+- `grace-note`.
+
+Addresses remain document/revision/ancestry bound. Renderers expose opaque tokens mapping to these semantic identities; they never infer canonical grace ownership from coordinates.
+
+## Migration architecture
+
+### v1 -> v2
+
+Lossless defaults only:
+
+- `Voice.graceGroups = []`;
+- event articulations = `[]`;
+- event ornaments = `[]`;
+- grace-notation collections = `[]`.
+
+No musical semantic is invented.
+
+### v2 -> v1
+
+Downgrade is accepted only when all v2-only structures are empty. Otherwise reject with typed `DOWNGRADE_UNREPRESENTABLE` evidence identifying the paths that would be lost.
+
+A session may never maintain separately mutable v1 and v2 score authorities. Version conversion occurs at an explicit boundary, then one canonical version owns the session.
+
+## MusicXML vNext boundary
+
+MusicXML 4.0 represents grace notes as `<note>` with `<grace>` and without normal `<duration>`, and places articulations/ornaments under `<notations>`. A future v2 importer/exporter therefore receives a separate explicit profile until the cutover is complete.
+
+Source-specific timing attributes are normalized; raw MusicXML `divisions` never become canonical grace state. Unsupported/ambiguous anchoring or ornament relations reject instead of disappearing.
+
+Legacy v1 importer behavior must not broaden silently.
+
+## SesliTab / renderer / Guitar compatibility
+
+The existing authority topology remains unchanged during schema expansion:
+
+```text
+source/evidence
+  -> one canonical score+notation version
+  -> unified editor history
+  -> RenderRequest + opaque semantic tokens
+  -> renderer / SesliTab host
+```
+
+Guitar Workspace remains derivative-only. A v2 feature must have an explicit safe Guitar projection policy or be rejected by that projection; it cannot be silently rewritten.
+
+Playback remains separate from edit admission.
+
+## Human gates
+
+SSE-00 design documentation may merge with no runtime schema change.
+
+Implementation of public `ScoreDocumentV2` / `NotationDocumentV2` and the canonical session cutover requires explicit acceptance of the frozen vNext contract. Staff/part topology, E8-D engine invocation, persistence/network authority and production/public-write activation remain separate gates.
 
 ## Dependencies / invariants
 
-Runtime dependencies remain only `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`. Source immutability, revision binding, independent validation, unified history, renderer isolation, derivative Guitar authority and no-production-by-merge remain active.
+Runtime dependencies remain only `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`. SSE-00 requires no dependency change. Source immutability, revision binding, fail-closed validation, unified history, renderer isolation, derivative Guitar authority and no-production-by-merge remain active.
