@@ -6,51 +6,62 @@ Goal: evolve ST Score Editor Core into a renderer-independent general score-auth
 
 ## Completed foundation
 
-The original SEC-NE program and bounded MusicXML work are COMPLETE / MERGED. The approved SCORE-SCHEMA-EXPANSION program has moved the canonical editor session to v2 and implemented:
+The original SEC-NE program and SCORE-SCHEMA-EXPANSION through SSE-07 are COMPLETE / MERGED:
 
-- **SSE-00–02 — COMPLETE / MERGED:** vNext contract, dual-version substrate and one canonical v2 session/history/render/selection state;
-- **SSE-03 — COMPLETE / MERGED:** canonical grace-note authoring;
-- **SSE-04 — COMPLETE / MERGED:** typed articulation authoring;
-- **SSE-05 — COMPLETE / MERGED:** relation-safe ornament authoring;
-- **SSE-06 — COMPLETE / MERGED:** bounded isolated MusicXML v2 semantic round trip;
-- **SSE-07 — COMPLETE / MERGE CANDIDATE:** renderer + SesliTab v2 compatibility.
+- v2 contract, migration and one canonical v2 session;
+- grace-note authoring;
+- typed articulation authoring;
+- relation-safe ornament authoring;
+- bounded MusicXML v2 semantic round trip;
+- renderer v2 projection and additive OSMD/alphaTab compatibility;
+- SesliTab v2 host facade with no dual-write authority.
 
-The earlier statement that grace notes, articulations and ornaments required a future schema is historical: that schema design was approved at SSE-00 and is implemented as `ScoreDocumentV2` / `NotationDocumentV2` 2.0.0.
+The active runtime remains v2.
 
-## Current MusicXML and renderer capability
+## SSE-08 — Staff/part topology contract — HUMAN-APPROVED DESIGN FREEZE
 
-SSE-06 provides a separate v2 parser/importer/serializer without widening legacy v1 acceptance. SSE-07 connects that proven projection to `renderer-contract-v2` while preserving lossless v1 compatibility where available.
+SSE-08 is design-only and freezes the next major topology target:
 
-Renderer requests now distinguish:
+- `ScoreDocumentV3/3.0.0`;
+- `NotationDocumentV3/3.0.0`;
+- `SemanticAddressV3/3.0.0`;
+- `RendererRequestV3/3.0.0`.
 
-- `V1_COMPATIBLE_XML` for lossless v1 projection;
-- `V2_SEMANTIC_XML` for bounded representable v2-only semantics;
-- `VNEXT_XML_PENDING` for canonical pairs that the bounded v2 serializer still cannot represent.
+### Canonical topology direction
 
-Opaque tokens remain revision-bound semantic identities, including grace-group/event/note targets. Additive OSMD and alphaTab v2 adapters reject pending requests before renderer load rather than guessing or losing semantics.
+The frozen design introduces document-global stable `measureFrames` as aligned measure-sequence authority. Parts gain explicit ordinals and stable instrument identity. Content-bearing staves are `standard` or `percussion` and own one staff measure per frame.
 
-## SesliTab v2 compatibility
+A `tablature-linked` staff is presentation topology only. It points to a standard source staff in the same part, owns no independent canonical event/note stream, and keeps string/fret/fingering/voicing derivative. TAB glyph hits must resolve to source canonical note/event identities.
 
-`seslitab-editor-host-v2` wraps exactly one canonical v2 editor session. It exposes v2 render-token selection, admitted grace/articulation/ornament edits and unified undo/redo through editor-owned semantic paths.
+V3 notation separates frame-owned time/barline semantics from staff-measure key/clef semantics. V3 addressing adds exact measure-frame identity and keeps stable IDs/revision binding as authority.
 
-Pointer, keyboard and touch are provenance only; they do not create separate mutation authority. Host dual-write, renderer mutation authority and DOM/SVG coordinate mutation authority remain forbidden. Playback remains host-owned and edit admission does not independently disable playback.
+V2 -> V3 migration must prove aligned measure count/ordinal/display number and reject conflicting frame-owned notation. No silent repair and no automatic conversion merely because a staff uses TAB clef.
 
-## Human-gated next sequence
+Full design: `docs/staff-part-topology-contract.md`.
 
-### SSE-08 — Staff/part topology contract — HUMAN-GATED DESIGN
+## SSE-09 — Staff/part topology implementation — NOT STARTED
 
-Freeze part/staff identity lifecycle, aligned-measure correspondence, notation ownership, instrument/TAB staff semantics, migration, source-map and renderer impacts before authoring is implemented.
+After the frozen v3 contract is admitted, bounded implementation may add/remove/reorder parts and standard/percussion staves, add/remove linked TAB presentation staves, and rename part/instrument display names.
 
-No topology implementation should start until this design is explicitly approved.
+Initial content-staff creation must not invent rhythmic content. It may proceed only when every measure frame has enough effective meter evidence to initialize deterministic explicit full-frame rests; otherwise it fails closed.
 
-### SSE-09 — Staff/part topology authoring — NOT STARTED
+SSE-09 must prove v3 validators, deterministic migration, exact addressing, atomic history, orphan safety and renderer/MusicXML fail-closed behavior before any v3 session cutover.
 
-Only after SSE-08 approval.
+## SSE-10 — Cross-staff canonical relation model — SEPARATE GATE
 
-### SSE-10 — Cross-staff canonical relation model — NOT STARTED
+Cross-staff beaming, note relocation, ties/slurs/tuplets/ornaments and ownership are not part of SSE-08. They require separately approved canonical semantics and MusicXML preservation rules.
 
-Requires separately approved ownership, editing and MusicXML-preservation rules.
+## Remaining explicit gates
+
+- polymeter/non-controlling topology;
+- part groups/brackets/braces;
+- arbitrary instrument transposition;
+- percussion-map authoring;
+- page/system/layout geometry;
+- playback/MIDI routing;
+- direct external-engine invocation;
+- persistence/network/public-write/production activation.
 
 ## Completion rule
 
-Autonomous work is complete through SSE-07 on this merge candidate. Public schema breaks beyond the approved v2 contract, whole staff/part topology authority, cross-staff ownership, direct external-engine invocation and production/public-write activation remain explicit human gates.
+SSE-08 completion freezes the design only; it does not activate `ScoreDocumentV3`. Implementation authority begins with SSE-09 and remains bounded by the frozen contract and existing source/history/renderer/host safety invariants.

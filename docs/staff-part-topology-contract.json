@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "staff_part_topology_contract",
+  "project": "ST Score Editor Core",
+  "stage": "SSE-08",
+  "status": "HUMAN_APPROVED_DESIGN_FREEZE_IMPLEMENTATION_NOT_STARTED",
+  "target_contracts": {
+    "score_document": "ScoreDocumentV3/3.0.0",
+    "notation_document": "NotationDocumentV3/3.0.0",
+    "semantic_address": "SemanticAddressV3/3.0.0",
+    "renderer_request": "RendererRequestV3/3.0.0"
+  },
+  "authority": {
+    "single_canonical_score_notation_pair": true,
+    "musicxml_exchange_only": true,
+    "renderer_canonical_authority": false,
+    "host_dual_write": false,
+    "guitar_string_fret_authority": "DERIVATIVE_ONLY",
+    "linked_tab_pitch_authority": false
+  },
+  "part_v3": {
+    "stable_id": true,
+    "explicit_unique_positive_ordinal": true,
+    "array_order_equals_ordinal_order": true,
+    "stable_instrument_identity": true,
+    "instrument_fields": ["id", "name", "shortName"]
+  },
+  "staff_roles": [
+    "standard",
+    "percussion",
+    "tablature-linked"
+  ],
+  "content_staff_roles": [
+    "standard",
+    "percussion"
+  ],
+  "tablature_linked": {
+    "derivative_presentation_only": true,
+    "must_reference_standard_staff_same_part": true,
+    "independent_measures_forbidden": true,
+    "independent_events_forbidden": true,
+    "cross_part_link_forbidden": true,
+    "tab_profile": {
+      "fields": ["stringCount", "tuning", "capoFret"],
+      "string_numbers_explicit": true,
+      "string_fret_assignments_canonical": false
+    }
+  },
+  "measure_frames": {
+    "scope": "DOCUMENT_GLOBAL",
+    "single_sequence_authority": true,
+    "fields": ["id", "ordinal", "displayNumber"],
+    "ordinals_positive_unique_contiguous_initial_profile": true,
+    "content_staff_exactly_one_measure_per_frame": true,
+    "staff_measure_fields": ["id", "frameId", "voices"],
+    "multimetric_non_controlling_initial_profile": false
+  },
+  "notation_v3_ownership": {
+    "frame_notation": ["timeSignature", "barlines"],
+    "staff_measure_notation": ["keySignature", "clef"],
+    "event_note_grace_semantics_preserved": true,
+    "sparse": true,
+    "same_revision_required": true
+  },
+  "addressing_v3": {
+    "measure_frame_address_kind": true,
+    "descendant_paths_include_frame_id": true,
+    "identity_uses_ids_not_ordinals": true,
+    "stale_revision_fails_closed": true,
+    "renderer_tokens_opaque": true
+  },
+  "migration_v2_to_v3": {
+    "preserve_existing_entity_ids": true,
+    "assign_part_ordinals_from_current_array_order": true,
+    "create_deterministic_noncolliding_instrument_ids": true,
+    "derive_frames_from_aligned_measure_ordinals": true,
+    "require_matching_measure_count_ordinal_display_number": true,
+    "missing_or_misaligned_measures_reject": true,
+    "conflicting_frame_time_barline_notation_reject": true,
+    "tab_clef_does_not_auto_create_linked_tab_staff": true
+  },
+  "migration_v3_to_v2": {
+    "lossless_only": true,
+    "linked_tab_staff_blocks_downgrade": true,
+    "notation_duplication_must_be_conflict_free": true,
+    "semantic_loss_rejects_with_exact_path": true
+  },
+  "sse_09_initial_authoring_candidate": [
+    "ADD_STANDARD_OR_PERCUSSION_PART",
+    "REMOVE_PART",
+    "REORDER_PART",
+    "ADD_STANDARD_OR_PERCUSSION_STAFF",
+    "REMOVE_CONTENT_STAFF",
+    "REORDER_STAFF",
+    "ADD_LINKED_TAB_STAFF",
+    "REMOVE_LINKED_TAB_STAFF",
+    "RENAME_PART_OR_INSTRUMENT"
+  ],
+  "add_content_staff_policy": {
+    "invent_rhythmic_content": false,
+    "requires_effective_meter_for_every_frame": true,
+    "creates_deterministic_explicit_full_frame_rest_content": true,
+    "insufficient_meter_evidence_fails_closed": true
+  },
+  "explicitly_out_of_scope": [
+    "CROSS_STAFF_RELATION_OWNERSHIP",
+    "POLYMETER_NON_CONTROLLING_TOPOLOGY",
+    "PART_GROUP_BRACKET_BRACE",
+    "ARBITRARY_INSTRUMENT_TRANSPOSITION",
+    "PERCUSSION_MAP_AUTHORING",
+    "LAYOUT_PAGE_SYSTEM_GEOMETRY",
+    "PLAYBACK_MIDI_ROUTING",
+    "MXL_CONTAINER",
+    "PERSISTENCE_NETWORK_PUBLIC_WRITE"
+  ],
+  "implementation_gate": {
+    "sse_08_is_design_only": true,
+    "sse_09_not_implemented": true,
+    "requires_validators": true,
+    "requires_v2_v3_migration_guards": true,
+    "requires_exact_v3_addressing": true,
+    "requires_atomic_history": true,
+    "requires_orphan_safe_topology_operations": true,
+    "requires_frame_alignment_validation": true,
+    "requires_linked_tab_derivative_authority": true,
+    "requires_renderer_musicxml_fail_closed": true,
+    "requires_node_18_20_22_ci": true
+  }
+}

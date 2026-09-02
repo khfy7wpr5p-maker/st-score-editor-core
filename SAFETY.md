@@ -2,29 +2,51 @@
 
 ## Mandatory controls
 
-`ScoreDocument` remains canonical; source identity is immutable; all edit/notation/evidence targets are revision-bound; unsupported or ambiguous operations fail closed; independent timing validation remains a veto; renderer/host coordinates never become canonical; relation semantics may not be silently damaged; accepted edits create one child revision or none; production/public-write is never activated by merge.
+The active versioned `ScoreDocument` remains canonical; source identity is immutable; all edit/notation/evidence targets are revision-bound; unsupported or ambiguous operations fail closed; independent timing validation remains a veto; renderer/host coordinates never become canonical; relation semantics may not be silently damaged; accepted edits create one child revision or none; production/public-write is never activated by merge.
 
-## SEC-NE-07 advanced authoring safety
+## Current v2 schema safety
 
-`editor-advanced-authoring` is a composition/safety layer over existing canonical commands, not a second musical model.
+Grace notes, articulations and ornaments are no longer future hidden semantics: they are explicitly versioned in the approved and implemented `ScoreDocumentV2` / `NotationDocumentV2` 2.0.0 contracts.
 
-- Pitch/chord/rest-note operations use existing `commands` semantics.
-- If a canonical edit would remove an entity still targeted by notation, same-revision notation rebind rejects the edit.
-- `SET_EVENT_DURATION` is additionally rejected when the target carries augmentation dots, beam marks or tuplet metadata because changing duration independently could desynchronize written rhythm from canonical timing.
-- Every admitted duration edit is independently rechecked by SEC-NE-04A after the candidate revision is built.
-- MusicXML-derived duration edits require current safe 04B1 evidence and reject `implicit="yes"`, `non-controlling="yes"` or unknown-meter measures.
-- Existing tie/slur/triplet authoring uses the explicit-target validators in `editor-keypad-advanced`; raw proximity/geometry is never enough to infer a relation.
+SSE-00–07 preserve these controls:
 
-## Public-schema safety gate
+- one canonical v2 score+notation pair per v2 session;
+- same-document/same-revision notation;
+- lossless-only downgrade to v1;
+- bounded MusicXML v2 import/export;
+- fail-closed renderer projection when a canonical pair is not representable;
+- opaque revision-bound renderer tokens;
+- no SesliTab host dual-write;
+- playback admission remains separate from editor admission.
 
-Grace notes, articulations and ornaments are absent from public `ScoreDocument` / `NotationDocument` 1.0.0. Adding hidden fields or unversioned side state would violate the canonical contract. These semantics remain **human-gated public schema expansion** until an explicit versioned representation, import/export policy and migration/compatibility strategy are approved.
+## SSE-08 topology design safety
 
-Whole staff/part topology likewise remains separately gated until cross-staff measure correspondence and ownership rules are explicit.
+SSE-08 freezes design only. The active runtime remains v2; no `ScoreDocumentV3` implementation or topology mutation authority is activated by this stage.
+
+The frozen v3 target requires:
+
+- document-global stable measure-frame identity instead of implicit first-staff alignment;
+- explicit stable part ordinals and instrument identity;
+- exact staff roles: `standard`, `percussion`, `tablature-linked`;
+- linked TAB as derivative presentation only, with no independent canonical event/note stream;
+- v3 notation ownership split between frame-level time/barlines and staff-measure key/clef;
+- exact measure-frame-aware semantic addressing;
+- deterministic lossless-only v2 -> v3 migration with rejection of misaligned measures/conflicting ownership;
+- lossless-only v3 -> v2 downgrade;
+- no rhythmic invention when adding a content staff.
+
+A linked TAB staff must resolve to a standard source staff in the same part. String/fret/fingering/voicing remains derivative Guitar state. Removing a source staff cannot silently orphan or retarget its linked TAB presentation.
+
+## Topology implementation gate
+
+SSE-09 may not bypass the frozen SSE-08 contract. Before v3 authoring/session cutover is admitted it must prove validators, deterministic migration, exact addressing, atomic history, orphan-safe topology operations, measure-frame alignment, renderer/MusicXML fail-closed behavior and Node 18/20/22 CI.
+
+Cross-staff ownership is still not admitted. Polymeter/non-controlling topology, cross-staff note/beam/tie/slur/tuplet/ornament semantics, arbitrary instrument transposition, layout geometry and production activation remain separate gates.
 
 ## Prior stage safety remains active
 
-04A timing veto, 04B1 evidence validation, 04B2 legal-gap proof, 05 relation-safe retiming and 06 structural/copy orphan protection are cumulative. Later stages may not bypass them.
+04A timing veto, 04B1 evidence validation, 04B2 legal-gap proof, 05 relation-safe retiming, 06 copy/orphan protection, v2 schema validation, MusicXML safety and SSE-07 renderer/host isolation are cumulative. Later stages may not bypass them.
 
 ## Human gates
 
-Human approval is required before breaking public score/notation contracts, enabling schema-absent advanced semantics, enabling staff/part topology without frozen rules, weakening source immutability/fail-closed validation, adding material dependency/license risk, granting AI/renderer/host canonical authority, or activating production/public-write services.
+Human approval is required before any new public score/notation schema is activated, before staff/part topology implementation deviates from the frozen SSE-08 design, before cross-staff canonical ownership is introduced, before source immutability/fail-closed validation is weakened, before material dependency/license risk is added, before AI/renderer/host gains canonical authority, or before production/public-write services are activated.
