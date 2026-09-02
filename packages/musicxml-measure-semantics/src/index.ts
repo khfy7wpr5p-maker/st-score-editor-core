@@ -100,6 +100,20 @@ const gcd = (left: bigint, right: bigint): bigint => {
   return a;
 };
 
+const frozenRational = (numerator: bigint, denominator: bigint, label: string): Rational => {
+  if (numerator < 0n || denominator <= 0n) {
+    throw new MusicXmlMeasureSemanticsError(`${label} produced an invalid rational.`, 'INVALID_EVIDENCE');
+  }
+  const divisor = gcd(numerator, denominator);
+  const reducedNumerator = numerator / divisor;
+  const reducedDenominator = denominator / divisor;
+  const max = BigInt(Number.MAX_SAFE_INTEGER);
+  if (reducedNumerator > max || reducedDenominator > max) {
+    throw new MusicXmlMeasureSemanticsError(`${label} exceeds canonical safe integer bounds.`, 'INVALID_EVIDENCE');
+  }
+  return Object.freeze({ numerator: Number(reducedNumerator), denominator: Number(reducedDenominator) });
+};
+
 const canonicalRational = (value: unknown, label: string, allowZero: boolean): Rational => {
   const item = record(value, ['numerator', 'denominator'], label);
   const numerator = safeInteger(item.numerator, allowZero ? 0 : 1, Number.MAX_SAFE_INTEGER, `${label}.numerator`);
@@ -109,6 +123,21 @@ const canonicalRational = (value: unknown, label: string, allowZero: boolean): R
   }
   return Object.freeze({ numerator, denominator });
 };
+
+const addRational = (left: Rational, right: Rational, label: string): Rational => frozenRational(
+  BigInt(left.numerator) * BigInt(right.denominator) + BigInt(right.numerator) * BigInt(left.denominator),
+  BigInt(left.denominator) * BigInt(right.denominator),
+  label
+);
+
+const subtractRational = (left: Rational, right: Rational, label: string): Rational => frozenRational(
+  BigInt(left.numerator) * BigInt(right.denominator) - BigInt(right.numerator) * BigInt(left.denominator),
+  BigInt(left.denominator) * BigInt(right.denominator),
+  label
+);
+
+const sameRational = (left: Rational, right: Rational): boolean =>
+  left.numerator === right.numerator && left.denominator === right.denominator;
 
 const timeSignature = (value: unknown, label: string): TimeSignature | null => {
   if (value === null) return null;
@@ -146,14 +175,76 @@ const validateCursorOperations = (value: unknown, label: string): readonly Music
     if (item.kind !== 'backup' && item.kind !== 'forward') {
       throw new MusicXmlMeasureSemanticsError(`${label}[${index}].kind is unsupported.`, 'INVALID_EVIDENCE');
     }
-    return Object.freeze({
-      sourceOrder,
-      kind: item.kind,
-      duration: canonicalRational(item.duration, `${label}[${index}].duration`, false),
-      cursorBefore: canonicalRational(item.cursorBefore, `${label}[${index}].cursorBefore`, true),
-      cursorAfter: canonicalRational(item.cursorAfter, `${label}[${index}].cursorAfter`, true)
-    });
+    const duration = canonicalRational(item.duration, `${label}[${index}].duration`, false);
+    const cursorBefore = canonicalRational(item.cursorBefore, `${label}[${index}].cursorBefore`, true);
+    const cursorAfter = canonicalRational(item.cursorAfter, `${label}[${index}].cursorAfter`, true);
+    const expectedAfter = item.kind === 'forward'
+      ? addRational(cursorBefore, duration, `${label}[${index}] forward arithmetic`)
+      : subtractRational(cursorBefore, duration, `${label}[${index}] backup arithmetic`);
+    if (!sameRational(cursorAfter, expectedAfter)) {
+      throw new MusicXmlMeasureSemanticsError(`${label}[${index}] cursor arithmetic is inconsistent.`, 'INVALID_EVIDENCE', {
+        kind: item.kind,
+        sourceOrder,
+        expectedAfter,
+        observedAfter: cursorAfter
+      });
+    }
+    return Object.freeze({ sourceOrder, kind: item.kind, duration, cursorBefore, cursorAfter });
   }));
+};
+
+const validateTimeInheritance = (measures: readonly MusicXmlMeasureSemanticsEntry[]): void => {
+  const seenSourceMeasures = new Set<string>();
+  const groups = new Map<string, MusicXmlMeasureSemanticsEntry[]>();
+
+  for (const entry of measures) {
+    const sourceKey = JSON.stringify([entry.sourcePartId, entry.sourceStaffOrdinal, entry.sourceMeasureIndex]);
+    if (seenSourceMeasures.has(sourceKey)) {
+      throw new MusicXmlMeasureSemanticsError('Measure-semantics contains duplicate source measure evidence.', 'INVALID_EVIDENCE', {
+        sourcePartId: entry.sourcePartId,
+        sourceStaffOrdinal: entry.sourceStaffOrdinal,
+        sourceMeasureIndex: entry.sourceMeasureIndex
+      });
+    }
+    seenSourceMeasures.add(sourceKey);
+
+    const groupKey = JSON.stringify([entry.sourcePartId, entry.sourceStaffOrdinal]);
+    const group = groups.get(groupKey) ?? [];
+    group.push(entry);
+    groups.set(groupKey, group);
+  }
+
+  for (const group of groups.values()) {
+    group.sort((left, right) => left.sourceMeasureIndex - right.sourceMeasureIndex);
+    let activeTimeSignature: TimeSignature | null = null;
+
+    for (const entry of group) {
+      if (entry.timeSignatureSource === 'DECLARED_HERE') {
+        activeTimeSignature = entry.declaredTimeSignature;
+        continue;
+      }
+      if (entry.timeSignatureSource === 'INHERITED') {
+        if (activeTimeSignature === null || !sameTime(activeTimeSignature, entry.effectiveTimeSignature)) {
+          throw new MusicXmlMeasureSemanticsError('Inherited time-signature evidence does not match the active source meter.', 'INVALID_EVIDENCE', {
+            sourcePartId: entry.sourcePartId,
+            sourceStaffOrdinal: entry.sourceStaffOrdinal,
+            sourceMeasureIndex: entry.sourceMeasureIndex,
+            expected: activeTimeSignature,
+            observed: entry.effectiveTimeSignature
+          });
+        }
+        continue;
+      }
+      if (activeTimeSignature !== null) {
+        throw new MusicXmlMeasureSemanticsError('Unknown time-signature evidence cannot follow a known active source meter.', 'INVALID_EVIDENCE', {
+          sourcePartId: entry.sourcePartId,
+          sourceStaffOrdinal: entry.sourceStaffOrdinal,
+          sourceMeasureIndex: entry.sourceMeasureIndex,
+          activeTimeSignature
+        });
+      }
+    }
+  }
 };
 
 export const createMusicXmlMeasureSemanticsDocument = (
@@ -241,6 +332,8 @@ export const createMusicXmlMeasureSemanticsDocument = (
       cursorOperations: validateCursorOperations(item.cursorOperations, `measures[${index}].cursorOperations`)
     });
   });
+
+  validateTimeInheritance(measures);
 
   return Object.freeze({
     contractVersion: MUSICXML_MEASURE_SEMANTICS_VERSION,
