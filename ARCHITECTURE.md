@@ -1,98 +1,89 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–07 are merged. SSE-08 freezes the next staff/part topology contract as design only; runtime implementation is not started.**
+Status: **SEC-NE and SSE-00–08 are merged. SSE-09 bounded V3 staff/part topology runtime is implemented on this merge candidate.**
 
-## Current canonical authority
+## Canonical authority
 
-Each active v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. MusicXML remains exchange/projection data. Renderer, DOM/SVG state and SesliTab host state remain noncanonical.
+A session owns exactly one versioned canonical score+notation pair. V2 sessions remain supported; a V3 session owns exactly one `ScoreDocumentV3 + NotationDocumentV3` pair. V2 input may be migrated once into V3, but mutable V2 and V3 copies are never kept in parallel.
 
-SSE-08 does not change that runtime authority. It defines the approved target for a future v3 cutover.
+MusicXML is exchange/projection data. Renderer, DOM/SVG, SesliTab host state and Guitar derivative state remain noncanonical.
 
-## Existing SSE-07 renderer projection
-
-```text
-canonical v2 score + notation
-        |
-try lossless v2 -> v1 downgrade
-   | success                  | unrepresentable
-V1_COMPATIBLE_XML             v
-                       serializeNotationMusicXmlV2
-                          | success          | unsupported
-                     V2_SEMANTIC_XML      VNEXT_XML_PENDING
-                          |
-               exact renderer profile
-                          |
-                 OSMD / alphaTab adapter
-```
-
-Opaque renderer tokens remain revision-bound semantic identities. SesliTab v2 remains a facade over one canonical v2 session with no host dual-write.
-
-## SSE-08 topology problem
-
-The current v1/v2 nested shape stores measures under each staff and does not define an explicit aligned measure entity. Serializers therefore use one staff as a reference sequence and locate other staff measures by ordinal. Part order is also implicit array order, and no canonical staff-role/instrument/TAB ownership contract exists.
-
-Those limitations make safe part/staff authoring a schema problem rather than a local command problem.
-
-## Frozen v3 topology direction
-
-The approved design target is:
-
-- `ScoreDocumentV3/3.0.0`;
-- `NotationDocumentV3/3.0.0`;
-- `SemanticAddressV3/3.0.0`;
-- `RendererRequestV3/3.0.0`.
-
-Conceptually:
+## V3 topology
 
 ```text
 ScoreDocumentV3
-  -> measureFrames[]          # global aligned measure sequence
+  -> measureFrames[]             # document-global aligned sequence
   -> parts[]
-       -> explicit ordinal
-       -> stable instrument identity
+       -> id + ordinal
+       -> instrument {id,name,shortName}
        -> staves[]
-            -> standard/percussion content staff
+            -> standard/percussion
                  -> StaffMeasureV3(frameId)[]
-            -> tablature-linked presentation staff
+                      -> voices/events/graceGroups
+            -> tablature-linked
                  -> sourceStaffId
-                 -> no independent canonical event stream
+                 -> TabProfileV3
+                 -> measures=[]
 ```
 
-`measureFrames` become the sole aligned measure-sequence authority. Content-bearing staffs contain exactly one staff measure per current frame. Linked TAB presentation derives alignment and note identity from its source standard staff.
+`measureFrames` are the sole aligned measure-sequence authority. Standard/percussion staffs have exactly one measure per frame. Linked TAB is presentation topology only and cannot own canonical voices/events/notes. String/fret/fingering/voicing remains derivative Guitar state.
 
-## Notation ownership in v3
+## V3 notation ownership
 
-V3 separates notation ownership that is mixed in current `MeasureNotation`:
+`NotationDocumentV3` separates structural notation ownership:
 
-- measure-frame notation owns controlling time signature and bounded barline/repeat structure;
-- staff-measure notation owns key signature and clef;
-- event/note/grace notation retains its current semantic meaning.
+- frame: controlling time signature and barlines;
+- staff measure: key signature and clef;
+- event/note/grace: the admitted V2 semantic notation set.
 
-All notation remains sparse, same-document and same-revision.
+Notation is sparse, same-document and same-revision. A topology edit that would remove a still-notated entity rejects rather than silently dropping its notation.
 
-## TAB authority
+## Migration
 
-`tablature-linked` is presentation topology, not a second musical model.
+V2 -> V3:
 
-- it must reference a standard staff in the same part;
-- it cannot own independent voices/events/notes;
-- rendered TAB note/fret hits resolve back to source canonical note/event identities;
-- tuning/capo may configure the presentation profile;
-- string/fret/fingering/voicing assignments remain derivative Guitar state;
-- deleting a source staff requires atomic handling of linked TAB topology.
+- preserves existing canonical entity IDs;
+- creates deterministic noncolliding frame/instrument identities;
+- requires equal staff measure counts and matching ordinal/display-number alignment;
+- rejects conflicting aligned time/barline ownership;
+- never infers linked TAB merely from a TAB clef.
 
-This preserves the existing standard-notation canonical boundary.
+V3 -> V2 is lossless-only. Linked TAB, non-standard topology or custom V3 topology metadata that would disappear blocks downgrade.
 
-## V3 migration gate
+## SSE-09 topology authoring
 
-V2 -> V3 migration is lossless only when current staff measures can be proven aligned. It must preserve existing entity IDs, create deterministic fresh frame/instrument identities, and reject missing/misaligned measures or conflicting frame-owned notation rather than repair them.
+Admitted operations:
 
-V3 -> V2 downgrade is lossless-only and rejects any v3 topology that cannot be represented without semantic loss, including linked TAB staff.
+- add/remove/reorder part;
+- add/remove/reorder standard or percussion staff;
+- add/remove linked TAB presentation staff;
+- rename part/instrument display metadata.
 
-## SSE-09 implementation boundary
+Every operation uses exact revision-bound semantic targets and caller-supplied fresh identity plans. Adding content topology requires effective meter on every frame and initializes exactly one explicit full-frame rest voice per new staff/frame. It does not copy or infer rhythmic content from another staff.
 
-SSE-09 may implement bounded add/remove/reorder part/staff operations only against the frozen v3 contract. Initial content-staff creation must not invent rhythmic content: it requires enough effective meter evidence to create deterministic explicit full-frame rests or must fail closed.
+Removing the final part or final content staff is forbidden. Removing a source standard staff while linked TAB exists is rejected; the linked TAB must be removed explicitly first. No cascading deletion or nearest retarget is admitted.
 
-Cross-staff relation ownership, polymeter/non-controlling topology, part groups, arbitrary instrument transposition, layout geometry, playback routing, persistence/network and production activation remain outside this design.
+## V3 history/session
 
-Full contract: `docs/staff-part-topology-contract.md`.
+`editor-history-v3` stores atomic score+notation snapshots and accepts only direct-child revisions. `editor-session-controller-v3` composes migration, topology commits, selection, render request regeneration and undo/redo without introducing host authority.
+
+## Renderer boundary
+
+`RendererRequestV3` is additive:
+
+```text
+V3 canonical pair
+  -> guarded lossless V3 -> V2 downgrade
+       -> proven V2 renderer projection succeeds -> V2_COMPATIBLE_XML
+       -> semantic loss / known unsupported MusicXML projection -> V3_XML_PENDING + null XML
+```
+
+Pending projection never invalidates the canonical V3 edit/history; it only prevents lossy rendering. V3-native topology MusicXML serialization is not claimed by SSE-09.
+
+## Product boundary
+
+SSE-09 does not activate SesliTab V3 product cutover, persistence, network/server revisions, publication or production write authority. Existing SesliTab v2 host integration remains current.
+
+## Next gate
+
+**SSE-10 is HUMAN-GATED DESIGN** for cross-staff canonical relation ownership. Cross-staff beam/note relocation/tie/slur/tuplet/ornament semantics, polymeter/non-controlling topology, part groups, arbitrary transposition, percussion maps, layout geometry and playback routing remain outside SSE-09.
