@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "document_type": "score_authoring_capability_matrix",
   "project": "ST Score Editor Core",
-  "as_of_stage": "SEC-NE-04B1",
+  "as_of_stage": "SEC-NE-04B2",
   "canonical_authority": "ScoreDocument",
   "status_values": ["COMPLETE_MERGED", "IN_PROGRESS", "NOT_STARTED", "HUMAN_GATED"],
   "capabilities": [
@@ -11,16 +11,12 @@
       "status": "COMPLETE_MERGED",
       "capability": "selected explicit-rest note entry",
       "public_surface": true,
-      "browser_session_surface": true,
-      "implicit_gap_authority": false,
-      "onset_mutation_authority": false
+      "browser_session_surface": true
     },
     {
       "id": "SEC-NE-02",
       "status": "COMPLETE_MERGED",
-      "capability": "unified session/history/browser composition for selected-rest entry",
-      "public_surface": true,
-      "browser_session_surface": true
+      "capability": "unified session/history/browser composition for selected-rest entry"
     },
     {
       "id": "SEC-NE-03",
@@ -31,7 +27,7 @@
     {
       "id": "SEC-NE-04A",
       "status": "COMPLETE_MERGED",
-      "capability": "measure timing, voice occupancy and explicit-rest admission",
+      "capability": "measure timing, target-voice occupancy and explicit-rest admission",
       "authoring_safe_classes": ["EXPLICIT_REST_SLOT"],
       "fail_closed_classes": ["BLOCKED_PITCHED", "OUTSIDE_MEASURE", "IMPLICIT_GAP_UNADMITTED", "MIXED_UNADMITTED"]
     },
@@ -42,40 +38,41 @@
       "public_surface": false,
       "browser_session_surface": false,
       "integration_mode": "LOW_LEVEL_FIRST_PARTY_PRIMITIVE",
-      "supports": ["rest_start", "rest_middle", "rest_end", "exact_rest_fill", "leading_rest_split", "trailing_rest_split"],
-      "implicit_gap_authority": false,
-      "onset_mutation_authority": false
+      "supports": ["rest_start", "rest_middle", "rest_end", "exact_rest_fill", "leading_rest_split", "trailing_rest_split"]
     },
     {
       "id": "SEC-NE-04B1",
       "status": "COMPLETE_MERGED",
       "capability": "revision-bound MusicXML time and measure-semantics evidence",
-      "design": "ADDITIVE_VERSIONED_MEASURE_SEMANTICS_EVIDENCE",
-      "breaking_score_schema_change": false,
-      "breaking_notation_schema_change": false,
-      "legacy_import_musicxml_behavior_changed": false,
-      "additive_import_surface": "importMusicXmlWithMeasureSemantics",
       "evidence_contract": "MusicXmlMeasureSemanticsDocument/1.0.0",
-      "preserves": [
-        "declared_simple_time_signature",
-        "effective_time_signature_inheritance",
-        "time_signature_changes",
-        "measure_implicit_yes_no",
-        "measure_non_controlling_yes_no",
-        "backup_forward_exact_rational_cursor_evidence",
-        "source_part_measure_staff_provenance"
-      ],
+      "legacy_import_musicxml_behavior_changed": false,
       "short_measure_pickup_inference": false,
-      "implicit_gap_authority": false,
-      "rest_materialization_authority": false,
+      "evidence_mutation_authority": false,
       "new_runtime_dependency": false
     },
     {
       "id": "SEC-NE-04B2",
-      "status": "NOT_STARTED",
-      "capability": "deterministic legal implicit-silence rest materialization",
-      "depends_on": ["SEC-NE-04B1"],
-      "implicit_gap_authority": "PENDING"
+      "status": "COMPLETE_MERGED",
+      "capability": "deterministic normal-measure target-voice implicit-gap rest materialization",
+      "package": "editor-implicit-gap-materialization",
+      "public_browser_session_surface": false,
+      "admission_requires": [
+        "current_04b1_evidence",
+        "current_insertion_position",
+        "04a_implicit_gap_unadmitted_window",
+        "single_target_voice_gap_containment",
+        "04b1_meter_equals_04a_meter",
+        "measure_implicit_not_yes",
+        "measure_non_controlling_not_yes"
+      ],
+      "materialization": "ENTIRE_CONTAINING_GAP_TO_ONE_FRESH_REST",
+      "existing_event_onset_mutation": false,
+      "cross_voice_inference": false,
+      "pickup_gap_authority": false,
+      "non_controlling_gap_authority": false,
+      "direct_pitched_note_entry": false,
+      "implicit_gap_authority": "BOUNDED_REST_MATERIALIZATION_ONLY",
+      "new_runtime_dependency": false
     },
     {
       "id": "SEC-NE-05",
