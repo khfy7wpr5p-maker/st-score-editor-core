@@ -4,111 +4,53 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-The repository has three distinct capability lines:
+The repository now implements the bounded SEC-NE authoring line through **SEC-NE-06**.
 
-1. **Core E0–E8-C** — canonical score model, bounded MusicXML import/export, semantic addressing, atomic edits/history, notation sidecar, renderer/browser contracts and read-only Guitar Workspace evidence.
-2. **SEC-SMUFL-KEYPAD-01** — existing-score correction keypad, complete through SEC-KP-10.
-3. **SEC-NE Sibelius-style authoring expansion** — complete through SEC-NE-05 for bounded score authoring and fail-closed retiming.
+- **SEC-NE-01/02:** exact selected-rest note entry and unified history/session composition.
+- **SEC-NE-03:** revision-bound canonical `InsertionPosition`.
+- **SEC-NE-04A/04C:** exact timing veto and explicit-rest position note entry.
+- **SEC-NE-04B1/04B2:** MusicXML measure evidence and proven normal-measure implicit-gap rest materialization.
+- **SEC-NE-05:** fail-closed canonical onset movement plus atomic current 3:2 triplet retiming.
+- **SEC-NE-06:** bounded measure/voice structural authoring and relation-safe identity-fresh voice copy/paste.
 
-### SEC-NE completed state
+## SEC-NE-06 structural authority
 
-- **SEC-NE-01 — COMPLETE / MERGED:** exact selected-rest note entry.
-- **SEC-NE-02 — COMPLETE / MERGED:** selected-rest entry through unified history/session/browser composition.
-- **SEC-NE-03 — COMPLETE / MERGED:** revision-bound canonical `InsertionPosition`.
-- **SEC-NE-04A — COMPLETE / MERGED:** exact measure timing/target-voice occupancy and explicit-rest admission.
-- **SEC-NE-04C — COMPLETE / MERGED:** low-level explicit-rest position note-entry primitive.
-- **SEC-NE-04B1 — COMPLETE / MERGED:** revision-bound MusicXML measure/time evidence.
-- **SEC-NE-04B2 — COMPLETE / MERGED:** conservative legal implicit-silence assessment and deterministic full-gap explicit-rest materialization.
-- **SEC-NE-05 — COMPLETE / MERGED:** bounded canonical event onset movement plus atomic retiming of the already-supported exact 3:2 three-event triplet profile.
+`editor-structural-authoring/1.0.0` admits:
 
-### SEC-NE-05 retiming boundary
+- `ADD_MEASURE_AFTER` — inserts one fresh measure with one fresh empty initial voice and deterministic ordinal normalization;
+- `REMOVE_EMPTY_MEASURE` — only when the staff keeps another measure, every contained voice is empty, and no measure notation would be orphaned;
+- `ADD_EMPTY_VOICE` — appends one fresh empty voice;
+- `REMOVE_EMPTY_VOICE` — only when the voice is empty and its measure keeps another voice.
 
-`editor-event-retiming` admits `MOVE_EVENT/1.0.0` only for a current event inside its existing measure/voice. The target keeps its event/note identities, duration and pitch; only onset changes. The result is independently rechecked by SEC-NE-04A timing/occupancy validation.
+All canonical IDs must be globally fresh. Structural changes create one direct child revision and same-revision notation must rebind successfully or the operation rejects.
 
-Single-event movement fails closed when the target carries beam/tuplet/tie/slur coupling, or when the move crosses another event carrying such relation-sensitive notation. This prevents event-order changes from silently corrupting notation relationships.
+Measure-level time/key/clef/barline authoring already exists through `notation-commands` and remains the notation authority; SEC-NE-06 does not duplicate that state in `ScoreDocument`.
 
-`editor-triplet-retiming` separately admits one atomic current **3:2 three-event triplet** range. All three events move as one revision and preserve their current triplet notation. The profile requires three consecutive equal-duration contiguous events with exact start/middle/stop tuplet evidence. Beam or tie/slur coupling remains unsupported in this v1 group-retiming profile.
+`editor-copy-paste/1.0.0` admits `COPY_VOICE_TO_EMPTY_VOICE` for relation-free source content only. Every copied event and note receives an explicit fresh identity. Onset, duration, pitch and safe accidental/dot notation are preserved. Beam/tuplet/tie/slur-coupled source material rejects instead of being ambiguously cloned. The target must be empty and the pasted voice must independently pass SEC-NE-04A timing validation.
 
-For MusicXML-derived scores, retiming requires current SEC-NE-04B1 evidence for the exact measure. Pickup/incomplete (`implicit="yes"`), non-controlling and unknown-meter measures remain fail-closed.
+MusicXML-derived paste requires current safe 04B1 target-measure evidence and rejects pickup/incomplete, non-controlling and unknown-meter targets.
 
-### Next stages
+## Deliberately unadmitted structural topology
 
-- **SEC-NE-06:** structural authoring.
-- **SEC-NE-07:** advanced note/notation authoring.
-- **SEC-NE-XML-ROUNDTRIP:** broader golden preservation/equivalence hardening.
+Adding/removing whole staffs or parts is **not** inferred from the existing schema. Cross-staff correspondence, measure alignment and part-level notation ownership need a separately frozen topology contract before those operations can become canonical authority.
+
+## Next stages
+
+- **SEC-NE-07:** advanced authoring that is representable by current canonical/notation contracts; schema-expanding features remain human-gated.
+- **SEC-NE-XML-ROUNDTRIP:** golden preservation/equivalence hardening.
 - **SEC-NE-08:** guitar/TAB authoring composition.
 - **SEC-NE-09:** SesliTab product integration.
 
-The repository still does **not** authorize cross-measure drag, independent movement of relation-coupled events, automatic voice creation, pickup/non-controlling implicit-gap authoring, or renderer-coordinate edit authority.
-
 ## Canonical authority
 
-```text
-MusicXML / OMR evidence
-        ↓
-safe import adapters
-        ↓
-Canonical ScoreDocument + revision-bound notation/evidence
-        ↓
-SemanticAddress / Selection / InsertionPosition
-        ↓
-04A timing + 04B1 measure evidence
-        ↓
-typed bounded authoring / retiming primitive
-        ↓
-atomic validated child revision
-        ↓
-unified score+notation history
-        ↓
-RenderRequest + opaque manifest
-        ↓
-ST Score Rendering Layer / product UI
-```
+`ScoreDocument` remains the single musical edit authority. MusicXML and sidecar evidence are revision-bound inputs, renderers are presentation-only, SesliTab is host/orchestration only, and Guitar/OMR results are derivative or advisory unless separately admitted.
 
-`ScoreDocument` is the single musical edit authority. MusicXML, measure evidence, renderer objects, SVG/DOM state, coordinates, glyphs, OMR/AI output and Guitar Workspace results are non-authoritative by themselves.
-
-## MusicXML measure-semantics boundary
-
-Legacy `importMusicXml` remains the narrow E2 score-only profile and rejects newly meaningful measure/time semantics rather than silently dropping them.
-
-`importMusicXmlWithMeasureSemantics` returns same-revision score, notation and `MusicXmlMeasureSemanticsDocument`, preserving the admitted simple time-signature chain, `implicit`, `non-controlling`, exact `backup`/`forward` cursor evidence and source measure provenance.
-
-Short measure length alone is never pickup proof. `.mxl` remains unadmitted.
-
-## Insertion and retiming safety
-
-`editor-measure-timing` remains the independent timing veto for both insertion and retiming. 04B2 may convert one specifically proven normal-measure implicit gap into an explicit rest. 05 may move admitted canonical events only if the final whole voice remains non-overlapping and inside the active measure span.
-
-Relation coupling is never guessed from renderer geometry or nearest-neighbor order. Unsupported relation-coupled retiming rejects instead of degrading notation.
-
-## Renderer, host and Guitar boundaries
-
-Renderers are presentation-only. SesliTab is a host/orchestrator and may not dual-write score state. Guitar fingering/voicing remains derivative unless separately admitted. Direct external Guitar TAB engine invocation remains human-gated.
+No repository merge activates production/public-write authority.
 
 ## Dependencies
 
-Runtime:
-
-- `saxes@6.0.0`
-- `xmlchars@2.2.0`
-
-Build-only:
-
-- `typescript@6.0.3`
-- `esbuild@0.28.2`
-
-SEC-NE through 05 adds no third-party dependency.
+Runtime remains only `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`. SEC-NE-06 adds no third-party dependency.
 
 ## Documentation
 
-- `ARCHITECTURE.md`
-- `ROADMAP.md`
-- `SAFETY.md`
-- `DEVELOPMENT_GOVERNANCE.md`
-- `DEPENDENCIES.md`
-- `docs/sibelius-editor-expansion-plan.md`
-- `docs/editor-ui-authority-contract.md`
-- `docs/insertion-and-timing-authority.md`
-- `docs/musicxml-roundtrip-policy.md`
-- `docs/score-authoring-capability-matrix.json`
-- `docs/seslitab-editor-integration-contract.md`
+See `ARCHITECTURE.md`, `ROADMAP.md`, `SAFETY.md`, `docs/sibelius-editor-expansion-plan.md`, `docs/score-authoring-capability-matrix.json`, `docs/musicxml-roundtrip-policy.md`, `docs/insertion-and-timing-authority.md` and `docs/seslitab-editor-integration-contract.md`.
