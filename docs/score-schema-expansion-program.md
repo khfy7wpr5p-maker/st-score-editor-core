@@ -1,14 +1,14 @@
 # SCORE-SCHEMA-EXPANSION Program
 
-Status: **SSE-09 COMPLETE / MERGE CANDIDATE**
+Status: **SSE-09 COMPLETE / MERGED**
 
-SSE-00–08 are complete and merged. SSE-09 implements the frozen V3 staff/part topology contract as an additive core runtime. Cross-staff ownership remains the next human-gated design stage.
+SSE-00–09 are complete and merged. SSE-09 implements the frozen V3 staff/part topology contract as an additive core runtime. Cross-staff ownership remains the next human-gated design stage.
 
 ## Completed sequence
 
 - **SSE-00–07 — COMPLETE / MERGED:** V2 schema/session, grace/articulation/ornament authoring, bounded MusicXML V2, renderer and SesliTab V2 compatibility.
 - **SSE-08 — COMPLETE / MERGED:** V3 staff/part topology design freeze.
-- **SSE-09 — COMPLETE / MERGE CANDIDATE:** V3 topology substrate, migration, history/session, renderer contract and bounded topology authoring.
+- **SSE-09 — COMPLETE / MERGED:** V3 topology substrate, migration, history/session, renderer contract and bounded topology authoring.
 - **SSE-10 — HUMAN-GATED DESIGN:** cross-staff canonical relation ownership.
 
 ## V3 runtime

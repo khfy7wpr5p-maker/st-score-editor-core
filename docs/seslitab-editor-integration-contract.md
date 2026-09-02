@@ -1,6 +1,6 @@
 # SesliTab Editor Integration Contract
 
-Status: **SEC-NE-09 v1 integration is merged; SSE-07 adds bounded v2 compatibility as a merge candidate. Production/persistence/deployment authority remains unactivated.**
+Status: **SEC-NE-09 v1 integration and SSE-07 bounded v2 compatibility are merged. SSE-09 V3 core topology is merged but SesliTab V3 product cutover is not activated. Production/persistence/deployment authority remains unactivated.**
 
 ## Ownership
 
@@ -72,14 +72,20 @@ Playback cursor/highlight may reference current semantic identity but cannot mut
 
 String/fret/fingering/voicing state remains derivative. A canonical score edit invalidates stale Guitar state; Guitar results never bypass generic Editor Core authoring. Direct external engine invocation remains E8-D human-gated.
 
+SSE-09 adds canonical staff/part topology and derivative linked-TAB placement inside the V3 core, but it does not grant SesliTab a second topology model or reverse-write authority.
+
 ## OMR boundary
 
 OMR is evidence/source. Corrections must enter through admitted semantic edit paths. Original source evidence remains immutable.
 
 ## Persistence/versioning boundary
 
-SSE-07 adds no network, persistence or server revision authority. A future product persistence layer must store/version accepted canonical revisions and define conflict handling explicitly. Silent last-write-wins is not admitted.
+SSE-07 and SSE-09 add no network, persistence or server revision authority. A future product persistence layer must store/version accepted canonical revisions and define conflict handling explicitly. Silent last-write-wins is not admitted.
+
+## V3 product boundary
+
+SSE-09 provides an additive V3 core session and bounded staff/part topology authoring. Existing SesliTab product integration remains on the admitted v2 facade until a separate V3 product-cutover contract is approved and validated. V3-native topology MusicXML, cross-staff ownership and product persistence remain separate gates.
 
 ## Production gate
 
-The bounded integration is CI-verified, but merge does not activate public write APIs, persistence, production services or deployment. Those remain separate human-gated product decisions. Staff/part topology and cross-staff canonical authority also remain outside SSE-07.
+The bounded integrations are CI-verified, but merge does not activate public write APIs, persistence, production services or deployment. Those remain separate human-gated product decisions. Cross-staff canonical authority remains outside the current admitted scope.

@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–08 are merged. SSE-09 bounded V3 staff/part topology runtime is implemented on this merge candidate.**
+Status: **SEC-NE and SSE-00–09 are merged. SSE-09 bounded V3 staff/part topology runtime is active as an additive core contract.**
 
 ## Canonical authority
 

@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.9.0",
+  "schema_version": "1.9.1",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
   "stage": "SSE-09",
-  "status": "COMPLETE_MERGE_CANDIDATE",
+  "status": "COMPLETE_MERGED",
   "supported_canonical_session_versions": ["2.0.0", "3.0.0"],
   "single_version_authority_per_session": true,
   "sse_09": {
@@ -56,7 +56,7 @@
     {"id":"SSE-06","status":"COMPLETE_MERGED"},
     {"id":"SSE-07","status":"COMPLETE_MERGED"},
     {"id":"SSE-08","status":"COMPLETE_MERGED"},
-    {"id":"SSE-09","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"SSE-09","status":"COMPLETE_MERGED"},
     {"id":"SSE-10","status":"HUMAN_GATED_DESIGN"}
   ],
   "global_invariants": {

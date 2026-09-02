@@ -16,7 +16,7 @@ Repository reality only; planned capability is not production capability.
 
 - **SSE-00–07 — COMPLETE / MERGED:** v2 contract/session, grace/articulation/ornament authoring, bounded MusicXML v2, renderer and SesliTab v2 compatibility.
 - **SSE-08 — COMPLETE / MERGED:** human-approved V3 staff/part topology contract freeze.
-- **SSE-09 — COMPLETE / MERGE CANDIDATE:** bounded V3 topology runtime and authoring.
+- **SSE-09 — COMPLETE / MERGED:** bounded V3 topology runtime and authoring.
 - **SSE-10 — HUMAN-GATED DESIGN:** cross-staff canonical relation ownership.
 
 ## SSE-09 exact capability

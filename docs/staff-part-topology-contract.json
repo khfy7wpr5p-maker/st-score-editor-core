@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.1.1",
   "document_type": "staff_part_topology_contract",
   "project": "ST Score Editor Core",
   "design_stage": "SSE-08",
   "implementation_stage": "SSE-09",
-  "status": "BOUNDED_IMPLEMENTATION_COMPLETE_MERGE_CANDIDATE",
+  "status": "BOUNDED_IMPLEMENTATION_COMPLETE_MERGED",
   "contracts": {
     "score_document": "ScoreDocumentV3/3.0.0",
     "notation_document": "NotationDocumentV3/3.0.0",
