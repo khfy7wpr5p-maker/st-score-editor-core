@@ -4,48 +4,33 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-The bounded SEC-NE autonomous authoring program is **COMPLETE / MERGED through SEC-NE-09**.
+The bounded SEC-NE authoring program is **COMPLETE / MERGED through SEC-NE-09**. The approved SCORE-SCHEMA-EXPANSION program has now entered implementation.
 
-- 01/02 — selected-rest entry + unified session/browser composition.
-- 03 — revision-bound insertion position.
-- 04A/04C — timing veto + explicit-rest position entry.
-- 04B1/04B2 — MusicXML measure evidence + proven legal-gap rest materialization.
-- 05 — relation-safe onset movement + atomic current 3:2 triplet movement.
-- 06 — bounded measure/voice structure + relation-safe fresh-ID copy/paste.
-- 07 — advanced current-schema authoring composition.
-- XML round trip — bounded notation serializer-profile export/re-import.
-- 08 — revision-bound derivative Guitar/TAB authoring companion.
-- 09 — single-session SesliTab host integration adapter.
+- **SSE-00 — COMPLETE / MERGED:** vNext score/notation contract and migration policy frozen and explicitly approved.
+- **SSE-01 — COMPLETE / MERGE CANDIDATE:** additive v2 score, notation, addressing and guarded migration substrate.
+- **SSE-02 — NEXT:** cut one editor session over to one canonical v2 score+notation pair without parallel mutable v1/v2 authority.
 
-Current public runtime contracts remain `ScoreDocument` / `NotationDocument` **1.0.0**.
+## SSE-01 dual-version substrate
 
-## Next program: SCORE-SCHEMA-EXPANSION
+Version 1 remains supported and unchanged. SSE-01 adds separate public contracts rather than broadening v1 exact-key unions:
 
-`SSE-00` is a **documentation/design stage only**. It defines the vNext contract needed for capabilities deliberately absent from 1.0.0:
+- `score-model-v2` — `ScoreDocumentV2 2.0.0`, including voice-owned canonical `graceGroups`;
+- `addressing-v2` — revision-bound `2.0.0` addresses including `grace-group`, `grace-event` and `grace-note`;
+- `notation-structure-v2` — `NotationDocumentV2 2.0.0`, typed articulation/ornament vocabularies and grace notation collections;
+- `schema-migration-v1-v2` — deterministic migration and loss-guarded downgrade.
 
-- canonical grace-note identity and anchoring;
-- articulations;
-- ornaments;
-- later staff/part topology and cross-staff relations.
+A pure v1 -> v2 conversion preserves document, revision and source identity, leaves normal timed events unchanged, initializes `graceGroups`, articulations, ornaments and grace notation as empty collections, and does not pretend a musical edit occurred.
 
-The proposed vNext versions are `ScoreDocumentV2 2.0.0` and `NotationDocumentV2 2.0.0`, but they are **not active runtime schemas yet**.
+A v2 -> v1 downgrade is allowed only when every v2-only semantic is empty. Grace material, articulations, ornaments or grace notation produce typed `DOWNGRADE_UNREPRESENTABLE` evidence with exact loss paths rather than being discarded.
 
-Grace material is designed as canonical voice-owned `graceGroups` anchored to an exact normal event. It is not represented as a fake zero-duration timed event. Articulations and ornaments extend typed notation state. v1 -> v2 migration must be lossless; v2 -> v1 downgrade must reject if any v2-only semantic would be lost.
+Grace material is not a zero-duration timed event. It remains canonical but outside normal measure occupancy, anchored to an exact normal event in the same voice.
 
-See:
+## Active editor runtime boundary
 
-- `docs/score-schema-expansion-program.md`
-- `docs/score-schema-vnext-contract-draft.md`
-- `docs/score-schema-expansion-program.json`
-
-## SesliTab integration
-
-`seslitab-editor-host/1.0.0` gives a product host one `EditorSessionState` as the only mutable editor state. Selection enters through exact current render tokens and supported score/notation/keypad/note-entry/history operations delegate to existing session-controller authority.
-
-Pointer, keyboard and touch converge on the same semantic mutation paths. Renderer/DOM coordinates never become score-write authority. Playback remains a separate product/media capability: edit rejection is not itself a playback-disable signal.
+SSE-01 provides dual-version validation/migration substrate only. Existing editor session/history/browser/SesliTab composition still operates on the v1 canonical pair until SSE-02 explicitly cuts a session over to v2. No session may maintain independently mutable v1 and v2 canonical states.
 
 ## Authority and dependencies
 
-`ScoreDocument` remains canonical. `NotationDocument` remains same-revision notation authority. MusicXML/OMR/Guitar data remains exchange/evidence/derivative state. Renderers and SesliTab remain noncanonical presentation/orchestration layers.
+Canonical musical state remains versioned `ScoreDocument`; notation remains same-revision `NotationDocument`. MusicXML/OMR/Guitar remain exchange/evidence/derivative state. Renderer and SesliTab remain noncanonical.
 
-Runtime dependencies remain only `saxes@6.0.0` and `xmlchars@2.2.0`. SSE-00 adds no runtime dependency and does not activate a new schema, public write API, persistence or production authority.
+Runtime dependencies remain only `saxes@6.0.0` and `xmlchars@2.2.0`. SSE-01 adds no dependency and does not activate persistence, network/server authority, production/public write, staff/part topology or E8-D external Guitar engine invocation.
