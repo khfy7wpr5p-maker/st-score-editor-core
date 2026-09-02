@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "score_schema_expansion_program",
+  "project": "ST Score Editor Core",
+  "program": "SCORE-SCHEMA-EXPANSION",
+  "stage": "SSE-00",
+  "status": "DESIGN_FREEZE_CANDIDATE",
+  "base_main_sha": "df8402ab7ba29e4a05e7d09be24ba006c71830c3",
+  "runtime_schema_changed": false,
+  "proposed_versions": {
+    "score_document": "2.0.0",
+    "notation_document": "2.0.0"
+  },
+  "authority": {
+    "canonical_score": "ScoreDocumentV2",
+    "notation": "NotationDocumentV2",
+    "renderer_canonical": false,
+    "host_canonical": false,
+    "musicxml_live_state": false,
+    "guitar_result_canonical": false
+  },
+  "design_decisions": {
+    "grace_notes": {
+      "canonical": true,
+      "normal_timeline_event": false,
+      "container": "VoiceV2.graceGroups",
+      "anchoring": "EXACT_NORMAL_EVENT_SAME_VOICE",
+      "placements": ["before", "after"],
+      "grace_event_kinds": ["note", "rest", "chord"],
+      "normal_measure_occupancy": false,
+      "zero_duration_hack_allowed": false,
+      "renderer_only_attachment_allowed": false
+    },
+    "articulations": {
+      "authority": "NotationDocumentV2.EventNotationV2",
+      "typed_finite_vocabulary": true,
+      "arbitrary_other_fallback": false
+    },
+    "ornaments": {
+      "authority": "NotationDocumentV2.EventNotationV2",
+      "typed_discriminated_union": true,
+      "supports_relation_aware_wavy_line": true,
+      "supports_relation_aware_tremolo": true,
+      "arbitrary_other_fallback": false
+    },
+    "migration": {
+      "v1_to_v2": "LOSSLESS_DETERMINISTIC",
+      "v2_to_v1": "ONLY_WHEN_NO_V2_ONLY_SEMANTICS",
+      "silent_loss_allowed": false,
+      "downgrade_error": "DOWNGRADE_UNREPRESENTABLE"
+    }
+  },
+  "stages": [
+    {"id":"SSE-00","name":"Contract freeze","status":"IN_PROGRESS","runtime_change":false},
+    {"id":"SSE-01","name":"Dual-version substrate","status":"HUMAN_GATED_PENDING_CONTRACT_APPROVAL"},
+    {"id":"SSE-02","name":"Canonical session v2 cutover","status":"NOT_STARTED"},
+    {"id":"SSE-03","name":"Grace note authoring","status":"NOT_STARTED"},
+    {"id":"SSE-04","name":"Articulation authoring","status":"NOT_STARTED"},
+    {"id":"SSE-05","name":"Ornament authoring","status":"NOT_STARTED"},
+    {"id":"SSE-06","name":"MusicXML vNext round trip","status":"NOT_STARTED"},
+    {"id":"SSE-07","name":"Renderer and SesliTab compatibility","status":"NOT_STARTED"},
+    {"id":"SSE-08","name":"Staff/part topology contract","status":"HUMAN_GATED_DESIGN"},
+    {"id":"SSE-09","name":"Staff/part topology authoring","status":"NOT_STARTED"},
+    {"id":"SSE-10","name":"Cross-staff relation model","status":"NOT_STARTED"}
+  ],
+  "global_invariants": {
+    "source_immutable": true,
+    "stale_revision_fails_closed": true,
+    "single_atomic_score_notation_history": true,
+    "no_mixed_version_score_notation_pair": true,
+    "legacy_v1_validation_stable_during_v2_introduction": true,
+    "production_activation_by_merge": false,
+    "new_runtime_dependency_required_by_design": false
+  },
+  "next_gate": {
+    "name": "VNEXT_CONTRACT_APPROVAL",
+    "required_before": ["SSE-01", "SSE-02"],
+    "approval_scope": "public ScoreDocumentV2/NotationDocumentV2 contract and migration semantics"
+  }
+}
