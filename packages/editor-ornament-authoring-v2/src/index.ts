@@ -110,7 +110,7 @@ const isLocal = (value: unknown): value is LocalOrnamentSpecV2 => {
   return true;
 };
 
-const assertLocalValue = (value: unknown): asserts value is LocalOrnamentSpecV2 => {
+const assertLocalValue: (value: unknown) => asserts value is LocalOrnamentSpecV2 = (value) => {
   if (!isLocal(value)) throw new OrnamentAuthoringV2Error('Local ornament operation accepts only simple ornaments or single-note tremolo.', 'INVALID_LOCAL_ORNAMENT');
 };
 
@@ -135,7 +135,6 @@ const normalEvent = (score: ScoreDocumentV2, target: EventAddressV2): ScoreEvent
 
 const defaultEvent = (): EventNotationV2 => ({ dots: 0, beams: [], tuplet: null, articulations: [], ornaments: [] });
 const defaultGraceEvent = (): GraceEventNotationV2 => ({ slash: false, dots: 0, beams: [], articulations: [], ornaments: [] });
-const isSpanning = (ornament: OrnamentSpec): boolean => ornament.kind === 'wavy-line' || (ornament.kind === 'tremolo' && ornament.type !== 'single');
 
 const sameVoiceScope = (targets: readonly EventAddressV2[]): boolean => targets.length > 0 && targets.every((target) =>
   target.partId === targets[0]?.partId &&
@@ -173,22 +172,27 @@ const allOrnaments = (notation: NotationDocumentV2): readonly OrnamentSpec[] => 
   ...notation.graceEvents.flatMap((entry) => entry.notation.ornaments)
 ]);
 
+const relationMatches = (ornament: OrnamentSpec, kind: 'tremolo' | 'wavy-line', number: number): boolean => {
+  if (kind === 'wavy-line') return ornament.kind === 'wavy-line' && ornament.number === number;
+  return ornament.kind === 'tremolo' && ornament.type !== 'single' && ornament.number === number;
+};
+
 const relationInUse = (notation: NotationDocumentV2, kind: 'tremolo' | 'wavy-line', number: number): boolean =>
-  allOrnaments(notation).some((ornament) => ornament.kind === kind && (ornament.kind === 'wavy-line' || ornament.type !== 'single') && ornament.number === number);
+  allOrnaments(notation).some((ornament) => relationMatches(ornament, kind, number));
 
 const normalRelationMembers = (notation: NotationDocumentV2, kind: 'tremolo' | 'wavy-line', number: number): readonly string[] => {
   const members: string[] = [];
   for (const entry of notation.events) {
-    if (entry.notation.ornaments.some((ornament) => ornament.kind === kind && (ornament.kind === 'wavy-line' || ornament.type !== 'single') && ornament.number === number)) members.push(entry.target.eventId);
+    if (entry.notation.ornaments.some((ornament) => relationMatches(ornament, kind, number))) members.push(entry.target.eventId);
   }
-  if (notation.graceEvents.some((entry) => entry.notation.ornaments.some((ornament) => ornament.kind === kind && (ornament.kind === 'wavy-line' || ornament.type !== 'single') && ornament.number === number))) {
+  if (notation.graceEvents.some((entry) => entry.notation.ornaments.some((ornament) => relationMatches(ornament, kind, number)))) {
     throw new OrnamentAuthoringV2Error('This bounded relation profile does not mutate relations spanning grace events.', 'RELATION_SCOPE_UNSUPPORTED', { kind, number });
   }
   return Object.freeze(members);
 };
 
 const withoutRelation = (items: readonly OrnamentSpec[], kind: 'tremolo' | 'wavy-line', number: number): readonly OrnamentSpec[] =>
-  items.filter((ornament) => !(ornament.kind === kind && (ornament.kind === 'wavy-line' || ornament.type !== 'single') && ornament.number === number));
+  items.filter((ornament) => !relationMatches(ornament, kind, number));
 
 const rebindNotation = (
   nextScore: ScoreDocumentV2,
@@ -224,7 +228,6 @@ export const executeOrnamentAuthoringV2 = (
     resolveLocalTarget(score, intent.target);
     assertLocalValue(intent.value);
     selectionEntityId = intent.target.kind === 'event' ? intent.target.eventId : intent.target.graceEventId;
-    const map = intent.target.kind === 'event' ? normal : grace;
     const current = intent.target.kind === 'event' ? (normal.get(selectionEntityId) ?? defaultEvent()) : (grace.get(selectionEntityId) ?? defaultGraceEvent());
     const existing = current.ornaments.findIndex((item) => same(item, intent.value));
     let ornaments: readonly OrnamentSpec[];
@@ -238,7 +241,6 @@ export const executeOrnamentAuthoringV2 = (
     }
     if (intent.target.kind === 'event') normal.set(selectionEntityId, { ...(current as EventNotationV2), ornaments });
     else grace.set(selectionEntityId, { ...(current as GraceEventNotationV2), ornaments });
-    void map;
   } else if (intent.type === 'CREATE_TREMOLO_RELATION') {
     if (!validRelationNumber(intent.number) || !validMarks(intent.marks) || !validPlacement(intent.placement)) throw new OrnamentAuthoringV2Error('Tremolo relation parameters are invalid.', 'INVALID_INTENT');
     orderedIndices(score, [intent.start, intent.stop]);
