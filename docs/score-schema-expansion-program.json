@@ -1,24 +1,29 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
-  "stage": "SSE-04",
+  "stage": "SSE-05",
   "status": "COMPLETE_MERGE_CANDIDATE",
   "canonical_session_version": "2.0.0",
-  "sse_04": {
-    "normal_event_articulation_authoring": true,
-    "grace_event_articulation_authoring": true,
-    "operations": ["SET_ARTICULATIONS", "TOGGLE_ARTICULATION", "REMOVE_ARTICULATION"],
-    "finite_typed_vocabulary": true,
-    "duplicate_semantics_allowed": false,
-    "invalid_direction_allowed": false,
+  "sse_05": {
+    "local_simple_ornaments": true,
+    "local_single_note_tremolo": true,
+    "local_targets": ["event", "grace-event"],
+    "local_spanning_endpoint_write_allowed": false,
+    "atomic_two_note_tremolo_relation": true,
+    "atomic_wavy_line_relation": true,
+    "spanning_scope": "NORMAL_PITCHED_EVENTS_SAME_PART_STAFF_MEASURE_VOICE",
+    "strict_canonical_event_order": true,
+    "rest_relation_members_allowed": false,
+    "grace_spanning_relation_allowed": false,
+    "cross_measure_relation_allowed": false,
+    "relation_number_collision_checked": true,
     "stale_targets_fail_closed": true,
     "canonical_musical_content_mutation": false,
     "direct_child_score_revision": true,
     "same_revision_notation": true,
     "atomic_v2_history": true,
-    "deterministic_post_edit_selection": true,
     "musicxml_status_until_sse06": "VNEXT_XML_PENDING"
   },
   "stages": [
@@ -26,9 +31,9 @@
     {"id":"SSE-01","status":"COMPLETE_MERGED"},
     {"id":"SSE-02","status":"COMPLETE_MERGED"},
     {"id":"SSE-03","status":"COMPLETE_MERGED"},
-    {"id":"SSE-04","status":"COMPLETE_MERGE_CANDIDATE"},
-    {"id":"SSE-05","status":"NEXT"},
-    {"id":"SSE-06","status":"NOT_STARTED"},
+    {"id":"SSE-04","status":"COMPLETE_MERGED"},
+    {"id":"SSE-05","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"SSE-06","status":"NEXT"},
     {"id":"SSE-07","status":"NOT_STARTED"},
     {"id":"SSE-08","status":"HUMAN_GATED_DESIGN"},
     {"id":"SSE-09","status":"NOT_STARTED"},
@@ -45,5 +50,5 @@
     "production_activation_by_merge": false,
     "new_runtime_dependency": false
   },
-  "next_stage": "SSE-05"
+  "next_stage": "SSE-06"
 }
