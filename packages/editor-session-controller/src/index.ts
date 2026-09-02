@@ -9,6 +9,8 @@ import type { InspectorModel } from '../../editor-selection/src/index.js';
 import { resolveExternalRendererHit } from '../../editor-renderer-selection-bridge/src/index.js';
 import { executeEditorScoreIntent } from '../../editor-score-intents/src/index.js';
 import type { EditorCommitIdentity } from '../../editor-score-intents/src/index.js';
+import { executeRestNoteEntry } from '../../editor-note-entry/src/index.js';
+import type { NoteEntryCommitIdentity } from '../../editor-note-entry/src/index.js';
 import { executeEditorNotationIntent } from '../../editor-notation-intents/src/index.js';
 import type { NotationIntentCommitIdentity } from '../../editor-notation-intents/src/index.js';
 import { parseEditorKeypadAction } from '../../editor-keypad/src/index.js';
@@ -95,6 +97,23 @@ export const commitSessionScoreIntent=(session:EditorSessionState,rawIntent:unkn
   const nextNotation=rebindNotationAfterScoreEdit(base.score,base.notation,nextScore);
   const history=commitEditorHistory(session.history,nextScore,nextNotation);
   return makeState(session.renderRequest.renderer,history,null,null,Object.freeze({level:'success',code:'SCORE_EDIT_COMMITTED',message:'Score edit committed.'}));
+};
+
+export const commitSessionNoteEntry=(session:EditorSessionState,rawIntent:unknown,identity:NoteEntryCommitIdentity):Readonly<EditorSessionState>=>{
+  if(session.selection===null||session.selection.primary===null)throw new Error('A current semantic selection is required.');
+  if(session.selection.primary.kind!=='event')throw new Error('Note entry requires an exact event selection.');
+  const base=session.history.present;
+  const nextScore=executeRestNoteEntry(base.score,session.selection.primary,rawIntent,identity);
+  const nextNotation=rebindNotationAfterScoreEdit(base.score,base.notation,nextScore);
+  const history=commitEditorHistory(session.history,nextScore,nextNotation);
+  const rebound=rebindKeypadSelection(session.selection,nextScore);
+  return makeState(
+    session.renderRequest.renderer,
+    history,
+    rebound?.selection??null,
+    rebound?.inspector??null,
+    Object.freeze({level:'success',code:'NOTE_ENTRY_COMMITTED',message:'Note entry committed.'})
+  );
 };
 
 export const commitSessionNotationIntent=(session:EditorSessionState,rawIntent:unknown,identity:NotationIntentCommitIdentity):Readonly<EditorSessionState>=>{
