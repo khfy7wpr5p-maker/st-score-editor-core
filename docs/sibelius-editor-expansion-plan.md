@@ -6,7 +6,9 @@ Goal: evolve ST Score Editor Core into a renderer-independent general score-auth
 
 ## Completed foundation
 
-The original SEC-NE program and SCORE-SCHEMA-EXPANSION through SSE-07 are COMPLETE / MERGED:
+The original SEC-NE program and SCORE-SCHEMA-EXPANSION through SSE-08 are COMPLETE / MERGED. SSE-09 bounded V3 staff/part topology runtime is implemented on this merge candidate.
+
+Completed foundation includes:
 
 - v2 contract, migration and one canonical v2 session;
 - grace-note authoring;
@@ -14,45 +16,57 @@ The original SEC-NE program and SCORE-SCHEMA-EXPANSION through SSE-07 are COMPLE
 - relation-safe ornament authoring;
 - bounded MusicXML v2 semantic round trip;
 - renderer v2 projection and additive OSMD/alphaTab compatibility;
-- SesliTab v2 host facade with no dual-write authority.
+- SesliTab v2 host facade with no dual-write authority;
+- human-approved SSE-08 V3 staff/part topology contract.
 
-The active runtime remains v2.
+V2 sessions remain supported. SSE-09 adds a separate V3 session contract; one session owns exactly one versioned canonical score+notation pair and never keeps mutable V2 and V3 canonical copies in parallel.
 
-## SSE-08 — Staff/part topology contract — HUMAN-APPROVED DESIGN FREEZE
+## SSE-09 — Staff/part topology implementation — COMPLETE / MERGE CANDIDATE
 
-SSE-08 is design-only and freezes the next major topology target:
+Implemented contracts:
 
 - `ScoreDocumentV3/3.0.0`;
 - `NotationDocumentV3/3.0.0`;
 - `SemanticAddressV3/3.0.0`;
-- `RendererRequestV3/3.0.0`.
+- `RendererRequestV3/3.0.0`;
+- guarded V2 -> V3 migration and lossless-only V3 -> V2 downgrade;
+- atomic V3 score+notation history and V3 session.
 
-### Canonical topology direction
+### Canonical topology
 
-The frozen design introduces document-global stable `measureFrames` as aligned measure-sequence authority. Parts gain explicit ordinals and stable instrument identity. Content-bearing staves are `standard` or `percussion` and own one staff measure per frame.
+The V3 runtime uses document-global stable `measureFrames` as aligned measure-sequence authority. Parts have explicit contiguous ordinals and stable instrument identity. Content-bearing staves are `standard` or `percussion` and own exactly one staff measure per frame.
 
-A `tablature-linked` staff is presentation topology only. It points to a standard source staff in the same part, owns no independent canonical event/note stream, and keeps string/fret/fingering/voicing derivative. TAB glyph hits must resolve to source canonical note/event identities.
+A `tablature-linked` staff is presentation topology only. It references a same-part standard source staff, owns no independent canonical measure/voice/event/note stream, and does not make string/fret/fingering/voicing canonical.
 
-V3 notation separates frame-owned time/barline semantics from staff-measure key/clef semantics. V3 addressing adds exact measure-frame identity and keeps stable IDs/revision binding as authority.
+V3 notation owns time/barlines at frame level and key/clef at staff-measure level. V3 addressing includes exact measure-frame identity and remains revision-bound.
 
-V2 -> V3 migration must prove aligned measure count/ordinal/display number and reject conflicting frame-owned notation. No silent repair and no automatic conversion merely because a staff uses TAB clef.
+### Bounded topology authoring
 
-Full design: `docs/staff-part-topology-contract.md`.
+SSE-09 implements:
 
-## SSE-09 — Staff/part topology implementation — NOT STARTED
+- add/remove/reorder part;
+- add/remove/reorder standard or percussion staff;
+- add/remove linked TAB presentation staff;
+- rename part/instrument display metadata.
 
-After the frozen v3 contract is admitted, bounded implementation may add/remove/reorder parts and standard/percussion staves, add/remove linked TAB presentation staves, and rename part/instrument display names.
+Content-staff creation does not copy or infer rhythm from another staff. Every frame must have effective meter evidence, and the caller supplies fresh identities for deterministic explicit full-frame rest initialization. Missing meter fails closed.
 
-Initial content-staff creation must not invent rhythmic content. It may proceed only when every measure frame has enough effective meter evidence to initialize deterministic explicit full-frame rests; otherwise it fails closed.
+Removal rejects notation orphaning, stale targets, final-part/final-content-staff deletion, and linked-TAB source removal while the link exists. No implicit cascade or nearest-target retargeting is admitted.
 
-SSE-09 must prove v3 validators, deterministic migration, exact addressing, atomic history, orphan safety and renderer/MusicXML fail-closed behavior before any v3 session cutover.
+### Renderer and MusicXML boundary
 
-## SSE-10 — Cross-staff canonical relation model — SEPARATE GATE
+`RendererRequestV3` reuses the existing renderer projection only when a V3 pair can be downgraded and serialized without semantic loss. Otherwise it returns `V3_XML_PENDING` with `musicXml: null`.
 
-Cross-staff beaming, note relocation, ties/slurs/tuplets/ornaments and ownership are not part of SSE-08. They require separately approved canonical semantics and MusicXML preservation rules.
+SSE-09 does not claim V3-native topology MusicXML import/export and does not cut the SesliTab product runtime over to V3. Existing SesliTab v2 integration remains current until a separately admitted integration stage.
+
+## SSE-10 — Cross-staff canonical relation model — HUMAN-GATED DESIGN
+
+Cross-staff beaming, note relocation, ties/slurs/tuplets/ornaments and ownership are not admitted by SSE-09. They require a separately approved canonical relation and preservation contract before implementation.
 
 ## Remaining explicit gates
 
+- V3-native topology MusicXML import/export;
+- SesliTab V3 product cutover;
 - polymeter/non-controlling topology;
 - part groups/brackets/braces;
 - arbitrary instrument transposition;
@@ -60,8 +74,9 @@ Cross-staff beaming, note relocation, ties/slurs/tuplets/ornaments and ownership
 - page/system/layout geometry;
 - playback/MIDI routing;
 - direct external-engine invocation;
-- persistence/network/public-write/production activation.
+- persistence/network/public-write/production activation;
+- `.mxl` container support.
 
 ## Completion rule
 
-SSE-08 completion freezes the design only; it does not activate `ScoreDocumentV3`. Implementation authority begins with SSE-09 and remains bounded by the frozen contract and existing source/history/renderer/host safety invariants.
+SSE-09 completion means the bounded V3 topology core is implemented and validated. It does not authorize cross-staff semantics, V3 product cutover, V3-native topology MusicXML, persistence/network or production/public-write authority.
