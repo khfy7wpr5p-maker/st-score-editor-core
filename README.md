@@ -4,27 +4,26 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-SCORE-SCHEMA-EXPANSION is implemented through **SSE-03 canonical grace authoring** on this merge candidate.
+SCORE-SCHEMA-EXPANSION is implemented through **SSE-04 typed articulation authoring** on this merge candidate.
 
-- **SSE-00–02 — COMPLETE / MERGED:** approved v2 contract, dual-version substrate and single canonical v2 session/history/render/selection path.
-- **SSE-03 — COMPLETE / MERGE CANDIDATE:** typed grace group/event/pitch authoring.
-- **SSE-04 — NEXT:** articulation authoring.
+- **SSE-00–03 — COMPLETE / MERGED:** approved v2 contract, dual-version substrate, one canonical v2 session and canonical grace authoring.
+- **SSE-04 — COMPLETE / MERGE CANDIDATE:** typed articulation set/toggle/remove on normal and grace events.
+- **SSE-05 — NEXT:** ornament authoring.
 
-## SSE-03 grace authoring
+## SSE-04 articulation authoring
 
-`editor-grace-authoring-v2/1.0.0` operates only on exact current v2 semantic addresses. It can create/remove grace groups, add/remove/reorder grace events, author note/rest/chord grace content, replace an event while preserving its event identity and edit a grace note/chord-tone pitch.
+`editor-articulation-authoring-v2/1.0.0` operates only on exact current v2 `event` or `grace-event` semantic addresses. It supports `SET_ARTICULATIONS`, `TOGGLE_ARTICULATION` and `REMOVE_ARTICULATION` using the finite articulation vocabulary frozen in `NotationDocumentV2`.
 
-Every accepted edit creates one direct-child `ScoreDocumentV2` revision, rebinds same-revision `NotationDocumentV2`, and commits through `EditorHistoryStateV2`. The session deterministically selects a created or surviving entity after commit.
+Articulation state remains notation authority. Every accepted edit creates one direct-child `ScoreDocumentV2` revision without changing canonical musical part/staff/measure/voice/event content, creates same-revision `NotationDocumentV2`, and commits through unified `EditorHistoryStateV2`. The edited semantic event remains selected after commit.
 
 Safety rules include:
 
-- grace edits may not alter normal timed `Voice.events` occupancy;
-- anchors remain exact normal events in the same voice;
-- fresh IDs are checked by canonical validation;
-- stale targets fail closed;
-- the final event cannot be removed without explicit group removal;
-- delete/replace operations that would orphan existing grace notation reject;
-- grace content remains `VNEXT_XML_PENDING` until SSE-06 rather than being silently omitted from MusicXML.
+- stale event/grace-event targets fail closed;
+- duplicate articulation specs reject;
+- unsupported articulation kinds, placement or direction combinations reject;
+- articulation edits do not mutate pitch, onset, duration, grace identity or normal measure occupancy;
+- normal and grace articulation edits share the same atomic history path;
+- articulation content remains `VNEXT_XML_PENDING` until SSE-06 rather than being silently omitted from MusicXML.
 
 ## Authority and dependencies
 
