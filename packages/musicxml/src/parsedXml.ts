@@ -54,6 +54,8 @@ const LEAF_ELEMENTS = new Set([
   'alter',
   'octave',
   'type',
+  'beats',
+  'beat-type',
   'rest',
   'chord'
 ]);
