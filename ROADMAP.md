@@ -18,39 +18,36 @@ Repository reality only; planned capability is not production capability.
 - **SSE-01 — COMPLETE / MERGED:** dual-version substrate and guarded migration.
 - **SSE-02 — COMPLETE / MERGED:** single canonical v2 session/history/render/selection cutover.
 - **SSE-03 — COMPLETE / MERGED:** canonical grace-note authoring.
-- **SSE-04 — COMPLETE / MERGED:** typed articulation authoring for normal/grace events.
+- **SSE-04 — COMPLETE / MERGED:** typed articulation authoring.
 - **SSE-05 — COMPLETE / MERGED:** relation-safe ornament authoring.
-- **SSE-06 — COMPLETE / MERGE CANDIDATE:** bounded isolated MusicXML v2 semantic round trip.
-- **SSE-07 — NEXT:** renderer + SesliTab v2 compatibility.
+- **SSE-06 — COMPLETE / MERGED:** bounded isolated MusicXML v2 semantic round trip.
+- **SSE-07 — COMPLETE / MERGE CANDIDATE:** renderer + SesliTab v2 compatibility.
 - **SSE-08 — HUMAN-GATED DESIGN:** staff/part topology contract.
 - **SSE-09 — NOT STARTED:** staff/part topology authoring.
 - **SSE-10 — NOT STARTED:** cross-staff canonical relation model.
 
-## SSE-06 exact capability
+## SSE-07 exact capability
 
-- separate safe MusicXML v2 parser using existing processing budgets;
-- no widening of legacy v1 parser/importer profiles;
-- v2 serializer/importer for canonical grace note/rest/chord semantics;
-- bounded grace written value, slash/playback, dots/beams and grace-note notation;
-- normal/grace typed articulation round trip;
-- simple ornament + accidental-mark round trip;
-- single and numbered spanning tremolo round trip;
-- numbered wavy-line start/continue/stop round trip;
-- original MusicXML source identity preserved on final canonical import result;
-- sparse notation preserved rather than materializing default entries;
-- serializer -> importer semantic-equivalence regression;
-- legacy notation importer proven fail-closed for v2-only XML;
-- unsupported ambiguous grace placement/playback rejected rather than silently changed.
+- v1-compatible v2 pairs continue to emit `V1_COMPATIBLE_XML`;
+- representable v2-only pairs emit bounded `V2_SEMANTIC_XML` using the SSE-06 serializer;
+- unrepresentable pairs stay fail-closed as `VNEXT_XML_PENDING` with no XML;
+- v2 opaque manifest tokens cover normal and grace semantic identities;
+- additive OSMD and alphaTab v2 adapters consume only renderable requests;
+- exact renderer version/license profiles remain enforced, including ST Rendering Layer OSMD 2.1.2;
+- additive SesliTab v2 host owns no parallel score and delegates authoring to one canonical v2 session;
+- pointer/keyboard/touch share one semantic path;
+- playback remains host-owned and independent from editor admission;
+- legacy v1 renderer and SesliTab APIs remain unchanged.
 
-## Still fail-closed / pending
+## Still fail-closed / gated
 
-- mixed-version session state;
-- arbitrary external MusicXML forms outside the bounded profile;
-- `.mxl` container support;
-- silent v2 -> v1 semantic loss;
-- renderer use of v2 MusicXML before SSE-07 integration (`VNEXT_XML_PENDING` may remain on v2-only render requests);
-- renderer-coordinate authoring and host dual-write;
-- E8-D external engine invocation;
-- production/public-write activation.
+- mixed-version canonical session state;
+- arbitrary MusicXML outside bounded profiles and `.mxl`;
+- renderer-coordinate authoring, DOM/SVG mutation authority and host dual-write;
+- bounded v2 pairs the serializer cannot represent;
+- E8-D direct external-engine invocation;
+- production/public-write activation;
+- staff/part topology implementation before SSE-08 approval;
+- cross-staff ownership before its later explicit gate.
 
-Staff/part topology and cross-staff remain separately human-gated at SSE-08+.
+SSE-08 is a human-gated design stage; autonomous topology implementation stops here.
