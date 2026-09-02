@@ -42,6 +42,11 @@ const notation = createNotationDocumentV2(score, {
 });
 
 const normalized = (value) => JSON.parse(JSON.stringify(value));
+const musicXmlSourceFor = (xml) => ({
+  sha256: 'e'.repeat(64),
+  format: 'musicxml',
+  byteLength: new TextEncoder().encode(xml).byteLength
+});
 
 test('SSE-06 serializer -> importer preserves bounded v2 score and notation semantics', () => {
   const xml = serializeNotationMusicXmlV2(score, notation);
@@ -50,14 +55,16 @@ test('SSE-06 serializer -> importer preserves bounded v2 score and notation sema
   assert.match(xml, /<ornaments>/);
   assert.match(xml, /<tremolo type="start" number="2"/);
   assert.match(xml, /<wavy-line type="continue" number="3"/);
-  const imported = importNotationMusicXmlV2(xml, { source, documentId: score.id, revisionId: score.revision.id });
-  assert.deepEqual(normalized(imported.score), normalized(score));
+  const importSource = musicXmlSourceFor(xml);
+  const imported = importNotationMusicXmlV2(xml, { source: importSource, documentId: score.id, revisionId: score.revision.id });
+  assert.deepEqual(normalized(imported.score), normalized({ ...score, source: importSource }));
   assert.deepEqual(normalized(imported.notation), normalized(notation));
 });
 
 test('SSE-06 legacy notation importer remains fail-closed for v2 XML', () => {
   const xml = serializeNotationMusicXmlV2(score, notation);
-  assert.throws(() => importNotationMusicXml(xml, { source, documentId: score.id, revisionId: score.revision.id }));
+  const importSource = musicXmlSourceFor(xml);
+  assert.throws(() => importNotationMusicXml(xml, { source: importSource, documentId: score.id, revisionId: score.revision.id }));
 });
 
 test('SSE-06 rejects unsupported before-grace previous-time stealing rather than losing placement semantics', () => {
