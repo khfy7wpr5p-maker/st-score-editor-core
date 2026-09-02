@@ -15,8 +15,7 @@ const rawScore = () => ({
         { id: 'event-1', kind: 'note', onset: { numerator: 0, denominator: 1 }, duration: { numerator: 1, denominator: 8 }, note: { id: 'note-1', pitch: { step: 'C', alter: 0, octave: 4 } } },
         { id: 'event-2', kind: 'note', onset: { numerator: 1, denominator: 8 }, duration: { numerator: 1, denominator: 8 }, note: { id: 'note-2', pitch: { step: 'D', alter: 0, octave: 4 } } },
         { id: 'event-3', kind: 'chord', onset: { numerator: 1, denominator: 4 }, duration: { numerator: 1, denominator: 8 }, notes: [
-          { id: 'note-3a', pitch: { step: 'E', alter: 0, octave: 4 } },
-          { id: 'note-3b', pitch: { step: 'G', alter: 0, octave: 4 } }
+          { id: 'note-3a', pitch: { step: 'E', alter: 0, octave: 4 } }, { id: 'note-3b', pitch: { step: 'G', alter: 0, octave: 4 } }
         ] },
         { id: 'event-4', kind: 'rest', onset: { numerator: 3, denominator: 8 }, duration: { numerator: 1, denominator: 8 } }
       ],
@@ -40,13 +39,11 @@ test('SSE-05 adds/removes simple ornaments and single-note tremolo on normal and
     version: '1.0.0', type: 'ADD_LOCAL_ORNAMENT', target: addressEntityV2(score, 'event-1'), value: simple('mordent')
   }, { nextRevisionId: 'rev-2' });
   assert.equal(eventOrnaments(result.notation, 'event-1')[0].kind, 'mordent');
-
   result = executeOrnamentAuthoringV2(result.score, result.notation, {
     version: '1.0.0', type: 'ADD_LOCAL_ORNAMENT', target: addressEntityV2(result.score, 'grace-event-1'), value: singleTremolo()
   }, { nextRevisionId: 'rev-3' });
   assert.equal(graceOrnaments(result.notation, 'grace-event-1')[0].kind, 'tremolo');
   assert.equal(graceOrnaments(result.notation, 'grace-event-1')[0].type, 'single');
-
   result = executeOrnamentAuthoringV2(result.score, result.notation, {
     version: '1.0.0', type: 'REMOVE_LOCAL_ORNAMENT', target: addressEntityV2(result.score, 'event-1'), value: simple('mordent')
   }, { nextRevisionId: 'rev-4' });
@@ -62,8 +59,7 @@ test('SSE-05 rejects duplicate local ornaments and spanning forms through local 
     version: '1.0.0', type: 'ADD_LOCAL_ORNAMENT', target: addressEntityV2(first.score, 'event-1'), value: simple()
   }, { nextRevisionId: 'rev-3' }), (error) => error instanceof OrnamentAuthoringV2Error && error.code === 'DUPLICATE_ORNAMENT');
   assert.throws(() => executeOrnamentAuthoringV2(score, emptyNotationDocumentV2(score), {
-    version: '1.0.0', type: 'ADD_LOCAL_ORNAMENT', target: addressEntityV2(score, 'event-1'),
-    value: { kind: 'wavy-line', type: 'start', number: 1, placement: 'auto' }
+    version: '1.0.0', type: 'ADD_LOCAL_ORNAMENT', target: addressEntityV2(score, 'event-1'), value: { kind: 'wavy-line', type: 'start', number: 1, placement: 'auto' }
   }, { nextRevisionId: 'rev-x' }), (error) => error instanceof OrnamentAuthoringV2Error && error.code === 'INVALID_LOCAL_ORNAMENT');
 });
 
@@ -126,8 +122,9 @@ test('SSE-05 stale targets fail closed and session undo restores relation-free n
     version: '1.0.0', type: 'ADD_LOCAL_ORNAMENT', target: stale, value: simple('turn')
   }, { nextRevisionId: 'rev-2' });
   assert.equal(session.status.code, 'ORNAMENT_EDIT_COMMITTED');
-  assert.equal(session.renderRequest.projectionStatus, 'VNEXT_XML_PENDING');
-  assert.equal(session.renderRequest.musicXml, null);
+  assert.equal(session.renderRequest.projectionStatus, 'V2_SEMANTIC_XML');
+  assert.equal(typeof session.renderRequest.musicXml, 'string');
+  assert.match(session.renderRequest.musicXml, /<ornaments>/);
   assert.throws(() => executeOrnamentAuthoringV2(session.history.present.score, session.history.present.notation, {
     version: '1.0.0', type: 'TOGGLE_LOCAL_ORNAMENT', target: stale, value: simple('turn')
   }, { nextRevisionId: 'rev-3' }), (error) => error instanceof OrnamentAuthoringV2Error && error.code === 'STALE_TARGET');

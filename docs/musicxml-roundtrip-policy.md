@@ -1,10 +1,10 @@
 # MusicXML Round-Trip Policy
 
-Status: current-reality policy through **SSE-06 bounded MusicXML v2 semantic round trip**.
+Status: current-reality policy through **SSE-07 renderer/SesliTab v2 compatibility**.
 
 ## Authority rule
 
-MusicXML is an import/export exchange format. It is never live mutable editor state. After admitted import, the versioned `ScoreDocument` is canonical musical authority and same-revision notation is canonical notation authority. Source identity remains auditable and renderer/host state remains noncanonical.
+MusicXML is an import/export and render-projection format. It is never live mutable editor state. After admitted import, the versioned `ScoreDocument` is canonical musical authority and same-revision notation is canonical notation authority. Source identity remains auditable; renderer and host state remain noncanonical.
 
 ## Legacy v1 profiles
 
@@ -18,19 +18,19 @@ MusicXML is an import/export exchange format. It is never live mutable editor st
 
 ### Bounded v1 notation round trip
 
-`serializeNotationMusicXml` + `importNotationMusicXml` remain the public v1 score/notation exchange profile for the admitted 1.0.0 semantics.
+`serializeNotationMusicXml` + `importNotationMusicXml` remain the public v1 score/notation exchange profile for admitted 1.0.0 semantics.
 
-SSE-06 does **not** broaden any of these parser/importer profiles. V2-only MusicXML continues to fail closed when supplied to legacy v1 APIs.
+SSE-06/07 do **not** broaden these parser/importer profiles. V2-only MusicXML continues to fail closed when supplied to legacy v1 APIs.
 
-## SSE-06 isolated v2 profile
+## Isolated v2 profile
 
-`packages/musicxml-v2` adds separate bounded APIs:
+`packages/musicxml-v2` provides:
 
-- `serializeNotationMusicXmlV2`
-- `importNotationMusicXmlV2`
-- a separate safe v2 XML parser used by the importer
+- `serializeNotationMusicXmlV2`;
+- `importNotationMusicXmlV2`;
+- a separate safe v2 XML parser used by the importer.
 
-The v2 parser reuses the established input/resource safety model: normalized untrusted input, bounded bytes/depth/elements/attributes/text, cancellation and processing deadline. Only the explicitly admitted v2 MusicXML elements and attributes are accepted.
+The parser reuses the established input/resource safety model: normalized untrusted input, bounded bytes/depth/elements/attributes/text, cancellation and processing deadline. Only explicitly admitted elements and attributes are accepted.
 
 ### Import architecture
 
@@ -45,16 +45,16 @@ original v2 MusicXML bytes
   -> ScoreDocumentV2 + sparse same-revision NotationDocumentV2
 ```
 
-The internal projection is an implementation detail, not canonical state and not a public v2 -> v1 downgrade. Final source identity belongs to the original MusicXML input.
+The internal projection is implementation detail, not canonical state and not a public v2 -> v1 downgrade. Final source identity belongs to the original MusicXML input.
 
-## Admitted SSE-06 semantics
+## Admitted v2 round-trip semantics
 
-The bounded v2 round trip preserves:
+The bounded v2 profile preserves:
 
 - normal pitch/chord/rest/onset/duration/voice/staff semantics already admitted by v1;
 - current measure/event/note notation admitted by the v1 notation profile;
 - grace note/rest/chord events and exact canonical anchor grouping;
-- grace written values without turning grace notes into normal timeline occupancy;
+- grace written values without normal timeline occupancy;
 - bounded grace slash, steal-time/make-time metadata, dots and beams;
 - grace-note accidentals, ties and slurs;
 - typed articulations on normal and grace events;
@@ -67,7 +67,7 @@ Default notation stays sparse after re-import.
 
 ## Grace placement policy
 
-MusicXML does not provide a direct canonical `before|after` grace-placement field matching `GraceGroup.placement`. The bounded serializer therefore admits only combinations it can encode and recover unambiguously. Unsupported combinations reject rather than being guessed or silently normalized. A serializer-produced after-grace marker is interpreted only by this bounded v2 profile.
+MusicXML does not provide a direct canonical `before|after` grace-placement field matching `GraceGroup.placement`. The bounded serializer admits only combinations it can encode and recover unambiguously. Unsupported combinations reject rather than being guessed or silently normalized.
 
 ## Equivalence contract
 
@@ -80,23 +80,29 @@ ScoreDocumentV2 + NotationDocumentV2
   -> semantically equivalent canonical score + notation
 ```
 
-The imported score source identity represents the newly supplied MusicXML bytes; it is not required to equal the pre-export source envelope. Canonical musical structure, revision identity requested by the importer and admitted notation semantics must round-trip. Sparse default notation must not appear merely as an import artifact.
+The imported score source identity represents newly supplied MusicXML bytes and need not equal the pre-export source envelope. Canonical musical structure, requested revision identity and admitted notation semantics must round-trip. Sparse default notation must not appear merely as an import artifact.
 
-Golden regression covers v2 semantic equality, legacy v1 rejection of v2 XML and fail-closed rejection of an unrepresentable grace placement/playback combination.
+## Renderer projection policy
+
+SSE-07 connects bounded MusicXML to `renderer-contract-v2` without making MusicXML or the renderer canonical.
+
+Projection is explicit:
+
+- `V1_COMPATIBLE_XML`: the v2 pair downgrades losslessly and uses the proven v1 serializer;
+- `V2_SEMANTIC_XML`: v2-only semantics are present and the SSE-06 serializer can represent the pair;
+- `VNEXT_XML_PENDING`: the pair is canonical but outside the bounded serializer profile, so `musicXml` is null and renderer loading is forbidden.
+
+Opaque render-token manifests remain derived from revision-bound semantic addresses, not XML node identity or renderer geometry.
 
 ## Loss policy
 
-Unsupported is not equivalent to ignorable. Unknown elements/attributes, broken relations, source identity mismatches and schema-absent semantics must reject or remain behind a later versioned profile. Silent semantic loss is forbidden.
+Unsupported is not equivalent to ignorable. Unknown elements/attributes, broken relations, source identity mismatches and schema-absent semantics must reject or remain pending behind a later versioned profile. Silent semantic loss is forbidden.
 
-SSE-06 does not claim arbitrary external MusicXML, `.mxl`, staff/part topology authoring or cross-staff semantics.
-
-## Renderer boundary
-
-Direct v2 MusicXML exchange exists after SSE-06. Existing renderer requests are not automatically widened by this policy. Wiring v2-only XML into renderer/SesliTab requests is **SSE-07** work; until then `renderer-contract-v2` may still report `VNEXT_XML_PENDING` for v2-only pairs.
+The current profile does not claim arbitrary external MusicXML, `.mxl`, staff/part topology authoring or cross-staff semantics.
 
 ## Corpus policy
 
-Round-trip fixtures must be synthetic, first-party, public-domain or explicitly licensed. Add a golden fixture/regression whenever the public admitted semantic set expands.
+Round-trip fixtures must be synthetic, first-party, public-domain or explicitly licensed. Add a golden fixture/regression whenever the admitted semantic set expands.
 
 ## Container policy
 

@@ -1,65 +1,76 @@
 # SesliTab Editor Integration Contract
 
-Status: **SEC-NE-09 bounded Editor Core integration implemented. Production/persistence/deployment authority remains unactivated.**
+Status: **SEC-NE-09 v1 integration is merged; SSE-07 adds bounded v2 compatibility as a merge candidate. Production/persistence/deployment authority remains unactivated.**
 
 ## Ownership
 
-SesliTab is a product host/orchestrator. `seslitab-editor-host/1.0.0` contains exactly one `EditorSessionState`; it does not create another mutable musical model.
+SesliTab is a product host/orchestrator. Neither the v1 nor v2 facade creates a second mutable musical model.
 
 ```text
 MusicXML / OMR evidence
-  -> ScoreDocument + NotationDocument
-  -> EditorSessionState + unified history
-  -> RenderRequest / opaque token manifest
-  -> ST Score Rendering Layer / SesliTab UI
+  -> canonical ScoreDocument + NotationDocument
+  -> one EditorSession + unified history
+  -> RenderRequest / opaque semantic-token manifest
+  -> renderer / SesliTab presentation
 ```
 
-Canonical edits return through existing Editor Core semantic operations.
+Canonical edits return through Editor Core semantic operations only.
 
-## Implemented SEC-NE-09 adapter
+## V1 compatibility
 
-The adapter supports:
+`seslitab-editor-host/1.0.0` remains unchanged for the existing v1 session surface: render-token selection, score/notation/keypad/note-entry delegation and unified undo/redo.
 
-- one current editor session;
-- current render-token selection;
-- score-intent delegation;
-- notation-intent delegation;
-- keypad delegation, including existing exact-target advanced actions;
-- existing selected-rest note-entry delegation;
-- unified undo/redo;
+## SSE-07 v2 facade
+
+`seslitab-editor-host-v2/2.0.0` wraps exactly one `EditorSessionStateV2` and exposes:
+
+- v2 renderer request snapshots;
+- opaque revision-bound token selection for normal and grace semantic addresses;
+- admitted grace authoring delegation;
+- admitted articulation authoring delegation;
+- admitted ornament authoring delegation;
+- unified v2 undo/redo;
 - typed product-facing rejection results;
-- pointer, keyboard and touch provenance using the same semantic paths.
+- pointer, keyboard and touch provenance through the same semantic paths.
 
-Input mode is not mutation authority. A touch gesture and a keyboard gesture that express the same admitted semantic operation reach the same Editor Core path.
+Input mode is not mutation authority. Equivalent pointer, keyboard and touch actions resolve to the same editor-owned semantic operation.
+
+## Renderer boundary
+
+V2 session render requests may contain `V1_COMPATIBLE_XML` or `V2_SEMANTIC_XML`. `VNEXT_XML_PENDING` means the bounded serializer cannot safely represent the canonical pair; such requests must not be sent to a renderer.
+
+Renderer manifests contain opaque revision-bound semantic tokens. Renderer reflow, resize, orientation change or DOM replacement cannot independently redefine canonical selection identity. A token that is stale, absent or mismatched fails closed rather than resolving by nearest geometry.
 
 ## Forbidden dual-write
 
 SesliTab must not:
 
 - mutate renderer objects as musical state;
-- edit MusicXML as live state alongside `ScoreDocument`;
+- edit MusicXML as live state alongside canonical score state;
 - apply OMR/Guitar results directly to a second host score;
 - reuse stale semantic addresses after revision change;
 - use DOM/SVG coordinates as direct mutation targets;
 - create a last-write-wins shadow score outside Editor Core history.
 
+Both host profiles explicitly keep `hostDualWriteAllowed`, `rendererMutationAuthority` and `domCoordinateMutationAuthority` false.
+
 ## Selection continuity
 
-Canonical selection is revision-bound semantic state. Renderer reflow, resize, orientation change or DOM replacement does not independently erase canonical identity. The host may re-present a still-current selection from the session; if a current token cannot resolve exactly, selection must fail rather than guess.
+Canonical selection is revision-bound semantic state. The host may re-present a still-current selection from the session after rerender. If a current opaque token cannot resolve exactly, selection fails rather than guesses.
 
-Accepted operations use the existing session-controller rebound/clear policies. History transitions remain within the same session.
+Accepted authoring operations use the session-controller rebound/clear policies. History transitions remain inside the same canonical session.
 
 ## Playback boundary
 
 Playback is a product/media capability, not editor mutation authority.
 
-`sesliTabEditorHostProfile.editorAdmissionControlsPlayback` is `false`. Therefore an incomplete OMR result, unavailable edit feature or rejected score mutation does not by itself authorize the Editor Core adapter to disable playback. Playback must be decided from playback-specific source/data readiness and its errors should remain distinct from editor-admission errors.
+Both host profiles keep playback host-owned and `editorAdmissionControlsPlayback = false`. Therefore incomplete OMR, an unavailable edit feature or a rejected score mutation does not by itself authorize Editor Core to disable playback. Playback readiness and errors must be determined by playback-specific data/state.
 
 Playback cursor/highlight may reference current semantic identity but cannot mutate score state.
 
 ## Guitar/TAB boundary
 
-SEC-NE-08 keeps string/fret/fingering/voicing derivative. A canonical score edit invalidates old Guitar state; Guitar results never bypass generic Editor Core authoring. Direct external engine invocation remains E8-D human-gated.
+String/fret/fingering/voicing state remains derivative. A canonical score edit invalidates stale Guitar state; Guitar results never bypass generic Editor Core authoring. Direct external engine invocation remains E8-D human-gated.
 
 ## OMR boundary
 
@@ -67,8 +78,8 @@ OMR is evidence/source. Corrections must enter through admitted semantic edit pa
 
 ## Persistence/versioning boundary
 
-SEC-NE-09 adds no network, persistence or server revision authority. A future product persistence layer must store/version accepted canonical revisions and define conflict handling explicitly. Silent last-write-wins is not admitted by this contract.
+SSE-07 adds no network, persistence or server revision authority. A future product persistence layer must store/version accepted canonical revisions and define conflict handling explicitly. Silent last-write-wins is not admitted.
 
 ## Production gate
 
-The bounded Editor Core integration is implemented and CI-verified, but merge does not activate public write APIs, persistence, production services or deployment. Those remain separate human-gated product decisions.
+The bounded integration is CI-verified, but merge does not activate public write APIs, persistence, production services or deployment. Those remain separate human-gated product decisions. Staff/part topology and cross-staff canonical authority also remain outside SSE-07.

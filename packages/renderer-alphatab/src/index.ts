@@ -1,5 +1,6 @@
-import type { RendererRequest } from '../../renderer-contract/src/index.js';
+import type { RendererRequest, RendererProfile } from '../../renderer-contract/src/index.js';
 import { assertRendererProfile } from '../../renderer-contract/src/index.js';
+import { renderableMusicXmlV2, type RendererRequestV2 } from '../../renderer-contract-v2/src/index.js';
 
 export const ALPHATAB_INTEGRATION_VERSION = '1.8.4' as const;
 
@@ -23,7 +24,7 @@ export interface AlphaTabRenderSession {
 }
 
 export class AlphaTabAdapterError extends Error {
-  readonly code: 'INVALID_ALPHATAB_HOST' | 'WRONG_RENDERER_FAMILY' | 'ALPHATAB_LOAD_REJECTED';
+  readonly code: 'INVALID_ALPHATAB_HOST' | 'WRONG_RENDERER_FAMILY' | 'UNRENDERABLE_V2_REQUEST' | 'ALPHATAB_LOAD_REJECTED';
   constructor(message: string, code: AlphaTabAdapterError['code']) {
     super(message);
     this.name = 'AlphaTabAdapterError';
@@ -48,16 +49,30 @@ const assertHost = (host: AlphaTabRendererHost): void => {
   }
 };
 
-export const renderWithAlphaTab = (
-  host: AlphaTabRendererHost,
-  request: RendererRequest
-): Readonly<AlphaTabRenderSession> => {
-  assertHost(host);
-  if (request.renderer.family !== 'alphatab') {
+const assertRequestProfile = (host: AlphaTabRendererHost, profile: RendererProfile): void => {
+  if (profile.family !== 'alphatab') {
     throw new AlphaTabAdapterError('alphaTab adapter received a request for another renderer family.', 'WRONG_RENDERER_FAMILY');
   }
-  assertRendererProfile(request.renderer);
-  const bytes = new TextEncoder().encode(request.musicXml);
+  assertRendererProfile(profile);
+  if (
+    profile.packageName !== host.packageName ||
+    profile.packageVersion !== host.packageVersion ||
+    profile.license !== host.license
+  ) {
+    throw new AlphaTabAdapterError('alphaTab request profile does not match the exact direct-adapter host profile.', 'INVALID_ALPHATAB_HOST');
+  }
+};
+
+const renderXml = (
+  host: AlphaTabRendererHost,
+  profile: RendererProfile,
+  documentId: string,
+  revisionId: string,
+  musicXml: string
+): Readonly<AlphaTabRenderSession> => {
+  assertHost(host);
+  assertRequestProfile(host, profile);
+  const bytes = new TextEncoder().encode(musicXml);
   let accepted = false;
   try {
     accepted = host.api.load(bytes);
@@ -67,12 +82,26 @@ export const renderWithAlphaTab = (
   if (!accepted) {
     throw new AlphaTabAdapterError('alphaTab rejected the generated MusicXML.', 'ALPHATAB_LOAD_REJECTED');
   }
-  return Object.freeze({
-    family: 'alphatab',
-    documentId: request.documentId,
-    revisionId: request.revisionId,
-    accepted: true
-  });
+  return Object.freeze({ family: 'alphatab', documentId, revisionId, accepted: true });
+};
+
+export const renderWithAlphaTab = (
+  host: AlphaTabRendererHost,
+  request: RendererRequest
+): Readonly<AlphaTabRenderSession> =>
+  renderXml(host, request.renderer, request.documentId, request.revisionId, request.musicXml);
+
+export const renderWithAlphaTabV2 = (
+  host: AlphaTabRendererHost,
+  request: RendererRequestV2
+): Readonly<AlphaTabRenderSession> => {
+  let musicXml: string;
+  try {
+    musicXml = renderableMusicXmlV2(request);
+  } catch {
+    throw new AlphaTabAdapterError('alphaTab v2 request does not contain an admitted renderable MusicXML projection.', 'UNRENDERABLE_V2_REQUEST');
+  }
+  return renderXml(host, request.renderer, request.documentId, request.revisionId, musicXml);
 };
 
 export const destroyAlphaTabPresentation = (host: AlphaTabRendererHost): void => {

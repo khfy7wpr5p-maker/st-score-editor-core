@@ -1,72 +1,61 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE is complete. SSE-00–05 are merged; SSE-06 adds bounded MusicXML v2 semantic round trip as a merge candidate.**
+Status: **SEC-NE and SSE-00–06 are merged; SSE-07 renderer + SesliTab v2 compatibility is a merge candidate.**
 
 ## Authority
 
-Each v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. Grace identity/order/anchor/written value live in canonical score state. Articulations and ornaments are same-revision notation semantics. MusicXML remains exchange/projection data. Renderer/SesliTab remain noncanonical.
+Each v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. MusicXML remains exchange/projection data. Renderer, DOM/SVG state and SesliTab host state remain noncanonical.
 
-## SSE-06 MusicXML v2 boundary
+## MusicXML v2 layer
 
-Legacy MusicXML APIs remain deliberately narrow. SSE-06 does not widen `parseMusicXmlTree`, `importMusicXml`, `importMusicXmlWithMeasureSemantics` or `importNotationMusicXml`.
+SSE-06 remains the bounded exchange layer: separate safe v2 parser, isolated importer/serializer, legacy v1 APIs unchanged, unsupported semantics fail closed.
 
-Instead, `packages/musicxml-v2` owns a separate bounded profile:
+## SSE-07 renderer projection
 
 ```text
-untrusted MusicXML v2 input
+canonical v2 score + notation
         |
-separate safe v2 parser
-(existing byte/depth/element/attribute/text/deadline budgets)
-        |
-original source identity validation
-        |
-noncanonical internal v1-compatible timed projection
-        |
-existing proven v1 notation importer
-        |
-one deterministic v1 -> v2 migration
-        |
-rebind v2-only semantics from original parsed tree
-        |
-ScoreDocumentV2 + sparse same-revision NotationDocumentV2
+try lossless v2 -> v1 downgrade
+   | success                  | unrepresentable
+V1_COMPATIBLE_XML             v
+                       serializeNotationMusicXmlV2
+                          | success          | unsupported
+                     V2_SEMANTIC_XML      VNEXT_XML_PENDING
+                          |
+               exact renderer profile
+                          |
+                 OSMD / alphaTab adapter
 ```
 
-The internal projection strips grace material plus v2-only articulation/ornament elements only for reuse of the existing timed-score importer. It is never exposed as canonical state or a public downgrade. Final canonical source identity belongs to the original MusicXML input, not the internal projection.
+`VNEXT_XML_PENDING` now means the canonical pair is outside the currently admitted renderer projection profile; it no longer means every v2-only pair.
 
-## Admitted v2 round-trip semantics
+`RenderManifestV2` remains derived from the canonical semantic address index. Opaque tokens cover document/part/staff/measure/voice/event/note plus grace-group/grace-event/grace-note identities. Hit resolution validates document, revision, token mapping and exact semantic address before selection.
 
-The bounded serializer/importer preserves:
+Legacy renderer adapters are unchanged. Additive v2 adapter functions consume `RendererRequestV2`; pending requests fail before renderer load.
 
-- existing normal timed score and v1 notation semantics;
-- grace note/rest/chord events outside normal measure occupancy;
-- grace written value, slash and bounded playback metadata;
-- grace event dots/beams and grace-note accidental/tie/slur notation;
-- finite typed articulations on normal/grace events;
-- finite simple ornaments plus accidental marks;
-- single-note tremolo;
-- numbered spanning tremolo start/stop;
-- numbered wavy-line start/continue/stop.
+## SesliTab v2 host
 
-Notation remains sparse: default normal-event, grace-event and grace-note notation is not materialized merely because XML was re-imported.
+`seslitab-editor-host-v2` is an additive facade over `EditorSessionStateV2`:
+
+- one canonical v2 pair and unified history;
+- renderer-token selection only through opaque semantic tokens;
+- grace/articulation/ornament authoring delegated to editor-owned typed operations;
+- unified undo/redo;
+- pointer/keyboard/touch converge on the same semantic paths;
+- playback stays host-owned and independent of editor admission.
+
+The facade exposes no direct score mutation, coordinate mutation, network, persistence, server-revision, publication or production authority. The legacy v1 SesliTab host remains unchanged.
 
 ## Fail-closed rules
 
-- unknown or unsupported v2 XML elements/attributes reject;
-- legacy importers continue to reject v2-only XML;
-- source format/byte-length mismatch rejects before canonical output;
-- unsupported/ambiguous grace placement-playback combinations reject rather than being normalized silently;
-- broken ornament relations are rejected by `NotationDocumentV2` validation;
-- no renderer geometry, DOM/SVG identity or host state participates in import authority;
-- no silent v2 -> v1 semantic loss is admitted.
+- stale/mismatched render requests or tokens reject;
+- unrenderable bounded v2 pairs remain pending;
+- wrong renderer family/version/license rejects;
+- host cannot dual-write canonical score state;
+- renderer load/render failure does not create a canonical revision;
+- no silent v2 -> v1 semantic loss;
+- no coordinate/DOM inference for selection or mutation.
 
-## Rendering boundary
+## Next gate
 
-SSE-06 provides direct bounded `serializeNotationMusicXmlV2` / `importNotationMusicXmlV2` exchange support. `renderer-contract-v2` is intentionally not widened in this stage. V2-only renderer requests may therefore continue to expose `VNEXT_XML_PENDING` / `musicXml = null` until SSE-07 wires the proven v2 projection into renderer/SesliTab compatibility.
-
-## Next stages
-
-- **SSE-07 — NEXT:** renderer + SesliTab v2 compatibility while retaining opaque semantic tokens and no host dual-write.
-- **SSE-08 — HUMAN-GATED DESIGN:** staff/part topology contract.
-- **SSE-09+** remain gated by the frozen topology/cross-staff design sequence.
-
-No dependency, renderer/host authority, persistence/network authority or production activation is added by SSE-06.
+**SSE-08 is HUMAN-GATED DESIGN** for staff/part topology. Implementation must not begin until identity lifecycle, aligned-measure correspondence, notation ownership, instrument/TAB semantics, migration/source-map and renderer impacts are explicitly approved. Cross-staff remains a later separate gate.

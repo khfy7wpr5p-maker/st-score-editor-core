@@ -1,30 +1,26 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
-  "stage": "SSE-06",
+  "stage": "SSE-07",
   "status": "COMPLETE_MERGE_CANDIDATE",
   "canonical_session_version": "2.0.0",
-  "sse_06": {
-    "isolated_musicxml_v2_profile": true,
-    "legacy_v1_parser_broadened": false,
-    "legacy_v1_importers_broadened": false,
-    "safe_parser_reuses_existing_processing_budgets": true,
-    "grace_note_rest_chord_roundtrip": true,
-    "grace_written_value_roundtrip": true,
-    "grace_playback_metadata_bounded": true,
-    "normal_grace_articulation_roundtrip": true,
-    "simple_ornament_roundtrip": true,
-    "ornament_accidental_mark_roundtrip": true,
-    "single_tremolo_roundtrip": true,
-    "spanning_tremolo_roundtrip": true,
-    "wavy_line_roundtrip": true,
-    "original_source_identity_preserved": true,
-    "sparse_notation_preserved": true,
-    "unsupported_semantics_fail_closed": true,
-    "ambiguous_grace_placement_rejected": true,
-    "renderer_v2_xml_wiring": "SSE_07_PENDING"
+  "sse_07": {
+    "v1_compatible_projection_preserved": true,
+    "v2_semantic_xml_projection": true,
+    "unrepresentable_projection_remains_pending": true,
+    "opaque_normal_and_grace_tokens": true,
+    "osmd_v2_adapter": true,
+    "alphatab_v2_adapter": true,
+    "st_rendering_layer_profile_supported": true,
+    "seslitab_v2_host_facade": true,
+    "host_dual_write_allowed": false,
+    "renderer_mutation_authority": false,
+    "coordinate_mutation_authority": false,
+    "playback_owned_by_host": true,
+    "editor_admission_controls_playback": false,
+    "legacy_v1_apis_changed": false
   },
   "stages": [
     {"id":"SSE-00","status":"COMPLETE_MERGED"},
@@ -33,8 +29,8 @@
     {"id":"SSE-03","status":"COMPLETE_MERGED"},
     {"id":"SSE-04","status":"COMPLETE_MERGED"},
     {"id":"SSE-05","status":"COMPLETE_MERGED"},
-    {"id":"SSE-06","status":"COMPLETE_MERGE_CANDIDATE"},
-    {"id":"SSE-07","status":"NEXT"},
+    {"id":"SSE-06","status":"COMPLETE_MERGED"},
+    {"id":"SSE-07","status":"COMPLETE_MERGE_CANDIDATE"},
     {"id":"SSE-08","status":"HUMAN_GATED_DESIGN"},
     {"id":"SSE-09","status":"NOT_STARTED"},
     {"id":"SSE-10","status":"NOT_STARTED"}
@@ -51,5 +47,5 @@
     "production_activation_by_merge": false,
     "new_runtime_dependency": false
   },
-  "next_stage": "SSE-07"
+  "next_stage": "SSE-08_HUMAN_GATE"
 }
