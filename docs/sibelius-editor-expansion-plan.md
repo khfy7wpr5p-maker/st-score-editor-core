@@ -13,7 +13,7 @@ Canonical ScoreDocument + revision-bound notation/evidence
         ↕
 SemanticAddress / Selection / InsertionPosition
         ↕
-Timing validation + typed edit/authoring intent
+04A timing + 04B1 measure semantics + typed authoring intent
         ↕
 Atomic canonical revision
         ↕
@@ -24,107 +24,103 @@ RenderRequest / opaque selection bridge
 Presentation-only renderer / host
 ```
 
-MusicXML, SVG, DOM, OSMD, alphaTab, VexFlow, Smoosic and host UI state are never canonical edit authority.
-
 ## Completed foundation
 
 ### SEC-NE-00 — COMPLETE
-External editor taxonomy; external editor repositories remain reference-only unless separately admitted.
+External editor taxonomy; reference-only by default.
 
 ### SEC-NE-01 — COMPLETE / MERGED
-Exact selected-rest note entry, including bounded trailing-rest split.
+Exact selected-rest note entry.
 
 ### SEC-NE-02 — COMPLETE / MERGED
-Selected-rest entry composed through unified history/session/browser flow with accepted-revision RenderRequest regeneration.
+Selected-rest entry through unified history/session/browser composition.
 
 ### SEC-NE-03 — COMPLETE / MERGED
-Revision-bound canonical `InsertionPosition`; renderer coordinates are non-authoritative.
+Revision-bound canonical `InsertionPosition`; coordinates are non-authoritative.
 
 ### SEC-NE-04A — COMPLETE / MERGED
-Read-only exact measure timing/occupancy analysis. Only a full requested window inside one explicit rest is authoring-safe.
+Exact effective-meter and target-voice occupancy analysis. Only one full window inside one explicit rest is directly authoring-safe.
 
 ### SEC-NE-04C — COMPLETE / MERGED
-Low-level revision-bound position note entry inside one admitted explicit rest. Supports rest start/middle/end, exact fill and deterministic leading/trailing rest splits. No second cursor-position session/browser API was introduced.
+Low-level position note entry inside an admitted explicit rest; deterministic rest splitting; no second cursor-position browser/session API.
 
 ### SEC-NE-04B1 — COMPLETE / MERGED
+Revision-bound MusicXML measure/time evidence: simple meter declaration/inheritance/change, `implicit`, `non-controlling`, exact `backup`/`forward` cursor evidence and provenance. Legacy E2 import remains fail-closed for the expanded semantics.
 
-**Goal achieved:** preserve sufficient bounded MusicXML measure/time semantics as additive revision-bound evidence without breaking `ScoreDocument` or `NotationDocument` 1.0.0.
+### SEC-NE-04B2 — COMPLETE IN THIS PR
+
+**Goal achieved for the first conservative profile:** prove a normal-measure target-voice implicit gap from current 04A + 04B1 evidence and represent the entire containing gap deterministically as one explicit canonical rest.
 
 Implemented:
 
-- additive `musicxml-measure-semantics` evidence contract;
-- additive `importMusicXmlWithMeasureSemantics` import surface;
-- simple unnumbered time-signature import within existing notation range;
-- time-signature declaration, inheritance and change evidence;
-- independent preservation of MusicXML measure `implicit` and `non-controlling` yes/no evidence;
-- exact rational `backup` / `forward` cursor-operation evidence;
-- canonical measure-address binding plus source part/measure/staff provenance;
-- short measures are never inferred to be pickups;
-- ambiguous/unsupported time forms fail closed;
-- parser leaf hardening prevents hidden nested semantics in `beats` / `beat-type`;
-- legacy `importMusicXml` remains the E2 score-only profile and continues to reject the newly admitted semantics instead of silently dropping them.
+- additive `editor-implicit-gap-materialization` package;
+- read-only `assessImplicitGapMaterialization` admission surface;
+- low-level `executeImplicitGapMaterialization` mutation primitive;
+- exact current `InsertionPosition` required;
+- current 04B1 evidence revalidated before use;
+- current 04A target-voice timing re-derived independently;
+- requested window must currently be `IMPLICIT_GAP_UNADMITTED` and fully contained in one exact implicit-gap interval;
+- 04B1 effective meter must equal 04A effective meter;
+- MusicXML `implicit="yes"` rejected;
+- MusicXML `non-controlling="yes"` rejected;
+- absent/no values enter the conservative normal-measure profile;
+- no cross-voice false proof;
+- entire containing gap → exactly one fresh rest;
+- existing event IDs/onsets/durations remain unchanged;
+- another implicit gap in the same voice remains untouched;
+- final candidate passes canonical `ScoreDocument` validation;
+- unified history undo/redo composition tested;
+- after same-revision notation rebind, the new rest is an ordinary `EXPLICIT_REST_SLOT`.
 
-04B1 is **evidence-only**. It does not make implicit gaps writable and does not materialize rests.
+04B2 remains low-level. It does not directly enter a pitched note and does not add a new browser/session cursor mutation API. Existing explicit-rest note-entry authority remains the only pitch-entry path.
 
 ## Next autonomous sequence
 
-### SEC-NE-04B2 — NOT STARTED
+### SEC-NE-05 — NOT STARTED
 
-**Dependency:** SEC-NE-04B1 complete.
-
-**Goal:** deterministic rest materialization and writable-gap admission only for proven legal implicit silence.
+**Goal:** canonical onset mutation / retiming authority.
 
 Required:
 
-- derive legal measure span from admitted 04B1 evidence;
-- prove silence for the exact target voice;
-- no cross-voice false proof;
-- deterministic explicit-rest materialization;
-- no overlap;
+- typed `MOVE_EVENT` / `CHANGE_ONSET` contract;
+- exact current revision target;
+- exact overlap validation;
+- measure-boundary validation;
+- deterministic event ordering;
+- tie/slur/beam/tuplet coupling policy;
+- tuplets retimed atomically;
 - one unified history transaction;
-- no renderer-coordinate inference;
-- fail closed when evidence is missing, ambiguous, stale, non-controlling in an unsafe way, or insufficient to establish legal writable time.
+- selection/insertion invalidation or deterministic rebound;
+- no nearest-target inference.
 
-Until 04B2 completes, `IMPLICIT_GAP_UNADMITTED` remains non-writable.
-
-### SEC-NE-05 — NOT STARTED
-
-Canonical onset mutation / retiming authority. Requires typed movement contract, exact overlap/measure-boundary validation, frozen tie/slur/beam/tuplet coupling, atomic tuplet retiming and revision-safe selection/insertion handling.
+This stage unlocks real drag/move note and general triplet creation/removal.
 
 ### SEC-NE-06 — NOT STARTED
-
-Structural authoring: add/remove measures/voices and later bounded staff/part operations; set time/key/clef/barline; copy/paste with fresh identities.
+Structural score authoring: measure/voice first, then separately bounded staff/part changes; time/key/clef/barline; copy/paste with fresh IDs.
 
 ### SEC-NE-07 — NOT STARTED
-
 Advanced authoring: chord entry, grace notes, true tuplets, tie/slur during entry, articulations/ornaments, enharmonic spelling, transposition and multi-measure paste.
 
-### SEC-NE-XML-ROUNDTRIP — BOUNDED SUBSET EXISTS / HARDENING CONTINUES
-
-E2 semantic round trip exists for its admitted subset. Newly admitted 04B1 measure/time evidence now requires golden preservation/export/re-import hardening before any broader round-trip claim is made.
+### SEC-NE-XML-ROUNDTRIP — HARDENING CONTINUES
+E2 bounded semantic round trip exists. Newly admitted time/measure semantics and later structural/advanced capabilities require golden preservation/export/re-import equivalence tests before broader claims.
 
 ### SEC-NE-08 — NOT STARTED
-
-Guitar/TAB authoring composition. Standard notation remains canonical; fingering/string/fret remains derivative unless separately admitted.
+Guitar/TAB authoring composition; standard notation remains canonical and fingering remains derivative unless separately admitted.
 
 ### SEC-NE-09 — NOT STARTED
-
-SesliTab integration. Host orchestration may not create dual-write score state. Mobile/pointer/keyboard interaction must resolve to the same semantic command paths.
+SesliTab integration; no dual-write, same semantic command path for pointer/keyboard/mobile, renderer remains presentation-only.
 
 ## Still not admitted
 
-- implicit-gap authoring before 04B2;
+- pickup / `implicit="yes"` writable-gap materialization;
+- non-controlling/multimetric writable-gap materialization;
 - arbitrary event onset movement;
 - automatic voice creation;
-- unrestricted insertion into occupied time;
-- pickup inference from spacing/measure length alone;
 - renderer-coordinate gap authority;
-- public cursor-position session/browser mutation path from 04C;
-- Smoosic/VexFlow runtime dependency;
-- renderer-owned edits;
+- public cursor-position browser/session mutation API from 04C/04B2;
 - host dual-write state;
 - production/public-write activation by merge.
 
 ## Definition of done
 
-Each stage records exact base/head/merge SHA, CI/test evidence, contracts changed, dependency/license state, limitations, current-reality documentation, and explicit authority-change status.
+Each stage records exact base/head/merge SHA, supported Node CI, package-boundary regression tests, contracts changed, dependency/license state, known limitations, current-reality docs and explicit authority-change status.
