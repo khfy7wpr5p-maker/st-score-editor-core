@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **Core remains implemented through E8-C. SEC-SMUFL-KEYPAD-01 is complete through SEC-KP-10. SEC-NE is complete through 04A/04C/04B1 and the bounded 04B2 legal implicit-gap materialization stage in this PR. Canonical onset mutation and direct external-engine invocation remain unadmitted.**
+Status: **Core remains implemented through E8-C. SEC-SMUFL-KEYPAD-01 is complete through SEC-KP-10. SEC-NE is COMPLETE / MERGED through 04A/04C/04B1 and the bounded 04B2 legal implicit-gap materialization stage. Canonical onset mutation and direct external-engine invocation remain unadmitted.**
 
 ## 1. Purpose
 
@@ -106,21 +106,13 @@ Low-level position note entry inside one admitted explicit rest. Supports rest s
 
 ## 7. SEC-NE-04B1 measure evidence — COMPLETE / MERGED
 
-`importMusicXmlWithMeasureSemantics` returns same-revision:
-
-```text
-ScoreDocument
-NotationDocument
-MusicXmlMeasureSemanticsDocument
-```
+`importMusicXmlWithMeasureSemantics` returns same-revision score, notation and `MusicXmlMeasureSemanticsDocument`.
 
 The evidence records canonical measure/staff target, source part/measure/staff provenance, `implicit`, `non-controlling`, declared/effective meter chain and exact-rational `backup`/`forward` cursor operations.
 
-The evidence validator independently checks cursor arithmetic, source-measure uniqueness and meter inheritance consistency. Legacy `importMusicXml` still rejects these newly meaningful semantics rather than silently dropping them.
+The evidence validator independently checks cursor arithmetic, source-measure uniqueness and meter inheritance consistency. Legacy `importMusicXml` still rejects these newly meaningful semantics rather than silently dropping them. Short measure length alone is not pickup proof.
 
-Short measure length alone is not pickup proof.
-
-## 8. SEC-NE-04B2 legal implicit silence — COMPLETE IN THIS PR
+## 8. SEC-NE-04B2 legal implicit silence — COMPLETE / MERGED
 
 04B2 introduces a **separate conservative admission layer**. It does not change 04A classifications and does not infer writable time from geometry or spacing alone.
 
@@ -137,7 +129,7 @@ Short measure length alone is not pickup proof.
 7. non-null 04B1 effective meter equal to the independent 04A timing meter;
 8. source measure `implicit` not `yes`;
 9. source measure `non-controlling` not `yes`;
-10. requested window fully contained in one exact `analysis.implicitGaps` interval.
+10. requested window fully contained in one exact target-voice implicit-gap interval.
 
 MusicXML 4.0 defaults absent `implicit` and `non-controlling` attributes to `no`; therefore absent/no values may enter this conservative normal-measure profile. Explicit `yes` remains blocked.
 
@@ -195,9 +187,7 @@ Guitar/TAB authoring composition and SesliTab product integration.
 
 MusicXML is exchange/projection data, not live editor state. An importer must import a semantic, preserve it as bounded evidence, or reject it. Silent destructive loss is forbidden where musical meaning or authoring safety changes.
 
-04B2 relies only on admitted current 04B1 evidence and independent 04A canonical timing; it does not re-interpret raw XML in the mutation primitive.
-
-`.mxl` remains unadmitted.
+04B2 relies only on admitted current 04B1 evidence and independent 04A canonical timing; it does not re-interpret raw XML in the mutation primitive. `.mxl` remains unadmitted.
 
 ## 11. Renderer / host / Guitar boundary
 
@@ -205,17 +195,7 @@ Renderer packages remain presentation-only. SesliTab remains orchestration-only.
 
 ## 12. Dependencies
 
-Runtime remains:
-
-- `saxes@6.0.0`;
-- `xmlchars@2.2.0`.
-
-Build-only remains:
-
-- `typescript@6.0.3`;
-- `esbuild@0.28.2`.
-
-SEC-NE-04B2 adds no third-party dependency.
+Runtime remains `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`. SEC-NE-04B2 adds no third-party dependency.
 
 ## 13. Non-negotiable invariants
 
@@ -237,6 +217,5 @@ SEC-NE-04B2 adds no third-party dependency.
 - E0–E7-H — COMPLETE
 - E8-A/B/C — IMPLEMENTED; E8-D HUMAN-GATED
 - SEC-KP-00–10 — COMPLETE
-- SEC-NE-00/01/02/03/04A/04C/04B1 — COMPLETE / MERGED
-- SEC-NE-04B2 — COMPLETE IN THIS PR
+- SEC-NE-00/01/02/03/04A/04C/04B1/04B2 — COMPLETE / MERGED
 - SEC-NE-05/06/07/08/09 — NOT STARTED
