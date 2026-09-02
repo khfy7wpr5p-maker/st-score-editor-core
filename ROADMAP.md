@@ -13,7 +13,7 @@ This file records repository reality. Planned or human-gated capability is not p
 - **SEC-NE-00–07 — COMPLETE / MERGED** within documented bounded profiles.
 - **SEC-NE-XML-ROUNDTRIP — COMPLETE / MERGED.**
 - **SEC-NE-08 — COMPLETE / MERGED:** derivative Guitar/TAB authoring companion.
-- **SEC-NE-09 — COMPLETE / MERGE CANDIDATE:** single-session SesliTab host integration.
+- **SEC-NE-09 — COMPLETE / MERGED:** single-session SesliTab host integration.
 
 ## SEC-NE-09 exact capability
 
