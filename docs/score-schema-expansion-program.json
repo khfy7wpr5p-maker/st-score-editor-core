@@ -1,87 +1,46 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
-  "stage": "SSE-01",
+  "stage": "SSE-02",
   "status": "COMPLETE_MERGE_CANDIDATE",
   "vnext_contract_approval": "APPROVED",
-  "runtime_session_version": "1.0.0_UNTIL_SSE_02",
-  "available_schema_substrate": ["1.0.0", "2.0.0"],
-  "versions": {
-    "score_document_v1": "1.0.0",
-    "notation_document_v1": "1.0.0",
-    "semantic_address_v1": "1.0.0",
-    "score_document_v2": "2.0.0",
-    "notation_document_v2": "2.0.0",
-    "semantic_address_v2": "2.0.0",
-    "migration": "1.0.0"
-  },
-  "sse_01": {
-    "score_model_v2": true,
-    "notation_structure_v2": true,
-    "addressing_v2": true,
-    "v1_to_v2_lossless_deterministic": true,
-    "v2_to_v1_silent_loss_allowed": false,
-    "downgrade_error": "DOWNGRADE_UNREPRESENTABLE",
-    "downgrade_reports_exact_paths": true,
-    "v1_packages_broadened": false,
-    "v2_authoring_enabled": false,
-    "v2_session_cutover": false,
-    "new_runtime_dependency": false
-  },
-  "authority": {
-    "canonical_score": "ONE_VERSIONED_SCORE_DOCUMENT_PER_SESSION",
-    "notation": "SAME_VERSION_SAME_REVISION_NOTATION_DOCUMENT",
-    "renderer_canonical": false,
-    "host_canonical": false,
-    "musicxml_live_state": false,
-    "guitar_result_canonical": false
-  },
-  "design_decisions": {
-    "grace_notes": {
-      "canonical": true,
-      "normal_timeline_event": false,
-      "container": "VoiceV2.graceGroups",
-      "anchoring": "EXACT_NORMAL_EVENT_SAME_VOICE",
-      "placements": ["before", "after"],
-      "normal_measure_occupancy": false,
-      "zero_duration_hack_allowed": false
-    },
-    "articulations": {
-      "authority": "NotationDocumentV2.EventNotationV2",
-      "typed_finite_vocabulary": true,
-      "arbitrary_other_fallback": false
-    },
-    "ornaments": {
-      "authority": "NotationDocumentV2.EventNotationV2",
-      "typed_discriminated_union": true,
-      "relation_endpoints_validated": true,
-      "arbitrary_other_fallback": false
-    }
+  "canonical_session_version": "2.0.0",
+  "legacy_v1_supported": true,
+  "session_boundary": {
+    "v1_to_v2_migration_at_creation": true,
+    "parallel_mutable_v1_v2": false,
+    "mixed_version_pair_allowed": false,
+    "atomic_v2_history": true,
+    "grace_target_rebinding": true,
+    "v2_render_manifest": true,
+    "v2_only_xml_before_sse06": "VNEXT_XML_PENDING"
   },
   "stages": [
-    {"id":"SSE-00","name":"Contract freeze","status":"COMPLETE_MERGED","runtime_change":false},
-    {"id":"SSE-01","name":"Dual-version substrate","status":"COMPLETE_MERGE_CANDIDATE"},
-    {"id":"SSE-02","name":"Canonical session v2 cutover","status":"NEXT"},
-    {"id":"SSE-03","name":"Grace note authoring","status":"NOT_STARTED"},
-    {"id":"SSE-04","name":"Articulation authoring","status":"NOT_STARTED"},
-    {"id":"SSE-05","name":"Ornament authoring","status":"NOT_STARTED"},
-    {"id":"SSE-06","name":"MusicXML vNext round trip","status":"NOT_STARTED"},
-    {"id":"SSE-07","name":"Renderer and SesliTab compatibility","status":"NOT_STARTED"},
-    {"id":"SSE-08","name":"Staff/part topology contract","status":"HUMAN_GATED_DESIGN"},
-    {"id":"SSE-09","name":"Staff/part topology authoring","status":"NOT_STARTED"},
-    {"id":"SSE-10","name":"Cross-staff relation model","status":"NOT_STARTED"}
+    {"id":"SSE-00","status":"COMPLETE_MERGED"},
+    {"id":"SSE-01","status":"COMPLETE_MERGED"},
+    {"id":"SSE-02","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"SSE-03","status":"NEXT"},
+    {"id":"SSE-04","status":"NOT_STARTED"},
+    {"id":"SSE-05","status":"NOT_STARTED"},
+    {"id":"SSE-06","status":"NOT_STARTED"},
+    {"id":"SSE-07","status":"NOT_STARTED"},
+    {"id":"SSE-08","status":"HUMAN_GATED_DESIGN"},
+    {"id":"SSE-09","status":"NOT_STARTED"},
+    {"id":"SSE-10","status":"NOT_STARTED"}
   ],
   "global_invariants": {
     "source_immutable": true,
+    "same_version_same_revision_score_notation": true,
     "stale_revision_fails_closed": true,
     "single_atomic_score_notation_history": true,
-    "parallel_mutable_v1_v2_session": false,
-    "legacy_v1_validation_stable": true,
     "renderer_canonical_authority": false,
     "host_dual_write": false,
-    "production_activation_by_merge": false
+    "musicxml_silent_loss": false,
+    "guitar_result_canonical_authority": false,
+    "production_activation_by_merge": false,
+    "new_runtime_dependency": false
   },
-  "next_stage": "SSE-02"
+  "next_stage": "SSE-03"
 }
