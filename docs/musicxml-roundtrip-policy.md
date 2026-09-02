@@ -1,100 +1,65 @@
 # MusicXML Round-Trip Policy
 
-Status: current-reality policy through SEC-NE-04B1.
+Status: current-reality policy through bounded SEC-NE-XML-ROUNDTRIP.
 
 ## Authority rule
 
 MusicXML is an import/export exchange format. It is never live mutable editor state. After admitted import, `ScoreDocument` is canonical musical authority; notation and measure evidence are revision-bound sidecars.
 
-## Import policy
+## Import profiles
 
-For each semantic, an importer must do one of three things:
+### Legacy E2
 
-1. import it into canonical/admitted revision-bound state;
-2. preserve it explicitly as bounded evidence; or
-3. reject the input/profile as unsupported.
+`importMusicXml` remains score-only and intentionally narrow.
 
-Silent discard is forbidden when loss could change musical meaning or authoring safety.
+### SEC-NE-04B1
 
-## Current import profiles
+`importMusicXmlWithMeasureSemantics` returns same-revision score, notation time declarations and `MusicXmlMeasureSemanticsDocument`. It preserves simple time declaration/inheritance/change, `implicit`, `non-controlling`, exact `backup`/`forward` cursor evidence and source provenance.
 
-### Legacy E2 profile
+### Bounded notation serializer profile
 
-`importMusicXml` remains score-only and intentionally narrow. It continues to reject SEC-NE-04B1-only time/measure semantics rather than accepting them without returning their evidence.
+`importNotationMusicXml` is the re-import surface for XML produced by `serializeNotationMusicXml` within the current public 1.0.0 score/notation contracts.
 
-### SEC-NE-04B1 profile
+It preserves:
 
-`importMusicXmlWithMeasureSemantics` returns:
+- pitch, chords, rests, onset/duration, voice and staff;
+- time/key/clef;
+- barline and repeat notation;
+- dots and accidentals;
+- beams;
+- current tuplet representation (`time-modification` + numbered boundary marks);
+- MusicXML tie playback markers plus numbered `tied` notation;
+- slurs;
+- current 04B1 time/measure evidence.
 
-```text
-ScoreDocument
-NotationDocument
-MusicXmlMeasureSemanticsDocument
-```
+The original input is always parsed through the bounded safe parser before any semantic projection. The score-only subset is then passed through the unchanged 04B1 importer. Notation is reconstructed against deterministic canonical IDs and the final outputs are rebound to the original source identity.
 
-All outputs are bound to the same canonical document/revision.
+Legacy importers continue to reject notation-rich serializer output; the new profile is additive rather than a silent broadening of E2.
 
-The admitted 04B1 profile preserves:
+## Equivalence contract
 
-- simple unnumbered time-signature declarations within existing notation limits;
-- time-signature inheritance and changes;
-- MusicXML measure `implicit` yes/no evidence;
-- MusicXML measure `non-controlling` yes/no evidence independently from `implicit`;
-- exact rational `backup` / `forward` cursor-operation evidence;
-- source part/measure/staff provenance bound to canonical measure addresses.
-
-A short measure alone is never pickup evidence. Mid-measure time changes, extra `<time>` attributes, compound/ambiguous unsupported forms and hidden nested leaf semantics fail closed.
-
-SEC-NE-04B1 evidence does not authorize implicit-gap writes or rest materialization.
-
-## Export policy
-
-Export is generated from current canonical state plus admitted same-revision notation/evidence. Export must not reconstruct authority from renderer state, DOM/SVG state, host UI state or stale evidence.
-
-If an admitted semantic cannot be exported without destructive loss, export must reject or surface an explicit unsupported/loss state.
-
-## Semantic round-trip goal
-
-For every fully admitted round-trip semantic:
+For the fully admitted current profile:
 
 ```text
-MusicXML import
-  -> canonical score + admitted evidence
-  -> supported edit
-  -> MusicXML export
-  -> re-import
-  -> semantic equivalence
+ScoreDocument + NotationDocument
+  -> serializeNotationMusicXml
+  -> importNotationMusicXml
+  -> semantically equivalent score + notation
 ```
 
-Byte-for-byte XML identity is not required.
+Byte-for-byte XML identity and entity-ID identity with an arbitrary pre-export canonical document are not required. Re-imported deterministic IDs must correctly bind the equivalent imported semantic structure.
 
-SEC-NE-04B1 **does not by itself claim complete export/re-import round trip** for all newly preserved measure evidence. The additive evidence import is now admitted; golden export/preservation/re-import coverage remains part of `SEC-NE-XML-ROUNDTRIP` hardening.
-
-## Required golden corpus categories
-
-Progressively cover:
-
-- monophonic material;
-- voices 1–4;
-- chords/rests;
-- explicit gaps;
-- simple time-signature declaration/inheritance/change;
-- pickup/anacrusis once 04B2 legal-span semantics are admitted;
-- key/clef changes;
-- ties/slurs;
-- tuplets;
-- grace notes;
-- multi-staff material;
-- cross-staff only after explicit admission;
-- guitar notation and later notation+TAB.
-
-Fixtures must be synthetic, first-party, public-domain or explicitly licensed.
+Golden regression verifies measure notation, event notation, note notation, current measure semantics and canonical score timing/pitch. It also verifies that inconsistent tie playback/notation projections fail closed.
 
 ## Loss policy
 
-Unsupported is not equivalent to ignorable. Omission must be proven presentation-only for the admitted profile or explicitly rejected/recorded as loss.
+Unsupported is not equivalent to ignorable. Unknown or schema-absent semantics must be rejected or separately versioned; they may not disappear silently during round-trip.
 
-CI may never be fixed by broadening a silent-loss fallback.
+Current 1.0.0 does not claim grace notes, articulations, ornaments, whole staff/part topology semantics, arbitrary external MusicXML profiles or `.mxl` container support.
+
+## Corpus policy
+
+Round-trip fixtures must be synthetic, first-party, public-domain or explicitly licensed. Current first-party synthetic golden coverage should be extended when a new public semantic is admitted.
 
 ## Container policy
 
