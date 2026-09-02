@@ -46,6 +46,26 @@ Remaining keypad limitation requiring a separately authorized architectural chan
 
 The host remains responsible for visual glyph rendering with an admitted SMuFL font such as Bravura. Editor Core does not bundle Bravura, CSS, VexFlow, Smoosic, renderer packages or production UI code.
 
+## SEC-NE — Sibelius-style note-entry expansion
+
+The additive note-entry program extends existing-score correction without changing canonical authority:
+
+- **SEC-NE-00 — COMPLETE:** external editor taxonomy; Smoosic remains reference-only.
+- **SEC-NE-01 — COMPLETE / MERGED:** bounded exact-rest-slot note entry.
+- **SEC-NE-02 — COMPLETE / MERGED:** selected-rest note entry composed into unified session/history/browser flow.
+- **SEC-NE-03 — COMPLETE / MERGED:** revision-bound canonical `InsertionPosition`; no SVG/DOM coordinate authority.
+- **SEC-NE-04A — COMPLETE / MERGED:** effective time-signature inheritance, exact measure/voice occupancy analysis, overlap/overflow rejection and explicit-rest-only admission.
+- **SEC-NE-04C — COMPLETE IN THIS STAGE:** low-level explicit-rest position note-entry primitive. An admitted `InsertionPosition` inside one explicit rest may atomically produce leading rest + note + trailing rest while preserving the original authorized event id for the inserted note event. The primitive composes with unified history/notation rebinding and revision-bound RenderRequest generation. It intentionally does **not** add a new session/browser cursor-entry public surface in this stage.
+- **SEC-NE-04B1 — NOT STARTED:** additive MusicXML time/pickup/incomplete-measure evidence.
+- **SEC-NE-04B2 — NOT STARTED:** deterministic rest materialization for proven legal implicit silence.
+- **SEC-NE-05 — NOT STARTED:** onset mutation / retiming authority.
+- **SEC-NE-06 — NOT STARTED:** structural score authoring.
+- **SEC-NE-07 — NOT STARTED:** advanced notation/note-entry authoring.
+- **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
+- **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
+
+Until SEC-NE-04B1/04B2 are complete, implicit gaps remain non-authoritative and unrestricted free insertion remains fail-closed. Until SEC-NE-05 is complete, ordinary onset retiming and general triplet creation/removal remain unavailable.
+
 ## Stage E8 — Guitar Workspace Adapter
 
 ### E8-A — Guitar Workspace Authority Contract — COMPLETE
