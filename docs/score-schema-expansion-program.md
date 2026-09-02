@@ -1,104 +1,115 @@
 # SCORE-SCHEMA-EXPANSION Program
 
-Status: **SSE-07 COMPLETE / MERGE CANDIDATE**
+Status: **SSE-08 HUMAN-APPROVED DESIGN FREEZE / MERGE CANDIDATE**
 
-The vNext contract frozen by SSE-00 is implemented through renderer and SesliTab v2 compatibility. Staff/part topology remains a separate human-gated design at SSE-08.
+SSE-00–07 are implemented and merged. SSE-08 freezes the next major staff/part topology contract without activating v3 runtime code. SSE-09 topology authoring remains not started.
 
 ## Mission
 
-Extend ST Score Editor Core beyond `ScoreDocument` / `NotationDocument` 1.0.0 without weakening canonical authority, revision binding, source immutability, unified history, MusicXML safety, renderer isolation, Guitar derivative authority or SesliTab no-dual-write rules.
+Extend ST Score Editor Core without weakening canonical authority, revision binding, source immutability, unified history, MusicXML safety, renderer isolation, Guitar derivative authority or SesliTab no-dual-write rules.
 
-Expansion sequence:
+## Completed v2 sequence
 
-1. grace notes;
-2. articulations;
-3. ornaments;
-4. MusicXML v2 round trip;
-5. renderer/SesliTab v2 identity compatibility;
-6. later staff/part topology and cross-staff relations behind separate gates.
-
-## Non-negotiable invariants
-
-- one versioned `ScoreDocument` is canonical musical authority in a session;
-- notation is same-document, same-revision and same-version;
-- no parallel mutable v1/v2 canonical pair;
-- renderer, DOM/SVG and SesliTab host state remain noncanonical;
-- MusicXML is exchange/projection data, not live mutable editor state;
-- source identity remains immutable/auditable;
-- stale addresses/sidecars fail closed;
-- score + notation mutation remains one atomic history commit;
-- v2 -> v1 downgrade rejects semantic loss;
-- unsupported MusicXML semantics reject rather than disappear;
-- no new runtime dependency is required by SSE-00–07;
-- production/public-write activation remains a separate gate.
-
-## Frozen vNext model
-
-### ScoreDocumentV2 2.0.0
-
-Normal `Voice.events` retain timed semantics. `VoiceV2.graceGroups` contains canonical non-occupancy grace material anchored to exact normal events. Grace events have stable IDs, written duration and normalized playback metadata without normal timeline onset/duration.
-
-### NotationDocumentV2 2.0.0
-
-Event notation adds finite typed `articulations[]` and `ornaments[]`; grace event/note notation uses dedicated semantic targets. Default notation is represented sparsely.
-
-### SemanticAddressV2 2.0.0
-
-The v2 address space contains normal ancestry plus `grace-group`, `grace-event` and `grace-note`. All editor/renderer selection authority stays revision-bound.
-
-## Stage status
-
-- **SSE-00 — COMPLETE / MERGED:** vNext contract freeze and approval.
+- **SSE-00 — COMPLETE / MERGED:** v2 contract freeze and approval.
 - **SSE-01 — COMPLETE / MERGED:** v2 score/address/notation substrate and guarded migrations.
 - **SSE-02 — COMPLETE / MERGED:** one canonical v2 session/history/render/selection state.
 - **SSE-03 — COMPLETE / MERGED:** canonical grace authoring.
-- **SSE-04 — COMPLETE / MERGED:** typed articulation authoring for normal/grace events.
-- **SSE-05 — COMPLETE / MERGED:** local ornaments and atomic bounded tremolo/wavy-line relations.
-- **SSE-06 — COMPLETE / MERGED:** isolated bounded MusicXML v2 import/export round trip.
-- **SSE-07 — COMPLETE / MERGE CANDIDATE:** renderer projection and additive SesliTab v2 compatibility.
-- **SSE-08 — HUMAN-GATED DESIGN:** staff/part topology contract.
-- **SSE-09 — NOT STARTED:** topology authoring after SSE-08 approval.
-- **SSE-10 — NOT STARTED:** cross-staff canonical relation model.
+- **SSE-04 — COMPLETE / MERGED:** typed articulation authoring.
+- **SSE-05 — COMPLETE / MERGED:** relation-safe ornament authoring.
+- **SSE-06 — COMPLETE / MERGED:** bounded isolated MusicXML v2 round trip.
+- **SSE-07 — COMPLETE / MERGED:** renderer v2 projection and additive SesliTab v2 compatibility.
 
-## SSE-06 MusicXML architecture
+The active runtime remains `ScoreDocumentV2 + NotationDocumentV2` until a later implementation stage performs an explicit v3 cutover.
 
-SSE-06 keeps every legacy v1 MusicXML parser/importer unchanged. `packages/musicxml-v2` owns a separate bounded safe parser plus `serializeNotationMusicXmlV2` and `importNotationMusicXmlV2`.
+## Why SSE-08 requires v3
 
-The importer validates original v2 input, derives a noncanonical v1-compatible timed projection, reuses the existing proven v1 notation importer, migrates once to v2 and then rebinds grace/articulation/ornament semantics from the original parsed tree. The internal projection never becomes canonical and the final score retains the original MusicXML source identity.
+Current v2 topology inherits the v1 nested structure. Part order is implicit array order, measures are independently nested under each staff, aligned measure identity is not explicit, instrument identity is absent and TAB staff authority is undefined.
 
-Unsupported XML, broken relations, source mismatches and ambiguous grace placement/playback combinations fail closed.
+MusicXML serializers use one staff as a reference measure sequence. That is acceptable for the current bounded profile, but it is not sufficient authority for safe add/remove/reorder topology authoring.
 
-## SSE-07 renderer / SesliTab compatibility
+## Frozen SSE-08 target
 
-`renderer-contract-v2` now uses three explicit projection outcomes:
+The approved design target is:
 
-- `V1_COMPATIBLE_XML` when the v2 pair can be downgraded losslessly to the proven v1 serializer;
-- `V2_SEMANTIC_XML` when v2-only semantics are present and the bounded SSE-06 serializer can represent them;
-- `VNEXT_XML_PENDING` with `musicXml = null` when the bounded v2 serializer cannot represent the canonical pair.
+- `ScoreDocumentV3/3.0.0`;
+- `NotationDocumentV3/3.0.0`;
+- `SemanticAddressV3/3.0.0`;
+- `RendererRequestV3/3.0.0`.
 
-Opaque render tokens remain revision-bound semantic addresses, including grace-group/event/note identities. Additive `renderWithOsmdV2` and `renderWithAlphaTabV2` consume renderable v2 requests without changing legacy adapter APIs. Pending requests fail before renderer load.
+### Part and instrument identity
 
-`seslitab-editor-host-v2` wraps exactly one canonical `EditorSessionStateV2`. Pointer, keyboard and touch use the same semantic token/edit paths; host dual-write, renderer mutation authority and DOM-coordinate mutation authority remain forbidden. Playback remains host-owned and editor admission does not control playback.
+`PartV3` adds explicit positive unique ordinal and a stable instrument identity. Reordering changes order/ordinal but not part, staff or instrument IDs.
 
-## Migration policy
+The initial instrument identity profile is intentionally narrow: stable ID, name and short name. Transposition, playback patches/MIDI and arbitrary external metadata remain outside SSE-08.
 
-### v1 -> v2
+### Staff roles
 
-Lossless and deterministic for the admitted v1 semantic set. Normal timed events and identity ancestry are preserved; v2-only arrays begin empty.
+Frozen roles:
 
-### v2 -> v1
+- `standard` — canonical content-bearing musical staff;
+- `percussion` — canonical content-bearing percussion staff;
+- `tablature-linked` — derivative presentation staff linked to a standard source staff.
 
-Allowed only when v2-only content is empty. Any grace group, articulation, ornament or grace notation rejects with `DOWNGRADE_UNREPRESENTABLE`. Silent discard is forbidden.
+A linked TAB staff owns no independent canonical voices/events/notes. Its note/fret presentation resolves to source canonical event/note identity. String/fret/fingering/voicing assignments remain derivative Guitar state.
 
-## Compatibility strategy
+### Global measure frames
 
-1. keep v1 validation/import stable — complete;
-2. prove deterministic dual-version migration — complete;
-3. cut one session to one v2 pair — complete;
-4. add grace/articulation/ornament authoring — complete;
-5. prove bounded v2 MusicXML round trip without widening v1 — complete;
-6. wire renderer/SesliTab to the proven v2 projection while retaining opaque semantic identity — complete on this merge candidate.
+`ScoreDocumentV3.measureFrames` becomes the document-global aligned measure-sequence authority. A content-bearing staff contains exactly one `StaffMeasureV3` per frame, and each staff measure carries `frameId` rather than its own independent ordinal/display number authority.
 
-## Definition of done
+The initial profile rejects polymeter/non-controlling topology rather than inferring correspondence.
 
-The schema-expansion program through SSE-07 is complete on this merge candidate without authority drift. Staff/part topology and cross-staff remain separate later gates and require explicit approval before canonical topology implementation.
+### Notation ownership
+
+`NotationDocumentV3` splits current measure notation ownership:
+
+- frame notation: controlling time signature and bounded barline/repeat structure;
+- staff-measure notation: key signature and clef;
+- event/note/grace notation retains current semantics.
+
+All notation remains sparse, same-document and same-revision.
+
+### Addressing
+
+`SemanticAddressV3` adds `measure-frame` identity and includes `frameId` in staff-measure descendant paths. Stable IDs, not ordinals or coordinates, remain identity authority.
+
+## Migration design
+
+### V2 -> V3
+
+Migration preserves all existing document/source/revision/part/staff/measure/voice/event/note/grace IDs. It creates deterministic fresh frame/instrument identities and derives frames only when current content staves prove aligned measure count, ordinal and display number.
+
+Missing/misaligned measures, conflicting frame-owned notation or ambiguous ownership reject rather than being repaired silently. A TAB clef alone does not auto-convert a v2 content staff into linked TAB topology.
+
+### V3 -> V2
+
+Downgrade remains lossless-only. Linked TAB topology or other v3-only semantics block downgrade when they cannot be represented without semantic loss.
+
+## SSE-09 implementation candidate
+
+After SSE-08 merges, bounded implementation may target:
+
+- add/remove/reorder part;
+- add/remove/reorder standard/percussion staff;
+- add/remove linked TAB presentation staff;
+- rename part/instrument display names;
+- exact v3 validation/migration/addressing/history support.
+
+Adding a content staff must not invent ambiguous rhythm. The initial implementation requires effective meter for every frame so it can create deterministic explicit full-frame rests; otherwise it fails closed.
+
+## Still separately gated
+
+- cross-staff note/beam/tie/slur/tuplet/ornament ownership;
+- polymeter/non-controlling topology;
+- part groups/brackets/braces;
+- arbitrary instrument transposition;
+- percussion-map authoring;
+- layout/page/system geometry;
+- playback/MIDI routing;
+- direct external-engine invocation;
+- persistence/network/public-write/production activation.
+
+## Source of truth
+
+The complete frozen design is `docs/staff-part-topology-contract.md` with machine-readable mirror `docs/staff-part-topology-contract.json`.
+
+SSE-08 completion is a design milestone only. It does not activate or implement `ScoreDocumentV3`.
