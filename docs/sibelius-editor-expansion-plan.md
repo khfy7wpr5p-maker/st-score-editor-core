@@ -44,7 +44,7 @@ Implemented invariants:
 - one immutable revision or none;
 - no renderer/UI/network authority added.
 
-### SEC-NE-02 — Editor note-entry intent + browser surface — IMPLEMENTED ON WORK BRANCH
+### SEC-NE-02 — Editor note-entry intent + browser surface — COMPLETE / MERGED
 
 The SEC-NE-01 primitive is composed into the existing framework-neutral session controller and browser runtime.
 
@@ -60,14 +60,13 @@ Implemented behavior:
 - browser runtime remains non-production, network-disabled, persistence-disabled and renderer-non-authoritative;
 - keyboard, pointer and mobile hosts can compose the same semantic entry point rather than creating separate edit semantics.
 
-### SEC-NE-03 — Cursor and insertion-position contract
+### SEC-NE-03 — Cursor and insertion-position contract — IMPLEMENTED ON WORK BRANCH
 
-Define a canonical insertion position independent of SVG coordinates.
-
-Candidate identity:
+A canonical insertion position is now represented independently of SVG/DOM coordinates.
 
 ```text
 InsertionPosition {
+  contractVersion
   documentId
   revisionId
   partId
@@ -78,7 +77,18 @@ InsertionPosition {
 }
 ```
 
-Renderer coordinates may locate a candidate, but Editor Core must validate/resolve it against the current score revision before authoring.
+Implemented invariants:
+
+- exact document and revision identity required;
+- exact part/staff/measure/voice path must resolve canonically;
+- onset is a canonical non-negative rational;
+- stale positions cannot be replayed onto newer score revisions;
+- document/path mismatches fail closed;
+- the contract is immutable and performs no score mutation;
+- renderer coordinates cannot become insertion authority;
+- this stage intentionally does not claim that an onset is inside the measure or free of event overlap.
+
+Gap safety, measure occupancy and legal insertion remain SEC-NE-04 responsibilities.
 
 ### SEC-NE-04 — Measure timing and gap authority
 
@@ -157,12 +167,13 @@ Host integration order:
 
 The host orchestrates. It does not create a second canonical model or dual-write score state.
 
-## Explicitly not part of SEC-NE-01 / SEC-NE-02
+## Explicitly not part of SEC-NE-01 / SEC-NE-02 / SEC-NE-03
 
 - arbitrary event onset movement;
 - measure length inference;
 - automatic voice creation;
 - unrestricted note insertion into occupied time;
+- gap/overlap inference from renderer coordinates;
 - Smoosic/VexFlow dependency;
 - renderer-owned edits;
 - production/public-write activation.
