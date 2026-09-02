@@ -16,9 +16,9 @@ Repository reality only; planned capability is not production capability.
 
 - **SSE-00 — COMPLETE / MERGED:** approved vNext contract.
 - **SSE-01 — COMPLETE / MERGED:** dual-version substrate and guarded migration.
-- **SSE-02 — COMPLETE / MERGE CANDIDATE:** v2-native session/history/render/selection cutover.
-- **SSE-03 — NEXT:** grace-note authoring.
-- **SSE-04 — NOT STARTED:** articulation authoring.
+- **SSE-02 — COMPLETE / MERGED:** single canonical v2 session/history/render/selection cutover.
+- **SSE-03 — COMPLETE / MERGE CANDIDATE:** canonical grace-note authoring.
+- **SSE-04 — NEXT:** articulation authoring.
 - **SSE-05 — NOT STARTED:** ornament authoring.
 - **SSE-06 — NOT STARTED:** vNext MusicXML semantic round trip.
 - **SSE-07 — NOT STARTED:** renderer + SesliTab v2 compatibility.
@@ -26,24 +26,26 @@ Repository reality only; planned capability is not production capability.
 - **SSE-09 — NOT STARTED:** staff/part topology authoring.
 - **SSE-10 — NOT STARTED:** cross-staff canonical relation model.
 
-## SSE-02 exact capability
+## SSE-03 exact capability
 
-- v1 score+notation may migrate once at a v2-session creation boundary;
-- a v2 session contains only one v2 score+notation authority pair;
-- mixed versions reject;
-- v2 history is atomic and direct-child revision bound;
-- notation rebinding covers normal and grace semantic targets;
-- v2 render manifests contain all v2 entity identities;
-- v2-only content cannot silently downgrade to v1 MusicXML: it is marked `VNEXT_XML_PENDING` with no lossy XML;
-- normal/grace semantic targets are selectable through opaque v2 render tokens;
-- no v2 authoring mutation is opened by SSE-02 itself.
+- exact normal-event anchor create/remove grace group;
+- note/rest/chord grace event insertion;
+- remove/reorder grace event;
+- replacement preserving grace-event identity;
+- exact grace-note/chord-tone pitch edit;
+- normal timed occupancy invariant;
+- fresh canonical entity/revision validation;
+- stale address rejection;
+- explicit final-event/group removal rule;
+- grace notation orphan protection;
+- atomic score+notation history and deterministic post-edit selection.
 
 ## Still fail-closed
 
 - mixed-version session state;
-- disappearing notation targets;
-- v2 -> v1 semantic loss;
-- grace/articulation/ornament authoring before their own stages;
+- grace anchor orphaning or stale targets;
+- silent notation loss;
+- articulation/ornament authoring before their own stages;
 - v2-only MusicXML projection before SSE-06;
 - renderer-coordinate authoring and host dual-write;
 - E8-D external engine invocation;
