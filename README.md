@@ -4,26 +4,21 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-SCORE-SCHEMA-EXPANSION is implemented through **SSE-04 typed articulation authoring** on this merge candidate.
+SCORE-SCHEMA-EXPANSION is implemented through **SSE-05 relation-safe ornament authoring** on this merge candidate.
 
-- **SSE-00–03 — COMPLETE / MERGED:** approved v2 contract, dual-version substrate, one canonical v2 session and canonical grace authoring.
-- **SSE-04 — COMPLETE / MERGE CANDIDATE:** typed articulation set/toggle/remove on normal and grace events.
-- **SSE-05 — NEXT:** ornament authoring.
+- **SSE-00–04 — COMPLETE / MERGED:** approved v2 contract, dual-version substrate, one canonical v2 session, grace authoring and typed articulation authoring.
+- **SSE-05 — COMPLETE / MERGE CANDIDATE:** local ornament authoring plus bounded atomic tremolo/wavy-line relations.
+- **SSE-06 — NEXT:** vNext MusicXML semantic round trip.
 
-## SSE-04 articulation authoring
+## SSE-05 ornament authoring
 
-`editor-articulation-authoring-v2/1.0.0` operates only on exact current v2 `event` or `grace-event` semantic addresses. It supports `SET_ARTICULATIONS`, `TOGGLE_ARTICULATION` and `REMOVE_ARTICULATION` using the finite articulation vocabulary frozen in `NotationDocumentV2`.
+`editor-ornament-authoring-v2/1.0.0` keeps ornament semantics in `NotationDocumentV2` and exposes two deliberately different authority profiles.
 
-Articulation state remains notation authority. Every accepted edit creates one direct-child `ScoreDocumentV2` revision without changing canonical musical part/staff/measure/voice/event content, creates same-revision `NotationDocumentV2`, and commits through unified `EditorHistoryStateV2`. The edited semantic event remains selected after commit.
+Local authoring admits the frozen simple-ornament vocabulary and single-note tremolo on exact current normal `event` or `grace-event` targets. Add, toggle and remove operations cannot be used to fabricate one endpoint of a spanning relation.
 
-Safety rules include:
+Spanning authoring is atomic and bounded. Two-note tremolo and wavy-line chains are created/removed as whole relations on exact normal pitched events in one part/staff/measure/voice. Targets must be unique and strictly increasing in canonical event order. Rest members, cross-scope targets, grace-spanning relations and relation-number collisions fail closed.
 
-- stale event/grace-event targets fail closed;
-- duplicate articulation specs reject;
-- unsupported articulation kinds, placement or direction combinations reject;
-- articulation edits do not mutate pitch, onset, duration, grace identity or normal measure occupancy;
-- normal and grace articulation edits share the same atomic history path;
-- articulation content remains `VNEXT_XML_PENDING` until SSE-06 rather than being silently omitted from MusicXML.
+Every accepted ornament edit advances one direct-child `ScoreDocumentV2` revision without changing pitch/onset/duration or other canonical musical content, creates same-revision notation, and commits through unified v2 history. Ornament-bearing pairs remain `VNEXT_XML_PENDING` with `musicXml: null` until SSE-06 rather than silently losing notation.
 
 ## Authority and dependencies
 
