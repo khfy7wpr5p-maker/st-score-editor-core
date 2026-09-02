@@ -1,139 +1,97 @@
 # Roadmap
 
-## Completed core stages
+## Current source of truth
 
-- **E0 — Architecture & Safety Foundation:** authority/trust boundaries, governance and CI baseline.
-- **E1 — Canonical ScoreDocument:** immutable Part/Staff/Measure/Voice/Event/Note/Rest/Chord model.
-- **E2 — Safe MusicXML Import + Semantic Round Trip:** resource-bounded parser, explicit unsupported semantics, serializer/equivalence tests.
-- **E3 — Stable Addressing / Selection:** revision/ancestry-bound semantic addresses and stale-selection rejection.
-- **E4 — Score Editing / Transactions:** typed bounded score commands, atomic validation, immutable revisions and score history.
-- **E5 — Notation Structure:** time/key/clef/barline, dots/beams/tuplets, accidentals/ties/slurs plus MusicXML export.
-- **E6 — Renderer Adapters:** presentation-only host integrations for OSMD 2.1.1 and alphaTab 1.8.4.
+This file records merged/in-progress/not-started repository reality. Planned stages are not production capability.
 
-## Stage E7 — Editor Core / UI Boundary
+Current merged SEC-NE baseline: `8e486617fdc6eefad3586f2c4fdcc7db7c04b889` includes SEC-NE-04C.
 
-- **E7-A — UI Authority Contract — COMPLETE**
-- **E7-B — Framework-neutral Editor Shell — COMPLETE**
-- **E7-C — Secure Selection + Inspector — COMPLETE**
-- **E7-D — Basic Score Editing Intents — COMPLETE**
-- **E7-E1 — Atomic Notation Transactions — COMPLETE**
-- **E7-E2 — Notation Editing Intents — COMPLETE**
-- **E7-F — Undo/Redo, Accessibility and UX Safety — COMPLETE**
-- **E7-G — ScoreMosaic Browser Host Runtime — COMPLETE**
-- **E7-H — Browser-safe Runtime Bundle — COMPLETE**
+## Core stages
 
-E7 remains bounded to repository/browser composition. Production/public-write/live-AI authority is not granted.
+- **E0 — COMPLETE:** architecture and safety foundation.
+- **E1 — COMPLETE:** immutable canonical `ScoreDocument`.
+- **E2 — COMPLETE:** bounded safe MusicXML subset + admitted semantic round trip.
+- **E3 — COMPLETE:** revision-bound semantic addressing/selection.
+- **E4 — COMPLETE:** typed bounded score transactions/history primitives.
+- **E5 — COMPLETE:** revision-bound notation structure/export.
+- **E6 — COMPLETE:** presentation-only renderer adapters.
+- **E7-A through E7-H — COMPLETE:** editor UI authority, shell, selection, typed intents, unified score+notation history, browser runtime/bundle.
+- **E8-A — COMPLETE:** Guitar Workspace derivative-only authority contract.
+- **E8-B — COMPLETE:** deterministic guitar MusicXML + source-map projection.
+- **E8-C — CURRENT / IMPLEMENTED:** bounded read-only `CanonicalTabResult 2.0.0` evidence validation.
+- **E8-D — HUMAN-GATED / NOT AUTHORIZED:** direct host/external-engine invocation boundary.
+- **E9 — LATER:** advisory music-intelligence overlays.
 
-## SEC-SMUFL-KEYPAD-01 — Sibelius-style correction keypad — IMPLEMENTED WITH ONE EXPLICIT LIMITATION
+## SEC-SMUFL-KEYPAD-01 — existing-score correction
 
-The editor-side keypad program is implemented through SEC-KP-10:
+- **SEC-KP-00 through SEC-KP-10 — COMPLETE.**
 
-- **SEC-KP-00 — COMPLETE:** fresh-read semantic freeze and capability matrix.
-- **SEC-KP-01 — COMPLETE:** framework-neutral keypad action manifest plus verified SMuFL glyph-name metadata; no font assets or raw guessed codepoints.
-- **SEC-KP-02 — COMPLETE:** whole/half/quarter/eighth/16th/32nd duration and rest corrections through atomic unified revisions.
-- **SEC-KP-03 — COMPLETE:** flat/natural/sharp corrections update canonical pitch alteration plus display accidental atomically.
-- **SEC-KP-04 — COMPLETE:** dot counts 0..3 keep canonical effective duration and notation metadata consistent.
-- **SEC-KP-05 — BOUNDED COMPLETE:** triplet metadata can be applied only to an explicit three-event range whose canonical timing already proves exact contiguous 3:2 timing. Ordinary event spacing is not silently retimed because E4 has no admitted onset-mutation primitive.
-- **SEC-KP-06 — COMPLETE:** tie/slur correction uses explicit revision-bound note endpoints; nearest-note inference is forbidden.
-- **SEC-KP-07 — COMPLETE:** repeated keypad edits safely rebind a surviving exact semantic target to the new revision; target loss clears selection; undo/redo still clears selection.
-- **SEC-KP-08 — COMPLETE:** browser runtime exposes immutable keypad metadata and a typed bounded local commit surface without network/persistence/production authority.
-- **SEC-KP-09 — COMPLETE (EDITOR SIDE):** editor-renderer selection bridge accepts only a current render-request identity plus opaque hit token; renderer coordinates, DOM/SVG ids, renderer objects and foreign semantic addresses are not edit authority.
-- **SEC-KP-10 — COMPLETE:** regression matrix, accessibility invariants, architecture/docs synchronization and Rendering Layer JSON2 handoff requirements.
+Implemented correction categories include duration/rest, accidental, dots, bounded explicit existing 3:2 triplet metadata, explicit tie/slur targets, selection continuity, browser surface and renderer-hit bridge.
 
-Remaining keypad limitation requiring a separately authorized architectural change:
+Known limitation: canonical onset mutation is not yet admitted, so general triplet creation/removal that requires retiming remains fail-closed until SEC-NE-05.
 
-- creating/removing tuplets when canonical onset/duration retiming is required remains fail-closed until an explicit onset-mutation primitive is admitted into the canonical transaction layer.
+## SEC-NE — Sibelius-style authoring expansion
 
-The host remains responsible for visual glyph rendering with an admitted SMuFL font such as Bravura. Editor Core does not bundle Bravura, CSS, VexFlow, Smoosic, renderer packages or production UI code.
-
-## SEC-NE — Sibelius-style note-entry expansion
-
-The additive note-entry program extends existing-score correction without changing canonical authority:
+### Completed / merged
 
 - **SEC-NE-00 — COMPLETE:** external editor taxonomy; Smoosic remains reference-only.
-- **SEC-NE-01 — COMPLETE / MERGED:** bounded exact-rest-slot note entry.
-- **SEC-NE-02 — COMPLETE / MERGED:** selected-rest note entry composed into unified session/history/browser flow.
-- **SEC-NE-03 — COMPLETE / MERGED:** revision-bound canonical `InsertionPosition`; no SVG/DOM coordinate authority.
-- **SEC-NE-04A — COMPLETE / MERGED:** effective time-signature inheritance, exact measure/voice occupancy analysis, overlap/overflow rejection and explicit-rest-only admission.
-- **SEC-NE-04C — COMPLETE IN THIS STAGE:** low-level explicit-rest position note-entry primitive. An admitted `InsertionPosition` inside one explicit rest may atomically produce leading rest + note + trailing rest while preserving the original authorized event id for the inserted note event. The primitive composes with unified history/notation rebinding and revision-bound RenderRequest generation. It intentionally does **not** add a new session/browser cursor-entry public surface in this stage.
-- **SEC-NE-04B1 — NOT STARTED:** additive MusicXML time/pickup/incomplete-measure evidence.
-- **SEC-NE-04B2 — NOT STARTED:** deterministic rest materialization for proven legal implicit silence.
-- **SEC-NE-05 — NOT STARTED:** onset mutation / retiming authority.
-- **SEC-NE-06 — NOT STARTED:** structural score authoring.
-- **SEC-NE-07 — NOT STARTED:** advanced notation/note-entry authoring.
-- **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
-- **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
+- **SEC-NE-01 — COMPLETE / MERGED:** exact selected-rest note entry; shorter note may atomically create trailing rest.
+- **SEC-NE-02 — COMPLETE / MERGED:** selected-rest entry through unified session/history/browser flow; RenderRequest follows accepted revision; surviving selection may be deterministically rebound.
+- **SEC-NE-03 — COMPLETE / MERGED:** revision-bound canonical `InsertionPosition`; renderer coordinates are not insertion authority.
+- **SEC-NE-04A — COMPLETE / MERGED:** effective time-signature inheritance, exact measure/voice occupancy, overlap/overflow rejection and explicit-rest-only admission.
+- **SEC-NE-04C — COMPLETE / MERGED:** low-level position note-entry primitive for a window fully contained inside one explicit rest. Supports rest start/middle/end, exact fill and leading/trailing split forms. Composes safely with notation rebinding, unified history, undo/redo and revision-bound rendering. No second cursor-position browser/session API was added.
 
-Until SEC-NE-04B1/04B2 are complete, implicit gaps remain non-authoritative and unrestricted free insertion remains fail-closed. Until SEC-NE-05 is complete, ordinary onset retiming and general triplet creation/removal remain unavailable.
+### Next dependency order
 
-## Stage E8 — Guitar Workspace Adapter
+1. **SEC-NE-04B1 — NOT STARTED:** additive MusicXML time/pickup/incomplete-measure evidence.
+2. **SEC-NE-04B2 — NOT STARTED:** deterministic explicit-rest materialization for proven legal implicit silence. Depends on 04B1.
+3. **SEC-NE-05 — NOT STARTED:** canonical onset mutation / retiming.
+4. **SEC-NE-06 — NOT STARTED:** structural score authoring.
+5. **SEC-NE-07 — NOT STARTED:** advanced notation/note-entry authoring.
+6. **SEC-NE-XML-ROUNDTRIP — IN PROGRESS AS AN EXISTING SUBSET / HARDENING LATER:** admitted E2 round trip exists; broader golden corpus and newly admitted semantics must be hardened as capabilities expand.
+7. **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
+8. **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
 
-### E8-A — Guitar Workspace Authority Contract — COMPLETE
-Implemented:
-- guitar string/fret/fingering/voicing/reduction state is derivative only;
-- external engine output has no canonical score mutation authority;
-- revision-bound `GuitarWorkspaceSourceMap` maps engine source identities to canonical `event` / `note` semantic addresses;
-- stale, duplicate, ambiguous or unsupported mappings fail closed;
-- external reference is `CanonicalTabResult 2.0.0` from `musicxml-to-guitar-tab-engine`;
-- no engine integration, production activation or new dependency.
+## SEC-NE-04B1 gate
 
-### E8-B — Deterministic MusicXML + Source-map Projection — COMPLETE
-Implemented:
-- engine-safe MusicXML and source map are created in the same deterministic canonical traversal;
-- exactly one part and one/two staves admitted initially;
-- external source IDs use `P1:measure:<measureIndex>:note:<sourceOrder>`;
-- source order increments only for emitted MusicXML `<note>` elements;
-- canonical notes/chord tones map to canonical `note` addresses and rests to canonical `event` addresses;
-- exact canonical pitch/timing and tie source facts are preserved;
-- deterministic multi-voice/staff `backup` / `forward` cursor operations;
-- unsupported engine notation omitted without changing canonical state;
-- unsupported/stale source structures fail closed;
-- no external engine invocation.
+04B1 must preserve time/measure semantics as additive revision-bound evidence where possible:
 
-### E8-C — Read-only CanonicalTabResult Evidence — CURRENT
-Implemented:
-- bounded JSON-string ingestion only;
-- exact `CanonicalTabResult 2.0.0` document/source/guitar/policy contract identities;
-- no caller-supplied projection object is trusted;
-- current E8-B projection is re-derived internally before acceptance;
-- result measure/event source facts must match current canonical pitch, timing, voice/staff, tie, chord and source-order facts;
-- exact simultaneous-group count/order/membership;
-- exact arrangement-decision source coverage/order;
-- exact note-disposition source order and decision consistency;
-- selected string/fret must round-trip to target MIDI under the admitted six-string tuning;
-- exact required selected-shape coverage plus finger/barre/playability invariants;
-- output is immutable, read-only, derivative Guitar Workspace evidence;
-- teacher review state is evidence only and grants no mutation authority;
-- no direct external-engine invocation, production activation, persistence or public write authority.
+- time signatures and changes;
+- effective inheritance;
+- MusicXML `measure implicit="yes"` evidence where admitted;
+- pickup/incomplete vs non-controlling distinction;
+- required `backup`/`forward` timing evidence;
+- no short-measure → pickup inference;
+- ambiguous unsupported semantics fail closed.
 
-### E8-D — Host Invocation Boundary — HUMAN-GATED / NOT AUTHORIZED
-The next architectural question is how a product host may invoke `musicxml-to-guitar-tab-engine` and return a bounded `CanonicalTabResult 2.0.0` artifact to E8-C.
+A breaking public `ScoreDocument` or `NotationDocument` schema change is human-gated.
 
-Before implementation, freeze:
-- local package vs service/process boundary;
-- exact engine version/provenance pin;
-- timeout/cancellation/resource-budget ownership;
-- maximum request/result sizes;
-- no implicit network authority inside core;
-- no raw engine object graph crossing into E8-C;
-- canonical revision changed while engine runs → result rejected/recomputed;
-- errors remain typed/non-authoritative;
-- no production activation by repository merge.
+## SEC-NE-04B2 gate
 
-`directExternalEngineInvocation` remains an explicit human gate and is currently unauthorized.
+Implicit gaps remain non-authoritative until 04B1 is complete and 04B2 can prove legal silence for the exact target voice. No cross-voice proof and no renderer-coordinate inference.
 
-### Later E8 work — SEPARATELY BOUNDED
-Possible later work may include:
-- Guitar Workspace view models;
-- fingering/shape/barre inspector UX;
-- explicit proposal requests that may enter ordinary canonical editor intents without bypassing E4/E7-E1.
+## SEC-NE-05 gate
 
-Any change to ScoreMosaic vs Guitar TAB authority ownership remains human-gated by `DEVELOPMENT_GOVERNANCE.md`.
+Onset movement/retiming requires exact overlap and measure validation plus frozen tie/slur/beam/tuplet coupling. Tuplet retiming must be atomic.
 
-## Stage E9 — Music Intelligence Overlays
+## Product and authority rules
 
-Typed advisory Harmony/Fingering/Orchestration analysis overlays. AI remains non-authoritative.
+- `ScoreDocument` remains canonical.
+- MusicXML is exchange/projection data, not live editor state.
+- Renderer/DOM/SVG coordinates never become musical authority.
+- SesliTab is a host/orchestrator and may not dual-write score state.
+- OMR/AI output is evidence/advice only.
+- Guitar string/fret/fingering remains derivative unless separately admitted.
+- Original source evidence remains immutable.
+- Repository merge does not activate production/public write/live AI/direct engine invocation.
 
-## Development rule
+## Documentation gates
 
-Every stage preserves the E0 authority baseline. A green repository/CI state never implies public deployment, production activation, user-data ingestion, public write APIs, live AI edit authority or external-engine invocation authority.
+Architecture-changing PRs must synchronize affected current-reality documents. See:
+
+- `ARCHITECTURE.md`
+- `docs/sibelius-editor-expansion-plan.md`
+- `docs/score-authoring-capability-matrix.json`
+- `docs/insertion-and-timing-authority.md`
+- `docs/musicxml-roundtrip-policy.md`
+- `docs/seslitab-editor-integration-contract.md`
