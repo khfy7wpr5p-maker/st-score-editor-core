@@ -1,16 +1,14 @@
 # Insertion and Timing Authority
 
-Status: current-reality contract after SEC-NE-04C merge `8e486617fdc6eefad3586f2c4fdcc7db7c04b889`.
+Status: current-reality contract through SEC-NE-04B1.
 
 ## Core rule
 
-Writable musical time is a canonical semantic fact, not a renderer-coordinate fact.
+Writable musical time is a canonical semantic fact, never a renderer-coordinate fact.
 
-A screen/page/SVG/DOM position may help a host propose where the user pointed, but authoring may proceed only after that proposal is converted to a current revision-bound `InsertionPosition` and independently admitted by canonical timing analysis.
+A host may use screen/page/SVG/DOM position to propose where the user pointed, but authoring can proceed only after conversion to a current revision-bound `InsertionPosition` and independent canonical timing admission.
 
 ## InsertionPosition
-
-The current insertion identity contains:
 
 ```text
 InsertionPosition {
@@ -25,25 +23,13 @@ InsertionPosition {
 }
 ```
 
-It is bound to one exact canonical document/revision/path and a non-negative rational onset. A stale position is invalid and cannot be replayed against a later revision.
+A stale position is invalid and cannot be replayed on a newer revision.
 
-## Timing admission authority
+## SEC-NE-04A timing admission
 
-`editor-measure-timing` from SEC-NE-04A is the current admission authority for position-based note entry.
+`editor-measure-timing` remains the write-admission authority for position-based note entry. It validates same-revision notation, derives effective meter and exact measure duration, computes target-voice occupancy, rejects overlap/overflow and classifies requested windows as:
 
-It must:
-
-- verify score/notation revision identity;
-- resolve effective time signature by canonical notation inheritance;
-- derive exact rational measure duration;
-- derive exact event intervals for the requested voice;
-- reject overlapping events;
-- reject events/windows beyond the measure span;
-- distinguish pitched occupation from explicit rest and implicit silence.
-
-Current classes:
-
-- `EXPLICIT_REST_SLOT` — authoring-safe when the full requested duration is contained in one explicit rest;
+- `EXPLICIT_REST_SLOT` — authoring-safe only when the entire requested duration is inside one explicit rest;
 - `BLOCKED_PITCHED` — rejected;
 - `OUTSIDE_MEASURE` — rejected;
 - `IMPLICIT_GAP_UNADMITTED` — rejected;
@@ -51,50 +37,74 @@ Current classes:
 
 ## SEC-NE-04C mutation rule
 
-`editor-position-note-entry` may mutate only after the timing analyzer admits the exact full window as `EXPLICIT_REST_SLOT`.
+`editor-position-note-entry` may mutate only after 04A admits the exact full window as `EXPLICIT_REST_SLOT`.
 
-It may produce:
+Supported split shapes:
 
 - note + trailing rest at rest start;
 - leading rest + note + trailing rest in the middle;
 - leading rest + note at rest end;
 - note only for exact rest fill.
 
-The original admitted rest event id becomes the inserted note event id. Fresh note/rest ids must not collide with any canonical id. Other event onsets are unchanged.
+The final candidate must pass canonical `ScoreDocument` validation. Other event onsets remain unchanged.
 
-The final candidate must pass canonical `ScoreDocument` validation or the entire operation fails.
+04C remains low-level; there is no second public cursor-position session/browser mutation API.
+
+## SEC-NE-04B1 evidence rule
+
+SEC-NE-04B1 now preserves additional **measure evidence**, but deliberately does not change 04A authoring admission.
+
+`MusicXmlMeasureSemanticsDocument` is revision-bound and records, per canonical measure/staff target:
+
+- source part/measure/staff provenance;
+- source `implicit` yes/no/null;
+- source `non-controlling` yes/no/null;
+- declared/effective time signature and declaration/inheritance status;
+- ordered exact-rational `backup` / `forward` cursor operations.
+
+This evidence may be used by later validators, but cannot independently mutate the score or make a gap writable.
+
+Important distinctions:
+
+- `implicit="yes"` is preserved evidence, not automatic pickup authority;
+- `non-controlling="yes"` is preserved independently and must not be treated as pickup/incomplete evidence;
+- short measure length alone is never pickup proof;
+- missing or stale evidence fails closed;
+- legacy `importMusicXml` still rejects 04B1-only semantics rather than silently losing them.
 
 ## Why implicit gaps remain blocked
 
-An apparent gap between events does not prove that the span is legal writable silence. It may reflect pickup/incomplete measure semantics or source timing evidence not currently admitted into canonical authoring authority.
+Even after 04B1, an apparent empty span does not yet prove legal writable silence. SEC-NE-04B2 must combine admitted measure semantics with exact per-voice occupancy and a bounded legal-span rule.
 
-SEC-NE-04B1 must first preserve sufficient measure semantics. SEC-NE-04B2 may then prove legal per-voice silence and materialize explicit rests deterministically.
+No renderer geometry, event-spacing heuristic, measure-length heuristic or cross-voice inference may bypass 04B2.
 
-No renderer geometry, event spacing heuristic or cross-voice inference can bypass these stages.
+## SEC-NE-04B2 gate
 
-## Multi-voice rule
+04B2 must prove all of the following before an implicit gap can become writable:
 
-Timing evidence is voice-specific. A gap in one voice cannot be inferred from another voice's occupancy, and one voice's events cannot establish writable time in another voice.
+- the exact target measure has sufficient current 04B1 semantics evidence;
+- the legal measure span is known under the admitted profile;
+- the exact target voice is silent across the requested interval;
+- no conflicting occupation exists in that voice;
+- the requested interval is not excluded by pickup/incomplete/non-controlling semantics;
+- deterministic explicit rests can be materialized without changing unrelated event onsets;
+- the materialization and note entry can commit through one unified history transaction.
 
-Future implicit-gap admission must prove the legal span for the exact target voice and measure semantics.
+Until then, `IMPLICIT_GAP_UNADMITTED` remains fail-closed.
 
 ## History and rendering composition
 
-When a primitive result is exposed as an editor operation, it must compose through:
+When an accepted primitive becomes an editor operation:
 
 ```text
 accepted ScoreDocument child revision
-  -> same-revision NotationDocument rebind/update
+  -> same-revision notation/evidence rebind/update where admitted
   -> unified history commit
   -> new revision-bound RenderRequest
 ```
 
-Undo/redo restores the exact unified snapshots. Old `SelectionSnapshot`, `InsertionPosition` and RenderRequest identities are never reused as current authority.
-
-SEC-NE-04C is currently low-level only; no second public cursor-entry session/browser API is claimed.
+Old `SelectionSnapshot`, `InsertionPosition`, RenderRequest and revision-bound evidence are never reused as current authority.
 
 ## Future onset authority
 
-SEC-NE-05 is a separate authority expansion for moving/retiming existing events. It must not be smuggled into insertion logic.
-
-Before onset mutation is admitted, the design must freeze overlap/measure validation and coupling rules for ties, slurs, beams and tuplets. Tuplet retiming must be atomic.
+SEC-NE-05 is a separate authority expansion. It must freeze exact overlap/measure validation and tie/slur/beam/tuplet coupling before any existing event can be moved or retimed.

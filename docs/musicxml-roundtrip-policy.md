@@ -1,32 +1,61 @@
 # MusicXML Round-Trip Policy
 
-Status: current-reality policy for ST Score Editor Core as of main `8e486617fdc6eefad3586f2c4fdcc7db7c04b889`.
+Status: current-reality policy through SEC-NE-04B1.
 
 ## Authority rule
 
-MusicXML is an import/export exchange format. It is never the live mutable editor state. After an admitted import, `ScoreDocument` is the canonical musical authority; admitted notation/measure evidence is revision-bound sidecar data.
+MusicXML is an import/export exchange format. It is never live mutable editor state. After admitted import, `ScoreDocument` is canonical musical authority; notation and measure evidence are revision-bound sidecars.
 
 ## Import policy
 
-An importer may do exactly one of the following for a musical semantic:
+For each semantic, an importer must do one of three things:
 
 1. import it into canonical/admitted revision-bound state;
-2. preserve it explicitly as bounded evidence for later export/validation; or
-3. reject the document/profile as unsupported.
+2. preserve it explicitly as bounded evidence; or
+3. reject the input/profile as unsupported.
 
-It may not silently discard a semantic when doing so could change musical meaning or later authoring safety.
+Silent discard is forbidden when loss could change musical meaning or authoring safety.
 
-The current base importer is intentionally narrow. Unsupported advanced notation remains fail-closed. Time-signature/pickup/incomplete-measure semantics needed for implicit-gap authoring are not yet admitted through SEC-NE-04B1.
+## Current import profiles
+
+### Legacy E2 profile
+
+`importMusicXml` remains score-only and intentionally narrow. It continues to reject SEC-NE-04B1-only time/measure semantics rather than accepting them without returning their evidence.
+
+### SEC-NE-04B1 profile
+
+`importMusicXmlWithMeasureSemantics` returns:
+
+```text
+ScoreDocument
+NotationDocument
+MusicXmlMeasureSemanticsDocument
+```
+
+All outputs are bound to the same canonical document/revision.
+
+The admitted 04B1 profile preserves:
+
+- simple unnumbered time-signature declarations within existing notation limits;
+- time-signature inheritance and changes;
+- MusicXML measure `implicit` yes/no evidence;
+- MusicXML measure `non-controlling` yes/no evidence independently from `implicit`;
+- exact rational `backup` / `forward` cursor-operation evidence;
+- source part/measure/staff provenance bound to canonical measure addresses.
+
+A short measure alone is never pickup evidence. Mid-measure time changes, extra `<time>` attributes, compound/ambiguous unsupported forms and hidden nested leaf semantics fail closed.
+
+SEC-NE-04B1 evidence does not authorize implicit-gap writes or rest materialization.
 
 ## Export policy
 
-Export is generated from the current canonical score plus admitted same-revision notation/evidence. Export code must not reconstruct musical authority from renderer state, DOM/SVG state, host UI state or stale source evidence.
+Export is generated from current canonical state plus admitted same-revision notation/evidence. Export must not reconstruct authority from renderer state, DOM/SVG state, host UI state or stale evidence.
 
-If a supported semantic cannot be represented without destructive loss, export must reject or surface an explicit unsupported/loss condition rather than silently emitting a materially different score.
+If an admitted semantic cannot be exported without destructive loss, export must reject or surface an explicit unsupported/loss state.
 
 ## Semantic round-trip goal
 
-For admitted semantics:
+For every fully admitted round-trip semantic:
 
 ```text
 MusicXML import
@@ -37,50 +66,36 @@ MusicXML import
   -> semantic equivalence
 ```
 
-Byte-for-byte XML identity is not required. Musical semantic equivalence and stable canonical identity rules are the goal.
+Byte-for-byte XML identity is not required.
+
+SEC-NE-04B1 **does not by itself claim complete export/re-import round trip** for all newly preserved measure evidence. The additive evidence import is now admitted; golden export/preservation/re-import coverage remains part of `SEC-NE-XML-ROUNDTRIP` hardening.
 
 ## Required golden corpus categories
 
-Round-trip hardening should progressively cover:
+Progressively cover:
 
 - monophonic material;
 - voices 1–4;
-- chords and rests;
+- chords/rests;
 - explicit gaps;
-- pickup/anacrusis once admitted;
-- time-signature inheritance/change once admitted;
-- key and clef changes;
+- simple time-signature declaration/inheritance/change;
+- pickup/anacrusis once 04B2 legal-span semantics are admitted;
+- key/clef changes;
 - ties/slurs;
 - tuplets;
 - grace notes;
 - multi-staff material;
 - cross-staff only after explicit admission;
-- guitar notation;
-- notation + TAB only after explicit admission.
+- guitar notation and later notation+TAB.
 
-Each fixture must be synthetic, first-party, public-domain or explicitly licensed for repository use.
-
-## SEC-NE-04B1 gate
-
-SEC-NE-04B1 must add measure/time semantics without turning MusicXML into editor authority. Preferred design is a versioned additive evidence contract bound to canonical semantic measure addresses.
-
-The design must preserve or explicitly classify, where required:
-
-- time signatures and changes;
-- inherited effective time signatures;
-- MusicXML measure `implicit="yes"` evidence;
-- distinctions between pickup/incomplete and non-controlling measure semantics;
-- `backup` / `forward` timing evidence needed to reconstruct source timing;
-- ambiguity/unsupported states.
-
-A short measure alone is never sufficient proof of a pickup.
+Fixtures must be synthetic, first-party, public-domain or explicitly licensed.
 
 ## Loss policy
 
-Unsupported semantics are not automatically equivalent to ignorable semantics. Any omission must be proven presentation-only for the admitted profile or explicitly recorded as unsupported/lossy.
+Unsupported is not equivalent to ignorable. Omission must be proven presentation-only for the admitted profile or explicitly rejected/recorded as loss.
 
-No stage may make CI green by broadening a silent-loss fallback.
+CI may never be fixed by broadening a silent-loss fallback.
 
 ## Container policy
 
-`.mxl` container processing is not admitted by this policy. Do not add `.mxl` support until a separately bounded container-processing contract defines size, entry-count, decompression, path, MIME/content and cancellation limits.
+`.mxl` remains unadmitted. A future container contract must define compressed/uncompressed size, entry count, path rules, MIME/content checks, decompression limits and cancellation behavior before support is added.
