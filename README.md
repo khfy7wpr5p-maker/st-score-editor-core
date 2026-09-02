@@ -7,30 +7,42 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 The repository has three distinct capability lines:
 
 1. **Core E0–E8-C** — canonical score model, bounded MusicXML import/export, semantic addressing, atomic edits/history, notation sidecar, renderer/browser contracts and read-only Guitar Workspace evidence.
-2. **SEC-SMUFL-KEYPAD-01** — existing-score correction keypad, complete through SEC-KP-10 with general onset-retiming intentionally absent.
-3. **SEC-NE Sibelius-style authoring expansion** — complete through SEC-NE-04A, SEC-NE-04C and SEC-NE-04B1.
+2. **SEC-SMUFL-KEYPAD-01** — existing-score correction keypad, complete through SEC-KP-10; general onset retiming remains intentionally absent.
+3. **SEC-NE Sibelius-style authoring expansion** — complete through SEC-NE-04A, 04C, 04B1 and the bounded 04B2 implicit-gap materialization stage.
 
-### SEC-NE merged state
+### SEC-NE current state
 
 - **SEC-NE-01 — COMPLETE / MERGED:** exact selected-rest note entry.
 - **SEC-NE-02 — COMPLETE / MERGED:** selected-rest entry through unified history/session/browser composition.
 - **SEC-NE-03 — COMPLETE / MERGED:** revision-bound canonical `InsertionPosition`.
-- **SEC-NE-04A — COMPLETE / MERGED:** exact measure timing/occupancy and explicit-rest-only admission.
+- **SEC-NE-04A — COMPLETE / MERGED:** exact measure timing/target-voice occupancy and explicit-rest admission.
 - **SEC-NE-04C — COMPLETE / MERGED:** low-level explicit-rest position note-entry primitive.
-- **SEC-NE-04B1 — COMPLETE / MERGED:** additive revision-bound MusicXML measure-semantics evidence for admitted simple time signatures, inheritance/change, `implicit`, `non-controlling`, and exact `backup`/`forward` cursor evidence.
+- **SEC-NE-04B1 — COMPLETE / MERGED:** revision-bound MusicXML measure/time evidence.
+- **SEC-NE-04B2 — COMPLETE IN THIS PR:** conservative legal implicit-silence assessment and deterministic full-gap explicit-rest materialization.
 
-04C remains a low-level primitive; no parallel cursor-position browser/session mutation path exists. 04B1 is evidence-only and does **not** make implicit gaps writable.
+04B2 does **not** treat an empty-looking span as immediately writable. Materialization is admitted only when:
+
+- the requested window is already classified by 04A as one target-voice `IMPLICIT_GAP_UNADMITTED` span;
+- current 04B1 evidence exists for the exact canonical measure/staff;
+- 04B1 effective meter equals 04A timing meter;
+- the source measure is not `implicit="yes"`;
+- the source measure is not `non-controlling="yes"`;
+- the requested window lies fully inside one exact target-voice implicit gap.
+
+When admitted, the **entire containing gap** becomes one fresh canonical rest. Existing event IDs and onsets are unchanged. Another gap in the same voice is not materialized accidentally.
+
+04B2 remains low-level and adds no second browser/session cursor-write API. After same-revision notation rebinding, the new rest is an ordinary `EXPLICIT_REST_SLOT`, so existing explicit-rest authoring authority can be composed on top without renderer or host inference.
 
 ### Next stages
 
-- **SEC-NE-04B2:** prove legal per-voice implicit silence and deterministically materialize explicit rests.
 - **SEC-NE-05:** canonical onset movement/retiming.
 - **SEC-NE-06:** structural authoring.
 - **SEC-NE-07:** advanced note/notation authoring.
+- **SEC-NE-XML-ROUNDTRIP:** broader golden preservation/equivalence hardening.
 - **SEC-NE-08:** guitar/TAB authoring composition.
 - **SEC-NE-09:** SesliTab product integration.
 
-The repository still does **not** support unrestricted free insertion, arbitrary note dragging/retiming, automatic voice creation, or renderer-coordinate gap authoring.
+The repository still does **not** support arbitrary note dragging/retiming, automatic voice creation, pickup/non-controlling implicit-gap authoring, or renderer-coordinate gap authority.
 
 ## Canonical authority
 
@@ -43,9 +55,11 @@ Canonical ScoreDocument + revision-bound notation/evidence
         ↓
 SemanticAddress / Selection / InsertionPosition
         ↓
-measure timing + typed edit/authoring intent
+04A timing + 04B1 measure evidence
         ↓
-atomic validated revision
+typed bounded authoring primitive
+        ↓
+atomic validated child revision
         ↓
 unified score+notation history
         ↓
@@ -54,33 +68,21 @@ RenderRequest + opaque manifest
 ST Score Rendering Layer / product UI
 ```
 
-`ScoreDocument` is the single musical edit authority. MusicXML, renderer objects, SVG/DOM state, coordinates, glyphs, OMR/AI output and Guitar Workspace results are non-authoritative.
+`ScoreDocument` is the single musical edit authority. MusicXML, measure evidence, renderer objects, SVG/DOM state, coordinates, glyphs, OMR/AI output and Guitar Workspace results are non-authoritative by themselves.
 
 ## MusicXML measure-semantics boundary
 
-Legacy `importMusicXml` remains the narrow E2 score-only importer and continues to reject newly admitted measure/time semantics rather than silently dropping them.
+Legacy `importMusicXml` remains the narrow E2 score-only profile and rejects newly meaningful measure/time semantics rather than silently dropping them.
 
-SEC-NE-04B1 adds `importMusicXmlWithMeasureSemantics`, which returns:
+`importMusicXmlWithMeasureSemantics` returns same-revision score, notation and `MusicXmlMeasureSemanticsDocument`, preserving the admitted simple time-signature chain, `implicit`, `non-controlling`, exact `backup`/`forward` cursor evidence and source measure provenance.
 
-- canonical `ScoreDocument`;
-- same-revision `NotationDocument` containing admitted declared time-signature notation;
-- same-revision `MusicXmlMeasureSemanticsDocument` containing source-bound measure evidence.
+Short measure length alone is never pickup proof. `.mxl` remains unadmitted.
 
-The additive evidence preserves admitted simple time declarations/inheritance/change, MusicXML `implicit` and `non-controlling` attributes independently, and exact `backup`/`forward` cursor operations. Short measures are never inferred to be pickups.
+## Insertion and implicit-gap safety
 
-Unsupported/ambiguous time forms remain fail-closed. `.mxl` is not admitted.
+`editor-measure-timing` remains the first timing veto. Its base classifications remain unchanged. 04B2 does not weaken `IMPLICIT_GAP_UNADMITTED`; instead a separate `editor-implicit-gap-materialization` primitive may convert one specifically proven normal-measure gap into an explicit rest.
 
-## Insertion safety
-
-`editor-measure-timing` remains the authoring admission authority. Current classes are:
-
-- `EXPLICIT_REST_SLOT` — authoring-safe;
-- `BLOCKED_PITCHED` — rejected;
-- `OUTSIDE_MEASURE` — rejected;
-- `IMPLICIT_GAP_UNADMITTED` — rejected;
-- `MIXED_UNADMITTED` — rejected.
-
-SEC-NE-04B1 adds evidence, not write authority. Implicit-gap authoring remains blocked until SEC-NE-04B2.
+Pickup/implicit and non-controlling/multimetric measures remain fail-closed in the first 04B2 profile.
 
 ## Renderer, host and Guitar boundaries
 
@@ -98,7 +100,7 @@ Build-only:
 - `typescript@6.0.3`
 - `esbuild@0.28.2`
 
-SEC-NE-01/02/03/04A/04C/04B1 add no third-party dependency.
+SEC-NE-01/02/03/04A/04C/04B1/04B2 add no third-party dependency.
 
 ## Documentation
 
