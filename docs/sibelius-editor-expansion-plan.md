@@ -24,15 +24,15 @@ MusicXML, SVG, DOM, OSMD, alphaTab, VexFlow, Smoosic and host UI state are never
 
 ## Program
 
-### SEC-NE-00 — External editor taxonomy — COMPLETE ON WORK BRANCH
+### SEC-NE-00 — External editor taxonomy — COMPLETE
 
-Reference Smoosic and the already reviewed notation ecosystem as technical taxonomy. No new runtime dependency and no source-copy requirement.
+Smoosic is recorded as independent technical reference evidence. No runtime dependency or source-copy coupling was introduced.
 
-### SEC-NE-01 — Rest-slot note entry — IMPLEMENTED ON WORK BRANCH
+### SEC-NE-01 — Rest-slot note entry — COMPLETE / MERGED
 
-Add a bounded authoring primitive that writes a note into an exact selected rest while preserving represented time.
+A bounded authoring primitive writes a note into an exact selected rest while preserving represented time.
 
-Acceptance:
+Implemented invariants:
 
 - exact current `EventAddress` required;
 - target must be a rest;
@@ -44,17 +44,21 @@ Acceptance:
 - one immutable revision or none;
 - no renderer/UI/network authority added.
 
-### SEC-NE-02 — Editor note-entry intent + browser surface
+### SEC-NE-02 — Editor note-entry intent + browser surface — IMPLEMENTED ON WORK BRANCH
 
-Expose the primitive through framework-neutral typed intent and browser runtime entry points.
+The SEC-NE-01 primitive is composed into the existing framework-neutral session controller and browser runtime.
 
-Requirements:
+Implemented behavior:
 
-- selection must resolve to the current canonical rest;
-- duration/pitch/keypad state is semantic input only;
-- host-generated ids remain bounded and validated;
-- successful edit returns a new render request;
-- mobile/keyboard/pointer UI must call the same semantic entry point.
+- current semantic selection must resolve to the exact rest event;
+- pitch and duration remain typed semantic input;
+- ids remain bounded and validated by the SEC-NE-01 primitive;
+- successful entry commits through unified score+notation history;
+- a new revision-bound `RenderRequest` is generated immediately;
+- the surviving event selection is rebound to the new revision;
+- browser hosts receive a bounded `commitNoteEntry` entry point with typed success/failure result;
+- browser runtime remains non-production, network-disabled, persistence-disabled and renderer-non-authoritative;
+- keyboard, pointer and mobile hosts can compose the same semantic entry point rather than creating separate edit semantics.
 
 ### SEC-NE-03 — Cursor and insertion-position contract
 
@@ -153,7 +157,7 @@ Host integration order:
 
 The host orchestrates. It does not create a second canonical model or dual-write score state.
 
-## Explicitly not part of SEC-NE-01
+## Explicitly not part of SEC-NE-01 / SEC-NE-02
 
 - arbitrary event onset movement;
 - measure length inference;
