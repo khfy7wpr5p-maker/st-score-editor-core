@@ -40,7 +40,15 @@ const ATTRIBUTE_ALLOWLIST: Readonly<Record<string, ReadonlySet<string>>> = Objec
   'score-partwise': new Set(['version']),
   'score-part': new Set(['id']),
   part: new Set(['id']),
-  measure: new Set(['number', 'implicit', 'non-controlling'])
+  measure: new Set(['number', 'implicit', 'non-controlling']),
+  clef: new Set(['number']),
+  barline: new Set(['location']),
+  repeat: new Set(['direction']),
+  beam: new Set(['number']),
+  tie: new Set(['type']),
+  tied: new Set(['type', 'number']),
+  slur: new Set(['type', 'number']),
+  tuplet: new Set(['type', 'number'])
 });
 
 const LEAF_ELEMENTS = new Set([
@@ -57,10 +65,25 @@ const LEAF_ELEMENTS = new Set([
   'beats',
   'beat-type',
   'rest',
-  'chord'
+  'chord',
+  'fifths',
+  'sign',
+  'line',
+  'clef-octave-change',
+  'dot',
+  'accidental',
+  'beam',
+  'actual-notes',
+  'normal-notes',
+  'tie',
+  'tied',
+  'slur',
+  'tuplet',
+  'bar-style',
+  'repeat'
 ]);
 
-const EMPTY_ELEMENTS = new Set(['rest', 'chord']);
+const EMPTY_ELEMENTS = new Set(['rest', 'chord', 'dot', 'tie', 'tied', 'slur', 'tuplet', 'repeat']);
 
 const deepFreeze = <T>(value: T): Readonly<T> => {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
