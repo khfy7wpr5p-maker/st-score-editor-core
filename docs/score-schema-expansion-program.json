@@ -1,29 +1,17 @@
 {
-  "schema_version": "1.8.0",
+  "schema_version": "1.9.0",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
-  "stage": "SSE-08",
-  "status": "HUMAN_APPROVED_DESIGN_FREEZE_MERGE_CANDIDATE",
-  "active_canonical_session_version": "2.0.0",
-  "sse_07": {
-    "status": "COMPLETE_MERGED",
-    "v1_compatible_projection_preserved": true,
-    "v2_semantic_xml_projection": true,
-    "unrepresentable_projection_remains_pending": true,
-    "opaque_normal_and_grace_tokens": true,
-    "osmd_v2_adapter": true,
-    "alphatab_v2_adapter": true,
-    "seslitab_v2_host_facade": true,
-    "host_dual_write_allowed": false
-  },
-  "sse_08": {
-    "design_only": true,
-    "runtime_implemented": false,
-    "target_score_contract": "ScoreDocumentV3/3.0.0",
-    "target_notation_contract": "NotationDocumentV3/3.0.0",
-    "target_address_contract": "SemanticAddressV3/3.0.0",
-    "target_renderer_contract": "RendererRequestV3/3.0.0",
+  "stage": "SSE-09",
+  "status": "COMPLETE_MERGE_CANDIDATE",
+  "supported_canonical_session_versions": ["2.0.0", "3.0.0"],
+  "single_version_authority_per_session": true,
+  "sse_09": {
+    "score_document_v3": true,
+    "notation_document_v3": true,
+    "semantic_address_v3": true,
+    "renderer_request_v3": true,
     "document_global_measure_frames": true,
     "explicit_part_ordinals": true,
     "stable_instrument_identity": true,
@@ -32,10 +20,31 @@
     "linked_tab_independent_event_authority": false,
     "frame_notation_owns_time_and_barlines": true,
     "staff_measure_notation_owns_key_and_clef": true,
-    "v2_v3_migration_lossless_only": true,
-    "misaligned_measures_reject": true,
-    "cross_staff_ownership_admitted": false,
-    "polymeter_non_controlling_topology_admitted": false
+    "guarded_v2_to_v3_migration": true,
+    "v3_to_v2_lossless_only": true,
+    "atomic_v3_history": true,
+    "v3_session": true,
+    "topology_operations": [
+      "ADD_STANDARD_OR_PERCUSSION_PART",
+      "REMOVE_PART",
+      "REORDER_PART",
+      "ADD_STANDARD_OR_PERCUSSION_STAFF",
+      "REMOVE_CONTENT_STAFF",
+      "REORDER_STAFF",
+      "ADD_LINKED_TAB_STAFF",
+      "REMOVE_LINKED_TAB_STAFF",
+      "RENAME_PART_OR_INSTRUMENT"
+    ],
+    "content_staff_creation_requires_effective_meter": true,
+    "content_staff_creation_invents_rhythm": false,
+    "explicit_full_frame_rest_initialization": true,
+    "notation_orphan_rejects": true,
+    "linked_tab_source_removal_cascades": false,
+    "linked_tab_source_removal_fails_until_link_removed": true,
+    "renderer_lossless_v2_projection": true,
+    "renderer_unrepresentable_status": "V3_XML_PENDING",
+    "v3_native_topology_musicxml": false,
+    "seslitab_v3_product_cutover": false
   },
   "stages": [
     {"id":"SSE-00","status":"COMPLETE_MERGED"},
@@ -46,14 +55,14 @@
     {"id":"SSE-05","status":"COMPLETE_MERGED"},
     {"id":"SSE-06","status":"COMPLETE_MERGED"},
     {"id":"SSE-07","status":"COMPLETE_MERGED"},
-    {"id":"SSE-08","status":"HUMAN_APPROVED_DESIGN_FREEZE_MERGE_CANDIDATE"},
-    {"id":"SSE-09","status":"NOT_STARTED"},
-    {"id":"SSE-10","status":"NOT_STARTED"}
+    {"id":"SSE-08","status":"COMPLETE_MERGED"},
+    {"id":"SSE-09","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"SSE-10","status":"HUMAN_GATED_DESIGN"}
   ],
   "global_invariants": {
     "source_immutable": true,
     "single_active_score_notation_authority": true,
-    "active_runtime_still_v2": true,
+    "mixed_version_mutable_session": false,
     "stale_revision_fails_closed": true,
     "single_atomic_score_notation_history": true,
     "musicxml_is_exchange_not_live_state": true,
@@ -64,5 +73,5 @@
     "production_activation_by_merge": false,
     "new_runtime_dependency": false
   },
-  "next_stage": "SSE-09_IMPLEMENTATION_REQUIRES_FROZEN_V3_CONTRACT"
+  "next_stage": "SSE-10_HUMAN_GATE_CROSS_STAFF_DESIGN"
 }
