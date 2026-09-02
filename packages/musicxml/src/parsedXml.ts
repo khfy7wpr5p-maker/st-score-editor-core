@@ -40,7 +40,7 @@ const ATTRIBUTE_ALLOWLIST: Readonly<Record<string, ReadonlySet<string>>> = Objec
   'score-partwise': new Set(['version']),
   'score-part': new Set(['id']),
   part: new Set(['id']),
-  measure: new Set(['number'])
+  measure: new Set(['number', 'implicit', 'non-controlling'])
 });
 
 const LEAF_ELEMENTS = new Set([
