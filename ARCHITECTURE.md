@@ -1,50 +1,45 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE is complete. SSE-00–02 are merged; SSE-03 adds canonical grace authoring as a merge candidate.**
+Status: **SEC-NE is complete. SSE-00–03 are merged; SSE-04 adds typed articulation authoring as a merge candidate.**
 
 ## Authority
 
-Each v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. Grace identity/order/anchor/written value live in canonical score state; grace visual notation lives in same-revision notation state. Renderer/SesliTab remain noncanonical.
+Each v2 editor session owns exactly one `ScoreDocumentV2 + NotationDocumentV2` pair. Grace identity/order/anchor/written value live in canonical score state. Articulations and ornaments are same-revision notation semantics. Renderer/SesliTab remain noncanonical.
 
-## Grace authoring flow
+## Articulation authoring flow
 
 ```text
-exact current v2 semantic target
+exact current event | grace-event address
         |
-GraceAuthoringIntentV2 + fresh nextRevisionId
+ArticulationAuthoringIntentV2 + fresh nextRevisionId
         |
-canonical candidate mutation
+finite typed articulation mutation
         |
-ScoreDocumentV2 validation
+ScoreDocumentV2 direct-child revision (musical content unchanged)
         |
-normal Voice.events occupancy fingerprint unchanged
-        |
-NotationDocumentV2 rebind / orphan veto
+NotationDocumentV2 strict validation
         |
 EditorHistoryStateV2 atomic commit
         |
 deterministic semantic selection
 ```
 
-Admitted operations are group create/remove, grace event add/remove/reorder, event replacement with stable event ID, and exact grace-note pitch edits. Added grace events may be note, rest or chord.
+Admitted operations are set, toggle and remove. Targets are only normal `event` or canonical `grace-event` identities; geometry is never accepted as authority.
 
-## Safety
+## Validation / safety
 
-Grace groups remain anchored to exact normal events in the same voice. The v2 validator prevents missing anchors and duplicate identities. The authoring layer independently confirms that normal timed event ID/kind/onset/duration occupancy is unchanged.
+The frozen v2 notation validator owns articulation semantics. It rejects unsupported kinds, invalid placement, non-null direction outside strong accent, and duplicate semantically identical articulation specs. Old revision targets cannot be replayed after a commit.
 
-Removing the last grace event is rejected; group removal must be explicit. Replacing or deleting a grace entity that still has notation targets is rejected by v2 notation rebinding rather than silently discarding notation.
-
-All targets are revision-bound. Old addresses cannot be replayed after a commit.
+Articulation edits do not alter pitch, onset, duration, normal measure occupancy, grace grouping or anchor identity. Even though the semantic change is notation-only, unified editor history advances one direct-child score revision and one same-revision notation document; no independent notation timeline is introduced.
 
 ## Rendering / MusicXML boundary
 
-V2 render manifests already expose exact grace group/event/note identities. Until SSE-06, a score containing grace semantics reports `VNEXT_XML_PENDING` and no lossy MusicXML projection.
+V2 render manifests continue to expose exact event and grace-event identities. Until SSE-06 provides vNext MusicXML support, any articulation-bearing pair reports `VNEXT_XML_PENDING` and `musicXml = null` rather than projecting lossy v1 XML.
 
 ## Next stages
 
-- SSE-04 — typed articulation authoring for normal/grace event notation;
-- SSE-05 — ornament authoring with relation-safe spanning forms;
-- SSE-06 — bounded v2 MusicXML round trip;
+- SSE-05 — typed ornament authoring with relation-safe spanning forms;
+- SSE-06 — bounded v2 MusicXML round trip for grace/articulation/ornament semantics;
 - SSE-07 — product renderer/SesliTab compatibility.
 
-Staff/part topology and cross-staff remain separate SSE-08+ gates. No dependency, renderer/host authority, persistence/network authority or production activation is added by SSE-03.
+Staff/part topology and cross-staff remain separate SSE-08+ gates. No dependency, renderer/host authority, persistence/network authority or production activation is added by SSE-04.
