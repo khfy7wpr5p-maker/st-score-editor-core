@@ -60,9 +60,9 @@ Implemented behavior:
 - browser runtime remains non-production, network-disabled, persistence-disabled and renderer-non-authoritative;
 - keyboard, pointer and mobile hosts can compose the same semantic entry point rather than creating separate edit semantics.
 
-### SEC-NE-03 — Cursor and insertion-position contract — IMPLEMENTED ON WORK BRANCH
+### SEC-NE-03 — Cursor and insertion-position contract — COMPLETE / MERGED
 
-A canonical insertion position is now represented independently of SVG/DOM coordinates.
+A canonical insertion position is represented independently of SVG/DOM coordinates.
 
 ```text
 InsertionPosition {
@@ -85,26 +85,40 @@ Implemented invariants:
 - stale positions cannot be replayed onto newer score revisions;
 - document/path mismatches fail closed;
 - the contract is immutable and performs no score mutation;
-- renderer coordinates cannot become insertion authority;
-- this stage intentionally does not claim that an onset is inside the measure or free of event overlap.
+- renderer coordinates cannot become insertion authority.
 
-Gap safety, measure occupancy and legal insertion remain SEC-NE-04 responsibilities.
+### SEC-NE-04 — Measure timing and gap authority — PARTIAL
 
-### SEC-NE-04 — Measure timing and gap authority
+#### SEC-NE-04A — Time signature, occupancy and explicit-rest admission — IMPLEMENTED ON WORK BRANCH
 
-Before arbitrary insertion, canonical measure timing must be explicit enough to prove whether an insertion fits.
+A read-only timing analyzer now establishes the safe subset required before free insertion.
 
-Required work:
+Implemented behavior:
 
-- explicit measure duration/meter relationship;
-- exact voice occupancy calculation;
-- deterministic gap model;
-- overlap rejection;
-- rest materialization policy;
-- pickup/incomplete measure handling;
-- multi-voice rules.
+- validates score and notation revision binding;
+- resolves the effective time signature by inheritance along the selected staff;
+- derives exact measure duration from the active time signature;
+- calculates exact event intervals in the selected voice;
+- rejects overlapping voice events;
+- rejects events extending beyond the active measure duration;
+- identifies deterministic implicit gaps;
+- classifies requested insertion windows as `EXPLICIT_REST_SLOT`, `BLOCKED_PITCHED`, `OUTSIDE_MEASURE`, `IMPLICIT_GAP_UNADMITTED`, or `MIXED_UNADMITTED`;
+- only a window fully contained in one explicit rest is currently marked authoring-safe;
+- implicit gaps remain fail-closed because pickup/incomplete-measure semantics are not represented canonically;
+- no score mutation, onset mutation or rest materialization is performed.
 
-No free insertion should be admitted before this contract is complete.
+#### SEC-NE-04B — Pickup/incomplete measure semantics + implicit-gap materialization — NOT STARTED
+
+Required before an implicit gap can become authoring authority:
+
+- preserve or introduce an explicit non-breaking representation of pickup/incomplete-measure semantics;
+- distinguish legal implicit silence from incomplete/pickup span;
+- define deterministic rest materialization for admitted implicit gaps;
+- cover multi-voice implications and measure completeness rules.
+
+A breaking change to an existing public notation contract must remain human-gated. Prefer an additive contract if the required semantics can be represented safely.
+
+No unrestricted free insertion is admitted until SEC-NE-04B is complete.
 
 ### SEC-NE-05 — Onset mutation / retiming
 
@@ -167,13 +181,13 @@ Host integration order:
 
 The host orchestrates. It does not create a second canonical model or dual-write score state.
 
-## Explicitly not part of SEC-NE-01 / SEC-NE-02 / SEC-NE-03
+## Explicitly not admitted yet
 
 - arbitrary event onset movement;
-- measure length inference;
 - automatic voice creation;
-- unrestricted note insertion into occupied time;
-- gap/overlap inference from renderer coordinates;
+- unrestricted note insertion into occupied or implicit time;
+- pickup/incomplete-measure inference from event spacing;
+- renderer-coordinate gap authority;
 - Smoosic/VexFlow dependency;
 - renderer-owned edits;
 - production/public-write activation.
