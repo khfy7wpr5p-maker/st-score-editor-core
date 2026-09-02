@@ -1,5 +1,6 @@
-import type { RendererRequest } from '../../renderer-contract/src/index.js';
+import type { RendererRequest, RendererProfile } from '../../renderer-contract/src/index.js';
 import { assertRendererProfile } from '../../renderer-contract/src/index.js';
+import { renderableMusicXmlV2, type RendererRequestV2 } from '../../renderer-contract-v2/src/index.js';
 
 export const OSMD_INTEGRATION_VERSION = '2.1.1' as const;
 
@@ -24,7 +25,7 @@ export interface OsmdRenderSession {
 }
 
 export class OsmdAdapterError extends Error {
-  readonly code: 'INVALID_OSMD_HOST' | 'WRONG_RENDERER_FAMILY' | 'OSMD_LOAD_FAILED' | 'OSMD_RENDER_FAILED';
+  readonly code: 'INVALID_OSMD_HOST' | 'WRONG_RENDERER_FAMILY' | 'UNRENDERABLE_V2_REQUEST' | 'OSMD_LOAD_FAILED' | 'OSMD_RENDER_FAILED';
   constructor(message: string, code: OsmdAdapterError['code']) {
     super(message);
     this.name = 'OsmdAdapterError';
@@ -56,24 +57,31 @@ const assertHost = (host: OsmdRendererHost): void => {
   }
 };
 
-export const renderWithOsmd = async (
-  host: OsmdRendererHost,
-  request: RendererRequest
-): Promise<Readonly<OsmdRenderSession>> => {
-  assertHost(host);
-  if (request.renderer.family !== 'osmd') {
+const assertRequestProfile = (host: OsmdRendererHost, profile: RendererProfile): void => {
+  if (profile.family !== 'osmd') {
     throw new OsmdAdapterError('OSMD adapter received a request for another renderer family.', 'WRONG_RENDERER_FAMILY');
   }
-  assertRendererProfile(request.renderer);
+  assertRendererProfile(profile);
   if (
-    request.renderer.packageName !== host.packageName ||
-    request.renderer.packageVersion !== host.packageVersion ||
-    request.renderer.license !== host.license
+    profile.packageName !== host.packageName ||
+    profile.packageVersion !== host.packageVersion ||
+    profile.license !== host.license
   ) {
     throw new OsmdAdapterError('OSMD request profile does not match the exact direct-adapter host profile.', 'INVALID_OSMD_HOST');
   }
+};
+
+const renderXml = async (
+  host: OsmdRendererHost,
+  profile: RendererProfile,
+  documentId: string,
+  revisionId: string,
+  musicXml: string
+): Promise<Readonly<OsmdRenderSession>> => {
+  assertHost(host);
+  assertRequestProfile(host, profile);
   try {
-    await host.instance.load(request.musicXml);
+    await host.instance.load(musicXml);
   } catch {
     throw new OsmdAdapterError('OSMD rejected or failed to load the generated MusicXML.', 'OSMD_LOAD_FAILED');
   }
@@ -82,12 +90,26 @@ export const renderWithOsmd = async (
   } catch {
     throw new OsmdAdapterError('OSMD failed while rendering the loaded score.', 'OSMD_RENDER_FAILED');
   }
-  return Object.freeze({
-    family: 'osmd',
-    documentId: request.documentId,
-    revisionId: request.revisionId,
-    rendered: true
-  });
+  return Object.freeze({ family: 'osmd', documentId, revisionId, rendered: true });
+};
+
+export const renderWithOsmd = async (
+  host: OsmdRendererHost,
+  request: RendererRequest
+): Promise<Readonly<OsmdRenderSession>> =>
+  renderXml(host, request.renderer, request.documentId, request.revisionId, request.musicXml);
+
+export const renderWithOsmdV2 = async (
+  host: OsmdRendererHost,
+  request: RendererRequestV2
+): Promise<Readonly<OsmdRenderSession>> => {
+  let musicXml: string;
+  try {
+    musicXml = renderableMusicXmlV2(request);
+  } catch {
+    throw new OsmdAdapterError('OSMD v2 request does not contain an admitted renderable MusicXML projection.', 'UNRENDERABLE_V2_REQUEST');
+  }
+  return renderXml(host, request.renderer, request.documentId, request.revisionId, musicXml);
 };
 
 export const clearOsmdPresentation = (host: OsmdRendererHost): void => {
