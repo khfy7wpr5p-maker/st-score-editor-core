@@ -47,7 +47,7 @@ Low-level position note entry inside an admitted explicit rest; deterministic re
 ### SEC-NE-04B1 — COMPLETE / MERGED
 Revision-bound MusicXML measure/time evidence: simple meter declaration/inheritance/change, `implicit`, `non-controlling`, exact `backup`/`forward` cursor evidence and provenance. Legacy E2 import remains fail-closed for the expanded semantics.
 
-### SEC-NE-04B2 — COMPLETE IN THIS PR
+### SEC-NE-04B2 — COMPLETE / MERGED
 
 **Goal achieved for the first conservative profile:** prove a normal-measure target-voice implicit gap from current 04A + 04B1 evidence and represent the entire containing gap deterministically as one explicit canonical rest.
 
