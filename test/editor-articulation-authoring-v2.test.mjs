@@ -33,7 +33,6 @@ const rawScore = (revision = 'rev-1', parentId = null) => ({
 });
 
 const scoreMusicalFingerprint = (score) => JSON.stringify(score.parts);
-
 const eventArticulations = (notation, id) => notation.events.find((entry) => entry.target.eventId === id)?.notation.articulations ?? [];
 const graceArticulations = (notation, id) => notation.graceEvents.find((entry) => entry.target.graceEventId === id)?.notation.articulations ?? [];
 
@@ -58,12 +57,10 @@ test('SSE-04 toggles and removes articulations on normal and grace events', () =
     version: '1.0.0', type: 'TOGGLE_ARTICULATION', target: addressEntityV2(score, 'grace-event-1'), value: articulation('tenuto', 'below')
   }, { nextRevisionId: 'rev-2' });
   assert.equal(graceArticulations(result.notation, 'grace-event-1')[0].kind, 'tenuto');
-
   result = executeArticulationAuthoringV2(result.score, result.notation, {
     version: '1.0.0', type: 'TOGGLE_ARTICULATION', target: addressEntityV2(result.score, 'grace-event-1'), value: articulation('tenuto', 'below')
   }, { nextRevisionId: 'rev-3' });
   assert.equal(graceArticulations(result.notation, 'grace-event-1').length, 0);
-
   result = executeArticulationAuthoringV2(result.score, result.notation, {
     version: '1.0.0', type: 'SET_ARTICULATIONS', target: addressEntityV2(result.score, 'event-1'), value: [articulation('accent'), articulation('staccato')]
   }, { nextRevisionId: 'rev-4' });
@@ -77,12 +74,10 @@ test('SSE-04 rejects invalid or duplicate articulation semantics through v2 nota
   const score = createScoreDocumentV2(rawScore());
   const notation = emptyNotationDocumentV2(score);
   assert.throws(() => executeArticulationAuthoringV2(score, notation, {
-    version: '1.0.0', type: 'SET_ARTICULATIONS', target: addressEntityV2(score, 'event-1'),
-    value: [articulation('staccato'), articulation('staccato')]
+    version: '1.0.0', type: 'SET_ARTICULATIONS', target: addressEntityV2(score, 'event-1'), value: [articulation('staccato'), articulation('staccato')]
   }, { nextRevisionId: 'rev-2' }), (error) => error instanceof ArticulationAuthoringV2Error && error.code === 'RESULT_INVALID');
   assert.throws(() => executeArticulationAuthoringV2(score, notation, {
-    version: '1.0.0', type: 'SET_ARTICULATIONS', target: addressEntityV2(score, 'event-1'),
-    value: [articulation('staccato', 'auto', 'up')]
+    version: '1.0.0', type: 'SET_ARTICULATIONS', target: addressEntityV2(score, 'event-1'), value: [articulation('staccato', 'auto', 'up')]
   }, { nextRevisionId: 'rev-2b' }), (error) => error instanceof ArticulationAuthoringV2Error && error.code === 'RESULT_INVALID');
 });
 
@@ -107,8 +102,9 @@ test('SSE-04 session commits one atomic history revision and undo restores artic
   assert.equal(session.history.present.score.revision.id, 'rev-2');
   assert.equal(session.selection.primary.kind, 'event');
   assert.equal(session.status.code, 'ARTICULATION_EDIT_COMMITTED');
-  assert.equal(session.renderRequest.projectionStatus, 'VNEXT_XML_PENDING');
-  assert.equal(session.renderRequest.musicXml, null);
+  assert.equal(session.renderRequest.projectionStatus, 'V2_SEMANTIC_XML');
+  assert.equal(typeof session.renderRequest.musicXml, 'string');
+  assert.match(session.renderRequest.musicXml, /<articulations>/);
   assert.equal(eventArticulations(session.history.present.notation, 'event-1')[0].kind, 'strong-accent');
   session = navigateSessionHistoryV2(session, 'UNDO');
   assert.equal(session.history.present.score.revision.id, 'rev-1');
