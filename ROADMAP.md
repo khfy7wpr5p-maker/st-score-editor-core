@@ -27,7 +27,7 @@ This file records merged/in-progress/not-started repository reality. Planned sta
 - **SEC-NE-04A — COMPLETE / MERGED:** meter/target-voice occupancy, overlap/overflow rejection and explicit-rest admission.
 - **SEC-NE-04C — COMPLETE / MERGED:** low-level explicit-rest position note-entry.
 - **SEC-NE-04B1 — COMPLETE / MERGED:** bounded revision-bound MusicXML time/measure evidence.
-- **SEC-NE-04B2 — COMPLETE IN THIS PR:** conservative normal-measure implicit-silence assessment and deterministic full-gap rest materialization.
+- **SEC-NE-04B2 — COMPLETE / MERGED:** conservative normal-measure implicit-silence assessment and deterministic full-gap rest materialization.
 
 ### SEC-NE-04B2 exact capability
 
