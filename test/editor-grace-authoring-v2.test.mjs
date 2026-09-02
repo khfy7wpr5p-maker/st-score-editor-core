@@ -87,8 +87,9 @@ test('SSE-03 session commits grace edits through unified v2 history and undo res
   assert.equal(session.history.past.length, 1);
   assert.equal(session.history.present.score.revision.id, 'rev-2');
   assert.equal(session.selection.primary.kind, 'grace-group');
-  assert.equal(session.renderRequest.projectionStatus, 'VNEXT_XML_PENDING');
-  assert.equal(session.renderRequest.musicXml, null);
+  assert.equal(session.renderRequest.projectionStatus, 'V2_SEMANTIC_XML');
+  assert.equal(typeof session.renderRequest.musicXml, 'string');
+  assert.match(session.renderRequest.musicXml, /<grace/);
   session = navigateSessionHistoryV2(session, 'UNDO');
   assert.equal(session.history.present.score.revision.id, 'rev-1');
   assert.equal(session.history.present.score.parts[0].staves[0].measures[0].voices[0].graceGroups.length, 0);
