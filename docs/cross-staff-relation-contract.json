@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "cross_staff_presentation_relation_contract",
+  "project": "ST Score Editor Core",
+  "stage": "SSE-10",
+  "status": "DESIGN_CANDIDATE_HUMAN_REVIEW_REQUIRED_RUNTIME_NOT_STARTED",
+  "date": "2026-09-03",
+  "versioning": {
+    "score_document": "ScoreDocumentV3/3.0.0",
+    "score_schema_change_required": false,
+    "semantic_address": "SemanticAddressV3/3.0.0",
+    "new_address_kind_required": false,
+    "proposed_notation_document": "NotationDocumentV4/4.0.0",
+    "reason": "Cross-staff presentation changes the public notation shape while canonical score ownership remains unchanged."
+  },
+  "proposed_notation_v4": {
+    "preserves_v3_collections": true,
+    "adds": ["crossStaffPlacements"],
+    "placement_shape": {
+      "fields": ["source", "displayStaffId"],
+      "source_type": "EventAddressV3",
+      "unique_by_source_event": true
+    }
+  },
+  "initial_placement_profile": {
+    "normal_timed_event_only": true,
+    "pitched_event_only": true,
+    "event_kinds": ["note", "chord"],
+    "rest_allowed": false,
+    "grace_allowed": false,
+    "source_staff_role": "standard",
+    "display_staff_role": "standard",
+    "source_and_display_distinct": true,
+    "same_part_required": true,
+    "same_frame_correspondence_required": true,
+    "linked_tab_source_or_target_allowed": false,
+    "whole_event_moves_as_one_unit": true,
+    "split_chord_allowed": false,
+    "percussion_allowed": false
+  },
+  "canonical_ownership": {
+    "source_part_changes": false,
+    "source_staff_changes": false,
+    "source_measure_changes": false,
+    "source_voice_changes": false,
+    "event_identity_changes": false,
+    "note_identity_changes": false,
+    "pitch_changes": false,
+    "onset_changes": false,
+    "duration_changes": false,
+    "display_staff_is_second_musical_owner": false
+  },
+  "existing_relation_ownership": {
+    "beams_remain_source_event_notation": true,
+    "ties_remain_source_note_notation": true,
+    "slurs_remain_source_note_notation": true,
+    "tuplets_remain_source_event_notation": true,
+    "ornaments_remain_source_event_notation": true,
+    "visual_cross_staff_does_not_transfer_relation_ownership": true,
+    "independent_source_voice_staff_relation_authoring_admitted": false
+  },
+  "cross_staff_beam": {
+    "existing_same_source_voice_beam_may_render_across_staffs": true,
+    "new_beam_relation_between_independent_source_voices": false,
+    "renderer_geometry_canonical": false
+  },
+  "selection": {
+    "rendered_hit_resolves_to_original_source_identity": true,
+    "display_staff_replaces_source_ancestry": false,
+    "opaque_revision_bound_tokens_required": true,
+    "coordinate_or_nearest_staff_inference_allowed": false
+  },
+  "topology_safety": {
+    "source_staff_removal_may_orphan_placement": true,
+    "display_staff_removal_may_orphan_placement": true,
+    "implicit_cascade_allowed": false,
+    "nearest_surviving_staff_retarget_allowed": false,
+    "staff_reorder_preserves_by_stable_ids": true,
+    "current_sse_09_runtime_unchanged_until_v4_integration": true
+  },
+  "migration": {
+    "notation_v3_to_v4": {
+      "deterministic": true,
+      "preserve_existing_notation": true,
+      "crossStaffPlacements_initial": []
+    },
+    "notation_v4_to_v3": {
+      "lossless_only": true,
+      "requires_empty_crossStaffPlacements": true,
+      "flatten_by_moving_canonical_event_forbidden": true
+    }
+  },
+  "musicxml": {
+    "current_projection_lossless_for_nonempty_placements": false,
+    "v4_native_roundtrip_admitted": false,
+    "source_staff_inference_from_nearest_staff_forbidden": true,
+    "source_staff_inference_from_first_occurrence_forbidden": true,
+    "source_staff_inference_from_beam_geometry_forbidden": true,
+    "nonempty_placements_must_fail_closed_or_remain_pending": true
+  },
+  "renderer_candidate": {
+    "proposed_contract": "RendererRequestV4/4.0.0",
+    "empty_placements_may_reuse_existing_projection": true,
+    "nonempty_pending_status": "CROSS_STAFF_XML_PENDING",
+    "renderer_canonical_authority": false
+  },
+  "product": {
+    "seslitab_v4_cutover": false,
+    "playback_timing_or_pitch_changed_by_placement": false,
+    "host_parallel_staff_assignment_tree_allowed": false,
+    "production_activation": false
+  },
+  "explicitly_out_of_scope": [
+    "SPLIT_CHORD_CROSS_STAFF",
+    "GRACE_CROSS_STAFF",
+    "REST_CROSS_STAFF",
+    "PERCUSSION_CROSS_STAFF",
+    "LINKED_TAB_CROSS_STAFF_TARGET",
+    "BEAM_BETWEEN_INDEPENDENT_SOURCE_VOICES",
+    "TIE_SLUR_BETWEEN_INDEPENDENT_SOURCE_STAFFS",
+    "CROSS_SOURCE_STAFF_TUPLET_ORNAMENT_RELATIONS",
+    "POLYMETER_NON_CONTROLLING_TOPOLOGY",
+    "PART_GROUP_BRACKET_BRACE",
+    "LAYOUT_GEOMETRY_AS_CANONICAL_DATA",
+    "V4_NATIVE_MUSICXML_ROUNDTRIP",
+    "SESLITAB_V4_PRODUCT_CUTOVER",
+    "PERSISTENCE_NETWORK_PUBLIC_WRITE_PRODUCTION"
+  ],
+  "implementation_gate": {
+    "runtime_not_started": true,
+    "human_approval_required_before_freeze": true,
+    "human_approval_required_before_runtime": true,
+    "requires_notation_v4_validation": true,
+    "requires_v3_v4_migration_guards": true,
+    "requires_source_ownership_immutability": true,
+    "requires_topology_orphan_protection": true,
+    "requires_renderer_musicxml_fail_closed": true,
+    "requires_source_identity_selection": true,
+    "requires_atomic_history": true,
+    "requires_node_18_20_22_ci": true
+  }
+}
