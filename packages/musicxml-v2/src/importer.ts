@@ -11,6 +11,7 @@ import { addressEntityV2 } from '../../addressing-v2/src/index.js';
 import {
   createNotationDocumentV2,
   type ArticulationSpec,
+  type EventNotationV2,
   type GraceEventNotationV2,
   type GraceNoteNotationV2,
   type NotationDocumentV2,
@@ -96,7 +97,14 @@ const sameJson=(a:unknown,b:unknown):boolean=>JSON.stringify(a)===JSON.stringify
 
 interface VoiceExtras { groups:GraceGroup[]; graceEvents:{id:string;notation:GraceEventNotationV2}[]; graceNotes:{id:string;notation:GraceNoteNotationV2}[] }
 const parseExtras=(root:ParsedXmlNode,baseScore:ScoreDocumentV2,baseNotation:NotationDocumentV2,originalSource:ScoreDocumentV2['source']):{score:Readonly<ScoreDocumentV2>;notation:Readonly<NotationDocumentV2>}=>{
-  const extras=new Map<string,VoiceExtras>();const normalV2=new Map(baseNotation.events.map((entry)=>[entry.target.eventId,entry.notation]));let currentDivisions=1;
+  const extras=new Map<string,VoiceExtras>();
+  const sparseNotation=new Map(baseNotation.events.map((entry)=>[entry.target.eventId,entry.notation]));
+  const normalV2=new Map<string,EventNotationV2>();
+  for(const part of baseScore.parts)for(const staff of part.staves)for(const measure of staff.measures)for(const voice of measure.voices)for(const event of voice.events){
+    const existing=sparseNotation.get(event.id);
+    normalV2.set(event.id,existing??Object.freeze({dots:0,beams:Object.freeze([]),tuplet:null,articulations:Object.freeze([]),ornaments:Object.freeze([])}));
+  }
+  let currentDivisions=1;
   const partNodes=children(root,'part');
   for(const [pi,partNode] of partNodes.entries())for(const [mi,measureNode] of children(partNode,'measure').entries()){
     const attributes=one(measureNode,'attributes');const divNode=attributes===null?null:one(attributes,'divisions');if(divNode!==null)currentDivisions=positiveInt(divNode,'divisions',1_000_000);
