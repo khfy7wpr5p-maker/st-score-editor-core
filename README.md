@@ -4,30 +4,37 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-SCORE-SCHEMA-EXPANSION is implemented through **SSE-07 renderer + SesliTab v2 compatibility** on this merge candidate.
+SCORE-SCHEMA-EXPANSION is implemented through **SSE-07 renderer + SesliTab v2 compatibility**. SSE-08 is a human-approved **design freeze only** for the next staff/part topology schema.
 
-- **SSE-00–06 — COMPLETE / MERGED:** v2 schema/session, grace/articulation/ornament authoring and bounded MusicXML v2 round trip.
-- **SSE-07 — COMPLETE / MERGE CANDIDATE:** renderer v2 projection, additive OSMD/alphaTab v2 adapters and separate SesliTab v2 host facade.
-- **SSE-08 — HUMAN-GATED DESIGN:** staff/part topology contract.
+- **SSE-00–07 — COMPLETE / MERGED:** v2 schema/session, grace/articulation/ornament authoring, bounded MusicXML v2 round trip, renderer v2 projection and SesliTab v2 compatibility.
+- **SSE-08 — HUMAN-APPROVED DESIGN FREEZE / MERGE CANDIDATE:** staff/part topology contract for a future `ScoreDocumentV3 + NotationDocumentV3` implementation.
+- **SSE-09 — NOT STARTED:** topology authoring against the frozen v3 contract.
+- **SSE-10 — NOT STARTED:** cross-staff canonical relation model.
 
-## SSE-07 renderer projection
+## SSE-08 topology design
 
-`renderer-contract-v2` now chooses the safest available projection in order:
+The frozen design makes aligned measure ownership explicit instead of relying on the first staff as an implicit reference timeline.
+
+- document-global stable `measureFrames` become the measure-sequence authority;
+- parts gain stable explicit ordinals and stable instrument identity;
+- content staves are `standard` or `percussion`;
+- `tablature-linked` staff is derivative presentation linked to a canonical standard staff and owns no independent note/event stream;
+- v3 notation separates frame-owned time/barline semantics from staff-measure key/clef semantics;
+- v3 addressing adds exact measure-frame identity and remains revision-bound;
+- v2 -> v3 migration must reject misaligned measures or conflicting ownership rather than repair silently.
+
+See `docs/staff-part-topology-contract.md` and its machine-readable JSON mirror.
+
+## Existing SSE-07 renderer / SesliTab boundary
+
+`renderer-contract-v2` chooses the safest available projection:
 
 1. lossless v2 -> v1 downgrade: `V1_COMPATIBLE_XML`;
 2. otherwise bounded SSE-06 serialization: `V2_SEMANTIC_XML`;
-3. if the bounded v2 serializer cannot represent the canonical pair: `VNEXT_XML_PENDING` with `musicXml: null`.
+3. unrepresentable canonical pair: `VNEXT_XML_PENDING` with `musicXml: null`.
 
-Opaque revision-bound v2 manifest tokens remain the only renderer hit/selection bridge and cover normal plus grace semantic addresses. Renderer geometry/DOM state never becomes mutation authority.
+Opaque revision-bound manifest tokens remain the only renderer hit/selection bridge. Additive OSMD/alphaTab v2 adapters and `seslitab-editor-host-v2` do not create renderer or host canonical authority. Playback remains host-owned and editor admission does not control playback.
 
-Legacy renderer APIs remain unchanged. Additive `renderWithOsmdV2` and `renderWithAlphaTabV2` consume only renderable v2 requests and reject pending requests before renderer load. Exact admitted renderer version/license profiles remain enforced, including the ST Rendering Layer OSMD 2.1.2 integration profile.
+## Authority and dependencies
 
-## SesliTab v2 boundary
-
-`seslitab-editor-host-v2/2.0.0` wraps one canonical `EditorSessionStateV2`. It exposes v2 render-token selection, grace/articulation/ornament commits and unified undo/redo without creating host-owned score state.
-
-Pointer, keyboard and touch provenance converge on the same semantic editor paths. Host dual-write, renderer mutation authority, DOM-coordinate mutation authority, network/persistence/publication/production authority remain disabled. Playback remains host-owned and editor admission does not control playback.
-
-## MusicXML and authority
-
-SSE-06 direct `serializeNotationMusicXmlV2` / `importNotationMusicXmlV2` exchange remains unchanged. MusicXML is projection/exchange data, not live editor state. One v2 score+notation pair remains canonical per v2 session. Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`; no staff/part topology, cross-staff, E8-D or production/public-write authority is activated.
+The active runtime still uses one canonical v2 score+notation pair per v2 session. SSE-08 does not activate v3 runtime code. MusicXML remains exchange/projection data; renderer/SesliTab remain noncanonical; Guitar string/fret/fingering remains derivative. Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`; no cross-staff, E8-D, persistence/network or production/public-write authority is activated.
