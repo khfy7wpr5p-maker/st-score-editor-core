@@ -2,69 +2,56 @@
 
 Date: 2026-09-02
 
-Goal: evolve ST Score Editor Core into a general-purpose renderer-independent score-authoring core while preserving canonical authority, source immutability and fail-closed semantics.
+Goal: evolve ST Score Editor Core into a renderer-independent general score-authoring core without weakening canonical authority, source immutability or fail-closed validation.
 
-## Completed foundation
+## Completed autonomous authoring foundation
 
-SEC-NE-00 through SEC-NE-05 are COMPLETE / MERGED within their documented bounded profiles.
+SEC-NE-00 through SEC-NE-06 are COMPLETE / MERGED within their bounded contracts.
 
-## SEC-NE-06 — COMPLETE / MERGED
+## SEC-NE-07 — COMPLETE / MERGED for current public schemas
 
-**Bounded structural goal achieved without opening unsafe topology inference.**
+`editor-advanced-authoring/1.0.0` composes existing canonical edit commands with same-revision notation safety and independent timing validation.
 
-Implemented:
+Implemented/reused capability:
 
-- `editor-structural-authoring/1.0.0`;
-- add measure after exact current measure with fresh measure + initial voice IDs;
-- remove only fully empty non-last measure with no measure-notation orphan;
-- add empty voice;
-- remove only empty non-last voice;
-- deterministic measure/voice ordinal normalization;
-- globally fresh identities;
-- same-revision notation rebind or rejection;
-- existing notation-command authority reused for time/key/clef/barline rather than duplicated;
-- `editor-copy-paste/1.0.0`;
-- relation-free source voice → exact empty target voice;
-- explicit fresh destination identity for every event/note;
-- exact onset/duration/pitch preservation;
-- safe notation cloning;
-- beam/tuplet/tie/slur-coupled source rejection;
-- independent target timing veto;
-- current safe 04B1 evidence required for MusicXML-derived targets;
-- unified history composition covered by regression tests.
+- pitch mutation;
+- rest ↔ note replacement;
+- chord tone add/remove;
+- duration change with 04A timing veto;
+- duration rejection when written dots/beams/tuplet metadata would be silently desynchronized;
+- notation orphan prevention after entity-changing score edits;
+- current safe 04B1 measure evidence for MusicXML-derived duration edits;
+- existing notation commands for accidentals, dots, beams, meter/key/clef/barlines;
+- existing explicit-target advanced keypad semantics for current 3:2 triplets, ties and slurs;
+- SEC-NE-05 for admitted relation-safe movement;
+- SEC-NE-06 fresh-ID copy/paste for relation-free content.
 
-### Structural topology not guessed
+No duplicate score or notation semantics were introduced.
 
-Staff/part add/remove remains a separate topology gate because current contracts do not explicitly encode cross-staff measure correspondence, staff alignment policy or safe relationship ownership. This is an intentional fail-closed boundary, not an incomplete implementation disguised as support.
+## Human-gated advanced schema program
+
+The following cannot be implemented correctly without changing public schemas:
+
+- grace-note canonical identity/timing;
+- articulations;
+- ornaments.
+
+A future schema version must define validation, MusicXML import/export mapping, round-trip semantics, renderer contract impact and migration/compatibility. Whole staff/part topology likewise requires a separately frozen structural contract.
 
 ## Next autonomous sequence
 
-### SEC-NE-07 — NOT STARTED
+### SEC-NE-XML-ROUNDTRIP — NEXT
 
-Use current canonical/notation capabilities to expose advanced authoring without duplicating semantics already present in commands/keypad packages.
-
-Priority:
-
-1. chord construction/removal through canonical chord commands;
-2. pitch/duration transformation with current timing veto;
-3. accidental/dot/beam/tuplet/tie/slur authoring by composing existing notation contracts;
-4. bounded transposition/enharmonic operations representable by current pitch model;
-5. multi-event/paste composition only through fresh identities and existing safety gates.
-
-Grace notes, articulations and ornaments are not present in public `ScoreDocument`/`NotationDocument` 1.0.0. Adding them requires a public schema expansion and therefore remains a human-gated design decision rather than an autonomous silent schema break.
-
-### SEC-NE-XML-ROUNDTRIP — HARDENING CONTINUES
-
-Build a golden first-party/public-domain corpus for every admitted import/edit/export/re-import semantic. No unsupported semantic may disappear silently.
+Create first-party synthetic golden fixtures and semantic-equivalence regression covering admitted MusicXML and current score/notation editing. Focus on preservation, not byte identity. Unsupported forms must reject rather than disappear.
 
 ### SEC-NE-08 — NOT STARTED
 
-Compose guitar/TAB authoring on top of generic Editor Core. Standard notation stays canonical; string/fret/fingering stays derivative unless separately admitted.
+Compose Guitar Workspace/TAB proposals with generic Editor Core authoring. Standard notation remains canonical. Guitar string/fret/fingering stays derivative unless separately admitted; no guitar-specific bypass of timing/history/identity safety.
 
 ### SEC-NE-09 — NOT STARTED
 
-Compose SesliTab host/UI around one canonical Editor Core state and one renderer presentation path. No dual-write, no renderer-owned edit state, playback independent from OMR completeness where possible.
+Compose SesliTab around one Editor Core canonical state, one presentation renderer path and revision-bound semantic hit/selection state. No host dual-write and no playback lock caused merely by incomplete OMR when playable canonical content exists.
 
-## Definition of done
+## Completion rule
 
-Every stage requires exact PR/head/merge identity, supported Node CI, package-boundary regressions, synchronized current-reality docs, no hidden dependency/license change and explicit authority-change recording.
+Autonomous work may complete current-contract capabilities and hardening. Public schema breaks, whole staff/part topology authority, direct external-engine invocation and production/public-write activation remain explicit human gates.
