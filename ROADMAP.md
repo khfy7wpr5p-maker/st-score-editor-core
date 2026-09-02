@@ -10,47 +10,48 @@ This file records merged/in-progress/not-started repository reality. Planned cap
 - **E8-A/B/C — IMPLEMENTED**
 - **E8-D — HUMAN-GATED / NOT AUTHORIZED**
 - **SEC-KP-00–10 — COMPLETE**
-- **SEC-NE-00–06 — COMPLETE / MERGED** within documented bounded profiles.
-- **SEC-NE-07 — COMPLETE / MERGED** for semantics representable by current public score/notation contracts.
+- **SEC-NE-00–07 — COMPLETE / MERGED** within documented bounded profiles.
+- **SEC-NE-XML-ROUNDTRIP — COMPLETE / MERGE CANDIDATE:** current notation serializer profile has bounded export→re-import coverage.
 
-## SEC-NE-07 exact capability
+## SEC-NE-XML-ROUNDTRIP exact capability
 
-`editor-advanced-authoring` composes existing canonical edit transactions with stronger authoring safety:
+`importNotationMusicXml` is the matching importer for `serializeNotationMusicXml` within current public contracts.
 
-- canonical pitch changes;
-- rest ↔ note replacement where command preconditions hold;
-- chord tone add/remove;
-- duration mutation only when event notation is not dotted/beamed/tupletted and independent 04A timing remains valid;
-- notation-orphan prevention after canonical entity replacement/removal;
-- current safe 04B1 evidence required for MusicXML-derived duration mutation.
+Admitted round-trip semantics:
 
-Existing `notation-commands` and `editor-keypad-advanced` remain the authority for accidentals, dots, beams, current 3:2 tuplets, explicit ties and slurs. No duplicate notation state is introduced.
+- pitch/chord/rest/onset/duration/voice/staff;
+- time/key/clef/barline/repeat;
+- dots/accidentals/beams;
+- current tuplet representation;
+- MusicXML tie playback markers plus numbered tied marks;
+- slur marks;
+- current 04B1 measure/time evidence through the unchanged legacy score-only import authority.
+
+The safe XML parser admits only the explicit serializer envelope and still applies structural/resource budgets. Legacy import profiles remain fail-closed for notation-rich input.
 
 ## Human-gated public-schema expansion
 
-The following requested advanced semantics are not fields in `ScoreDocument` / `NotationDocument` 1.0.0 and therefore are not autonomously invented:
+The following remain outside public `ScoreDocument` / `NotationDocument` 1.0.0:
 
 - grace-note identity/timing model;
 - articulations;
-- ornaments.
-
-Whole staff/part topology also remains separately gated. These require explicit public contract design/approval before canonical implementation.
+- ornaments;
+- whole staff/part topology with frozen cross-staff correspondence rules.
 
 ## Next autonomous sequence
 
-1. **SEC-NE-XML-ROUNDTRIP — NEXT:** golden semantic-equivalence hardening for admitted import/edit/export/re-import capabilities.
-2. **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
-3. **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
+1. **SEC-NE-08 — NEXT:** guitar/TAB authoring composition.
+2. **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
 
 ## Still fail-closed
 
 - schema-absent grace/articulation/ornament semantics;
 - whole staff/part topology mutation;
 - pickup/non-controlling implicit-gap authoring;
-- cross-measure or unsupported relation-coupled retiming;
-- relation-coupled copy/paste;
+- unsupported relation-coupled retiming/copy;
+- arbitrary MusicXML outside the admitted serializer profile;
 - renderer-coordinate authoring;
 - host dual-write;
 - production/public-write activation by merge.
 
-`ScoreDocument` remains canonical; notation is same-revision sidecar authority; renderer/host state is noncanonical; source evidence remains immutable.
+`ScoreDocument` remains canonical; notation is same-revision authority; renderer/host state is noncanonical; source evidence remains immutable.
