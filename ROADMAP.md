@@ -2,68 +2,55 @@
 
 ## Current source of truth
 
-This file records merged/in-progress/not-started repository reality. Planned stages are not production capability.
+This file records merged/in-progress/not-started repository reality. Planned capability is not production capability.
 
-## Core and correction baseline
+## Baseline
 
 - **E0–E7-H — COMPLETE**
 - **E8-A/B/C — IMPLEMENTED**
 - **E8-D — HUMAN-GATED / NOT AUTHORIZED**
 - **SEC-KP-00–10 — COMPLETE**
+- **SEC-NE-00–06 — COMPLETE / MERGED** within documented bounded profiles.
+- **SEC-NE-07 — COMPLETE / MERGED** for semantics representable by current public score/notation contracts.
 
-## SEC-NE — Sibelius-style authoring expansion
+## SEC-NE-07 exact capability
 
-### Complete / merged
+`editor-advanced-authoring` composes existing canonical edit transactions with stronger authoring safety:
 
-- **SEC-NE-00–05 — COMPLETE / MERGED** within their documented bounded profiles.
-- **SEC-NE-06 — COMPLETE / MERGED:** measure/voice structural authoring plus relation-safe fresh-ID copy/paste.
+- canonical pitch changes;
+- rest ↔ note replacement where command preconditions hold;
+- chord tone add/remove;
+- duration mutation only when event notation is not dotted/beamed/tupletted and independent 04A timing remains valid;
+- notation-orphan prevention after canonical entity replacement/removal;
+- current safe 04B1 evidence required for MusicXML-derived duration mutation.
 
-### SEC-NE-06 exact capability
+Existing `notation-commands` and `editor-keypad-advanced` remain the authority for accidentals, dots, beams, current 3:2 tuplets, explicit ties and slurs. No duplicate notation state is introduced.
 
-`editor-structural-authoring`:
+## Human-gated public-schema expansion
 
-- add measure after an exact current measure;
-- new measure starts with one fresh empty voice;
-- remove only a fully empty non-last measure with no measure-notation orphan;
-- add an empty voice;
-- remove only an empty non-last voice;
-- deterministic sibling ordinal normalization;
-- globally fresh canonical identities;
-- same-revision notation rebind or reject.
+The following requested advanced semantics are not fields in `ScoreDocument` / `NotationDocument` 1.0.0 and therefore are not autonomously invented:
 
-`editor-copy-paste`:
+- grace-note identity/timing model;
+- articulations;
+- ornaments.
 
-- exact current source voice → exact empty target voice;
-- explicit fresh mapping for every event and note identity;
-- preserve onset/duration/pitch and admitted safe notation;
-- reject beam/tuplet/tie/slur-coupled source material;
-- reject nonempty targets;
-- independently validate target timing after paste;
-- require current safe 04B1 evidence for MusicXML-derived target measures.
+Whole staff/part topology also remains separately gated. These require explicit public contract design/approval before canonical implementation.
 
-Existing `notation-commands` remain the authority for time/key/clef/barline changes.
+## Next autonomous sequence
 
-### Next dependency order
-
-1. **SEC-NE-07 — NOT STARTED:** advanced authoring representable by current contracts; public-schema expansion remains human-gated.
-2. **SEC-NE-XML-ROUNDTRIP — HARDENING CONTINUES:** golden semantic equivalence for all admitted capabilities.
-3. **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
-4. **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
-
-## Separate topology gate
-
-Whole staff/part add/remove is not admitted by SEC-NE-06 v1. Before it can be authorized the architecture must freeze cross-staff measure correspondence, measure-count/alignment rules, part/staff notation ownership and removal semantics. No geometry or renderer inference may fill those gaps.
+1. **SEC-NE-XML-ROUNDTRIP — NEXT:** golden semantic-equivalence hardening for admitted import/edit/export/re-import capabilities.
+2. **SEC-NE-08 — NOT STARTED:** guitar/TAB authoring composition.
+3. **SEC-NE-09 — NOT STARTED:** SesliTab product integration.
 
 ## Still fail-closed
 
-- pickup/non-controlling implicit-gap authoring;
-- cross-measure retiming;
-- unsupported relation-coupled retiming/copy;
+- schema-absent grace/articulation/ornament semantics;
 - whole staff/part topology mutation;
-- renderer-coordinate structural authority;
+- pickup/non-controlling implicit-gap authoring;
+- cross-measure or unsupported relation-coupled retiming;
+- relation-coupled copy/paste;
+- renderer-coordinate authoring;
 - host dual-write;
 - production/public-write activation by merge.
 
-## Authority rules
-
-`ScoreDocument` remains canonical; notation stays same-revision sidecar authority for notation semantics; MusicXML/evidence is not live editor state; renderer/host state is not canonical; OMR/AI is advisory; Guitar state remains derivative unless separately admitted.
+`ScoreDocument` remains canonical; notation is same-revision sidecar authority; renderer/host state is noncanonical; source evidence remains immutable.
