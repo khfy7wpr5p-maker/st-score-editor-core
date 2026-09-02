@@ -1,91 +1,65 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "document_type": "staff_part_topology_contract",
   "project": "ST Score Editor Core",
-  "stage": "SSE-08",
-  "status": "HUMAN_APPROVED_DESIGN_FREEZE_IMPLEMENTATION_NOT_STARTED",
-  "target_contracts": {
+  "design_stage": "SSE-08",
+  "implementation_stage": "SSE-09",
+  "status": "BOUNDED_IMPLEMENTATION_COMPLETE_MERGE_CANDIDATE",
+  "contracts": {
     "score_document": "ScoreDocumentV3/3.0.0",
     "notation_document": "NotationDocumentV3/3.0.0",
     "semantic_address": "SemanticAddressV3/3.0.0",
     "renderer_request": "RendererRequestV3/3.0.0"
   },
   "authority": {
-    "single_canonical_score_notation_pair": true,
+    "single_versioned_canonical_score_notation_pair_per_session": true,
+    "mixed_mutable_v2_v3_session": false,
     "musicxml_exchange_only": true,
     "renderer_canonical_authority": false,
     "host_dual_write": false,
     "guitar_string_fret_authority": "DERIVATIVE_ONLY",
     "linked_tab_pitch_authority": false
   },
-  "part_v3": {
-    "stable_id": true,
-    "explicit_unique_positive_ordinal": true,
-    "array_order_equals_ordinal_order": true,
+  "topology": {
+    "document_global_measure_frames": true,
+    "parts_have_explicit_contiguous_ordinals": true,
     "stable_instrument_identity": true,
-    "instrument_fields": ["id", "name", "shortName"]
-  },
-  "staff_roles": [
-    "standard",
-    "percussion",
-    "tablature-linked"
-  ],
-  "content_staff_roles": [
-    "standard",
-    "percussion"
-  ],
-  "tablature_linked": {
-    "derivative_presentation_only": true,
-    "must_reference_standard_staff_same_part": true,
-    "independent_measures_forbidden": true,
-    "independent_events_forbidden": true,
-    "cross_part_link_forbidden": true,
-    "tab_profile": {
-      "fields": ["stringCount", "tuning", "capoFret"],
-      "string_numbers_explicit": true,
-      "string_fret_assignments_canonical": false
-    }
-  },
-  "measure_frames": {
-    "scope": "DOCUMENT_GLOBAL",
-    "single_sequence_authority": true,
-    "fields": ["id", "ordinal", "displayNumber"],
-    "ordinals_positive_unique_contiguous_initial_profile": true,
+    "staff_roles": ["standard", "percussion", "tablature-linked"],
+    "content_staff_roles": ["standard", "percussion"],
     "content_staff_exactly_one_measure_per_frame": true,
-    "staff_measure_fields": ["id", "frameId", "voices"],
-    "multimetric_non_controlling_initial_profile": false
+    "linked_tab_derivative_presentation_only": true,
+    "linked_tab_independent_measures_events_notes": false,
+    "linked_tab_same_part_standard_source_required": true,
+    "linked_tab_source_removal_cascade": false,
+    "linked_tab_source_removal_requires_explicit_unlink": true
   },
-  "notation_v3_ownership": {
-    "frame_notation": ["timeSignature", "barlines"],
-    "staff_measure_notation": ["keySignature", "clef"],
+  "notation_ownership": {
+    "frame": ["timeSignature", "barlines"],
+    "staff_measure": ["keySignature", "clef"],
     "event_note_grace_semantics_preserved": true,
     "sparse": true,
-    "same_revision_required": true
+    "same_revision": true
   },
-  "addressing_v3": {
-    "measure_frame_address_kind": true,
+  "addressing": {
+    "measure_frame_kind": true,
     "descendant_paths_include_frame_id": true,
-    "identity_uses_ids_not_ordinals": true,
+    "identity_uses_stable_ids": true,
+    "instrument_separate_address_kind": false,
     "stale_revision_fails_closed": true,
-    "renderer_tokens_opaque": true
+    "linked_tab_has_canonical_measure_descendants": false
   },
-  "migration_v2_to_v3": {
-    "preserve_existing_entity_ids": true,
-    "assign_part_ordinals_from_current_array_order": true,
-    "create_deterministic_noncolliding_instrument_ids": true,
-    "derive_frames_from_aligned_measure_ordinals": true,
-    "require_matching_measure_count_ordinal_display_number": true,
-    "missing_or_misaligned_measures_reject": true,
-    "conflicting_frame_time_barline_notation_reject": true,
-    "tab_clef_does_not_auto_create_linked_tab_staff": true
+  "migration": {
+    "v2_to_v3_guarded": true,
+    "preserve_existing_musical_entity_ids": true,
+    "deterministic_noncolliding_frame_and_instrument_ids": true,
+    "require_measure_count_ordinal_display_alignment": true,
+    "misalignment_rejects": true,
+    "frame_notation_conflict_rejects": true,
+    "tab_clef_does_not_infer_linked_tab": true,
+    "v3_to_v2_lossless_only": true,
+    "linked_tab_blocks_v2_downgrade": true
   },
-  "migration_v3_to_v2": {
-    "lossless_only": true,
-    "linked_tab_staff_blocks_downgrade": true,
-    "notation_duplication_must_be_conflict_free": true,
-    "semantic_loss_rejects_with_exact_path": true
-  },
-  "sse_09_initial_authoring_candidate": [
+  "implemented_authoring": [
     "ADD_STANDARD_OR_PERCUSSION_PART",
     "REMOVE_PART",
     "REORDER_PART",
@@ -99,8 +73,33 @@
   "add_content_staff_policy": {
     "invent_rhythmic_content": false,
     "requires_effective_meter_for_every_frame": true,
-    "creates_deterministic_explicit_full_frame_rest_content": true,
-    "insufficient_meter_evidence_fails_closed": true
+    "caller_supplies_measure_voice_rest_ids": true,
+    "creates_one_explicit_full_frame_rest_per_frame": true,
+    "missing_meter_fails_closed": true
+  },
+  "removal_policy": {
+    "final_part_forbidden": true,
+    "final_content_staff_forbidden": true,
+    "notation_orphan_rejects": true,
+    "nearest_target_rebinding": false,
+    "implicit_cascade": false
+  },
+  "history_session": {
+    "atomic_score_notation_snapshots": true,
+    "direct_child_commit_only": true,
+    "native_v3_session": true,
+    "one_time_v2_to_v3_session_migration": true
+  },
+  "renderer": {
+    "lossless_v3_to_v2_projection_reused": true,
+    "unrepresentable_status": "V3_XML_PENDING",
+    "unrepresentable_musicxml": null,
+    "v3_native_topology_musicxml": false
+  },
+  "product": {
+    "seslitab_v3_cutover": false,
+    "production_activation": false,
+    "persistence_network_public_write": false
   },
   "explicitly_out_of_scope": [
     "CROSS_STAFF_RELATION_OWNERSHIP",
@@ -110,20 +109,9 @@
     "PERCUSSION_MAP_AUTHORING",
     "LAYOUT_PAGE_SYSTEM_GEOMETRY",
     "PLAYBACK_MIDI_ROUTING",
+    "V3_NATIVE_TOPOLOGY_MUSICXML",
     "MXL_CONTAINER",
     "PERSISTENCE_NETWORK_PUBLIC_WRITE"
   ],
-  "implementation_gate": {
-    "sse_08_is_design_only": true,
-    "sse_09_not_implemented": true,
-    "requires_validators": true,
-    "requires_v2_v3_migration_guards": true,
-    "requires_exact_v3_addressing": true,
-    "requires_atomic_history": true,
-    "requires_orphan_safe_topology_operations": true,
-    "requires_frame_alignment_validation": true,
-    "requires_linked_tab_derivative_authority": true,
-    "requires_renderer_musicxml_fail_closed": true,
-    "requires_node_18_20_22_ci": true
-  }
+  "next_gate": "SSE-10_CROSS_STAFF_HUMAN_GATED_DESIGN"
 }
