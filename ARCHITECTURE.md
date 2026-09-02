@@ -1,91 +1,55 @@
 # ST Score Editor Core — Architecture
 
-Status: **Core remains implemented through E8-C. SEC-SMUFL-KEYPAD-01 is complete through SEC-KP-10. SEC-NE is COMPLETE / MERGED through SEC-NE-06 for bounded note entry, legal-gap materialization, retiming, measure/voice structure and identity-safe copy/paste.**
+Status: **SEC-NE is COMPLETE / MERGED through SEC-NE-07 for all authoring semantics representable by current public ScoreDocument/NotationDocument 1.0.0 contracts. Schema-absent semantics and whole staff/part topology remain explicit human gates.**
 
-## 1. Canonical authority
+## Canonical authority
 
-`ScoreDocument` is the single musical edit authority. `NotationDocument` is same-revision notation authority. MusicXML and measure-semantics documents are exchange/evidence, renderers are presentation-only, SesliTab is orchestration-only, and OMR/Guitar outputs cannot independently mutate canonical state.
+`ScoreDocument` is the single musical edit authority. `NotationDocument` owns same-revision notation semantics. MusicXML/evidence is exchange or bounded source evidence. Renderer/host state is noncanonical. OMR/AI and Guitar Workspace results cannot independently mutate score state.
 
-```text
-MusicXML / OMR evidence
-        ↓
-safe import adapters
-        ↓
-ScoreDocument + same-revision NotationDocument/evidence
-        ↓
-SemanticAddress / Selection / InsertionPosition
-        ↓
-typed bounded authoring operation
-        ↓
-independent validation
-        ↓
-atomic child revision or no mutation
-        ↓
-unified score+notation history
-        ↓
-RenderRequest / presentation renderer / host
-```
+## Implemented authoring layers
 
-## 2. Implemented SEC-NE layers
+- SEC-NE-01/02 — explicit-rest note entry and unified editor composition.
+- SEC-NE-03 — revision-bound semantic insertion position.
+- SEC-NE-04A/04C — exact timing veto and explicit-rest position entry.
+- SEC-NE-04B1/04B2 — MusicXML measure semantics and proven normal-measure gap materialization.
+- SEC-NE-05 — relation-safe same-measure retiming and atomic current 3:2 triplet movement.
+- SEC-NE-06 — bounded measure/voice structure and relation-free fresh-ID copy/paste.
+- SEC-NE-07 — advanced score-authoring safety composition over existing canonical/notation contracts.
 
-- `editor-note-entry` — selected explicit-rest entry.
-- `editor-insertion-position` — revision-bound semantic cursor.
-- `editor-measure-timing` — exact timing/occupancy veto.
-- `editor-position-note-entry` — explicit-rest position entry.
-- `musicxml-measure-semantics` — bounded source measure/time evidence.
-- `editor-implicit-gap-materialization` — proven normal-measure silence → explicit rest.
-- `editor-event-retiming` — relation-safe same-measure single-event onset movement.
-- `editor-triplet-retiming` — atomic exact supported 3:2 triplet movement.
-- `editor-structural-authoring` — bounded measure/voice add/remove.
-- `editor-copy-paste` — relation-free source voice → empty target voice with fresh identities.
+## SEC-NE-07 composition
 
-Existing `notation-commands` remain the structural notation authority for time signature, key signature, clef and barline state.
+`editor-advanced-authoring/1.0.0` accepts existing canonical `EditTransaction` operations but adds editor-authoring safeguards around them.
 
-## 3. SEC-NE-06 structural model
+Current representable advanced score semantics:
 
-### Measure authoring
+- `SET_NOTE_PITCH`;
+- `REPLACE_EVENT_WITH_REST`;
+- `REPLACE_REST_WITH_NOTE`;
+- `ADD_CHORD_TONE` / `REMOVE_CHORD_TONE`;
+- `SET_EVENT_DURATION`, with extra timing/notation restrictions.
 
-`ADD_MEASURE_AFTER` inserts a new measure after one exact current measure. Caller supplies a globally fresh measure ID and globally fresh initial empty voice ID. Existing measure IDs and display numbers are not silently rewritten; canonical sibling ordinals are normalized.
+Duration edits reject a target event carrying dots, beams or tuplet metadata. MusicXML-derived duration edits require current safe 04B1 evidence. After the canonical candidate is built, notation must rebind and the changed voice must pass 04A timing/occupancy validation.
 
-`REMOVE_EMPTY_MEASURE` is destructive and therefore narrower: all voices must be empty, the staff must retain another measure, and there must be no measure-level notation entry whose target would disappear. Otherwise it rejects.
+Existing notation authority is reused:
 
-### Voice authoring
+- `notation-commands` owns time/key/clef/barline, dots, beams, tuplets, accidentals, tie/slur mark storage;
+- `editor-keypad-advanced` owns the currently validated explicit-target 3:2 triplet and tie/slur interaction semantics;
+- SEC-NE-05 owns admitted movement semantics.
 
-`ADD_EMPTY_VOICE` adds one fresh empty voice to an exact measure. `REMOVE_EMPTY_VOICE` only removes an empty voice when another voice remains. Voice ordinals are normalized deterministically; existing IDs do not change.
+No second notation model is introduced.
 
-### Copy/paste
+## Public schema boundary
 
-`COPY_VOICE_TO_EMPTY_VOICE` copies exact canonical source events into one exact empty target voice. Every destination event/note ID is explicitly supplied and must be globally fresh. Source onsets, durations and pitches are preserved.
+Grace notes, articulations and ornaments cannot be represented in public 1.0.0 score/notation schemas. Whole staff/part topology also lacks frozen cross-staff correspondence/ownership rules. These are not inferred from renderer state or attached as unversioned hidden fields.
 
-Copy v1 rejects any source beam, tuplet, tie or slur coupling. This is deliberate: copying relation markers without an explicit relation-identity/range contract could create ambiguous or unintended endpoints. Safe accidental/dot notation can be cloned with fresh semantic targets.
+A future approved schema/topology expansion must define versioning, validation, MusicXML import/export preservation, migration and compatibility before these become canonical capabilities.
 
-After paste, the complete target voice must pass `editor-measure-timing`. MusicXML-derived target measures additionally require current safe 04B1 evidence.
+## Remaining autonomous stages
 
-## 4. Structural topology boundary
+- SEC-NE-XML-ROUNDTRIP — golden semantic equivalence hardening.
+- SEC-NE-08 — Guitar/TAB authoring composition; standard notation remains canonical.
+- SEC-NE-09 — SesliTab integration around one canonical editor state; no dual-write.
 
-Whole staff/part add/remove remains unadmitted. The current public model does not yet freeze enough topology semantics for:
+## Dependencies / invariants
 
-- cross-staff measure correspondence;
-- equal/unequal measure-count policy across staves;
-- staff-to-part notation ownership;
-- safe removal of cross-staff or derivative relationships;
-- deterministic creation of a complete staff/part skeleton.
-
-These facts cannot be guessed from renderer layout or existing array shape. A future topology contract must make them explicit before staff/part mutation becomes canonical authority.
-
-## 5. Revision/history/evidence
-
-Every accepted mutation creates one direct child score revision and one same-revision notation snapshot. Structural removal must not orphan notation. Copy/paste creates fresh semantic identities. Old revision-bound addresses, insertion positions, render requests and 04B1 evidence become stale after mutation and cannot be replayed.
-
-## 6. Remaining stages
-
-- **SEC-NE-07:** advanced authoring that fits current score/notation contracts; features requiring public schema expansion remain human-gated.
-- **SEC-NE-XML-ROUNDTRIP:** golden semantic preservation/equivalence hardening.
-- **SEC-NE-08:** Guitar/TAB authoring composition with derivative fingering authority.
-- **SEC-NE-09:** SesliTab product integration without dual-write.
-
-## 7. Dependencies and invariants
-
-Runtime remains only `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`.
-
-Non-negotiable invariants: source immutability, canonical ScoreDocument authority, current revision validation, independent timing veto, fail-closed relation semantics, no renderer-coordinate authority, no hidden dual-write, no production/public-write activation by merge, and no implicit new dependency.
+Runtime dependencies remain only `saxes@6.0.0` and `xmlchars@2.2.0`; build-only remains `typescript@6.0.3` and `esbuild@0.28.2`. All existing source immutability, revision binding, independent timing veto, relation-preservation and no-production-by-merge invariants remain active.
