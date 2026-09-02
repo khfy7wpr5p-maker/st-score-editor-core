@@ -37,10 +37,12 @@ export type {
 } from './parsedXml.js';
 
 export {
-  importMusicXml
+  importMusicXml,
+  importMusicXmlWithMeasureSemantics
 } from './importer.js';
 export type {
-  MusicXmlImportOptions
+  MusicXmlImportOptions,
+  MusicXmlMeasureSemanticsImportResult
 } from './importer.js';
 
 export {
