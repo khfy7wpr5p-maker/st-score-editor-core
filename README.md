@@ -4,10 +4,9 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-SCORE-SCHEMA-EXPANSION is implemented through **SSE-09 bounded v3 staff/part topology** on this merge candidate.
+SCORE-SCHEMA-EXPANSION is implemented through **SSE-09 bounded v3 staff/part topology**.
 
-- **SSE-00–08 — COMPLETE / MERGED:** v2 schema/session, grace/articulation/ornament authoring, bounded MusicXML v2, renderer/SesliTab v2 compatibility, and the approved v3 topology contract.
-- **SSE-09 — COMPLETE / MERGE CANDIDATE:** additive V3 score/notation/addressing/migration/history/session/renderer substrate plus bounded staff/part topology authoring.
+- **SSE-00–09 — COMPLETE / MERGED:** v2 schema/session, grace/articulation/ornament authoring, bounded MusicXML v2, renderer/SesliTab v2 compatibility, the approved v3 topology contract, and bounded V3 staff/part topology runtime.
 - **SSE-10 — HUMAN-GATED DESIGN:** cross-staff canonical relation ownership.
 
 ## SSE-09 V3 topology runtime
