@@ -7,8 +7,8 @@ import { createScoreDocumentV3, ScoreDocumentV3ValidationError } from '../dist/p
 import { addressEntityV3, resolveSemanticAddressV3 } from '../dist/packages/addressing-v3/src/index.js';
 import { migrateScoreNotationV2ToV3, downgradeScoreNotationV3ToV2, MigrationV2V3Error } from '../dist/packages/schema-migration-v2-v3/src/index.js';
 
-const event=(id,onset)=>({id,kind:'rest',onset:{numerator:onset,denominator:4},duration:{numerator:1,denominator:4}});
-const measure=(id,ordinal,display,voiceId,eventId)=>({id,ordinal,displayNumber:display,voices:[{id:voiceId,ordinal:1,events:[event(eventId,0)],graceGroups:[]}]});
+const event=(id)=>({id,kind:'rest',onset:{numerator:0,denominator:1},duration:{numerator:1,denominator:4}});
+const measure=(id,ordinal,display,voiceId,eventId)=>({id,ordinal,displayNumber:display,voices:[{id:voiceId,ordinal:1,events:[event(eventId)],graceGroups:[]}]});
 const raw=()=>({schemaVersion:'2.0.0',id:'doc-topology',revision:{id:'rev-1',parentId:null},source:{sha256:'d'.repeat(64),format:'synthetic',byteLength:null},parts:[{id:'part-1',name:'Guitar',staves:[{id:'staff-1',ordinal:1,measures:[measure('m1s1',1,'1','v1s1','e1s1'),measure('m2s1',2,'2','v2s1','e2s1')]},{id:'staff-2',ordinal:2,measures:[measure('m1s2',1,'1','v1s2','e1s2'),measure('m2s2',2,'2','v2s2','e2s2')]}]}]});
 const notation=(score)=>createNotationDocumentV2(score,{contractVersion:'2.0.0',documentId:score.id,revisionId:score.revision.id,measures:[
  {target:addressEntityV2(score,'m1s1'),notation:{timeSignature:{beats:4,beatType:4},keySignature:{fifths:0},clef:{sign:'G',line:2,octaveChange:0},barlines:[]}},
