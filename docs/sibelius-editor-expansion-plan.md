@@ -6,7 +6,7 @@ Goal: evolve ST Score Editor Core into a renderer-independent general score-auth
 
 ## Completed foundation
 
-The original SEC-NE program and SCORE-SCHEMA-EXPANSION through SSE-08 are COMPLETE / MERGED. SSE-09 bounded V3 staff/part topology runtime is implemented on this merge candidate.
+The original SEC-NE program and SCORE-SCHEMA-EXPANSION through SSE-09 are COMPLETE / MERGED.
 
 Completed foundation includes:
 
@@ -17,11 +17,12 @@ Completed foundation includes:
 - bounded MusicXML v2 semantic round trip;
 - renderer v2 projection and additive OSMD/alphaTab compatibility;
 - SesliTab v2 host facade with no dual-write authority;
-- human-approved SSE-08 V3 staff/part topology contract.
+- human-approved SSE-08 V3 staff/part topology contract;
+- bounded SSE-09 V3 staff/part topology runtime and authoring.
 
 V2 sessions remain supported. SSE-09 adds a separate V3 session contract; one session owns exactly one versioned canonical score+notation pair and never keeps mutable V2 and V3 canonical copies in parallel.
 
-## SSE-09 — Staff/part topology implementation — COMPLETE / MERGE CANDIDATE
+## SSE-09 — Staff/part topology implementation — COMPLETE / MERGED
 
 Implemented contracts:
 
@@ -79,4 +80,4 @@ Cross-staff beaming, note relocation, ties/slurs/tuplets/ornaments and ownership
 
 ## Completion rule
 
-SSE-09 completion means the bounded V3 topology core is implemented and validated. It does not authorize cross-staff semantics, V3 product cutover, V3-native topology MusicXML, persistence/network or production/public-write authority.
+SSE-09 completion means the bounded V3 topology core is implemented, validated and merged. It does not authorize cross-staff semantics, V3 product cutover, V3-native topology MusicXML, persistence/network or production/public-write authority.
