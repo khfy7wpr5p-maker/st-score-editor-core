@@ -11,7 +11,6 @@ import { addressEntityV2 } from '../../addressing-v2/src/index.js';
 import {
   createNotationDocumentV2,
   type ArticulationSpec,
-  type EventNotationV2,
   type GraceEventNotationV2,
   type GraceNoteNotationV2,
   type NotationDocumentV2,
@@ -96,7 +95,7 @@ const parseGraceEvent=(nodes:readonly ParsedXmlNode[],ids:{eventId:string;notePr
 const sameJson=(a:unknown,b:unknown):boolean=>JSON.stringify(a)===JSON.stringify(b);
 
 interface VoiceExtras { groups:GraceGroup[]; graceEvents:{id:string;notation:GraceEventNotationV2}[]; graceNotes:{id:string;notation:GraceNoteNotationV2}[] }
-const parseExtras=(root:ParsedXmlNode,baseScore:ScoreDocumentV2,baseNotation:NotationDocumentV2):{score:Readonly<ScoreDocumentV2>;notation:Readonly<NotationDocumentV2>}=>{
+const parseExtras=(root:ParsedXmlNode,baseScore:ScoreDocumentV2,baseNotation:NotationDocumentV2,originalSource:ScoreDocumentV2['source']):{score:Readonly<ScoreDocumentV2>;notation:Readonly<NotationDocumentV2>}=>{
   const extras=new Map<string,VoiceExtras>();const normalV2=new Map(baseNotation.events.map((entry)=>[entry.target.eventId,entry.notation]));let currentDivisions=1;
   const partNodes=children(root,'part');
   for(const [pi,partNode] of partNodes.entries())for(const [mi,measureNode] of children(partNode,'measure').entries()){
@@ -111,13 +110,20 @@ const parseExtras=(root:ParsedXmlNode,baseScore:ScoreDocumentV2,baseNotation:Not
       if(pendingBefore.length>0)throw new MusicXmlError('Before-grace group has no following normal anchor.','INVALID_MUSICXML_SEMANTICS',{voiceId});extras.set(voiceId,extra);
     }
   }
-  const scoreCandidate={...baseScore,parts:baseScore.parts.map((part)=>({...part,staves:part.staves.map((staff)=>({...staff,measures:staff.measures.map((measure)=>({...measure,voices:measure.voices.map((voice)=>({...voice,graceGroups:Object.freeze(extras.get(voice.id)?.groups??[])}))}))}))}))};const score=createScoreDocumentV2(scoreCandidate);
+  const scoreCandidate={...baseScore,source:originalSource,parts:baseScore.parts.map((part)=>({...part,staves:part.staves.map((staff)=>({...staff,measures:staff.measures.map((measure)=>({...measure,voices:measure.voices.map((voice)=>({...voice,graceGroups:Object.freeze(extras.get(voice.id)?.groups??[])}))}))}))}))};const score=createScoreDocumentV2(scoreCandidate);
   const eventEntries=[...normalV2].filter(([,notation])=>notation.dots!==0||notation.beams.length>0||notation.tuplet!==null||notation.articulations.length>0||notation.ornaments.length>0).map(([id,notation])=>({target:addressEntityV2(score,id),notation}));
   const graceEventEntries=[...extras.values()].flatMap((extra)=>extra.graceEvents).map((entry)=>({target:addressEntityV2(score,entry.id),notation:entry.notation}));const graceNoteEntries=[...extras.values()].flatMap((extra)=>extra.graceNotes).map((entry)=>({target:addressEntityV2(score,entry.id),notation:entry.notation}));
   const notation=createNotationDocumentV2(score,{contractVersion:'2.0.0',documentId:score.id,revisionId:score.revision.id,measures:baseNotation.measures.map((entry)=>({target:addressEntityV2(score,entry.target.measureId),notation:entry.notation})) as never,events:eventEntries as never,notes:baseNotation.notes.map((entry)=>({target:addressEntityV2(score,entry.target.noteId),notation:entry.notation})) as never,graceEvents:graceEventEntries as never,graceNotes:graceNoteEntries as never});return{score,notation};
 };
 
 export const importNotationMusicXmlV2=(input:MusicXmlInput,options:MusicXmlImportOptions):Readonly<NotationMusicXmlV2ImportResult>=>{
-  const parsed=parseMusicXmlV2Tree(input,options);if(parsed.root.name!=='score-partwise')throw new MusicXmlError('MusicXML v2 profile requires score-partwise root.','UNSUPPORTED_MUSICXML',{root:parsed.root.name});
-  const base=importNotationMusicXml(v1Projection(parsed.root),options);const migrated=migrateSchemaPairV1ToV2(base.score,base.notation);const enriched=parseExtras(parsed.root,migrated.score,migrated.notation);return Object.freeze(enriched);
+  const parsed=parseMusicXmlV2Tree(input,options);
+  if(parsed.root.name!=='score-partwise')throw new MusicXmlError('MusicXML v2 profile requires score-partwise root.','UNSUPPORTED_MUSICXML',{root:parsed.root.name});
+  if(options.source.format!=='musicxml'||options.source.byteLength===null||options.source.byteLength!==parsed.inputByteLength)throw new MusicXmlError('MusicXML v2 source identity does not match original input bytes.','SOURCE_IDENTITY_MISMATCH',{expected:options.source.byteLength,observed:parsed.inputByteLength,format:options.source.format});
+  const projection=v1Projection(parsed.root);
+  const projectionSource=Object.freeze({...options.source,byteLength:new TextEncoder().encode(projection).byteLength});
+  const base=importNotationMusicXml(projection,{...options,source:projectionSource});
+  const migrated=migrateSchemaPairV1ToV2(base.score,base.notation);
+  const enriched=parseExtras(parsed.root,migrated.score,migrated.notation,options.source);
+  return Object.freeze(enriched);
 };
