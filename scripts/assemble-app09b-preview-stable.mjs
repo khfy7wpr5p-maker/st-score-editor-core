@@ -71,21 +71,6 @@ const stableBridge = `  const nativeReplaceChildren = root.replaceChildren.bind(
     document.documentElement.dataset.app09bRendererFrameStable = 'armed';
   };`;
 
-const autoResizeEnabled = '            autoResize: true,';
-const autoResizeDisabled = '            autoResize: false,';
-
-export function applyDeviceTestAutoResizePolicy(
-  bootstrap,
-  disableAutoResize = process.env.ST_APP09B_DISABLE_OSMD_AUTO_RESIZE === '1'
-) {
-  if (!disableAutoResize) return bootstrap;
-  const occurrences = bootstrap.split(autoResizeEnabled).length - 1;
-  if (occurrences !== 1) {
-    throw new Error(`APP09B iOS auto-resize proof expected one autoResize:true render option, observed ${occurrences}.`);
-  }
-  return bootstrap.replace(autoResizeEnabled, autoResizeDisabled);
-}
-
 export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defaultOutputDir } = {}) {
   const manifest = await assembleApp09BPreview({ runtimeDir, outputDir });
   const bootstrapPath = path.join(outputDir, 'st-score-editor-app09b-bootstrap.js');
@@ -94,8 +79,7 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   if (occurrences !== 1) {
     throw new Error(`APP09B stable iframe patch expected one moving bridge, observed ${occurrences}.`);
   }
-  const stablePatched = bootstrap.replace(movingBridge, stableBridge);
-  const patched = applyDeviceTestAutoResizePolicy(stablePatched);
+  const patched = bootstrap.replace(movingBridge, stableBridge);
   await writeFile(bootstrapPath, patched, 'utf8');
   return manifest;
 }
@@ -159,6 +143,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = await assembleStableApp09BPreviewCli({ runtimeDir, includeIosDiagnostic, refreshRendererRuntime });
   const mode = includeIosDiagnostic ? 'stable preview + iOS device diagnostic' : 'stable preview';
   const source = refreshRendererRuntime ? 'refreshed exact renderer' : 'provided renderer';
-  const resize = process.env.ST_APP09B_DISABLE_OSMD_AUTO_RESIZE === '1' ? 'autoResize=false proof' : 'autoResize=default';
-  console.log(`APP-09B ${mode} assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, ${source}, ${resize})`);
+  console.log(`APP-09B ${mode} assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, ${source}, autoResize=false controlled-host)`);
 }
