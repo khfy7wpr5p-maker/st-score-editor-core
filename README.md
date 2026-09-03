@@ -4,82 +4,50 @@ Security-first, renderer-independent semantic score-editing core for the standal
 
 ## Current reality
 
-SCORE-SCHEMA-EXPANSION is implemented through **SSE-10 bounded cross-staff notation runtime**.
+- **SSE-00–10 — COMPLETE / MERGED:** canonical V2/V3 score+notation evolution, bounded MusicXML, V3 staff/part topology and bounded V4 cross-staff runtime.
+- **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** the standalone editor app is the primary product target.
+- **APP-00 — COMPLETE / MERGED:** standalone-product authority boundary.
+- **APP-01 — COMPLETE / MERGED:** New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking and V4 document lifecycle.
+- **APP-02 — COMPLETE / MERGED:** basic note/rest/pitch/duration/chord authoring, grace, articulation, ornament and semantic keypad orchestration now compose with topology and cross-staff inside one `EditorHistoryV4`.
+- **APP-03 — NEXT:** independent browser bundle and responsive standalone editor shell.
+- **SesliTab V4 product cutover — DEFERRED:** no SesliTab product integration before the standalone app passes APP-09.
 
-- **SSE-00–10 — COMPLETE / MERGED:** canonical V2/V3 score+notation evolution, grace/articulation/ornament authoring, bounded MusicXML, renderer compatibility, V3 staff/part topology and bounded V4 cross-staff runtime.
-- **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** the standalone editor app is now the primary product target.
-- **APP-00 — COMPLETE / MERGED:** standalone-product authority boundary is documented.
-- **APP-01 — COMPLETE / MERGED:** reusable standalone document runtime supports New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking, V4 undo/redo and current V4 topology/cross-staff commits.
-- **APP-02 — NEXT:** compose the existing note/rest/pitch/duration/chord/grace/articulation/ornament/keypad capabilities into one canonical V4 product session.
-- **SesliTab V4 product cutover — DEFERRED:** it must not begin before the standalone app passes the final product gate.
-
-## Standalone product boundary
-
-The standalone app consumes Core; it does not become another score authority.
+## Standalone product authority
 
 ```text
-ST Score Editor Core
+ST Score Editor App
         |
-        +--> ST Score Editor App   <-- current target
+        v
+ScoreEditorAppDocument
         |
-        +--> SesliTab              <-- deferred until app complete
+        v
+EditorSessionV4
+        |
+        +--> ScoreDocumentV3
+        +--> NotationDocumentV4
+        |
+        v
+RendererRequestV4
 ```
 
-Local editing does not require a backend/service provider. File picker state, autosave state, renderer DOM/SVG, playback cursor and recent-file metadata remain noncanonical product state.
+The app consumes Core; it never becomes a second score authority. Local editing does not require a backend/service provider. File picker, autosave, viewport, renderer DOM/SVG, playback cursor and recent-file state remain noncanonical.
 
-APP-01 owns one `EditorSessionV4` document lifecycle. MusicXML Open computes a SHA-256 source identity before import. MusicXML Export is allowed only when `RendererRequestV4` exposes an admitted lossless XML projection; otherwise export fails closed. `markSaved` records an externally completed save but performs no persistence itself.
+APP-02 uses no whole-document V4 -> V2 -> V4 editing bridge. Every accepted musical/keypad/topology/cross-staff edit produces exactly one direct-child canonical revision and one same-revision notation document in the same V4 history.
+
+The V4 keypad surface keeps existing semantic action IDs. Duration/rest actions update timing and dot state atomically; accidental actions update canonical pitch alteration plus display accidental atomically; triplet/tie/slur require explicit revision-bound semantic targets. Renderer geometry and nearest-note inference are forbidden.
 
 Full productization sequence: `docs/st-score-editor-app-productization.md`.
 
-## SSE-10 canonical boundary
-
-Cross-staff notation does **not** move a canonical event into another staff. `ScoreDocumentV3/3.0.0` and `SemanticAddressV3/3.0.0` remain unchanged.
-
-A V4-capable session owns exactly one pair:
+## Canonical pair
 
 ```text
-ScoreDocumentV3 + NotationDocumentV4
+ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`NotationDocumentV4/4.0.0` preserves all V3 notation collections and adds `crossStaffPlacements[]`:
+`SemanticAddressV3` remains canonical source identity. Cross-staff presentation does not move canonical events: `NotationDocumentV4.crossStaffPlacements[]` assigns a display staff while source part/staff/frame/measure/voice, IDs, pitch, onset and duration remain unchanged.
 
-```text
-source: EventAddressV3
-  -> displayStaffId
-```
+## Renderer / MusicXML boundary
 
-The source part/staff/frame/measure/voice, event/note IDs, pitch, onset and duration remain unchanged. The display staff is notation semantics only.
+Renderer tokens resolve original source semantic identity. MusicXML remains exchange/projection data. Non-empty cross-staff placements still return `CROSS_STAFF_XML_PENDING` with `musicXml: null`; no silent flattening is admitted.
 
-Initial admitted profile:
-
-- normal timed pitched `note`/`chord` events only;
-- whole event assigned as one display unit;
-- source/display are distinct `standard` staffs in the same part;
-- same global frame correspondence required;
-- no rest, grace, percussion, split-chord or linked-TAB placement;
-- no coordinate or nearest-staff inference.
-
-Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. Visual cross-staff placement does not create relations between independent canonical source voices/staffs.
-
-## V4 safety and history
-
-V3 notation -> V4 migration is additive and initializes an empty placement collection. V4 -> V3 is lossless-only and rejects any non-empty placement set.
-
-Cross-staff authoring uses exact revision-bound source event addresses and explicit display staff IDs. Accepted edits create one direct-child score revision while preserving canonical musical content and rebinding V4 notation to the same revision.
-
-V4-aware topology composition rejects any staff/part edit that would orphan a source/display placement. Stable staff reorder preserves placement by ID; no implicit cascade or nearest surviving staff retarget is admitted.
-
-`EditorSessionStateV4` uses one atomic score-v3 + notation-v4 history. Undo/redo restores exact pairs. Renderer tokens resolve to the original source `SemanticAddressV3`, never display-staff geometry.
-
-## Renderer / product boundary
-
-`RendererRequestV4/4.0.0` may reuse existing lossless V3/V2 MusicXML projection only when `crossStaffPlacements` is empty. A non-empty placement set returns:
-
-```text
-CROSS_STAFF_XML_PENDING
-musicXml: null
-```
-
-Cross-staff MusicXML round trip is not claimed. MusicXML remains exchange/projection data; renderer and future hosts remain noncanonical; Guitar string/fret/fingering/voicing remains derivative.
-
-Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`. Split-chord/grace/rest/percussion cross-staff semantics, independent-source-staff relations, V4-native MusicXML, persistence/network and production/public-write authority remain gated.
+Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`. Split-chord/grace/rest/percussion cross-staff semantics, independent-source-staff relations, V4-native cross-staff MusicXML, cloud/server authority, production/public-write and SesliTab V4 cutover remain gated.

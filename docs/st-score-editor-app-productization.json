@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-03",
-  "status": "APP_02A_COMPLETE_MERGE_CANDIDATE_APP_02B_NEXT",
+  "status": "APP_02_COMPLETE_MERGED_APP_03_NEXT",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_requires": "APP_09_STANDALONE_RELEASE_GATE",
@@ -14,49 +14,57 @@
   },
   "service_provider_required_for_local_editing": false,
   "app_01": {
+    "status": "COMPLETE_MERGED",
     "new_score": true,
     "musicxml_open": true,
     "musicxml_source_sha256_verified_provider": true,
     "musicxml_export_lossless_only": true,
     "dirty_saved_revision_tracking": true,
     "undo_redo_v4": true,
-    "topology_commit": true,
-    "cross_staff_commit": true,
     "persistence_authority": false,
     "network_authority": false,
     "server_revision_authority": false
   },
   "app_02": {
-    "status": "IN_PROGRESS",
-    "app_02a": {
-      "status": "COMPLETE_MERGE_CANDIDATE",
+    "status": "COMPLETE_MERGED",
+    "basic_authoring": {
       "normal_note_pitch": true,
       "event_duration": true,
       "rest_to_note": true,
       "pitched_event_to_rest": true,
       "add_chord_tone": true,
-      "remove_chord_tone": true,
-      "stale_target_fail_closed": true,
-      "identity_collision_fail_closed": true,
-      "notation_orphan_protection": true,
-      "cross_staff_conflict_protection": true,
-      "same_v4_history_as_topology_and_cross_staff": true
+      "remove_chord_tone": true
     },
-    "app_02b": {
-      "status": "NEXT",
-      "grace": false,
-      "articulation": false,
-      "ornament": false,
-      "keypad_semantic_routing": false
-    }
+    "grace_authoring": true,
+    "articulation_authoring": true,
+    "ornament_authoring": true,
+    "keypad_semantic_routing": {
+      "simple_duration": true,
+      "rest_duration": true,
+      "accidental_pitch_and_display_atomic": true,
+      "dots_duration_and_notation_atomic": true,
+      "triplet_explicit_range": true,
+      "tie_explicit_note_pair": true,
+      "slur_explicit_note_pair": true,
+      "renderer_geometry_inference": false
+    },
+    "topology_same_history": true,
+    "cross_staff_same_history": true,
+    "stale_target_fail_closed": true,
+    "identity_collision_fail_closed": true,
+    "notation_orphan_protection": true,
+    "cross_staff_conflict_protection": true
   },
   "stages": [
     {"id":"APP-00","status":"COMPLETE_MERGED"},
     {"id":"APP-01","status":"COMPLETE_MERGED"},
-    {"id":"APP-02","status":"IN_PROGRESS"},
-    {"id":"APP-02A","status":"COMPLETE_MERGE_CANDIDATE"},
-    {"id":"APP-02B","status":"NEXT"},
-    {"id":"APP-03","status":"PLANNED"},
+    {"id":"APP-02","status":"COMPLETE_MERGED"},
+    {"id":"APP-02A","status":"COMPLETE_MERGED"},
+    {"id":"APP-02B1","status":"COMPLETE_MERGED"},
+    {"id":"APP-02B2","status":"COMPLETE_MERGED"},
+    {"id":"APP-02B3","status":"COMPLETE_MERGED"},
+    {"id":"APP-02C","status":"COMPLETE_MERGED"},
+    {"id":"APP-03","status":"NEXT"},
     {"id":"APP-04","status":"PLANNED"},
     {"id":"APP-05","status":"PLANNED"},
     {"id":"APP-06","status":"PLANNED"},
@@ -68,7 +76,8 @@
     "single_v4_history": true,
     "v4_to_v2_to_v4_edit_bridge_allowed": false,
     "parallel_mutable_authority_allowed": false,
-    "one_direct_child_revision_per_accepted_edit": true
+    "one_direct_child_revision_per_accepted_edit": true,
+    "semantic_selection_revision_bound": true
   },
   "global_invariants": {
     "musicxml_exchange_only": true,
@@ -78,5 +87,5 @@
     "playback_canonical_authority": false,
     "production_activation_by_merge": false
   },
-  "next_action": "APP_02B_GRACE_ARTICULATION_ORNAMENT_KEYPAD"
+  "next_action": "APP_03_STANDALONE_BROWSER_BUNDLE_AND_SHELL"
 }
