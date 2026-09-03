@@ -33,31 +33,17 @@ const buildBrowserArtifact = async ({ entryPoint, artifact, manifestFile, global
     metafile: true,
     logLevel: 'warning'
   });
-
-  const externalImports = Object.values(result.metafile.outputs)
-    .flatMap((output) => output.imports)
-    .filter((entry) => entry.external === true);
-  if (externalImports.length !== 0) {
-    throw new Error(`${label} browser bundle contains external imports: ${JSON.stringify(externalImports)}`);
-  }
-
+  const externalImports = Object.values(result.metafile.outputs).flatMap((output) => output.imports).filter((entry) => entry.external === true);
+  if (externalImports.length !== 0) throw new Error(`${label} browser bundle contains external imports: ${JSON.stringify(externalImports)}`);
   const bundle = await readFile(outFile);
   const text = bundle.toString('utf8');
-  for (const token of forbiddenTokens) {
-    if (text.includes(token)) throw new Error(`${label} browser bundle contains forbidden capability token: ${token}`);
-  }
+  for (const token of forbiddenTokens) if (text.includes(token)) throw new Error(`${label} browser bundle contains forbidden capability token: ${token}`);
   if (!text.includes(globalName)) throw new Error(`${label} browser bundle does not expose ${globalName}.`);
-
   const description = Object.freeze({
     ...manifest,
     bundler: Object.freeze({ package: 'esbuild', version: '0.28.2', license: 'MIT' }),
-    artifact,
-    format: 'iife',
-    target: 'es2022',
-    global: globalName,
-    externalImports: 0,
-    bytes: bundle.byteLength,
-    sha256: createHash('sha256').update(bundle).digest('hex')
+    artifact, format: 'iife', target: 'es2022', global: globalName, externalImports: 0,
+    bytes: bundle.byteLength, sha256: createHash('sha256').update(bundle).digest('hex')
   });
   await writeFile(`${OUT_DIR}/${manifestFile}`, `${JSON.stringify(description, null, 2)}\n`, 'utf8');
   console.log(`${label} browser bundle: PASS (${description.bytes} bytes, sha256 ${description.sha256})`);
@@ -71,15 +57,9 @@ await buildBrowserArtifact({
   label: 'E7-H core',
   forbiddenTokens: CORE_FORBIDDEN_TOKENS,
   manifest: Object.freeze({
-    contract: 'ST_SCORE_EDITOR_CORE_BROWSER_BUNDLE',
-    version: '1.0.0',
-    runtimeVersion: '1.0.0',
-    networkCapable: false,
-    persistenceCapable: false,
-    recoveryStorageBundled: false,
-    serverRevisionAuthority: false,
-    approvalAuthority: false,
-    publicationAuthority: false
+    contract: 'ST_SCORE_EDITOR_CORE_BROWSER_BUNDLE', version: '1.0.0', runtimeVersion: '1.0.0',
+    networkCapable: false, persistenceCapable: false, recoveryStorageBundled: false,
+    rendererLifecycleBundled: false, serverRevisionAuthority: false, approvalAuthority: false, publicationAuthority: false
   })
 });
 
@@ -88,33 +68,17 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-05D standalone app',
+  label: 'APP-06A standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   manifest: Object.freeze({
-    contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE',
-    version: '1.0.0',
-    runtimeVersion: '1.0.0',
-    standaloneProduct: true,
-    canonicalAuthority: false,
-    networkCapable: false,
-    persistenceCapable: false,
-    rendererAuthority: false,
-    rendererBundled: false,
-    fileWorkflowBundled: true,
-    fileSystemAccessAdapter: true,
-    fileInputFallback: true,
-    downloadFallback: true,
-    markSavedAfterSuccessfulHandoffOnly: true,
-    recoveryAutosaveBundled: true,
-    browserLocalRecoveryStorage: 'indexedDB',
-    recoveryCanonicalAuthority: false,
-    recoveryAutoRestore: false,
-    recoveryExplicitApply: true,
-    recoveryApplyRevisionGuard: true,
-    recoveryMaxDocuments: 8,
-    playbackBundled: false,
-    serverRevisionAuthority: false,
-    publicationAuthority: false,
+    contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE', version: '1.0.0', runtimeVersion: '1.0.0', standaloneProduct: true,
+    canonicalAuthority: false, networkCapable: false, persistenceCapable: false,
+    rendererAuthority: false, rendererBundled: false, rendererLifecycleBundled: true, rendererImplementationBundled: false,
+    rendererAutoRender: false, rendererFamily: 'osmd', rendererExactHostVersion: '2.1.1', staleRenderResultRejected: true,
+    fileWorkflowBundled: true, recoveryAutosaveBundled: true, browserLocalRecoveryStorage: 'indexedDB',
+    recoveryCanonicalAuthority: false, recoveryAutoRestore: false, recoveryExplicitApply: true,
+    recoveryApplyRevisionGuard: true, recoveryMaxDocuments: 8,
+    playbackBundled: false, serverRevisionAuthority: false, publicationAuthority: false,
     entryHtml: 'st-score-editor-app.html'
   })
 });
@@ -143,4 +107,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-05D standalone HTML: PASS');
+console.log('APP-06A standalone HTML: PASS');
