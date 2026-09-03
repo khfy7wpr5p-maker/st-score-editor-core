@@ -99,6 +99,33 @@ await buildBrowserArtifact({
     fileWorkflowBundled: false,
     playbackBundled: false,
     serverRevisionAuthority: false,
-    publicationAuthority: false
+    publicationAuthority: false,
+    entryHtml: 'st-score-editor-app.html'
   })
 });
+
+const standaloneHtml = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ST Score Editor</title>
+<style>html,body,#st-score-editor-app-root{margin:0;width:100%;height:100%;min-height:100%;}body{overflow:hidden;}</style>
+</head>
+<body>
+<div id="st-score-editor-app-root"></div>
+<script src="./st-score-editor-app.js"></script>
+<script>
+(() => {
+  const root = document.getElementById('st-score-editor-app-root');
+  if (!root || !globalThis.STScoreEditorApp) throw new Error('ST_SCORE_EDITOR_APP_BOOTSTRAP_FAILED');
+  const controller = globalThis.STScoreEditorApp.createController();
+  controller.mount(root);
+  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });
+})();
+</script>
+</body>
+</html>
+`;
+await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
+console.log('APP-03A standalone HTML: PASS');
