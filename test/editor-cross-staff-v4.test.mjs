@@ -9,7 +9,7 @@ import { createNotationDocumentV4, NotationV4Error } from '../dist/packages/nota
 import { migrateNotationV3ToV4, downgradeNotationV4ToV3, MigrationV3V4Error } from '../dist/packages/schema-migration-v3-v4/src/index.js';
 import { executeCrossStaffAuthoringV4 } from '../dist/packages/editor-cross-staff-authoring-v4/src/index.js';
 import { executeTopologyAuthoringV4, TopologyAuthoringV4Error } from '../dist/packages/editor-topology-authoring-v4/src/index.js';
-import { createRendererRequestV4, renderableMusicXmlV4, RendererContractV4Error } from '../dist/packages/renderer-contract-v4/src/index.js';
+import { createRendererRequestV4, renderableMusicXmlV4, resolveRenderTokenV4, RendererContractV4Error } from '../dist/packages/renderer-contract-v4/src/index.js';
 import { createEditorSessionV4FromV3, commitSessionCrossStaffIntentV4, navigateSessionHistoryV4 } from '../dist/packages/editor-session-controller-v4/src/index.js';
 
 const note = (eventId, noteId, onset, step) => ({ id:eventId, kind:'note', onset, duration:{numerator:1,denominator:4}, note:{id:noteId,pitch:{step,alter:0,octave:4}} });
@@ -58,10 +58,11 @@ test('SSE-10 V4 validator rejects same-staff and rest placement instead of infer
   assert.throws(()=>createNotationDocumentV4(v3.score,{...v4,crossStaffPlacements:[{source:addressEntityV3(v3.score,'r3'),displayStaffId:'staff-1'}]}),e=>e instanceof NotationV4Error&&e.code==='INVALID_CROSS_STAFF_SOURCE');
 });
 
-test('SSE-10 non-empty V4 placement blocks downgrade and MusicXML projection fail-closed',()=>{
+test('SSE-10 non-empty V4 placement blocks downgrade and MusicXML projection fail-closed while tokens keep source ancestry',()=>{
   const v3=base();const placed=place(v3.score,migrateNotationV3ToV4(v3.score,v3.notation));
   assert.throws(()=>downgradeNotationV4ToV3(placed.score,placed.notation),e=>e instanceof MigrationV3V4Error&&e.code==='DOWNGRADE_UNREPRESENTABLE');
   const request=createRendererRequestV4(placed.score,placed.notation);assert.equal(request.projectionStatus,'CROSS_STAFF_XML_PENDING');assert.equal(request.musicXml,null);
+  const entry=request.manifest.entries.find(item=>item.address.kind==='event'&&item.address.eventId==='e2');assert.ok(entry);const resolved=resolveRenderTokenV4(placed.score,request,entry.token);assert.equal(resolved.kind,'event');assert.equal(resolved.staffId,'staff-1');assert.equal(resolved.eventId,'e2');
   assert.throws(()=>renderableMusicXmlV4(request),e=>e instanceof RendererContractV4Error);
 });
 
