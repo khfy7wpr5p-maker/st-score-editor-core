@@ -1,14 +1,35 @@
 # ST Score Editor Core
 
-Security-first, renderer-independent semantic score-editing core for ST score products.
+Security-first, renderer-independent semantic score-editing core for the standalone ST Score Editor App and later ST score products.
 
 ## Current reality
 
 SCORE-SCHEMA-EXPANSION is implemented through **SSE-10 bounded cross-staff notation runtime**.
 
-- **SSE-00–09 — COMPLETE / MERGED:** v2 schema/session, grace/articulation/ornament authoring, bounded MusicXML v2, renderer/SesliTab v2 compatibility, V3 staff/part topology contract and bounded V3 topology runtime.
-- **SSE-10 design — APPROVED / FROZEN / MERGED:** cross-staff presentation ownership keeps musical ownership on the source staff/voice.
-- **SSE-10 runtime — COMPLETE / MERGED:** `NotationDocumentV4`, guarded V3↔V4 notation migration, cross-staff placement authoring, V4-aware topology safety, atomic V4 history/session and fail-closed renderer projection.
+- **SSE-00–10 — COMPLETE / MERGED:** canonical V2/V3 score+notation evolution, grace/articulation/ornament authoring, bounded MusicXML, renderer compatibility, V3 staff/part topology and bounded V4 cross-staff runtime.
+- **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** the standalone editor app is now the primary product target.
+- **APP-00 — COMPLETE / MERGE CANDIDATE:** standalone-product authority boundary is documented.
+- **APP-01 — COMPLETE / MERGE CANDIDATE:** reusable standalone document runtime supports New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking, V4 undo/redo and current V4 topology/cross-staff commits.
+- **APP-02 — NEXT:** compose the existing note/rest/pitch/duration/chord/grace/articulation/ornament/keypad capabilities into one canonical V4 product session.
+- **SesliTab V4 product cutover — DEFERRED:** it must not begin before the standalone app passes the final product gate.
+
+## Standalone product boundary
+
+The standalone app consumes Core; it does not become another score authority.
+
+```text
+ST Score Editor Core
+        |
+        +--> ST Score Editor App   <-- current target
+        |
+        +--> SesliTab              <-- deferred until app complete
+```
+
+Local editing does not require a backend/service provider. File picker state, autosave state, renderer DOM/SVG, playback cursor and recent-file metadata remain noncanonical product state.
+
+APP-01 owns one `EditorSessionV4` document lifecycle. MusicXML Open computes a SHA-256 source identity before import. MusicXML Export is allowed only when `RendererRequestV4` exposes an admitted lossless XML projection; otherwise export fails closed. `markSaved` records an externally completed save but performs no persistence itself.
+
+Full productization sequence: `docs/st-score-editor-app-productization.md`.
 
 ## SSE-10 canonical boundary
 
@@ -59,6 +80,6 @@ CROSS_STAFF_XML_PENDING
 musicXml: null
 ```
 
-Cross-staff MusicXML round trip is not claimed. SesliTab V4 product cutover is not activated. MusicXML remains exchange/projection data; renderer/SesliTab remain noncanonical; Guitar string/fret/fingering/voicing remains derivative.
+Cross-staff MusicXML round trip is not claimed. MusicXML remains exchange/projection data; renderer and future hosts remain noncanonical; Guitar string/fret/fingering/voicing remains derivative.
 
 Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`. Split-chord/grace/rest/percussion cross-staff semantics, independent-source-staff relations, V4-native MusicXML, persistence/network and production/public-write authority remain gated.

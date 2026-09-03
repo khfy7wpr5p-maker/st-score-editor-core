@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "st_score_editor_app_productization_program",
+  "project": "ST Score Editor App",
+  "date": "2026-09-03",
+  "status": "APP_01_COMPLETE_MERGE_CANDIDATE",
+  "primary_product_target": "ST_SCORE_EDITOR_APP",
+  "seslitab_product_cutover_deferred": true,
+  "seslitab_cutover_requires": "APP_09_STANDALONE_RELEASE_GATE",
+  "canonical_pair": {
+    "score": "ScoreDocumentV3/3.0.0",
+    "notation": "NotationDocumentV4/4.0.0",
+    "session": "EditorSessionV4/4.0.0"
+  },
+  "service_provider_required_for_local_editing": false,
+  "app_01": {
+    "new_score": true,
+    "musicxml_open": true,
+    "musicxml_source_sha256_verified_provider": true,
+    "musicxml_export_lossless_only": true,
+    "dirty_saved_revision_tracking": true,
+    "undo_redo_v4": true,
+    "topology_commit": true,
+    "cross_staff_commit": true,
+    "persistence_authority": false,
+    "network_authority": false,
+    "server_revision_authority": false
+  },
+  "stages": [
+    {"id":"APP-00","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"APP-01","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"APP-02","status":"NEXT"},
+    {"id":"APP-03","status":"PLANNED"},
+    {"id":"APP-04","status":"PLANNED"},
+    {"id":"APP-05","status":"PLANNED"},
+    {"id":"APP-06","status":"PLANNED"},
+    {"id":"APP-07","status":"PLANNED"},
+    {"id":"APP-08","status":"PLANNED"},
+    {"id":"APP-09","status":"PLANNED"}
+  ],
+  "app_02_required_authoring": [
+    "NOTE_REST_INSERT_DELETE",
+    "PITCH",
+    "DURATION",
+    "CHORD_TONES",
+    "GRACE",
+    "ARTICULATION",
+    "ORNAMENT",
+    "KEYPAD_SEMANTIC_COMMANDS"
+  ],
+  "app_02_invariants": {
+    "single_v4_history": true,
+    "v4_to_v2_to_v4_edit_bridge_allowed": false,
+    "parallel_mutable_authority_allowed": false,
+    "one_direct_child_revision_per_accepted_edit": true
+  },
+  "global_invariants": {
+    "musicxml_exchange_only": true,
+    "renderer_canonical_authority": false,
+    "app_shell_canonical_authority": false,
+    "autosave_canonical_authority": false,
+    "playback_canonical_authority": false,
+    "production_activation_by_merge": false
+  },
+  "next_action": "APP_02_UNIFIED_V4_AUTHORING_SESSION"
+}
