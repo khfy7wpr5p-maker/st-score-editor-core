@@ -6,6 +6,8 @@ import { emptyNotationDocument } from '../dist/packages/notation-structure/src/i
 import {
   RendererContractError,
   createRendererRequest,
+  createRendererRequestWithProfile,
+  rendererProfileForIntegration,
   resolveRenderToken
 } from '../dist/packages/renderer-contract/src/index.js';
 import { OsmdAdapterError, renderWithOsmd } from '../dist/packages/renderer-osmd/src/index.js';
@@ -36,6 +38,11 @@ const makeScore = (revisionId = 'rev-1') => createScoreDocument({
 });
 
 const requestFor = (family, score = makeScore()) => createRendererRequest(score, emptyNotationDocument(score), family);
+const renderingLayerRequest = (score = makeScore()) => createRendererRequestWithProfile(
+  score,
+  emptyNotationDocument(score),
+  rendererProfileForIntegration('st-score-rendering-layer')
+);
 
 test('render manifest uses opaque unique tokens bound to semantic revision addresses', () => {
   const score = makeScore();
@@ -86,10 +93,31 @@ test('OSMD host adapter loads canonical MusicXML then renders without mutation a
   assert.equal(Object.prototype.hasOwnProperty.call(session, 'mutate'), false);
 });
 
-test('OSMD rejects a host version outside the admitted profile', async () => {
-  const request = requestFor('osmd');
+test('OSMD 2.1.2 ST Rendering Layer host is admitted only with the exact 2.1.2 request profile', async () => {
+  const calls = [];
   const host = {
     packageName: 'opensheetmusicdisplay', packageVersion: '2.1.2', license: 'BSD-3-Clause',
+    instance: {
+      async load(xml) { calls.push(['load', xml]); },
+      render() { calls.push(['render']); }
+    }
+  };
+  const request = renderingLayerRequest();
+  const session = await renderWithOsmd(host, request);
+  assert.equal(session.rendered, true);
+  assert.equal(request.renderer.packageVersion, '2.1.2');
+  assert.equal(calls.length, 2);
+
+  await assert.rejects(
+    () => renderWithOsmd(host, requestFor('osmd')),
+    (error) => error instanceof OsmdAdapterError && error.code === 'INVALID_OSMD_HOST'
+  );
+});
+
+test('OSMD rejects a host version outside the admitted profiles', async () => {
+  const request = requestFor('osmd');
+  const host = {
+    packageName: 'opensheetmusicdisplay', packageVersion: '2.1.3', license: 'BSD-3-Clause',
     instance: { async load() {}, render() {} }
   };
   await assert.rejects(
