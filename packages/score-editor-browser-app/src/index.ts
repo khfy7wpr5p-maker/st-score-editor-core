@@ -25,6 +25,7 @@ import {
   type OpenMusicXmlAppDocumentOptions,
   type ScoreEditorAppDocument
 } from '../../score-editor-app-document/src/index.js';
+import { adoptScoreEditorAppDocumentSnapshot } from '../../score-editor-app-snapshot-adoption/src/index.js';
 
 export const SCORE_EDITOR_BROWSER_APP_VERSION = '1.0.0' as const;
 
@@ -136,6 +137,7 @@ export interface StandaloneScoreEditorController {
   readonly unmount: () => void;
   readonly newDocument: (options?: NewAppDocumentOptions) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly openMusicXml: (musicXml: string, options?: OpenMusicXmlAppDocumentOptions) => Promise<Readonly<ScoreEditorBrowserAppSnapshot>>;
+  readonly adoptValidatedSnapshot: (document: ScoreEditorAppDocument) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly exportMusicXml: () => string;
   readonly markSaved: (title?: string) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly select: (address: SemanticAddressV3 | null) => Readonly<ScoreEditorBrowserAppSnapshot>;
@@ -283,6 +285,7 @@ export const createStandaloneScoreEditorController = (): Readonly<StandaloneScor
       catch (error) { lastError = errorInfo(error); }
       return notify();
     },
+    adoptValidatedSnapshot: (document) => mutate(() => adoptScoreEditorAppDocumentSnapshot(document)),
     exportMusicXml: () => exportMusicXmlScoreEditorAppDocument(requireDocument()),
     markSaved: (nextTitle) => mutate(() => markScoreEditorAppDocumentSaved(requireDocument(), nextTitle ?? requireDocument().title)),
     select: (address) => mutate(() => selectAppSemanticAddress(requireDocument(), address)),
