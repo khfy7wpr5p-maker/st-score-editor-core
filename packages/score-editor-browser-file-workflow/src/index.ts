@@ -22,21 +22,20 @@ export interface BrowserFileHandleLike {
   createWritable(): Promise<BrowserWritableFileLike>;
 }
 
+export interface BrowserFilePickerTypeLike {
+  readonly description: string;
+  readonly accept: Readonly<Record<string, readonly string[]>>;
+}
+
 export interface BrowserOpenFilePickerOptionsLike {
   readonly multiple: false;
-  readonly types: readonly [{
-    readonly description: string;
-    readonly accept: Readonly<Record<string, readonly string[]>>;
-  }];
+  readonly types: readonly BrowserFilePickerTypeLike[];
   readonly excludeAcceptAllOption: false;
 }
 
 export interface BrowserSaveFilePickerOptionsLike {
   readonly suggestedName: string;
-  readonly types: readonly [{
-    readonly description: string;
-    readonly accept: Readonly<Record<string, readonly string[]>>;
-  }];
+  readonly types: readonly BrowserFilePickerTypeLike[];
   readonly excludeAcceptAllOption: false;
 }
 
