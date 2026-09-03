@@ -24,8 +24,8 @@ Repository reality only; planned capability is not production capability.
 
 The standalone ST Score Editor App is the active product target. SesliTab V4 product cutover is deferred until the standalone product passes APP-09.
 
-- **APP-00 — COMPLETE / MERGE CANDIDATE:** standalone product/authority contract.
-- **APP-01 — COMPLETE / MERGE CANDIDATE:** standalone document runtime: New, MusicXML Open, admitted MusicXML Export, title/origin, dirty/saved revision tracking, V4 undo/redo and current V4 topology/cross-staff commits.
+- **APP-00 — COMPLETE / MERGED:** standalone product/authority contract.
+- **APP-01 — COMPLETE / MERGED:** standalone document runtime: New, MusicXML Open, admitted MusicXML Export, title/origin, dirty/saved revision tracking, V4 undo/redo and current V4 topology/cross-staff commits.
 - **APP-02 — NEXT:** unify note/rest insertion/deletion, pitch/duration, chord tones, grace, articulation, ornament and keypad semantics inside the same V4 history.
 - **APP-03 — PLANNED:** independent browser bundle and responsive editor shell.
 - **APP-04 — PLANNED:** local file picker/open/save/download workflow.
