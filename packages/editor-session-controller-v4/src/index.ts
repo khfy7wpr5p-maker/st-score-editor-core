@@ -1,5 +1,5 @@
 import { createScoreDocumentV3, type ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
-import { addressEntityV3, type SemanticAddressV3 } from '../../addressing-v3/src/index.js';
+import { addressEntityV3, resolveSemanticAddressV3, type SemanticAddressV3 } from '../../addressing-v3/src/index.js';
 import { createNotationDocumentV3, type NotationDocumentV3 } from '../../notation-structure-v3/src/index.js';
 import { createNotationDocumentV4, type NotationDocumentV4 } from '../../notation-structure-v4/src/index.js';
 import { migrateNotationV3ToV4 } from '../../schema-migration-v3-v4/src/index.js';
@@ -12,6 +12,7 @@ import { executeBasicAuthoringV4, type BasicAuthoringV4Options } from '../../edi
 import { executeGraceAuthoringV4, type GraceAuthoringV4Options } from '../../editor-grace-authoring-v4/src/index.js';
 import { executeArticulationAuthoringV4, type ArticulationAuthoringV4Options } from '../../editor-articulation-authoring-v4/src/index.js';
 import { executeOrnamentAuthoringV4, type OrnamentAuthoringV4Options } from '../../editor-ornament-authoring-v4/src/index.js';
+import { executeEditorKeypadActionV4, type EditorKeypadV4Options } from '../../editor-keypad-execution-v4/src/index.js';
 
 export const EDITOR_SESSION_V4_VERSION = '4.0.0' as const;
 export interface EditorSessionStateV4 {
@@ -64,6 +65,13 @@ export const commitSessionOrnamentAuthoringIntentV4 = (session: EditorSessionSta
   return state(history, result.selection, 'ORNAMENT_AUTHORING_EDIT_COMMITTED', 'Ornament authoring edit committed in the unified V4 history.');
 };
 
+export const commitSessionKeypadActionV4 = (session: EditorSessionStateV4, action: unknown, advancedTarget: unknown, options: EditorKeypadV4Options): Readonly<EditorSessionStateV4> => {
+  const current = session.history.present;
+  const result = executeEditorKeypadActionV4(current.score, current.notation, session.selection, action, advancedTarget, options);
+  const history = commitEditorHistoryV4(session.history, result.score, result.notation);
+  return state(history, result.selection, 'KEYPAD_EDIT_COMMITTED', 'Semantic keypad action committed atomically in the unified V4 history.');
+};
+
 export const commitSessionCrossStaffIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: CrossStaffAuthoringV4Options): Readonly<EditorSessionStateV4> => {
   const current = session.history.present;
   const result = executeCrossStaffAuthoringV4(current.score, current.notation, intent, options);
@@ -78,6 +86,12 @@ export const commitSessionTopologyIntentV4 = (session: EditorSessionStateV4, int
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
   const selection = addressEntityV3(history.present.score, result.selectionEntityId);
   return state(history, selection, 'TOPOLOGY_EDIT_COMMITTED', 'Topology edit committed with V4 cross-staff orphan protection.');
+};
+
+export const selectSessionSemanticAddressV4 = (session: EditorSessionStateV4, address: SemanticAddressV3 | null): Readonly<EditorSessionStateV4> => {
+  if (address === null) return state(session.history, null, 'SELECTION_CHANGED', 'Semantic selection cleared.');
+  resolveSemanticAddressV3(session.history.present.score, address);
+  return state(session.history, address, 'SELECTION_CHANGED', 'Current-revision semantic selection accepted.');
 };
 
 export const navigateSessionHistoryV4 = (session: EditorSessionStateV4, direction: 'UNDO' | 'REDO'): Readonly<EditorSessionStateV4> =>
