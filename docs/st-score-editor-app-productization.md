@@ -1,12 +1,12 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–07 COMPLETE / MERGED / APP-08 NEXT / NOT STARTED**
+Status: **ACTIVE / APP-00–08 COMPLETE / MERGED / APP-09 NEXT / NOT STARTED**
 
 Date: 2026-09-03
 
 ## Product decision
 
-ST Score Editor must become a complete standalone application before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback state is noncanonical. Local editing and APP-07 playback do not require a backend.
+ST Score Editor must become a complete standalone application before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print state is noncanonical. Local product operation through APP-08 requires no backend.
 
 ## Completed stages
 
@@ -26,7 +26,7 @@ Native V4 basic, grace, articulation, ornament, semantic keypad, topology and cr
 ### APP-03 — Standalone browser bundle and shell
 Status: **COMPLETE / MERGED**
 
-Independent frozen `STScoreEditorApp` global, self-contained JS bundle, integrity manifest, directly openable HTML bootstrap and responsive toolbar/keypad/viewport/inspector/status shell.
+Independent frozen `STScoreEditorApp` global, self-contained JS bundle, integrity manifest, directly openable HTML bootstrap and responsive shell.
 
 ### APP-04 — Local file workflow
 Status: **COMPLETE / MERGED**
@@ -36,62 +36,67 @@ PRs #72–73 provide bounded `.musicxml/.xml` open/save/download, File System Ac
 ### APP-05 — Local recovery/autosave
 Status: **COMPLETE / MERGED**
 
-Merged through PRs #76–79. Recovery stores only a validated current canonical V3/V4 snapshot plus bounded metadata, uses SHA-256 integrity, max 64 MiB payload and max 8 browser-local IndexedDB records, never auto-restores, and applies only through explicit document/revision-guarded canonical revalidation. Recovery remains noncanonical and cannot become persistence/server/publication authority.
+Merged through PRs #76–79. Recovery stores only a validated current canonical V3/V4 snapshot plus bounded metadata, uses SHA-256 integrity, remains browser-local/noncanonical, never auto-restores and applies only through explicit document/revision-guarded canonical revalidation.
 
 ### APP-06 — Renderer interaction and viewport
 Status: **COMPLETE / MERGED**
 
-- **APP-06A:** current guarded `RendererRequestV4` lifecycle; admitted projection only; stale render completion rejected.
-- **APP-06B:** PR #82 / `0965d9267083ef43501960bff308eb02275a1a9c`; current revision-bound opaque manifest token resolves to `SemanticAddressV3` selection only. DOM/SVG/coordinates/geometry remain non-authoritative.
-- **APP-06C:** PR #83 / `38b0f6c8d6f66a768927dcbc366138be584c62b6`; zoom/pan/native-scroll/page navigation is presentation-only and touch/pointer/keyboard viewport activity creates no canonical revision.
-
-Cross-staff visual hit identity remains the original source semantic identity. Unsupported V4/cross-staff projection remains fail-closed.
+Current guarded `RendererRequestV4`, current-revision opaque token semantic hit mapping and presentation-only viewport navigation are merged. Renderer DOM/SVG/coordinates/geometry remain non-authoritative; stale renderer state fails closed.
 
 ### APP-07 — Local playback transport
 Status: **COMPLETE / MERGED**
 
 PR #85, merged at `0608e231b536299086cd3a516c5f221ca41b01e8`.
 
+- revision-bound derivative `PlaybackPlanV1` from current validated `ScoreDocumentV3`;
+- normal note/chord pitch and canonical timing scheduled locally;
+- browser-local Web Audio; no backend/network authority;
+- play/pause/stop/seek and playback-only 20–300 BPM tempo;
+- semantic playback cursor, no canonical/history authority;
+- stale playback stops on canonical revision change;
+- grace timing remains explicitly deferred/partial;
+- playback failure never blocks editor/OMR admission.
+
+### APP-08 — Export/print/PDF workflow
+Status: **COMPLETE / MERGED**
+
+PR #87, merged at `1d1c821be4c6192bdf562fcd2d9fde6f90f178fa`.
+
 Implemented bounded behavior:
 
-- `PlaybackPlanV1` is derived directly from the current validated `ScoreDocumentV3` and is bound to exact document/revision identity;
-- playback plan is derivative/noncanonical and has no score mutation authority;
-- normal note/chord pitch plus canonical onset/duration are scheduled; rests contribute observed timeline extent;
-- playback does not use MusicXML or renderer coordinates/DOM/SVG as live authority;
-- empty frame timing is not guessed: zero observed extent is retained with an explicit warning;
-- grace-note playback timing is explicitly deferred in this version; a plan with supported normal notes remains playable but reports partial semantics;
-- local browser Web Audio oscillator output is used with no network/backend requirement and no new runtime dependency;
-- play, pause, stop and seek are supported;
-- playback tempo is bounded to 20–300 BPM with 120 BPM default; tempo is playback state only and is not written to `ScoreDocumentV3`/`NotationDocumentV4`;
-- playback cursor carries revision-bound `SemanticAddressV3` identity while playing/paused, but never mutates canonical score state;
-- playback/tempo/seek/cursor operations create no `EditorHistoryV4` revision;
-- canonical revision changes stop/dispose stale playback derived from the old revision;
-- missing Web Audio, no playable events and audio-operation failures remain playback-specific and do not block authoring, OMR admission or editor history;
-- standalone browser manifest keeps playback canonical authority, network capability and editor-admission coupling false;
-- no schema change, `SemanticAddressV3` change, MusicXML live authority, SesliTab integration, cloud/server authority or E8-D external-engine invocation was introduced.
+- standalone runtime exposes explicit **Export XML** and **Print / PDF** actions;
+- MusicXML export reuses the existing admitted lossless current-pair exporter rather than creating a parallel serializer;
+- APP-08 export is deliberately separate from APP-04 save/download semantics: successful export does **not** call `markSaved`;
+- export handoff does not modify dirty/saved identity, score revision, notation revision or `EditorHistoryV4`;
+- export status may record which revision was handed off, but this is presentation-only state;
+- print first calls the existing guarded current renderer lifecycle;
+- browser print handoff occurs only if the rendered document/revision exactly matches the revision captured when print began;
+- missing renderer, unsupported/pending projection, renderer failure or stale revision fails closed before the print host is invoked;
+- print-specific CSS hides editor controls and resets presentation zoom for paper output only;
+- Print/PDF creates no canonical revision or history entry and has no score-selection/mutation authority;
+- PDF support is explicitly `browser-print-dialog-save-as-pdf`; the repository does not claim direct PDF-byte generation;
+- export/print remains local and has no network, backend, server-revision, persistence or publication authority;
+- APP-08 introduces no schema change, new runtime dependency, `.mxl` support, SesliTab integration or E8-D invocation.
 
 ## Next stage
 
-### APP-08 — Export/print/PDF workflow
+### APP-09 — Product hardening and standalone release gate
 Status: **NEXT / NOT STARTED**
 
-No APP-08 implementation was included in APP-07. The planned stage remains admitted MusicXML export plus print/PDF workflow under existing canonical and fail-closed boundaries.
-
-### APP-09 — Product hardening and standalone release gate
-Status: **PLANNED**
-
-iPhone/iPad/Safari, desktop browsers, touch/pointer/keyboard, performance, recovery, accessibility and release checklist.
+Planned scope: iPhone/iPad/Safari and desktop browsers, touch/pointer/keyboard validation, performance, recovery, accessibility and standalone release checklist. APP-09 implementation requires a separate explicit start/approval after fresh-read.
 
 Only after APP-09 passes may a separate SesliTab product integration program begin.
 
 ## Explicitly deferred / gated
 
-- APP-08 implementation until separately started;
+- APP-09 implementation until separately started;
+- standalone release before APP-09 passes;
 - SesliTab V4 product cutover before APP-09;
 - server revision authority;
 - cloud sync/collaboration;
 - account system;
 - public-write/publication activation;
+- direct PDF-byte generation;
 - V4-native cross-staff MusicXML round trip;
 - `.mxl` container support;
 - renderer-coordinate authoring or DOM/SVG/geometry authority;

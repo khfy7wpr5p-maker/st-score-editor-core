@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.7.0",
+  "schema_version": "1.8.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-03",
-  "status": "APP_07_COMPLETE_MERGED_APP_08_NEXT_NOT_STARTED",
+  "status": "APP_08_COMPLETE_MERGED_APP_09_NEXT_NOT_STARTED",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_requires": "APP_09_STANDALONE_RELEASE_GATE",
@@ -14,6 +14,7 @@
   },
   "service_provider_required_for_local_editing": false,
   "service_provider_required_for_local_playback": false,
+  "service_provider_required_for_export_print": false,
   "app_01": {"status":"COMPLETE_MERGED"},
   "app_02": {"status":"COMPLETE_MERGED","single_v4_history":true,"v4_to_v2_to_v4_edit_bridge_allowed":false},
   "app_03": {"status":"COMPLETE_MERGED","browser_global":"STScoreEditorApp","self_contained_bundle":true,"standalone_html_bootstrap":true,"responsive_shell":true},
@@ -23,8 +24,7 @@
     "musicxml_extensions":[".musicxml",".xml"],
     "mxl_supported":false,
     "max_local_musicxml_bytes":33554432,
-    "mark_saved_after_successful_external_handoff_only":true,
-    "failure_preserves_dirty":true,
+    "save_marks_saved_after_successful_external_handoff_only":true,
     "file_handle_bound_to_document_id":true,
     "persistence_authority":false
   },
@@ -32,89 +32,63 @@
     "status":"COMPLETE_MERGED",
     "merge_prs":[76,77,78,79],
     "current_snapshot_only":true,
-    "undo_redo_history_serialized":false,
     "sha256_integrity":true,
-    "canonical_v3_v4_validation":true,
-    "max_recovery_json_bytes":67108864,
     "browser_local_storage":"indexedDB",
-    "legacy_core_indexeddb_allowed":false,
-    "max_recovery_documents":8,
     "automatic_restore":false,
     "explicit_prepare_apply":true,
     "recovery_canonical_authority":false,
     "persistence_authority":false,
-    "network_authority":false,
-    "server_revision_authority":false,
-    "cloud_required":false
+    "network_authority":false
   },
   "app_06": {
     "status":"COMPLETE_MERGED",
-    "app_06a": {
-      "status":"COMPLETE_MERGED",
-      "merge_sha":"dcc69823fefebd17345738c83efb9958b86f2b00",
-      "renderer_lifecycle":true,
-      "current_renderer_request_only":true,
-      "admitted_projection_only":true,
-      "stale_render_result_rejected":true,
-      "renderer_canonical_authority":false
-    },
-    "app_06b": {
-      "status":"COMPLETE_MERGED",
-      "merge_pr":82,
-      "merge_sha":"0965d9267083ef43501960bff308eb02275a1a9c",
-      "semantic_hit_mapping":true,
-      "hit_canonical_input":"opaque_renderer_request_v4_manifest_token",
-      "stale_unknown_mismatch_fail_closed":true,
-      "dom_svg_coordinate_geometry_authority":false,
-      "valid_hit_selection_only":true,
-      "cross_staff_hit_resolves_original_source_identity":true
-    },
-    "app_06c": {
-      "status":"COMPLETE_MERGED",
-      "merge_pr":83,
-      "merge_sha":"38b0f6c8d6f66a768927dcbc366138be584c62b6",
-      "viewport_navigation":true,
-      "presentation_only":true,
-      "canonical_authority":false,
-      "coordinate_authoring":false,
-      "zoom_range":[0.25,4],
-      "input_modes":["touch","pointer","keyboard"],
-      "native_scroll_state_preserved_across_rerender":true,
-      "viewport_change_creates_canonical_revision":false
-    }
+    "renderer_current_revision_only":true,
+    "semantic_hit_mapping":"opaque_renderer_request_v4_manifest_token_to_SemanticAddressV3",
+    "stale_renderer_state_fail_closed":true,
+    "dom_svg_coordinate_geometry_authority":false,
+    "viewport_presentation_only":true
   },
   "app_07": {
     "status":"COMPLETE_MERGED",
     "merge_pr":85,
     "merge_sha":"0608e231b536299086cd3a516c5f221ca41b01e8",
-    "playback_implemented":true,
     "playback_plan":"PlaybackPlanV1/1.0.0",
     "plan_source":"ScoreDocumentV3",
     "plan_revision_bound":true,
-    "normal_note_chord_pitch_timing":true,
-    "rests_contribute_observed_timeline_extent":true,
-    "empty_frame_duration_inference":false,
-    "grace_playback":"DEFERRED_PARTIAL",
     "audio_output":"browser_web_audio_local",
-    "network_required":false,
-    "backend_required":false,
     "transport_actions":["play","pause","stop","seek"],
     "tempo_bpm":{"default":120,"min":20,"max":300,"canonical":false},
-    "semantic_cursor":true,
-    "cursor_canonical_mutation_authority":false,
+    "grace_playback":"DEFERRED_PARTIAL",
     "playback_creates_editor_history_revision":false,
     "canonical_revision_change_stops_stale_playback":true,
     "playback_failure_blocks_editor_admission":false,
-    "playback_failure_blocks_omr_admission":false,
-    "musicxml_live_playback_authority":false,
-    "renderer_geometry_playback_authority":false,
     "playback_canonical_authority":false,
-    "playback_network_authority":false,
-    "new_runtime_dependency_added":false
+    "playback_network_authority":false
   },
   "app_08": {
+    "status":"COMPLETE_MERGED",
+    "merge_pr":87,
+    "merge_sha":"1d1c821be4c6192bdf562fcd2d9fde6f90f178fa",
+    "export_print_pdf_implemented":true,
+    "musicxml_export_reuses_existing_lossless_exporter":true,
+    "musicxml_export_marks_saved":false,
+    "musicxml_export_changes_dirty_saved_identity":false,
+    "musicxml_export_creates_editor_history_revision":false,
+    "print_requires_current_renderer_revision":true,
+    "missing_renderer_fails_closed_before_print":true,
+    "stale_renderer_revision_fails_closed_before_print":true,
+    "pending_or_rejected_projection_fails_closed_before_print":true,
+    "print_creates_editor_history_revision":false,
+    "print_canonical_authority":false,
+    "print_network_authority":false,
+    "pdf_workflow":"BROWSER_PRINT_DIALOG_SAVE_AS_PDF",
+    "direct_pdf_bytes_generated":false,
+    "publication_authority":false,
+    "new_runtime_dependency_added":false
+  },
+  "app_09": {
     "status":"NEXT_NOT_STARTED",
-    "export_print_pdf_implemented":false
+    "standalone_release_gate":true
   },
   "stages": [
     {"id":"APP-00","status":"COMPLETE_MERGED"},
@@ -125,8 +99,8 @@
     {"id":"APP-05","status":"COMPLETE_MERGED"},
     {"id":"APP-06","status":"COMPLETE_MERGED"},
     {"id":"APP-07","status":"COMPLETE_MERGED"},
-    {"id":"APP-08","status":"NEXT_NOT_STARTED"},
-    {"id":"APP-09","status":"PLANNED"}
+    {"id":"APP-08","status":"COMPLETE_MERGED"},
+    {"id":"APP-09","status":"NEXT_NOT_STARTED"}
   ],
   "global_invariants": {
     "musicxml_exchange_only":true,
@@ -139,8 +113,10 @@
     "autosave_canonical_authority":false,
     "recovery_canonical_authority":false,
     "playback_canonical_authority":false,
-    "playback_editor_admission_coupled":false,
+    "export_canonical_authority":false,
+    "print_canonical_authority":false,
+    "direct_pdf_generation_claimed":false,
     "production_activation_by_merge":false
   },
-  "next_action":"APP_08_EXPORT_PRINT_PDF_FRESH_READ_ONLY_UNTIL_EXPLICIT_IMPLEMENTATION_APPROVAL"
+  "next_action":"APP_09_PRODUCT_HARDENING_FRESH_READ_ONLY_UNTIL_EXPLICIT_IMPLEMENTATION_APPROVAL"
 }
