@@ -145,7 +145,7 @@ export const createIndexedDbRecoveryRecordStore = (
     }
   };
   return Object.freeze({
-    put: async (record) => withDatabase(async (database) => {
+    put: async (record: Readonly<RecoveryStoredRecord>) => withDatabase(async (database) => {
       const transaction = database.transaction(RECOVERY_STORE_NAME, 'readwrite');
       transaction.objectStore(RECOVERY_STORE_NAME).put(parseRecord(record));
       await transactionDone(transaction);
@@ -156,7 +156,7 @@ export const createIndexedDbRecoveryRecordStore = (
       await transactionDone(transaction);
       return Object.freeze([...result]);
     }),
-    delete: async (documentId) => withDatabase(async (database) => {
+    delete: async (documentId: string) => withDatabase(async (database) => {
       const transaction = database.transaction(RECOVERY_STORE_NAME, 'readwrite');
       transaction.objectStore(RECOVERY_STORE_NAME).delete(documentId);
       await transactionDone(transaction);
@@ -280,7 +280,7 @@ export const createRecoveryAutosaveCoordinator = (
     version: SCORE_EDITOR_BROWSER_RECOVERY_STORAGE_VERSION,
     flush,
     scan: () => scanRecoveryRecordStore(store, options.sha256Hex === undefined ? {} : { sha256Hex: options.sha256Hex }),
-    deleteRecovery: (documentId) => store.delete(documentId),
+    deleteRecovery: (documentId: string) => store.delete(documentId),
     dispose: () => {
       if (disposed) return;
       disposed = true;
