@@ -1,11 +1,11 @@
 {
-  "schema_version": "1.10.1",
+  "schema_version": "1.10.2",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
   "stage": "SSE-10",
-  "status": "BOUNDED_RUNTIME_COMPLETE_MERGE_CANDIDATE",
-  "completed_merged_through": "SSE-09",
+  "status": "COMPLETE_MERGED",
+  "completed_merged_through": "SSE-10",
   "sse_10_design": "APPROVED_FROZEN_MERGED",
   "supported_runtime_score_versions": ["1.0.0", "2.0.0", "3.0.0"],
   "supported_runtime_notation_versions": ["1.0.0", "2.0.0", "3.0.0", "4.0.0"],
@@ -53,7 +53,7 @@
     {"id":"SSE-07","status":"COMPLETE_MERGED"},
     {"id":"SSE-08","status":"COMPLETE_MERGED"},
     {"id":"SSE-09","status":"COMPLETE_MERGED"},
-    {"id":"SSE-10","status":"COMPLETE_MERGE_CANDIDATE"}
+    {"id":"SSE-10","status":"COMPLETE_MERGED"}
   ],
   "global_invariants": {
     "source_immutable": true,
@@ -67,5 +67,5 @@
     "production_activation_by_merge": false,
     "new_runtime_dependency": false
   },
-  "next_action": "FINAL_EXACT_HEAD_NODE_18_20_22_CI_THEN_SQUASH_MERGE"
+  "next_action": "NEXT_EXPANSION_REQUIRES_SEPARATE_APPROVED_SCOPE"
 }
