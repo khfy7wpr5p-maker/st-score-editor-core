@@ -14,7 +14,7 @@ const readAppArtifact = async () => ({
   manifest: JSON.parse(await readFile(appManifestPath, 'utf8'))
 });
 
-test('APP-07 standalone browser artifact is playback-enabled without canonical/persistence/network authority', async () => {
+test('APP-08 standalone browser artifact adds export/print without canonical/persistence/network authority', async () => {
   const { bundle, manifest } = await readAppArtifact();
   assert.equal(manifest.contract, 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE');
   assert.equal(manifest.version, '1.0.0');
@@ -48,6 +48,14 @@ test('APP-07 standalone browser artifact is playback-enabled without canonical/p
   assert.deepEqual(manifest.playbackTempoRange, [20, 300]);
   assert.equal(manifest.playbackGraceSemantics, 'deferred-partial');
   assert.equal(manifest.playbackCursorMutationAuthority, false);
+  assert.equal(manifest.exportPrintBundled, true);
+  assert.equal(manifest.musicXmlExportCanonicalAuthority, false);
+  assert.equal(manifest.musicXmlExportMarksSaved, false);
+  assert.equal(manifest.printCanonicalAuthority, false);
+  assert.equal(manifest.printRequiresCurrentRendererRevision, true);
+  assert.equal(manifest.printNetworkCapable, false);
+  assert.equal(manifest.pdfWorkflow, 'browser-print-dialog-save-as-pdf');
+  assert.equal(manifest.pdfBytesGenerated, false);
   assert.equal(manifest.serverRevisionAuthority, false);
   assert.equal(manifest.publicationAuthority, false);
   assert.equal(manifest.externalImports, 0);
@@ -62,13 +70,13 @@ test('APP-05D IndexedDB admission is isolated to standalone recovery bundle, nev
   assert.doesNotMatch(coreBundle.toString('utf8'), /indexedDB/);
 });
 
-test('APP-03–07 standalone HTML bootstrap stays local and contains no silent recovery/playback script', async () => {
+test('APP-03–08 standalone HTML bootstrap stays local and contains no silent recovery/playback/export/print script', async () => {
   const html = await readFile(appHtmlPath, 'utf8');
   assert.match(html, /<meta name="viewport"/);
   assert.match(html, /st-score-editor-app\.js/);
   assert.match(html, /STScoreEditorApp\.createController\(\)/);
   assert.match(html, /controller\.mount\(root\)/);
-  assert.doesNotMatch(html, /XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|prepareRecovery|applyPreparedRecovery|restoreRecovery|playbackPlay\(/);
+  assert.doesNotMatch(html, /XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|prepareRecovery|applyPreparedRecovery|restoreRecovery|playbackPlay\(|exportMusicXmlFile\(|printCurrent\(/);
 });
 
 test('APP-05D global exposes explicit recovery API and degrades safely when IndexedDB is unavailable', async () => {
@@ -117,6 +125,25 @@ test('APP-07 global exposes local playback API but does not require Web Audio me
   assert.equal(controller.getPlaybackState().available, false);
 });
 
+test('APP-08 global exposes explicit export/print API and truthful browser-dialog PDF boundary', async () => {
+  const { bundle } = await readAppArtifact();
+  const context = vm.createContext({ TextEncoder, Blob, URL: class URL {} });
+  vm.runInContext(bundle.toString('utf8'), context, { filename: 'st-score-editor-app.js' });
+  const app = context.STScoreEditorApp;
+  assert.ok(app.exportPrint);
+  assert.equal(app.exportPrint.bundled, true);
+  assert.equal(app.exportPrint.musicXmlExportCanonicalAuthority, false);
+  assert.equal(app.exportPrint.musicXmlExportMarksSaved, false);
+  assert.equal(app.exportPrint.printCanonicalAuthority, false);
+  assert.equal(app.exportPrint.printRequiresCurrentRendererRevision, true);
+  assert.equal(app.exportPrint.pdfWorkflow, 'browser-print-dialog-save-as-pdf');
+  assert.equal(app.exportPrint.pdfBytesGenerated, false);
+  const controller = app.createController();
+  assert.equal(typeof controller.exportMusicXmlFile, 'function');
+  assert.equal(typeof controller.printCurrent, 'function');
+  assert.equal(controller.getExportPrintState().pdfBytesGenerated, false);
+});
+
 test('APP-03A app and legacy core globals coexist without authority collision', async () => {
   const { bundle } = await readAppArtifact();
   const coreBundle = await readFile(coreBundlePath);
@@ -131,6 +158,8 @@ test('APP-03A app and legacy core globals coexist without authority collision', 
   assert.equal(context.STScoreEditorApp.profile.recoveryCanonicalAuthority, false);
   assert.equal(context.STScoreEditorApp.profile.recoveryAutoRestore, false);
   assert.equal(context.STScoreEditorApp.profile.playbackCanonicalAuthority, false);
+  assert.equal(context.STScoreEditorApp.profile.musicXmlExportCanonicalAuthority, false);
+  assert.equal(context.STScoreEditorApp.profile.printCanonicalAuthority, false);
   const descriptor = Object.getOwnPropertyDescriptor(context, 'STScoreEditorApp');
   assert.equal(descriptor?.writable, false);
   assert.equal(descriptor?.configurable, false);

@@ -1,9 +1,9 @@
-import { createPlaybackEnabledStandaloneBrowserAppRuntime } from './playback-enabled.js';
+import { createExportPrintEnabledStandaloneBrowserAppRuntime } from './export-print-enabled.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createPlaybackEnabledStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createExportPrintEnabledStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createPlaybackEnabledStandaloneBrowserAppRuntime(),
+  value: createExportPrintEnabledStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
