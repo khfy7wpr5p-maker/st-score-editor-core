@@ -1,10 +1,13 @@
+import { execFile } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { assembleApp09BPreview } from './assemble-app09b-preview.mjs';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const defaultOutputDir = path.join(repoRoot, 'dist', 'browser');
+const execFileAsync = promisify(execFile);
 
 const movingBridge = `  const nativeReplaceChildren = root.replaceChildren.bind(root);
   root.replaceChildren = (...nodes) => {
@@ -82,11 +85,25 @@ export async function assembleStableApp09BPreviewCli({
   outputDir = defaultOutputDir,
   includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1'
 } = {}) {
-  if (includeIosDiagnostic) {
-    const { assembleIosDeviceDiagnosticApp09BPreview } = await import('./assemble-app09b-ios-device-diagnostic.mjs');
-    return assembleIosDeviceDiagnosticApp09BPreview({ runtimeDir, outputDir });
-  }
-  return assembleStableApp09BPreview({ runtimeDir, outputDir });
+  if (!includeIosDiagnostic) return assembleStableApp09BPreview({ runtimeDir, outputDir });
+
+  await execFileAsync(
+    process.execPath,
+    [path.join(repoRoot, 'scripts', 'assemble-app09b-ios-device-diagnostic.mjs')],
+    {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        ST_SCORE_RENDERER_RUNTIME_DIR: runtimeDir ?? '',
+        ST_APP09B_OUTPUT_DIR: outputDir
+      }
+    }
+  );
+
+  const manifest = JSON.parse(
+    await readFile(path.join(outputDir, 'st-score-editor-app09b.manifest.json'), 'utf8')
+  );
+  return manifest;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
