@@ -32,7 +32,7 @@ export const iosDeviceDiagnosticSource = `(() => {
   document.body.append(status);
 
   const setStatus = (value) => {
-    const text = String(value).slice(0, 220);
+    const text = String(value).slice(0, 320);
     status.textContent = 'iPhone tanı: ' + text;
     document.documentElement.dataset.app09bIosDiagnostic = text;
   };
@@ -55,12 +55,21 @@ export const iosDeviceDiagnosticSource = `(() => {
     return { clientX: event.clientX, clientY: event.clientY };
   };
 
-  const describeElementAt = (doc, x, y) => {
-    const element = doc.elementFromPoint(x, y);
-    if (!(element instanceof Element)) return 'none';
-    const tag = element.tagName.toLowerCase();
+  const describeElement = (doc, element) => {
+    const ElementConstructor = doc.defaultView?.Element;
+    if (!ElementConstructor || !(element instanceof ElementConstructor)) return 'none';
+    const tag = String(element.tagName || '?').toLowerCase();
+    const id = typeof element.getAttribute === 'function' ? element.getAttribute('id') : null;
     const cls = typeof element.getAttribute === 'function' ? element.getAttribute('class') : null;
-    return cls ? tag + '.' + String(cls).trim().split(/\\s+/).slice(0, 2).join('.') : tag;
+    const suffix = [id ? '#' + id : '', cls ? '.' + String(cls).trim().split(/\\s+/).slice(0, 2).join('.') : ''].join('');
+    return tag + suffix;
+  };
+
+  const describeHitSurface = (doc, x, y, eventTarget) => {
+    const top = doc.elementFromPoint(x, y);
+    const stack = typeof doc.elementsFromPoint === 'function' ? doc.elementsFromPoint(x, y) : top ? [top] : [];
+    const labels = stack.slice(0, 6).map((element) => describeElement(doc, element));
+    return 'target=' + describeElement(doc, eventTarget) + ' top=' + describeElement(doc, top) + ' stack=' + labels.join('>');
   };
 
   const handleInteraction = async (event) => {
@@ -84,8 +93,8 @@ export const iosDeviceDiagnosticSource = `(() => {
 
     const x = point.clientX;
     const y = point.clientY;
-    const landed = describeElementAt(doc, x, y);
-    setStatus(event.type + ': event ' + Math.round(x) + ',' + Math.round(y) + ' on ' + landed);
+    const surface = describeHitSurface(doc, x, y, event.target);
+    setStatus(event.type + ': event ' + Math.round(x) + ',' + Math.round(y) + ' ' + surface);
 
     const evidence = bridge.getState?.().renderEvidence ?? null;
     if (!evidence) {
@@ -97,16 +106,16 @@ export const iosDeviceDiagnosticSource = `(() => {
     try {
       hit = api.hitTestNoteDetailed({ clientX: x, clientY: y });
     } catch (error) {
-      setStatus(event.type + ': hit rejected ' + String(error?.message ?? error));
+      setStatus(event.type + ': hit rejected ' + String(error?.message ?? error) + ' ' + surface);
       return;
     }
 
     if (!hit || hit.kind !== 'HIT') {
-      setStatus(event.type + ': MISS ' + String(hit?.reason ?? 'unknown') + ' on ' + landed);
+      setStatus(event.type + ': MISS ' + String(hit?.reason ?? 'unknown') + ' ' + surface);
       return;
     }
     if (hit.renderEpoch !== evidence.renderEpoch || (hit.sourceId ?? null) !== (evidence.sourceId ?? null)) {
-      setStatus(event.type + ': STALE hit');
+      setStatus(event.type + ': STALE hit ' + surface);
       return;
     }
 
@@ -120,10 +129,10 @@ export const iosDeviceDiagnosticSource = `(() => {
       document.documentElement.dataset.app09bLastHit = 'selected';
       setStatus(
         'SELECTED via ' + event.type + ' ' +
-        String(hit.target?.partId ?? '?') + '/m' + String(hit.target?.measureIndex ?? '?') + '/n' + String(hit.target?.noteIndex ?? '?')
+        String(hit.target?.partId ?? '?') + '/m' + String(hit.target?.measureIndex ?? '?') + '/n' + String(hit.target?.noteIndex ?? '?') + ' ' + surface
       );
     } catch (error) {
-      setStatus(event.type + ': selection rejected ' + String(error?.code ?? error?.message ?? error));
+      setStatus(event.type + ': selection rejected ' + String(error?.code ?? error?.message ?? error) + ' ' + surface);
     }
   };
 
