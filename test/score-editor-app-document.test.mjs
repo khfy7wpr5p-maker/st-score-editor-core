@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 import {
   createNewScoreEditorAppDocument,
@@ -15,6 +16,8 @@ const idFactory = () => {
   let index = 0;
   return () => `id-${++index}`;
 };
+
+const nodeSha256 = async text => createHash('sha256').update(new TextEncoder().encode(text)).digest('hex');
 
 const plans = (score, prefix) => score.measureFrames.map((frame, index) => ({
   frameId: frame.id,
@@ -61,13 +64,23 @@ test('APP-01 save marker tracks dirty state through edit and undo without persis
 test('APP-01 opens MusicXML into a canonical V4 app document and marks imported revision clean', async () => {
   const original = createNewScoreEditorAppDocument({ idFactory: idFactory() });
   const xml = exportMusicXmlScoreEditorAppDocument(original);
-  const imported = await openMusicXmlScoreEditorAppDocument(xml, { title: 'Imported' });
+  const expectedSha256 = await nodeSha256(xml);
+  const imported = await openMusicXmlScoreEditorAppDocument(xml, { title: 'Imported', sha256Hex: nodeSha256 });
   assert.equal(imported.origin, 'MUSICXML');
   assert.equal(imported.title, 'Imported');
   assert.equal(imported.dirty, false);
   assert.equal(imported.session.history.present.score.source.format, 'musicxml');
   assert.equal(imported.session.history.present.score.source.byteLength, new TextEncoder().encode(xml).byteLength);
-  assert.match(imported.session.history.present.score.source.sha256, /^[0-9a-f]{64}$/);
+  assert.equal(imported.session.history.present.score.source.sha256, expectedSha256);
+});
+
+test('APP-01 rejects an invalid injected source digest instead of accepting fake identity', async () => {
+  const original = createNewScoreEditorAppDocument({ idFactory: idFactory() });
+  const xml = exportMusicXmlScoreEditorAppDocument(original);
+  await assert.rejects(
+    () => openMusicXmlScoreEditorAppDocument(xml, { sha256Hex: async () => 'not-a-sha256' }),
+    error => error instanceof ScoreEditorAppDocumentError && error.code === 'INVALID_SHA256_RESULT'
+  );
 });
 
 test('APP-01 fails closed when current topology has no admitted lossless MusicXML export', () => {
