@@ -85,7 +85,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-03A standalone app',
+  label: 'APP-04B standalone app',
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE',
     version: '1.0.0',
@@ -96,7 +96,11 @@ await buildBrowserArtifact({
     persistenceCapable: false,
     rendererAuthority: false,
     rendererBundled: false,
-    fileWorkflowBundled: false,
+    fileWorkflowBundled: true,
+    fileSystemAccessAdapter: true,
+    fileInputFallback: true,
+    downloadFallback: true,
+    markSavedAfterSuccessfulHandoffOnly: true,
     playbackBundled: false,
     serverRevisionAuthority: false,
     publicationAuthority: false,
@@ -128,4 +132,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-03A standalone HTML: PASS');
+console.log('APP-04B standalone HTML: PASS');
