@@ -18,7 +18,7 @@ Repository reality only; planned capability is not production capability.
 - **SSE-08 — COMPLETE / MERGED:** approved V3 staff/part topology contract freeze.
 - **SSE-09 — COMPLETE / MERGED:** bounded V3 topology runtime and authoring.
 - **SSE-10 design — APPROVED / FROZEN / MERGED:** cross-staff presentation ownership contract.
-- **SSE-10 runtime — COMPLETE / MERGE CANDIDATE:** bounded Notation V4 cross-staff placement runtime.
+- **SSE-10 runtime — COMPLETE / MERGED:** bounded Notation V4 cross-staff placement runtime.
 
 ## SSE-10 exact capability
 
