@@ -72,22 +72,25 @@ async function currentState(page) {
   });
 }
 
-async function waitForNewEpoch(page, previousEpoch, stage) {
+async function waitForNewEvidence(page, previousEvidence, stage) {
   try {
     await page.waitForFunction((before) => {
       const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
       const state = globalThis.STScoreEditorApp09B?.getState?.() ?? null;
+      const currentEpoch = state?.renderEvidence?.renderEpoch ?? null;
+      const currentSourceId = state?.renderEvidence?.sourceId ?? null;
+      const evidenceChanged = currentEpoch !== before.renderEpoch || currentSourceId !== before.sourceId;
       return document.documentElement.dataset.app09bRendererFrameStable === 'true' &&
         state?.snapshot?.revisionId !== null &&
         state?.renderer?.renderedRevisionId === state?.snapshot?.revisionId &&
         state?.renderer?.status?.code === 'RENDERED_CURRENT_REVISION' &&
-        typeof state?.renderEvidence?.renderEpoch === 'string' &&
-        state.renderEvidence.renderEpoch !== before &&
+        typeof currentEpoch === 'string' &&
+        evidenceChanged &&
         (frame instanceof HTMLIFrameElement ? (frame.contentDocument?.querySelectorAll('svg').length ?? 0) : 0) > 0;
-    }, previousEpoch, { timeout: 5000 });
+    }, previousEvidence, { timeout: 5000 });
   } catch (error) {
     const diagnostic = await currentState(page);
-    throw new Error(`APP-09B ${stage} produced no fresh renderEpoch after layout signal: ${JSON.stringify(diagnostic)}; ${String(error?.message ?? error)}`);
+    throw new Error(`APP-09B ${stage} produced no fresh renderer evidence pair after layout signal: ${JSON.stringify(diagnostic)}; ${String(error?.message ?? error)}`);
   }
 }
 
@@ -194,6 +197,7 @@ try {
     const state = globalThis.STScoreEditorApp09B?.getState?.() ?? null;
     return {
       renderEpoch: state?.renderEvidence?.renderEpoch ?? null,
+      sourceId: state?.renderEvidence?.sourceId ?? null,
       revision: state?.snapshot?.revisionId ?? null,
       controllerProfile: globalThis.STScoreEditorAppController?.profile ?? null,
       runtimeProfile: globalThis.STScoreEditorApp?.profile ?? null
@@ -202,14 +206,14 @@ try {
   if (typeof initial.renderEpoch !== 'string' || initial.revision === null) throw new Error(`APP-09B initial evidence missing: ${JSON.stringify(initial)}`);
 
   await page.setViewportSize({ width: 844, height: 390 });
-  await waitForNewEpoch(page, initial.renderEpoch, 'landscape');
+  await waitForNewEvidence(page, { renderEpoch: initial.renderEpoch, sourceId: initial.sourceId }, 'landscape');
   const landscape = await currentState(page);
   if (!landscape.sameFrameWindow || !landscape.sameRendererHost) throw new Error(`APP-09B renderer browsing context changed in landscape: ${JSON.stringify(landscape)}`);
   if (landscape.revision !== initial.revision || landscape.renderedRevision !== initial.revision) throw new Error(`APP-09B canonical revision changed during layout rerender: ${JSON.stringify({ initial, landscape })}`);
   const landscapeInteraction = await probeAndTap(page, 1);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await waitForNewEpoch(page, landscape.renderEpoch, 'portrait-restore');
+  await waitForNewEvidence(page, { renderEpoch: landscape.renderEpoch, sourceId: landscape.sourceId }, 'portrait-restore');
   const portrait = await currentState(page);
   if (!portrait.sameFrameWindow || !portrait.sameRendererHost) throw new Error(`APP-09B renderer browsing context changed after portrait restore: ${JSON.stringify(portrait)}`);
   if (portrait.revision !== initial.revision || portrait.renderedRevision !== initial.revision) throw new Error(`APP-09B canonical revision changed after portrait restore: ${JSON.stringify({ initial, portrait })}`);
