@@ -1,4 +1,6 @@
-import type { ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
+import { contentStavesV3, type ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
+import type { GraceEvent, GraceGroup } from '../../score-model-v2/src/index.js';
+import type { ScoreEvent } from '../../score-model/src/index.js';
 import {
   RENDER_MANIFEST_V4_VERSION,
   RENDER_REQUEST_V4_VERSION,
@@ -19,6 +21,13 @@ export interface ExternalRendererHitV4 {
   readonly renderRequestVersion: typeof RENDER_REQUEST_V4_VERSION;
   readonly renderManifestVersion: typeof RENDER_MANIFEST_V4_VERSION;
   readonly opaqueHitToken: string;
+}
+
+export interface RenderedScoreNoteRefV4 {
+  readonly partId: string;
+  readonly measureIndex: number;
+  readonly noteIndex: number;
+  readonly voice?: number;
 }
 
 export type EditorRendererSelectionBridgeV4ErrorCode =
@@ -91,6 +100,103 @@ export const createExternalRendererHitV4 = (
   renderManifestVersion: request.manifest.contractVersion,
   opaqueHitToken
 });
+
+const parseRenderedScoreNoteRefV4 = (input: unknown): Readonly<RenderedScoreNoteRefV4> => {
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) {
+    throw new EditorRendererSelectionBridgeV4Error('Rendered score note locator must be an object.', 'INVALID_EXTERNAL_HIT');
+  }
+  const value = input as Record<string, unknown>;
+  const keys = Object.keys(value).sort();
+  const withoutVoice = ['measureIndex','noteIndex','partId'];
+  const withVoice = ['measureIndex','noteIndex','partId','voice'];
+  if (JSON.stringify(keys) !== JSON.stringify(withoutVoice) && JSON.stringify(keys) !== JSON.stringify(withVoice)) {
+    throw new EditorRendererSelectionBridgeV4Error('Rendered score note locator field set is invalid.', 'INVALID_EXTERNAL_HIT');
+  }
+  const partId = bounded(value.partId, 'partId');
+  const measureIndex = value.measureIndex;
+  const noteIndex = value.noteIndex;
+  const voice = value.voice;
+  if (!Number.isSafeInteger(measureIndex) || (measureIndex as number) < 0 || !Number.isSafeInteger(noteIndex) || (noteIndex as number) < 0) {
+    throw new EditorRendererSelectionBridgeV4Error('Rendered score note locator indices must be non-negative safe integers.', 'INVALID_EXTERNAL_HIT');
+  }
+  if (voice !== undefined && (!Number.isSafeInteger(voice) || (voice as number) < 0)) {
+    throw new EditorRendererSelectionBridgeV4Error('Rendered score note locator voice must be a non-negative safe integer.', 'INVALID_EXTERNAL_HIT');
+  }
+  return voice === undefined
+    ? Object.freeze({ partId, measureIndex: measureIndex as number, noteIndex: noteIndex as number })
+    : Object.freeze({ partId, measureIndex: measureIndex as number, noteIndex: noteIndex as number, voice: voice as number });
+};
+
+type EmittedRenderedNote = Readonly<{ voice: number; token: string | null }>;
+const tokenForEntity = (request: RendererRequestV4, kind: 'note' | 'grace-note', id: string): string | null => {
+  const matches = request.manifest.entries.filter((entry) =>
+    kind === 'note'
+      ? entry.address.kind === 'note' && entry.address.noteId === id
+      : entry.address.kind === 'grace-note' && entry.address.graceNoteId === id
+  );
+  return matches.length === 1 ? matches[0]!.token : null;
+};
+const emitNormalEvent = (request: RendererRequestV4, event: ScoreEvent, voice: number): readonly EmittedRenderedNote[] => {
+  if (event.kind === 'rest') return [Object.freeze({ voice, token: null })];
+  if (event.kind === 'note') return [Object.freeze({ voice, token: tokenForEntity(request, 'note', event.note.id) })];
+  return event.notes.map((note) => Object.freeze({ voice, token: tokenForEntity(request, 'note', note.id) }));
+};
+const emitGraceEvent = (request: RendererRequestV4, event: GraceEvent, voice: number): readonly EmittedRenderedNote[] => {
+  if (event.kind === 'rest') return [Object.freeze({ voice, token: null })];
+  if (event.kind === 'note') return [Object.freeze({ voice, token: tokenForEntity(request, 'grace-note', event.note.id) })];
+  return event.notes.map((note) => Object.freeze({ voice, token: tokenForEntity(request, 'grace-note', note.id) }));
+};
+const graceGroupFor = (groups: readonly GraceGroup[], anchorEventId: string, placement: 'before' | 'after'): GraceGroup | null =>
+  groups.find((group) => group.anchorEventId === anchorEventId && group.placement === placement) ?? null;
+
+export const resolveRenderedScoreNoteRefTokenV4 = (
+  score: ScoreDocumentV3,
+  request: RendererRequestV4,
+  rawRef: unknown
+): string | null => {
+  if (
+    request.contractVersion !== RENDER_REQUEST_V4_VERSION ||
+    request.manifest.contractVersion !== RENDER_MANIFEST_V4_VERSION ||
+    request.documentId !== score.id || request.revisionId !== score.revision.id ||
+    request.manifest.documentId !== score.id || request.manifest.revisionId !== score.revision.id
+  ) {
+    throw new EditorRendererSelectionBridgeV4Error('Rendered note locator belongs to a stale or invalid V4 render request.', 'STALE_EXTERNAL_HIT');
+  }
+  const ref = parseRenderedScoreNoteRefV4(rawRef);
+  const partIndex = score.parts.findIndex((_part, index) => `P${index + 1}` === ref.partId);
+  if (partIndex < 0 || ref.measureIndex >= score.measureFrames.length) return null;
+  const part = score.parts[partIndex];
+  if (part === undefined) return null;
+  const emitted: EmittedRenderedNote[] = [];
+  for (const staff of [...contentStavesV3(part)].sort((left, right) => left.ordinal - right.ordinal)) {
+    const measure = staff.measures[ref.measureIndex];
+    if (measure === undefined) return null;
+    for (const voice of [...measure.voices].sort((left, right) => left.ordinal - right.ordinal)) {
+      for (const event of voice.events) {
+        const before = graceGroupFor(voice.graceGroups, event.id, 'before');
+        if (before !== null) for (const graceEvent of before.events) emitted.push(...emitGraceEvent(request, graceEvent, voice.ordinal));
+        emitted.push(...emitNormalEvent(request, event, voice.ordinal));
+        const after = graceGroupFor(voice.graceGroups, event.id, 'after');
+        if (after !== null) for (const graceEvent of after.events) emitted.push(...emitGraceEvent(request, graceEvent, voice.ordinal));
+      }
+    }
+  }
+  const selected = ref.voice === undefined
+    ? emitted[ref.noteIndex]
+    : emitted.filter((entry) => entry.voice === ref.voice)[ref.noteIndex];
+  if (selected === undefined || selected.token === null) return null;
+  resolveRenderTokenV4(score, request, selected.token);
+  return selected.token;
+};
+
+export const createExternalRendererHitFromScoreNoteRefV4 = (
+  score: ScoreDocumentV3,
+  request: RendererRequestV4,
+  rawRef: unknown
+): Readonly<ExternalRendererHitV4> | null => {
+  const token = resolveRenderedScoreNoteRefTokenV4(score, request, rawRef);
+  return token === null ? null : createExternalRendererHitV4(request, token);
+};
 
 export const resolveExternalRendererHitV4 = (
   score: ScoreDocumentV3,

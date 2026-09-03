@@ -1,4 +1,5 @@
 import type { SemanticAddressV3 } from '../../addressing-v3/src/index.js';
+import type { RendererProfile } from '../../renderer-contract/src/index.js';
 import { getEditorKeypadManifest, parseEditorKeypadAction, type EditorKeypadActionId } from '../../editor-keypad/src/index.js';
 import type { BasicAuthoringV4Options } from '../../editor-basic-authoring-v4/src/index.js';
 import type { GraceAuthoringV4Options } from '../../editor-grace-authoring-v4/src/index.js';
@@ -60,6 +61,7 @@ export interface ScoreEditorBrowserAppSnapshot {
 }
 
 export type ScoreEditorBrowserAppListener = (snapshot: Readonly<ScoreEditorBrowserAppSnapshot>) => void;
+export interface StandaloneScoreEditorControllerOptions { readonly rendererProfile?: RendererProfile }
 
 export type ScoreEditorBrowserAppErrorCode =
   | 'NO_DOCUMENT'
@@ -152,11 +154,17 @@ export interface StandaloneScoreEditorController {
   readonly commitTopology: (intent: unknown, options: TopologyAuthoringV3Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
 }
 
-export const createStandaloneScoreEditorController = (): Readonly<StandaloneScoreEditorController> => {
+export const createStandaloneScoreEditorController = (
+  controllerOptions: StandaloneScoreEditorControllerOptions = {}
+): Readonly<StandaloneScoreEditorController> => {
   let current: Readonly<ScoreEditorAppDocument> | null = null;
   let lastError: Readonly<{ code: string; message: string }> | null = null;
   let root: HTMLElement | null = null;
   const listeners = new Set<ScoreEditorBrowserAppListener>();
+  const withRendererProfile = <T extends NewAppDocumentOptions | OpenMusicXmlAppDocumentOptions>(options: T): T =>
+    controllerOptions.rendererProfile === undefined || options.rendererProfile !== undefined
+      ? options
+      : Object.freeze({ ...options, rendererProfile: controllerOptions.rendererProfile }) as unknown as T;
 
   const snapshot = (): Readonly<ScoreEditorBrowserAppSnapshot> => {
     const selection = current?.session.selection ?? null;
@@ -279,9 +287,9 @@ export const createStandaloneScoreEditorController = (): Readonly<StandaloneScor
       root = nextRoot; render();
     },
     unmount: () => { if (root !== null) root.replaceChildren(); root = null; },
-    newDocument: (options = {}) => mutate(() => createNewScoreEditorAppDocument(options)),
+    newDocument: (options = {}) => mutate(() => createNewScoreEditorAppDocument(withRendererProfile(options))),
     openMusicXml: async (musicXml, options = {}) => {
-      try { current = await openMusicXmlScoreEditorAppDocument(musicXml, options); lastError = null; }
+      try { current = await openMusicXmlScoreEditorAppDocument(musicXml, withRendererProfile(options)); lastError = null; }
       catch (error) { lastError = errorInfo(error); }
       return notify();
     },

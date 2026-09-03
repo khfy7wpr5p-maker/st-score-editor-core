@@ -8,6 +8,7 @@ import {
 } from './renderer-enabled.js';
 import {
   EDITOR_RENDERER_SELECTION_BRIDGE_V4_VERSION,
+  createExternalRendererHitFromScoreNoteRefV4,
   resolveExternalRendererHitV4
 } from '../../editor-renderer-selection-bridge-v4/src/index.js';
 
@@ -23,6 +24,7 @@ export const rendererHitEnabledBrowserAppProfile = Object.freeze({
 export type RendererSemanticHitBridgeControllerErrorCode =
   | 'NO_CURRENT_RENDER_PRESENTATION'
   | 'RENDERER_PRESENTATION_MISMATCH'
+  | 'RENDERED_NOTE_UNMAPPED'
   | 'SELECTION_REJECTED';
 
 export class RendererSemanticHitBridgeControllerError extends Error {
@@ -40,6 +42,7 @@ export class RendererSemanticHitBridgeControllerError extends Error {
 export interface RendererHitEnabledStandaloneScoreEditorController extends Omit<RendererEnabledStandaloneScoreEditorController, 'profile'> {
   readonly profile: typeof rendererHitEnabledBrowserAppProfile;
   readonly selectRendererHit: (rawHit: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly selectRenderedScoreNoteRef: (rawRef: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
 }
 
 export const createRendererHitEnabledStandaloneScoreEditorController = (
@@ -47,7 +50,7 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
 ): Readonly<RendererHitEnabledStandaloneScoreEditorController> => {
   const base = createRendererEnabledStandaloneScoreEditorController(options);
 
-  const selectRendererHit = (rawHit: unknown): Readonly<ScoreEditorBrowserAppSnapshot> => {
+  const requireCurrentPresentation = () => {
     const document = base.getDocument();
     const presentation = base.getRendererState();
     if (document === null || presentation.renderedDocumentId === null || presentation.renderedRevisionId === null) {
@@ -77,11 +80,15 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
         }
       );
     }
+    return Object.freeze({ document, score, request });
+  };
 
-    const address = resolveExternalRendererHitV4(score, request, rawHit);
-    const beforeRevisionId = score.revision.id;
-    const beforePastLength = document.session.history.past.length;
-    const beforeFutureLength = document.session.history.future.length;
+  const selectRendererHit = (rawHit: unknown): Readonly<ScoreEditorBrowserAppSnapshot> => {
+    const current = requireCurrentPresentation();
+    const address = resolveExternalRendererHitV4(current.score, current.request, rawHit);
+    const beforeRevisionId = current.score.revision.id;
+    const beforePastLength = current.document.session.history.past.length;
+    const beforeFutureLength = current.document.session.history.future.length;
     const result = base.select(address);
     const after = base.getDocument();
     if (
@@ -100,11 +107,23 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
     return result;
   };
 
-  return Object.freeze({
+  const controller: RendererHitEnabledStandaloneScoreEditorController = Object.freeze({
     ...base,
     profile: rendererHitEnabledBrowserAppProfile,
-    selectRendererHit
+    selectRendererHit,
+    selectRenderedScoreNoteRef: (rawRef: unknown) => {
+      const current = requireCurrentPresentation();
+      const hit = createExternalRendererHitFromScoreNoteRefV4(current.score, current.request, rawRef);
+      if (hit === null) {
+        throw new RendererSemanticHitBridgeControllerError(
+          'Rendered note locator did not resolve exactly to a current opaque renderer token.',
+          'RENDERED_NOTE_UNMAPPED'
+        );
+      }
+      return selectRendererHit(hit);
+    }
   });
+  return controller;
 };
 
 export const createRendererHitEnabledStandaloneBrowserAppRuntime = () => {
