@@ -5,13 +5,14 @@ Security-first, renderer-independent semantic score-editing core for the standal
 ## Current reality
 
 - **SSE-00–10 — COMPLETE / MERGED:** canonical V2/V3 score+notation evolution, bounded MusicXML, V3 staff/part topology and bounded V4 cross-staff runtime.
-- **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** the standalone editor app is the primary product target.
+- **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** standalone editor app is the primary product target.
 - **APP-00 — COMPLETE / MERGED:** standalone-product authority boundary.
 - **APP-01 — COMPLETE / MERGED:** New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking and V4 document lifecycle.
-- **APP-02 — COMPLETE / MERGED:** basic note/rest/pitch/duration/chord authoring, grace, articulation, ornament and semantic keypad orchestration compose with topology and cross-staff inside one `EditorHistoryV4`.
-- **APP-03 — COMPLETE / MERGED:** independent `STScoreEditorApp` browser bundle, standalone HTML bootstrap and responsive toolbar/keypad/viewport/inspector/status shell.
-- **APP-04 — NEXT:** local file picker/open/save/download workflow without cloud or server authority.
-- **SesliTab V4 product cutover — DEFERRED:** no SesliTab product integration before the standalone app passes APP-09.
+- **APP-02 — COMPLETE / MERGED:** basic authoring, grace, articulation, ornament and semantic keypad in one V4 history with topology/cross-staff.
+- **APP-03 — COMPLETE / MERGED:** independent `STScoreEditorApp` browser bundle, standalone HTML bootstrap and responsive shell.
+- **APP-04 — COMPLETE / MERGED:** bounded browser-local `.musicxml/.xml` Open / Save / Download workflow with File System Access adapter and file-input/download fallbacks.
+- **APP-05 — NEXT:** validated browser-local recovery/autosave envelopes; recovery remains noncanonical.
+- **SesliTab V4 product cutover — DEFERRED:** no SesliTab integration before APP-09.
 
 ## Standalone product authority
 
@@ -31,22 +32,23 @@ EditorSessionV4
 RendererRequestV4
 ```
 
-The app consumes Core; it never becomes a second score authority. Local editing does not require a backend/service provider. File picker, autosave, viewport, renderer DOM/SVG, playback cursor and recent-file state remain noncanonical.
+The app consumes Core; it never becomes a second score authority. Local editing requires no backend/service provider. File handles, recovery records, viewport state, renderer DOM/SVG and playback state remain noncanonical.
 
-APP-02 uses no whole-document V4 -> V2 -> V4 editing bridge. Every accepted musical/keypad/topology/cross-staff edit produces exactly one direct-child canonical revision and one same-revision notation document in the same V4 history.
+## Browser product and file workflow
 
-## Standalone browser app
+`npm run build:browser` emits the legacy core runtime plus a separate `STScoreEditorApp` bundle and directly openable HTML shell. The app bundle is self-contained with zero external imports and no network/server authority.
 
-APP-03 adds a separate browser product surface without changing the legacy core browser global:
+APP-04 adds bounded local file behavior:
 
-```text
-STScoreEditorCoreRuntime   <- legacy core browser API
-STScoreEditorApp           <- standalone product API
-```
-
-`npm run build:browser` now emits `st-score-editor-app.js`, an integrity manifest and `st-score-editor-app.html`. The app bundle does not auto-touch DOM on load; the standalone HTML explicitly creates a controller and mounts the responsive shell. The shell exposes toolbar/keypad, a renderer connection slot, semantic inspector and status/error surface while remaining noncanonical.
-
-Renderer implementation is intentionally not bundled in APP-03; that belongs to APP-06. File System Access/save/download behavior belongs to APP-04. Browser build validation rejects external imports and admitted network/persistence capability tokens.
+- `.musicxml` and `.xml` only; `.mxl` remains unsupported;
+- 32 MiB local MusicXML bound;
+- File System Access open/save when available;
+- hidden file-input open fallback and download fallback;
+- current document-bound file handles only; a handle is never reused after `New` creates a different canonical document;
+- lossless export is evaluated before any write/download handoff;
+- `markSaved` occurs only after `write + close` or a successful download handoff;
+- failed write/handoff leaves the document dirty;
+- `persistenceCapable` remains false because the file layer is user-selected local handoff, not canonical/server revision authority.
 
 Full productization sequence: `docs/st-score-editor-app-productization.md`.
 
@@ -56,7 +58,7 @@ Full productization sequence: `docs/st-score-editor-app-productization.md`.
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` remains canonical source identity. Cross-staff presentation does not move canonical events: `NotationDocumentV4.crossStaffPlacements[]` assigns a display staff while source part/staff/frame/measure/voice, IDs, pitch, onset and duration remain unchanged.
+`SemanticAddressV3` remains canonical source identity. Cross-staff presentation does not move canonical events.
 
 ## Renderer / MusicXML boundary
 

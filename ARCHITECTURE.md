@@ -1,16 +1,16 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP / PRODUCTIZATION is active; APP-00–03 are complete/merged and APP-04 is next.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP / PRODUCTIZATION is active; APP-00–04 are complete/merged and APP-05 is next.**
 
 ## Product architecture
-
-The standalone ST Score Editor App is the current product target. SesliTab V4 integration is deferred until the standalone app passes APP-09.
 
 ```text
 Standalone HTML / Browser Shell
         |
         v
 STScoreEditorApp controller
+        |
+        +--> browser-local file workflow (noncanonical)
         |
         v
 ScoreEditorAppDocument
@@ -25,7 +25,7 @@ EditorSessionV4
 RendererRequestV4
 ```
 
-The app layer owns product state such as title, dirty/saved marker, mount root, future file/autosave/viewport/playback state. None is canonical score authority. A backend/service provider is not required for the local editing path.
+SesliTab V4 integration is deferred until APP-09. A backend/service provider is not required for the local editing path.
 
 ## Canonical authority
 
@@ -35,67 +35,57 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is the stable revision-bound source identity. MusicXML is exchange/projection data. Renderer DOM/SVG, app shell state, future SesliTab host state and Guitar derivative state remain noncanonical.
+`SemanticAddressV3` is the stable revision-bound source identity. MusicXML is exchange/projection data. Browser file handles, shell state, recovery state, renderer DOM/SVG, playback state and future SesliTab state are noncanonical.
 
-## APP-01 document lifecycle
+## APP-01/02 document and authoring runtime
 
-`score-editor-app-document` provides New, verified-SHA MusicXML Open, admitted lossless-only MusicXML Export, title/origin, dirty/saved revision tracking and V4 undo/redo. It contains no persistence/network/server authority.
-
-## APP-02 unified authoring
-
-The same `EditorHistoryV4` composes basic normal event/note authoring, grace, articulation, ornament, semantic keypad, topology and V4 cross-staff placement. There is no whole-document V4 -> V2 -> V4 editing bridge and no parallel mutable authoring authority. Every accepted edit creates exactly one direct-child score revision with one same-revision notation document and one atomic history snapshot.
-
-Keypad targets are current revision-bound semantic addresses. Duration/rest/dot/accidental operations keep score timing/pitch and notation metadata atomic. Triplet/tie/slur require explicit semantic targets. SVG/DOM coordinates and nearest-note inference are never edit targets.
+`score-editor-app-document` provides New, verified-SHA MusicXML Open, admitted lossless-only MusicXML Export, dirty/saved tracking and V4 undo/redo. APP-02 composes basic authoring, grace, articulation, ornament, semantic keypad, topology and cross-staff in one `EditorHistoryV4` without a whole-document V4 -> V2 -> V4 edit bridge.
 
 ## APP-03 standalone browser layer
 
-`score-editor-browser-app` is a product adapter over `ScoreEditorAppDocument`, not a new score model. It exposes a frozen `STScoreEditorApp` global with per-instance controllers. The older `STScoreEditorCoreRuntime` global remains separate and unchanged in authority.
+`score-editor-browser-app` exposes the frozen `STScoreEditorApp` product global separately from legacy `STScoreEditorCoreRuntime`. Bundle evaluation never auto-mutates DOM; `mount(root)` creates the responsive toolbar/keypad/viewport/inspector/status shell. The renderer viewport remains a connection slot until APP-06.
 
-The controller owns only a reference to the current immutable app document plus noncanonical shell status/error/mount state. It exposes New/Open/Export, semantic selection, undo/redo and the admitted APP-02 commit surfaces by delegation to the canonical app/session APIs.
+## APP-04 local file workflow
 
-Bundle load never auto-mutates DOM. `mount(root)` explicitly builds the shell. The build also emits `st-score-editor-app.html`, whose bootstrap explicitly creates a controller and mounts it.
+APP-04 is complete through PRs #72 and #73.
 
-The responsive shell contains:
+The file adapter admits only `.musicxml` / `.xml` text with a 32 MiB local bound. `.mxl` remains unsupported. It provides:
 
-- toolbar with New and history controls;
-- keypad generated from the semantic keypad manifest;
-- renderer viewport connection slot;
-- semantic inspector showing current revision/selection/projection;
-- status/error surface;
-- desktop/tablet/mobile responsive layout.
+- File System Access open picker when available;
+- file-like reader for `<input type=file>` fallback;
+- File System Access save with explicit `write` then `close` completion;
+- abort-on-failure when supported;
+- normalized `.musicxml` download artifact creation.
 
-Advanced triplet/tie/slur actions remain programmatically available but are disabled in the generic keypad shell until an explicit semantic range/pair target UI exists. No proximity inference is introduced.
-
-## Browser build boundary
-
-`npm run build:browser` emits both:
+The file-enabled standalone controller composes these primitives with the canonical app document. Safety ordering is mandatory:
 
 ```text
-st-score-editor-core.runtime.js
-st-score-editor-core.runtime.manifest.json
-st-score-editor-app.js
-st-score-editor-app.manifest.json
-st-score-editor-app.html
+current canonical document
+        |
+        v
+lossless MusicXML export must succeed
+        |
+        +--> local write + close succeeds ------+
+        |                                      |
+        +--> download handoff succeeds --------+
+                                               v
+                                           markSaved
 ```
 
-Both JS bundles are self-contained IIFEs with zero external imports. Build validation rejects admitted network/persistence capability tokens. The standalone app manifest explicitly records no canonical, renderer, persistence, network, server-revision or publication authority.
+If export, write, close or handoff fails, `markSaved` is not called and the document stays dirty.
 
-APP-03 intentionally does not bundle a renderer, file workflow, autosave or playback. Those remain APP-04–07 concerns.
+A file handle is associated with the canonical document ID that produced/opened it. If `New` creates a different document, the old handle is not reused. File handles/picker/file status are browser state only and cannot mutate score state directly.
 
-## Cross-staff boundary
+The standalone app manifest records `fileWorkflowBundled:true` but keeps `persistenceCapable:false`, `networkCapable:false`, `serverRevisionAuthority:false` and `publicationAuthority:false`.
 
-`NotationDocumentV4.crossStaffPlacements[]` assigns a display staff to a normal pitched event without changing canonical source part/staff/frame/measure/voice, event/note IDs, pitch, onset or duration. Rest, grace, percussion, linked TAB and split-chord placement remain outside the admitted profile.
+## Cross-staff and renderer boundary
 
-Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. Cross-staff display does not widen relation scopes between independent source voices/staffs.
-
-## Renderer / MusicXML boundary
-
-`RendererRequestV4` may reuse existing lossless projection when placements are empty. Non-empty placements return `CROSS_STAFF_XML_PENDING` with `musicXml = null`. Renderer tokens are built from canonical `SemanticAddressV3` and therefore resolve visual hits back to original source identity. No V4-native cross-staff MusicXML round trip is claimed.
+`NotationDocumentV4.crossStaffPlacements[]` assigns display staff without changing canonical source identity. Non-empty placements remain `CROSS_STAFF_XML_PENDING` with `musicXml = null`; no V4-native cross-staff MusicXML round trip is claimed.
 
 ## Next product layer
 
-APP-04 is next: browser-local file picker/open/save/download behavior. File handles, picker state and recent-file metadata must remain noncanonical. Cloud/backend authority is not required.
+APP-05 is next: validated browser-local recovery/autosave envelopes. Recovery storage must remain noncanonical, revision-aware, integrity-checked and unable to overwrite a newer live canonical session silently.
 
 ## Remaining gates
 
-APP-05 recovery/autosave, APP-06 renderer interaction, APP-07 playback, APP-08 export/print and APP-09 product hardening remain planned. Split-chord/grace/rest/percussion cross-staff semantics, independent-source-staff relations, V4-native cross-staff MusicXML, cloud/server revision authority, production/public-write and SesliTab V4 cutover remain separately gated.
+APP-06 renderer interaction, APP-07 playback, APP-08 export/print and APP-09 product hardening remain planned. Cloud/server authority, production/public-write and SesliTab V4 cutover remain separately gated.
