@@ -1,13 +1,17 @@
 import { execFile } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { assembleApp09BPreview } from './assemble-app09b-preview.mjs';
+import {
+  APP09B_RENDERER_SOURCE_REVISION,
+  assembleApp09BPreview
+} from './assemble-app09b-preview.mjs';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const defaultOutputDir = path.join(repoRoot, 'dist', 'browser');
 const execFileAsync = promisify(execFile);
+const rendererRepo = 'https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git';
 
 const movingBridge = `  const nativeReplaceChildren = root.replaceChildren.bind(root);
   root.replaceChildren = (...nodes) => {
@@ -80,12 +84,38 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   return manifest;
 }
 
+async function refreshExactRendererRuntime() {
+  const root = path.join(process.env.TMPDIR || '/tmp', 'st-score-rendering-layer-app09b-exact');
+  await rm(root, { recursive: true, force: true });
+  await execFileAsync('git', ['clone', rendererRepo, root], { cwd: repoRoot, maxBuffer: 8 * 1024 * 1024 });
+  await execFileAsync('git', ['checkout', '--detach', APP09B_RENDERER_SOURCE_REVISION], {
+    cwd: root,
+    maxBuffer: 8 * 1024 * 1024
+  });
+  await execFileAsync(
+    'npm',
+    ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--no-package-lock'],
+    { cwd: root, maxBuffer: 16 * 1024 * 1024 }
+  );
+  await execFileAsync('npm', ['run', 'export:workstation-runtime'], {
+    cwd: root,
+    maxBuffer: 16 * 1024 * 1024,
+    env: {
+      ...process.env,
+      ST_SCORE_RENDERER_SOURCE_REVISION: APP09B_RENDERER_SOURCE_REVISION
+    }
+  });
+  return path.join(root, 'dist', 'workstation-runtime');
+}
+
 export async function assembleStableApp09BPreviewCli({
   runtimeDir,
   outputDir = defaultOutputDir,
-  includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1'
+  includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1',
+  refreshRendererRuntime = process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1'
 } = {}) {
-  if (!includeIosDiagnostic) return assembleStableApp09BPreview({ runtimeDir, outputDir });
+  const exactRuntimeDir = refreshRendererRuntime ? await refreshExactRendererRuntime() : runtimeDir;
+  if (!includeIosDiagnostic) return assembleStableApp09BPreview({ runtimeDir: exactRuntimeDir, outputDir });
 
   await execFileAsync(
     process.execPath,
@@ -94,7 +124,7 @@ export async function assembleStableApp09BPreviewCli({
       cwd: repoRoot,
       env: {
         ...process.env,
-        ST_SCORE_RENDERER_RUNTIME_DIR: runtimeDir ?? '',
+        ST_SCORE_RENDERER_RUNTIME_DIR: exactRuntimeDir ?? '',
         ST_APP09B_OUTPUT_DIR: outputDir
       }
     }
@@ -109,7 +139,9 @@ export async function assembleStableApp09BPreviewCli({
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
   const includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1';
-  const result = await assembleStableApp09BPreviewCli({ runtimeDir, includeIosDiagnostic });
+  const refreshRendererRuntime = process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1';
+  const result = await assembleStableApp09BPreviewCli({ runtimeDir, includeIosDiagnostic, refreshRendererRuntime });
   const mode = includeIosDiagnostic ? 'stable preview + iOS device diagnostic' : 'stable preview';
-  console.log(`APP-09B ${mode} assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion})`);
+  const source = refreshRendererRuntime ? 'refreshed exact renderer' : 'provided renderer';
+  console.log(`APP-09B ${mode} assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, ${source})`);
 }
