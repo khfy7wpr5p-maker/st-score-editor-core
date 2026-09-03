@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const bundlePath = new URL('../dist/browser/st-score-editor-app.js', import.meta.url);
 const manifestPath = new URL('../dist/browser/st-score-editor-app.manifest.json', import.meta.url);
 
-test('APP-06B manifest admits semantic hit bridge without renderer or canonical authority', async () => {
+test('APP-06C manifest admits semantic hit bridge and presentation-only viewport without canonical authority', async () => {
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
   assert.equal(manifest.rendererAuthority, false);
   assert.equal(manifest.rendererBundled, false);
@@ -20,16 +20,25 @@ test('APP-06B manifest admits semantic hit bridge without renderer or canonical 
   assert.equal(manifest.rendererHitCanonicalInput, 'opaque-renderer-request-v4-manifest-token');
   assert.equal(manifest.rendererDomSvgCoordinateAuthority, false);
   assert.equal(manifest.staleRendererHitRejected, true);
+  assert.equal(manifest.viewportNavigationBundled, true);
+  assert.equal(manifest.viewportPresentationOnly, true);
+  assert.equal(manifest.viewportCanonicalAuthority, false);
+  assert.equal(manifest.coordinateAuthoring, false);
+  assert.deepEqual(manifest.viewportZoomRange, [0.25, 4]);
+  assert.equal(manifest.viewportZoomStep, 0.25);
+  assert.deepEqual(manifest.viewportInputModes, ['touch','pointer','keyboard']);
+  assert.deepEqual(manifest.responsiveViewportProfiles, ['iphone','ipad','desktop']);
   assert.equal(manifest.persistenceCapable, false);
   assert.equal(manifest.networkCapable, false);
 });
 
-test('APP-06B global exposes guarded renderer lifecycle plus semantic hit selection only', async () => {
+test('APP-06C global exposes guarded renderer hits plus presentation-only viewport navigation', async () => {
   const bundle = await readFile(bundlePath);
   const context = vm.createContext({ TextEncoder, Blob, URL: class URL {} });
   vm.runInContext(bundle.toString('utf8'), context, { filename: 'st-score-editor-app.js' });
   const app = context.STScoreEditorApp;
   assert.ok(app.renderer);
+  assert.ok(app.viewport);
   assert.equal(app.renderer.family, 'osmd');
   assert.equal(app.renderer.implementationBundled, false);
   assert.equal(app.renderer.autoRender, false);
@@ -37,15 +46,29 @@ test('APP-06B global exposes guarded renderer lifecycle plus semantic hit select
   assert.equal(app.renderer.semanticHitBridgeVersion, '4.0.0');
   assert.equal(app.renderer.hitCanonicalInput, 'opaque-renderer-request-v4-manifest-token');
   assert.equal(app.renderer.domSvgCoordinateAuthority, false);
+  assert.equal(app.viewport.presentationOnly, true);
+  assert.equal(app.viewport.canonicalAuthority, false);
+  assert.equal(app.viewport.coordinateAuthoring, false);
+  assert.deepEqual([...app.viewport.zoomRange], [0.25,4]);
+  assert.deepEqual([...app.viewport.inputModes], ['touch','pointer','keyboard']);
+  assert.deepEqual([...app.viewport.responsiveProfiles], ['iphone','ipad','desktop']);
   const controller = app.createController();
   assert.equal(typeof controller.attachOsmdRenderer, 'function');
-  assert.equal(typeof controller.detachRenderer, 'function');
   assert.equal(typeof controller.renderCurrent, 'function');
-  assert.equal(typeof controller.getRendererState, 'function');
   assert.equal(typeof controller.selectRendererHit, 'function');
+  assert.equal(typeof controller.getViewportState, 'function');
+  assert.equal(typeof controller.zoomIn, 'function');
+  assert.equal(typeof controller.zoomOut, 'function');
+  assert.equal(typeof controller.resetZoom, 'function');
+  assert.equal(typeof controller.panBy, 'function');
+  assert.equal(typeof controller.nextPage, 'function');
+  assert.equal(typeof controller.previousPage, 'function');
   assert.equal(controller.profile.semanticRendererHitBridgeBundled, true);
-  assert.equal(controller.profile.rendererDomSvgCoordinateAuthority, false);
+  assert.equal(controller.profile.viewportNavigationBundled, true);
+  assert.equal(controller.profile.viewportCanonicalAuthority, false);
+  assert.equal(controller.profile.coordinateAuthoring, false);
   assert.equal(controller.getRendererState().attached, false);
   assert.equal(controller.getRendererState().status.code, 'RENDERER_DETACHED');
+  assert.equal(controller.getViewportState().zoom, 1);
   controller.unmount();
 });
