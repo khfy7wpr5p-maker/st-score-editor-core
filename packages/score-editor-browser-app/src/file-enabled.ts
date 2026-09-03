@@ -189,15 +189,23 @@ export const createFileEnabledStandaloneScoreEditorController = (): Readonly<Fil
     }
   };
 
-  base.subscribe(() => { decorate(); });
+  base.subscribe(() => {
+    const currentDocumentId = documentId(base);
+    if (associatedDocumentId !== null && currentDocumentId !== associatedDocumentId) {
+      fileHandle = null;
+      associatedDocumentId = null;
+      associatedFileName = null;
+    }
+    decorate();
+  });
 
   const controller: FileEnabledStandaloneScoreEditorController = Object.freeze({
     ...base,
     profile: fileEnabledBrowserAppProfile,
-    mount: (nextRoot) => { root = nextRoot; base.mount(nextRoot); decorate(); },
+    mount: (nextRoot: HTMLElement) => { root = nextRoot; base.mount(nextRoot); decorate(); },
     unmount: () => { base.unmount(); root = null; },
     getFileWorkflowState: state,
-    openLocalFile: async (file) => {
+    openLocalFile: async (file: BrowserMusicXmlFileLike) => {
       try {
         const read = await readMusicXmlBrowserFile(file);
         return await openResult(read.musicXml, read.fileName, null);
