@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–01 COMPLETE / MERGED / APP-02 NEXT**
+Status: **ACTIVE / APP-00–01 COMPLETE / MERGED / APP-02A MERGE CANDIDATE / APP-02B NEXT**
 
 Date: 2026-09-03
 
@@ -20,151 +20,93 @@ ST Score Editor Core
 
 ## Non-negotiable authority boundary
 
-The standalone app never becomes a second score authority.
-
-Canonical editing remains:
-
-```text
-ScoreDocumentV3 + NotationDocumentV4
-              |
-       EditorSessionV4
-```
-
-UI state, file picker state, autosave state, renderer DOM/SVG, playback cursor and recent-file metadata are product state only. They cannot directly rewrite canonical score/notation structures.
-
-## Current product gap
-
-APP-01 is merged and provides the standalone document lifecycle. The remaining immediate gap is unified product authoring.
-
-Current V4 session directly exposes topology and cross-staff authoring. Earlier note-entry, pitch/duration, grace, articulation, ornament and keypad capabilities are not yet all composed through the same V4 product session.
-
-Therefore a visual shell must not be declared feature-complete until APP-02 closes this gap.
+The standalone app never becomes a second score authority. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/autosave/renderer/playback state stays noncanonical.
 
 ## Program sequence
 
 ### APP-00 — Standalone product contract
-
 Status: **COMPLETE / MERGED**
-
-- standalone app is the primary product target;
-- SesliTab cutover deferred;
-- no server requirement for local editing;
-- Core remains non-UI library;
-- browser/product state remains noncanonical.
 
 ### APP-01 — Document runtime
-
 Status: **COMPLETE / MERGED**
 
-Implemented:
-
-- New score;
-- MusicXML Open with verified SHA-256 source identity;
-- MusicXML Export when lossless projection is admitted;
-- title/origin metadata;
-- dirty/saved revision tracking;
-- V4 undo/redo;
-- currently available V4 topology/cross-staff commits.
-
-APP-01 contains **no persistence authority**. `markSaved` records that an external product shell successfully saved/exported the current revision; it does not write files itself.
+Implemented: New score, verified-SHA MusicXML Open, lossless-only MusicXML Export, title/origin, dirty/saved revision tracking, V4 undo/redo, topology and cross-staff commits. No persistence/network/server authority.
 
 ### APP-02 — Unified V4 authoring session
+Status: **IN PROGRESS**
 
+APP-02 is split only for implementation/test isolation; all slices share the same canonical V4 history.
+
+#### APP-02A — Basic musical authoring
+Status: **COMPLETE / MERGE CANDIDATE**
+
+Native V4 authoring now covers:
+
+- exact normal-note/chord-tone pitch edit;
+- timed event duration edit;
+- rest -> note with explicit fresh note identity;
+- pitched event -> rest;
+- add chord tone;
+- remove chord tone;
+- stale target and identity-collision rejection;
+- note-notation orphan protection;
+- explicit cross-staff conflict protection when converting a placed event to rest;
+- one direct-child `ScoreDocumentV3` revision plus same-revision `NotationDocumentV4` per accepted edit;
+- the same `EditorHistoryV4` used by topology and cross-staff edits.
+
+No whole-document V4 -> V2 -> V4 editing bridge is used.
+
+#### APP-02B — Grace / articulation / ornament / keypad composition
 Status: **NEXT**
 
-Required before declaring the editor shell feature-capable.
+Required before APP-02 is complete:
 
-Bring the existing score-editing capabilities under one product session without V4 -> V2 -> V4 lossy round trips:
-
-- note/rest insertion and deletion;
-- pitch edits;
-- duration edits;
-- chord-tone operations;
-- grace authoring;
+- grace-group/event authoring;
 - articulation authoring;
 - ornament authoring;
-- keypad/keyboard semantic commands;
-- topology and cross-staff remain in the same history.
-
-All accepted edits must remain one direct-child canonical revision in the same unified history.
+- keypad/keyboard semantic command routing;
+- all under the same V4 history and selection model.
 
 ### APP-03 — Standalone browser bundle and application shell
+Status: **PLANNED**
 
-- independent `STScoreEditorApp` browser entry;
-- no SesliTab host dependency;
-- toolbar/keypad shell;
-- score viewport;
-- semantic selection/inspector;
-- status/error surface;
-- desktop/tablet/mobile responsive layout.
+Independent `STScoreEditorApp` browser entry, toolbar/keypad shell, score viewport, semantic selection/inspector, status/error surface and responsive desktop/tablet/mobile layout.
 
 ### APP-04 — Local file workflow
+Status: **PLANNED**
 
-- File System Access API when available;
-- safe `<input type=file>` fallback;
-- MusicXML open;
-- MusicXML download/save;
-- local recent-document metadata only;
-- no cloud/server dependency required.
+File System Access API when available, safe file-input fallback, MusicXML open/download/save and local recent-document metadata; no cloud requirement.
 
 ### APP-05 — Local recovery/autosave
+Status: **PLANNED**
 
-- browser-local recovery snapshots;
-- explicit schema/version envelope;
-- fail-closed recovery validation;
-- canonical revision remains editor-session owned;
-- autosave store is never mutation authority.
+Browser-local validated recovery snapshots. Autosave never becomes mutation authority.
 
 ### APP-06 — Renderer interaction
+Status: **PLANNED**
 
-- OSMD primary standard-notation presentation;
-- AlphaTab only where admitted for derivative guitar/TAB presentation;
-- semantic token hit mapping;
-- zoom/page/navigation;
-- no renderer geometry mutation authority.
+OSMD primary standard notation, AlphaTab only for admitted derivative guitar/TAB, semantic token hit mapping, zoom/navigation and no renderer geometry authority.
 
 ### APP-07 — Playback
+Status: **PLANNED**
 
-- local playback transport;
-- playback remains available independently from OMR/edit admission;
-- cursor/playhead is noncanonical;
-- playback does not mutate score semantics.
+Local transport independent from OMR/edit admission; playhead is noncanonical.
 
 ### APP-08 — Export/print
+Status: **PLANNED**
 
-- MusicXML export within admitted profile;
-- browser print/PDF workflow;
-- explicit unsupported status for semantics without a lossless MusicXML projection;
-- no silent flattening.
+Admitted MusicXML export plus browser print/PDF workflow; unsupported semantics fail closed.
 
 ### APP-09 — Product hardening and standalone release gate
+Status: **PLANNED**
 
-- iPhone/iPad/Safari;
-- desktop Chromium/Firefox/Safari;
-- touch/pointer/keyboard regression;
-- large-score performance;
-- recovery tests;
-- destructive-action UX;
-- accessibility;
-- user acceptance corpus;
-- release checklist.
+iPhone/iPad/Safari, desktop browsers, touch/pointer/keyboard, performance, recovery, destructive-action UX, accessibility, user acceptance corpus and release checklist.
 
 Only after APP-09 passes may a separate SesliTab product integration program begin.
 
 ## Service-provider boundary
 
-A service provider is not required for the standalone editing path.
-
-Local app operation may remain:
-
-```text
-Browser UI
-   -> ST Score Editor App
-   -> EditorSessionV4
-   -> renderer / local playback / local file APIs
-```
-
-Backend/cloud services are optional future capabilities for account sync, cloud storage, collaboration, heavy OMR/AI or publishing. They are not canonical editing authority.
+A service provider is not required for the standalone editing path. Backend/cloud services are optional later capabilities for account sync, cloud storage, collaboration, heavy OMR/AI or publishing and are never canonical editing authority.
 
 ## Explicitly deferred
 

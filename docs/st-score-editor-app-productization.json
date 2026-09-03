@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-03",
-  "status": "APP_01_COMPLETE_MERGED_APP_02_NEXT",
+  "status": "APP_02A_COMPLETE_MERGE_CANDIDATE_APP_02B_NEXT",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_requires": "APP_09_STANDALONE_RELEASE_GATE",
@@ -26,10 +26,36 @@
     "network_authority": false,
     "server_revision_authority": false
   },
+  "app_02": {
+    "status": "IN_PROGRESS",
+    "app_02a": {
+      "status": "COMPLETE_MERGE_CANDIDATE",
+      "normal_note_pitch": true,
+      "event_duration": true,
+      "rest_to_note": true,
+      "pitched_event_to_rest": true,
+      "add_chord_tone": true,
+      "remove_chord_tone": true,
+      "stale_target_fail_closed": true,
+      "identity_collision_fail_closed": true,
+      "notation_orphan_protection": true,
+      "cross_staff_conflict_protection": true,
+      "same_v4_history_as_topology_and_cross_staff": true
+    },
+    "app_02b": {
+      "status": "NEXT",
+      "grace": false,
+      "articulation": false,
+      "ornament": false,
+      "keypad_semantic_routing": false
+    }
+  },
   "stages": [
     {"id":"APP-00","status":"COMPLETE_MERGED"},
     {"id":"APP-01","status":"COMPLETE_MERGED"},
-    {"id":"APP-02","status":"NEXT"},
+    {"id":"APP-02","status":"IN_PROGRESS"},
+    {"id":"APP-02A","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"APP-02B","status":"NEXT"},
     {"id":"APP-03","status":"PLANNED"},
     {"id":"APP-04","status":"PLANNED"},
     {"id":"APP-05","status":"PLANNED"},
@@ -37,16 +63,6 @@
     {"id":"APP-07","status":"PLANNED"},
     {"id":"APP-08","status":"PLANNED"},
     {"id":"APP-09","status":"PLANNED"}
-  ],
-  "app_02_required_authoring": [
-    "NOTE_REST_INSERT_DELETE",
-    "PITCH",
-    "DURATION",
-    "CHORD_TONES",
-    "GRACE",
-    "ARTICULATION",
-    "ORNAMENT",
-    "KEYPAD_SEMANTIC_COMMANDS"
   ],
   "app_02_invariants": {
     "single_v4_history": true,
@@ -62,5 +78,5 @@
     "playback_canonical_authority": false,
     "production_activation_by_merge": false
   },
-  "next_action": "APP_02_UNIFIED_V4_AUTHORING_SESSION"
+  "next_action": "APP_02B_GRACE_ARTICULATION_ORNAMENT_KEYPAD"
 }
