@@ -4,6 +4,10 @@ import { renderableMusicXmlV2, type RendererRequestV2 } from '../../renderer-con
 import { renderableMusicXmlV4, type RendererRequestV4 } from '../../renderer-contract-v4/src/index.js';
 
 export const OSMD_INTEGRATION_VERSION = '2.1.1' as const;
+export const OSMD_ST_RENDERING_LAYER_INTEGRATION_VERSION = '2.1.2' as const;
+export type AdmittedOsmdIntegrationVersion =
+  | typeof OSMD_INTEGRATION_VERSION
+  | typeof OSMD_ST_RENDERING_LAYER_INTEGRATION_VERSION;
 
 export interface OsmdHostInstance {
   load(content: string): Promise<unknown>;
@@ -13,7 +17,7 @@ export interface OsmdHostInstance {
 
 export interface OsmdRendererHost {
   readonly packageName: 'opensheetmusicdisplay';
-  readonly packageVersion: typeof OSMD_INTEGRATION_VERSION;
+  readonly packageVersion: AdmittedOsmdIntegrationVersion;
   readonly license: 'BSD-3-Clause';
   readonly instance: OsmdHostInstance;
 }
@@ -44,10 +48,9 @@ export class OsmdAdapterError extends Error {
 const assertHost = (host: OsmdRendererHost): void => {
   if (
     host.packageName !== 'opensheetmusicdisplay' ||
-    host.packageVersion !== OSMD_INTEGRATION_VERSION ||
     host.license !== 'BSD-3-Clause'
   ) {
-    throw new OsmdAdapterError('OSMD host does not match exact direct-adapter version/license profile.', 'INVALID_OSMD_HOST');
+    throw new OsmdAdapterError('OSMD host does not match exact direct-adapter package/license profile.', 'INVALID_OSMD_HOST');
   }
   try {
     assertRendererProfile({
@@ -57,7 +60,7 @@ const assertHost = (host: OsmdRendererHost): void => {
       license: host.license
     });
   } catch {
-    throw new OsmdAdapterError('OSMD host does not match exact admitted version/license profile.', 'INVALID_OSMD_HOST');
+    throw new OsmdAdapterError('OSMD host does not match an exact admitted version/license profile.', 'INVALID_OSMD_HOST');
   }
   if (!host.instance || typeof host.instance.load !== 'function' || typeof host.instance.render !== 'function') {
     throw new OsmdAdapterError('OSMD host instance does not expose the admitted load/render surface.', 'INVALID_OSMD_HOST');
@@ -68,7 +71,11 @@ const assertRequestProfile = (host: OsmdRendererHost, profile: RendererProfile):
   if (profile.family !== 'osmd') {
     throw new OsmdAdapterError('OSMD adapter received a request for another renderer family.', 'WRONG_RENDERER_FAMILY');
   }
-  assertRendererProfile(profile);
+  try {
+    assertRendererProfile(profile);
+  } catch {
+    throw new OsmdAdapterError('OSMD request profile is not an admitted exact renderer profile.', 'INVALID_OSMD_HOST');
+  }
   if (
     profile.packageName !== host.packageName ||
     profile.packageVersion !== host.packageVersion ||
