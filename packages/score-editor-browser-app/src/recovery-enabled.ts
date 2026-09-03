@@ -91,7 +91,7 @@ export const createRecoveryEnabledStandaloneScoreEditorController = (
   let rejectedCandidateCount = 0;
   let lastStoredDocumentId: string | null = null;
   let lastStoredRevisionId: string | null = null;
-  let status = Object.freeze({ code: 'RECOVERY_INITIALIZING', message: 'Recovery initialization pending.' });
+  let status: Readonly<{ code: string; message: string }> = Object.freeze({ code: 'RECOVERY_INITIALIZING', message: 'Recovery initialization pending.' });
 
   if (store === null) {
     try {
@@ -160,7 +160,7 @@ export const createRecoveryEnabledStandaloneScoreEditorController = (
       return record;
     },
     scanRecoveries: scan,
-    prepareRecovery: async (documentId: string, prepareOptions = {}) => {
+    prepareRecovery: async (documentId: string, prepareOptions: { readonly allowSameDocumentReplace?: boolean } = {}) => {
       try {
         const result = await scan();
         const candidate = result.valid.find((value) => value.record.documentId === documentId);
