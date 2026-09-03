@@ -32,12 +32,12 @@ jobs:
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
           cd "$RUNNER_TEMP/st-score-rendering-layer"
-          git checkout --detach bfd8efe04b90896012ee14d33895420f816beaa6
+          git checkout --detach 13c32eefccd5bf2c227e815aa27aae4a0583801d
       - name: Build exact renderer runtime
         run: |
           cd "$RUNNER_TEMP/st-score-rendering-layer"
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          ST_SCORE_RENDERER_SOURCE_REVISION=bfd8efe04b90896012ee14d33895420f816beaa6 npm run export:workstation-runtime
+          ST_SCORE_RENDERER_SOURCE_REVISION=13c32eefccd5bf2c227e815aa27aae4a0583801d npm run export:workstation-runtime
       - name: Assemble stable APP-09B preview
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
