@@ -129,56 +129,100 @@ try {
     throw new Error(`render epoch evidence missing: ${JSON.stringify(initial)}`);
   }
 
-  const hitPoint = await page.evaluate(() => {
+  const exactTargetProbe = await page.evaluate(async () => {
     const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
     if (!(frame instanceof HTMLIFrameElement)) throw new Error('APP09B_RENDERER_FRAME_MISSING');
     const child = frame.contentDocument;
     const api = frame.contentWindow?.__ST_SCORE_RENDER_HOST__;
-    if (!child || !api || typeof api.hitTestNoteDetailed !== 'function') {
+    if (!child || !api || typeof api.hitTestNoteDetailed !== 'function' || typeof api.highlight !== 'function') {
       throw new Error('APP09B_RENDERER_HIT_HOST_MISSING');
     }
+
+    const target = { partId: 'P1', measureIndex: 0, noteIndex: 0, voice: 1 };
+    let highlightError = null;
+    try {
+      await api.clearHighlights();
+      await api.highlight({ target, className: 'st-score-diagnostic-target' });
+    } catch (error) {
+      highlightError = String(error?.message ?? error);
+    }
+
+    const highlighted = child.querySelector('[data-st-score-highlight="true"]');
+    if (!(highlighted instanceof frame.contentWindow.Element)) {
+      return { target, highlightError, highlighted: false, hitPoint: null, missReasons: {}, landed: [] };
+    }
+
+    const rect = highlighted.getBoundingClientRect();
     const frameRect = frame.getBoundingClientRect();
-    const candidates = [...child.querySelectorAll('svg *')];
-    for (const candidate of candidates) {
-      if (!(candidate instanceof frame.contentWindow.Element)) continue;
-      const rect = candidate.getBoundingClientRect();
-      if (!Number.isFinite(rect.left) || !Number.isFinite(rect.top) || rect.width <= 0 || rect.height <= 0) continue;
-      const points = [
-        [0.5, 0.5], [0.25, 0.5], [0.75, 0.5], [0.5, 0.25], [0.5, 0.75]
-      ];
-      for (const [fx, fy] of points) {
+    const missReasons = {};
+    const landed = [];
+    const fractions = [0.2, 0.35, 0.5, 0.65, 0.8];
+    for (const fx of fractions) {
+      for (const fy of fractions) {
         const childX = rect.left + rect.width * fx;
         const childY = rect.top + rect.height * fy;
-        if (childX < 0 || childY < 0 || childX > frame.clientWidth || childY > frame.clientHeight) continue;
-        let hit;
+        const surface = child.elementFromPoint(childX, childY);
+        if (landed.length < 8) {
+          landed.push({
+            tag: surface?.tagName ?? null,
+            inSvg: surface instanceof frame.contentWindow.Element && surface.closest('svg') !== null,
+            inHighlighted: surface instanceof frame.contentWindow.Element && (surface === highlighted || highlighted.contains(surface))
+          });
+        }
+        let result;
         try {
-          hit = api.hitTestNoteDetailed({ clientX: childX, clientY: childY });
-        } catch {
+          result = api.hitTestNoteDetailed({ clientX: childX, clientY: childY });
+        } catch (error) {
+          const key = `THREW:${String(error?.message ?? error)}`;
+          missReasons[key] = (missReasons[key] ?? 0) + 1;
           continue;
         }
-        if (hit?.kind === 'HIT') {
+        if (result?.kind === 'HIT') {
           return {
-            childX,
-            childY,
-            pageX: frameRect.left + childX,
-            pageY: frameRect.top + childY,
-            target: hit.target,
-            renderEpoch: hit.renderEpoch,
-            sourceId: hit.sourceId ?? null
+            target,
+            highlightError,
+            highlighted: true,
+            rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+            missReasons,
+            landed,
+            hitPoint: {
+              childX,
+              childY,
+              pageX: frameRect.left + childX,
+              pageY: frameRect.top + childY,
+              target: result.target,
+              renderEpoch: result.renderEpoch,
+              sourceId: result.sourceId ?? null
+            }
           };
         }
+        const reason = result?.reason ?? 'UNKNOWN_MISS';
+        missReasons[reason] = (missReasons[reason] ?? 0) + 1;
       }
     }
-    return null;
+    return {
+      target,
+      highlightError,
+      highlighted: true,
+      rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+      hitPoint: null,
+      missReasons,
+      landed
+    };
   });
 
-  if (hitPoint === null) {
-    throw new Error('APP-09B renderer produced SVG but no exact note hit point was discoverable.');
+  if (exactTargetProbe.hitPoint === null) {
+    throw new Error(`APP-09B exact highlighted note produced no renderer HIT: ${JSON.stringify(exactTargetProbe)}`);
   }
+  const hitPoint = exactTargetProbe.hitPoint;
   if (hitPoint.renderEpoch !== initial.renderEpoch || hitPoint.sourceId !== initial.sourceId) {
     throw new Error(`APP-09B exact hit evidence was stale before touch: ${JSON.stringify({ hitPoint, initial })}`);
   }
 
+  await page.evaluate(async () => {
+    const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
+    await frame?.contentWindow?.__ST_SCORE_RENDER_HOST__?.clearHighlights?.();
+  });
   await page.touchscreen.tap(hitPoint.pageX, hitPoint.pageY);
   await page.waitForFunction(() => document.documentElement.dataset.app09bLastHit !== undefined, null, { timeout: 5000 });
   const interaction = await page.evaluate(() => {
@@ -233,7 +277,7 @@ try {
     throw new Error(`APP-09B WebKit console errors: ${consoleErrors.slice(-12).join(' | ')}`);
   }
 
-  console.log(`APP-09B WebKit regression: PASS (${JSON.stringify({ initial, hitPoint, interaction, persistence })})`);
+  console.log(`APP-09B WebKit regression: PASS (${JSON.stringify({ initial, exactTargetProbe, hitPoint, interaction, persistence })})`);
 } finally {
   if (browser !== undefined) await browser.close();
   await new Promise((resolve) => server.close(resolve));
