@@ -1,42 +1,45 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "document_type": "cross_staff_presentation_relation_contract",
   "project": "ST Score Editor Core",
   "stage": "SSE-10",
-  "status": "DESIGN_CANDIDATE_HUMAN_REVIEW_REQUIRED_RUNTIME_NOT_STARTED",
+  "status": "APPROVED_FROZEN_BOUNDED_RUNTIME_COMPLETE_MERGE_CANDIDATE",
   "date": "2026-09-03",
   "versioning": {
     "score_document": "ScoreDocumentV3/3.0.0",
     "score_schema_change_required": false,
     "semantic_address": "SemanticAddressV3/3.0.0",
     "new_address_kind_required": false,
-    "proposed_notation_document": "NotationDocumentV4/4.0.0",
-    "reason": "Cross-staff presentation changes the public notation shape while canonical score ownership remains unchanged."
+    "notation_document": "NotationDocumentV4/4.0.0",
+    "renderer_request": "RendererRequestV4/4.0.0",
+    "editor_session": "EditorSessionStateV4/4.0.0"
   },
-  "proposed_notation_v4": {
+  "notation_v4": {
     "preserves_v3_collections": true,
     "adds": ["crossStaffPlacements"],
     "placement_shape": {
       "fields": ["source", "displayStaffId"],
       "source_type": "EventAddressV3",
       "unique_by_source_event": true
-    }
+    },
+    "exact_validation": true,
+    "same_document_revision_required": true
   },
-  "initial_placement_profile": {
+  "placement_profile": {
     "normal_timed_event_only": true,
     "pitched_event_only": true,
     "event_kinds": ["note", "chord"],
     "rest_allowed": false,
     "grace_allowed": false,
+    "percussion_allowed": false,
+    "split_chord_allowed": false,
     "source_staff_role": "standard",
     "display_staff_role": "standard",
     "source_and_display_distinct": true,
     "same_part_required": true,
     "same_frame_correspondence_required": true,
     "linked_tab_source_or_target_allowed": false,
-    "whole_event_moves_as_one_unit": true,
-    "split_chord_allowed": false,
-    "percussion_allowed": false
+    "whole_event_moves_as_one_unit": true
   },
   "canonical_ownership": {
     "source_part_changes": false,
@@ -59,24 +62,23 @@
     "visual_cross_staff_does_not_transfer_relation_ownership": true,
     "independent_source_voice_staff_relation_authoring_admitted": false
   },
-  "cross_staff_beam": {
-    "existing_same_source_voice_beam_may_render_across_staffs": true,
-    "new_beam_relation_between_independent_source_voices": false,
-    "renderer_geometry_canonical": false
-  },
-  "selection": {
-    "rendered_hit_resolves_to_original_source_identity": true,
-    "display_staff_replaces_source_ancestry": false,
-    "opaque_revision_bound_tokens_required": true,
-    "coordinate_or_nearest_staff_inference_allowed": false
+  "authoring": {
+    "contract": "editor-cross-staff-authoring-v4/1.0.0",
+    "intents": ["SET_CROSS_STAFF_PLACEMENT", "REMOVE_CROSS_STAFF_PLACEMENT"],
+    "current_revision_source_required": true,
+    "explicit_display_staff_required": true,
+    "fresh_next_revision_id_required": true,
+    "one_direct_child_revision_per_accepted_edit": true,
+    "musical_content_mutated_by_placement": false
   },
   "topology_safety": {
-    "source_staff_removal_may_orphan_placement": true,
-    "display_staff_removal_may_orphan_placement": true,
+    "contract": "editor-topology-authoring-v4/1.0.0",
+    "composes_existing_v3_topology_engine": true,
+    "source_or_display_orphan_rejects": true,
+    "orphan_error": "CROSS_STAFF_ORPHAN_RISK",
     "implicit_cascade_allowed": false,
     "nearest_surviving_staff_retarget_allowed": false,
-    "staff_reorder_preserves_by_stable_ids": true,
-    "current_sse_09_runtime_unchanged_until_v4_integration": true
+    "staff_reorder_preserves_by_stable_ids": true
   },
   "migration": {
     "notation_v3_to_v4": {
@@ -87,8 +89,27 @@
     "notation_v4_to_v3": {
       "lossless_only": true,
       "requires_empty_crossStaffPlacements": true,
-      "flatten_by_moving_canonical_event_forbidden": true
+      "flatten_by_moving_canonical_event_forbidden": true,
+      "nonempty_error": "DOWNGRADE_UNREPRESENTABLE"
     }
+  },
+  "history_session": {
+    "atomic_score_v3_notation_v4_snapshots": true,
+    "direct_child_commit_only": true,
+    "unified_undo_redo": true,
+    "one_time_v3_notation_to_v4_session_migration": true,
+    "parallel_mutable_notation_authority": false
+  },
+  "renderer": {
+    "contract": "RendererRequestV4/4.0.0",
+    "empty_placements_may_reuse_existing_projection": true,
+    "empty_placement_success_status": "V3_COMPATIBLE_XML",
+    "lower_projection_pending_status": "V4_XML_PENDING",
+    "nonempty_pending_status": "CROSS_STAFF_XML_PENDING",
+    "nonempty_musicxml": null,
+    "manifest_uses_source_semantic_address_v3": true,
+    "display_staff_replaces_source_ancestry": false,
+    "renderer_canonical_authority": false
   },
   "musicxml": {
     "current_projection_lossless_for_nonempty_placements": false,
@@ -96,13 +117,7 @@
     "source_staff_inference_from_nearest_staff_forbidden": true,
     "source_staff_inference_from_first_occurrence_forbidden": true,
     "source_staff_inference_from_beam_geometry_forbidden": true,
-    "nonempty_placements_must_fail_closed_or_remain_pending": true
-  },
-  "renderer_candidate": {
-    "proposed_contract": "RendererRequestV4/4.0.0",
-    "empty_placements_may_reuse_existing_projection": true,
-    "nonempty_pending_status": "CROSS_STAFF_XML_PENDING",
-    "renderer_canonical_authority": false
+    "nonempty_placements_fail_closed": true
   },
   "product": {
     "seslitab_v4_cutover": false,
@@ -126,17 +141,8 @@
     "SESLITAB_V4_PRODUCT_CUTOVER",
     "PERSISTENCE_NETWORK_PUBLIC_WRITE_PRODUCTION"
   ],
-  "implementation_gate": {
-    "runtime_not_started": true,
-    "human_approval_required_before_freeze": true,
-    "human_approval_required_before_runtime": true,
-    "requires_notation_v4_validation": true,
-    "requires_v3_v4_migration_guards": true,
-    "requires_source_ownership_immutability": true,
-    "requires_topology_orphan_protection": true,
-    "requires_renderer_musicxml_fail_closed": true,
-    "requires_source_identity_selection": true,
-    "requires_atomic_history": true,
-    "requires_node_18_20_22_ci": true
+  "completion_gate": {
+    "requires_node_18_20_22_ci": true,
+    "production_activation_by_merge": false
   }
 }
