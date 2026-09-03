@@ -18,44 +18,38 @@ Repository reality only; planned capability is not production capability.
 The standalone ST Score Editor App is the active product target. SesliTab V4 product cutover is deferred until APP-09.
 
 - **APP-00–04 — COMPLETE / MERGED:** standalone authority, document runtime, unified V4 authoring, browser shell and bounded local file workflow.
-- **APP-05 — COMPLETE / MERGED:** validated browser-local recovery/autosave.
-  - current canonical V3/V4 snapshot only; undo/redo history is not serialized;
-  - SHA-256 integrity + canonical/metadata validation;
-  - 64 MiB recovery payload bound;
-  - IndexedDB cache only in standalone app; legacy core remains no-IndexedDB;
-  - max 8 document recovery records;
-  - autosave only after accepted dirty revisions;
-  - stale digest/revision race cannot commit an older recovery over newer live state;
-  - corrupt records fail closed;
-  - automatic restore disabled;
-  - explicit prepare/apply flow with active document/revision guard;
-  - recovered snapshot revalidated before live adoption;
-  - successful apply starts fresh V4 history and clears stale file association;
-  - recovery remains noncanonical and `persistenceCapable:false`.
+- **APP-05 — COMPLETE / MERGED:** validated browser-local recovery/autosave; explicit guarded apply, no persistence authority.
 - **APP-06 — COMPLETE / MERGED:** renderer interaction and viewport.
-  - APP-06A current `RendererRequestV4` lifecycle and stale-render rejection;
-  - APP-06B revision-bound opaque manifest token -> `SemanticAddressV3` selection only;
-  - exact document/revision/renderer-family/contract matching; stale/unknown/mismatch fail closed;
-  - DOM/SVG/coordinate/geometry authority remains forbidden;
-  - cross-staff visual hit resolves original source semantic identity;
-  - APP-06C zoom/pan/native scroll/page navigation is presentation-only;
-  - touch, pointer and keyboard viewport paths create no canonical revision/history entry;
-  - rerender continues to use current canonical revision request.
-- **APP-07 — NEXT / NOT STARTED:** local playback transport.
-- **APP-08 — PLANNED:** MusicXML export/print/PDF workflow.
+  - current `RendererRequestV4` lifecycle and stale-render rejection;
+  - revision-bound opaque manifest token -> `SemanticAddressV3` selection only;
+  - DOM/SVG/coordinate/geometry authority forbidden;
+  - zoom/pan/native-scroll/page navigation is presentation-only.
+- **APP-07 — COMPLETE / MERGED:** local playback transport through PR #85 / `0608e231b536299086cd3a516c5f221ca41b01e8`.
+  - revision-bound `PlaybackPlanV1` derived from validated `ScoreDocumentV3`;
+  - normal note/chord pitch and canonical event timing scheduled locally;
+  - rests contribute observed timeline extent;
+  - grace playback timing remains explicitly deferred/partial;
+  - browser-local Web Audio output; no network/backend requirement;
+  - play/pause/stop/seek plus semantic playback cursor;
+  - 20–300 BPM playback-only tempo, default 120 BPM, never written to canonical score;
+  - playback operations create no V4 history revision;
+  - canonical revision change stops stale playback;
+  - playback errors do not disable editing/OMR admission.
+- **APP-08 — NEXT / NOT STARTED:** admitted MusicXML export/print/PDF workflow.
 - **APP-09 — PLANNED:** iPhone/iPad/desktop hardening, performance, accessibility and standalone release gate.
 
-Local editing requires no backend/service provider.
+Local editing and APP-07 local playback require no backend/service provider.
 
-## Product safety result through APP-06
+## Product safety result through APP-07
 
-All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. File APIs and recovery cache cannot directly mutate canonical score state. Renderer presentation, renderer DOM/SVG/geometry and viewport state are noncanonical. Renderer hits can alter selection only after current revision-bound opaque-token resolution; subsequent edits still pass through `EditorSessionV4` validation/history.
+All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. File APIs, recovery cache, renderer presentation, viewport state and playback transport cannot directly mutate canonical score state. Renderer hits can alter selection only after current revision-bound opaque-token resolution. Playback cursor may reference revision-bound semantic identity, but playback state never becomes edit authority or history.
 
 ## Still fail-closed / gated
 
+- APP-08 export/print/PDF implementation is not started;
 - standalone release before APP-09;
 - SesliTab V4 cutover before APP-09 completion;
-- APP-07 playback implementation is not part of completed APP-06;
+- grace playback timing semantics beyond APP-07's explicit deferred/partial behavior;
 - split-chord/grace/rest/percussion cross-staff placement;
 - linked TAB as cross-staff target;
 - relations between independent source voices/staffs;
