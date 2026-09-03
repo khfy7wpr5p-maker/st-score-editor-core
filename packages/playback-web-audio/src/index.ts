@@ -102,6 +102,7 @@ export const createLocalPlaybackTransportV1 = (
   };
   const snapshot = (): Readonly<PlaybackTransportSnapshotV1> => {
     const position = positionNow();
+    const cursor = mode === 'playing' || mode === 'paused' ? currentCursor(plan.events, position) : null;
     return Object.freeze({
       version: PLAYBACK_TRANSPORT_V1_VERSION,
       documentId: plan.documentId,
@@ -110,7 +111,7 @@ export const createLocalPlaybackTransportV1 = (
       tempoBpm,
       positionWholeNotes: position,
       durationWholeNotes: plan.durationWholeNotes,
-      cursor: currentCursor(plan.events, position)
+      cursor
     });
   };
   const scheduleFrom = (position: number): void => {
