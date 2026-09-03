@@ -1,89 +1,69 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–09 are merged. SSE-09 bounded V3 staff/part topology runtime is active as an additive core contract.**
+Status: **SEC-NE and SSE-00–09 are merged. SSE-10 cross-staff presentation is a DESIGN CANDIDATE / HUMAN REVIEW REQUIRED; runtime is not started.**
 
 ## Canonical authority
 
-A session owns exactly one versioned canonical score+notation pair. V2 sessions remain supported; a V3 session owns exactly one `ScoreDocumentV3 + NotationDocumentV3` pair. V2 input may be migrated once into V3, but mutable V2 and V3 copies are never kept in parallel.
+A session owns exactly one versioned canonical score+notation pair. V2 and V3 runtime contracts remain supported. MusicXML is exchange/projection data. Renderer, DOM/SVG, SesliTab host state and Guitar derivative state remain noncanonical.
 
-MusicXML is exchange/projection data. Renderer, DOM/SVG, SesliTab host state and Guitar derivative state remain noncanonical.
+## Current V3 topology
 
-## V3 topology
+`ScoreDocumentV3` owns document-global `measureFrames`, explicit part/staff topology, stable instrument identity and source musical ownership. Standard/percussion staffs own measures/voices/events. Linked TAB remains derivative presentation only.
 
-```text
-ScoreDocumentV3
-  -> measureFrames[]             # document-global aligned sequence
-  -> parts[]
-       -> id + ordinal
-       -> instrument {id,name,shortName}
-       -> staves[]
-            -> standard/percussion
-                 -> StaffMeasureV3(frameId)[]
-                      -> voices/events/graceGroups
-            -> tablature-linked
-                 -> sourceStaffId
-                 -> TabProfileV3
-                 -> measures=[]
-```
+`SemanticAddressV3` already identifies source part, staff, frame, measure, voice, event and note exactly. SSE-10 therefore does not propose a new score address kind.
 
-`measureFrames` are the sole aligned measure-sequence authority. Standard/percussion staffs have exactly one measure per frame. Linked TAB is presentation topology only and cannot own canonical voices/events/notes. String/fret/fingering/voicing remains derivative Guitar state.
+## SSE-10 design conclusion
 
-## V3 notation ownership
+A Sibelius-style cross-staff note remains owned by its original canonical source voice/staff. Only its **display staff** changes.
 
-`NotationDocumentV3` separates structural notation ownership:
-
-- frame: controlling time signature and barlines;
-- staff measure: key signature and clef;
-- event/note/grace: the admitted V2 semantic notation set.
-
-Notation is sparse, same-document and same-revision. A topology edit that would remove a still-notated entity rejects rather than silently dropping its notation.
-
-## Migration
-
-V2 -> V3:
-
-- preserves existing canonical entity IDs;
-- creates deterministic noncolliding frame/instrument identities;
-- requires equal staff measure counts and matching ordinal/display-number alignment;
-- rejects conflicting aligned time/barline ownership;
-- never infers linked TAB merely from a TAB clef.
-
-V3 -> V2 is lossless-only. Linked TAB, non-standard topology or custom V3 topology metadata that would disappear blocks downgrade.
-
-## SSE-09 topology authoring
-
-Admitted operations:
-
-- add/remove/reorder part;
-- add/remove/reorder standard or percussion staff;
-- add/remove linked TAB presentation staff;
-- rename part/instrument display metadata.
-
-Every operation uses exact revision-bound semantic targets and caller-supplied fresh identity plans. Adding content topology requires effective meter on every frame and initializes exactly one explicit full-frame rest voice per new staff/frame. It does not copy or infer rhythmic content from another staff.
-
-Removing the final part or final content staff is forbidden. Removing a source standard staff while linked TAB exists is rejected; the linked TAB must be removed explicitly first. No cascading deletion or nearest retarget is admitted.
-
-## V3 history/session
-
-`editor-history-v3` stores atomic score+notation snapshots and accepts only direct-child revisions. `editor-session-controller-v3` composes migration, topology commits, selection, render request regeneration and undo/redo without introducing host authority.
-
-## Renderer boundary
-
-`RendererRequestV3` is additive:
+Proposed future pair:
 
 ```text
-V3 canonical pair
-  -> guarded lossless V3 -> V2 downgrade
-       -> proven V2 renderer projection succeeds -> V2_COMPATIBLE_XML
-       -> semantic loss / known unsupported MusicXML projection -> V3_XML_PENDING + null XML
+ScoreDocumentV3/3.0.0
+        +
+NotationDocumentV4/4.0.0
 ```
 
-Pending projection never invalidates the canonical V3 edit/history; it only prevents lossy rendering. V3-native topology MusicXML serialization is not claimed by SSE-09.
+V4 notation would retain all V3 notation and add:
+
+```text
+crossStaffPlacements[]
+  -> source: EventAddressV3
+  -> displayStaffId
+```
+
+The initial profile is event-level, not split-note geometry. A pitched normal `note` or `chord` event may be displayed on a distinct standard staff in the same part. Source part/staff/frame/measure/voice, pitch, timing and identity do not change.
+
+## Relation ownership
+
+Existing beams, ties, slurs, tuplets and ornaments remain owned by source canonical event/note notation.
+
+A beam may become visually cross-staff when events in one existing source voice have different display-staff assignments. SSE-10 does not admit a new beam relation between independent source voices/staffs.
+
+Likewise, visual placement does not widen current tie/slur/tuplet/spanning-ornament authoring scopes. Renderer geometry is presentation only.
+
+## Migration candidate
+
+Notation V3 -> V4 is deterministic: preserve all V3 semantics and initialize `crossStaffPlacements=[]`.
+
+V4 -> V3 is lossless-only and requires an empty placement collection. Flattening placement by moving canonical events to another staff is forbidden.
+
+## Renderer / MusicXML boundary
+
+Current MusicXML projection derives `<staff>` from canonical source-staff streams and cannot prove lossless source/display separation for a non-empty cross-staff placement set.
+
+Therefore the candidate requires non-empty placements to remain pending/fail-closed until a separate V4 MusicXML projection contract exists. Import may not infer source ownership from nearest staff, first occurrence, beam appearance or reused voice ordinal.
+
+## Topology boundary
+
+A future V4-aware topology transaction must reject removal of a source or display staff when that would orphan a placement, unless placement removal is explicitly included in the admitted atomic transaction. Reorder remains ID-stable and must not retarget by proximity.
+
+Current SSE-09 runtime is unchanged by this design PR.
 
 ## Product boundary
 
-SSE-09 does not activate SesliTab V3 product cutover, persistence, network/server revisions, publication or production write authority. Existing SesliTab v2 host integration remains current.
+SSE-10 does not activate SesliTab V4 integration, persistence, network/server revisions, publication or production write authority. Playback pitch/timing is unchanged by cross-staff display.
 
-## Next gate
+## Human gate
 
-**SSE-10 is HUMAN-GATED DESIGN** for cross-staff canonical relation ownership. Cross-staff beam/note relocation/tie/slur/tuplet/ornament semantics, polymeter/non-controlling topology, part groups, arbitrary transposition, percussion maps, layout geometry and playback routing remain outside SSE-09.
+The full design is `docs/cross-staff-relation-contract.md` and `.json`. It must be explicitly human-approved before the contract is frozen or any SSE-10 runtime implementation starts.

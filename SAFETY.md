@@ -4,42 +4,50 @@
 
 The active versioned score remains canonical; notation is same-document/same-revision; source identity is immutable; stale targets fail closed; unsupported or ambiguous semantics are never guessed; renderer/host coordinates never become mutation authority; accepted mutations create one direct-child revision or none; production/public-write is never activated by merge.
 
-## V2 safety remains active
-
-Grace, articulation and ornament semantics remain explicitly versioned in V2. Bounded MusicXML, renderer projection, opaque tokens, SesliTab no-dual-write and playback/edit-admission separation remain unchanged.
-
 ## SSE-09 V3 topology safety
 
-V3 topology authoring is admitted only through the frozen SSE-08 model.
+V3 topology authoring remains governed by the frozen SSE-08 model: explicit measure frames, stable IDs, guarded migration, no rhythmic invention on new staff creation, no notation orphaning, derivative linked TAB, atomic V3 history and no parallel mutable V2/V3 authority.
 
-- `measureFrames` are explicit aligned-measure authority; first-staff inference is not canonical.
-- V2 -> V3 migration rejects measure misalignment and frame-level notation conflicts rather than repairing them.
-- Part/staff IDs remain stable while ordinals are normalized after reorder.
-- New topology identities are caller-supplied and globally validated for collisions.
-- New standard/percussion staff content is not copied from neighboring staffs. Effective frame meter must be known; only then is one explicit full-frame rest initialized for each frame.
-- Missing meter is a veto.
-- Removing the final part or final content-bearing staff is forbidden.
-- Any removal that would orphan event/note/grace/staff-measure notation rejects.
-- Linked TAB owns no canonical measures/events/notes and can reference only a standard staff in the same part.
-- A linked TAB source staff cannot be removed by implicit cascade; the link must be explicitly removed first.
-- String/fret/fingering/voicing remains derivative Guitar state.
-- V3 history stores one atomic score+notation snapshot and accepts only direct-child commits.
-- V3 session migration is one-way at session creation; parallel mutable V2/V3 authority is forbidden.
+## SSE-10 design-candidate safety
+
+SSE-10 is design only. No cross-staff runtime authority is activated by this candidate.
+
+The proposed safety rule is that cross-staff display **never moves canonical musical ownership**.
+
+- source part/staff/frame/measure/voice remain unchanged;
+- event/note IDs remain unchanged;
+- pitch/onset/duration remain unchanged;
+- display staff is notation semantics only;
+- initial source and display staffs must be distinct `standard` staffs in the same part;
+- only pitched normal `note`/`chord` events are admitted initially;
+- rests, grace events, percussion, linked TAB targets and split chords remain unsupported;
+- no nearest-staff or coordinate inference is allowed;
+- one source event may have at most one display-staff assignment.
+
+Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. Visual cross-staff placement does not authorize new relations between independent source voices/staffs.
+
+## Topology safety with future V4 notation
+
+A source/display staff cannot be removed if doing so would orphan a cross-staff placement unless explicit placement removal is part of the same admitted atomic transaction. Staff reorder preserves assignments by stable IDs. Silent cascade or nearest-surviving-staff retargeting is forbidden.
+
+Current SSE-09 topology runtime remains unchanged until an explicitly approved V4 integration stage composes these checks.
 
 ## Renderer / MusicXML safety
 
-V3 renderer projection is lossless-only. When a V3 pair can safely use the proven V2 projection it may emit `V2_COMPATIBLE_XML`. If topology metadata would be lost or the bounded MusicXML serializer cannot represent the pair, the renderer request remains `V3_XML_PENDING` with no XML.
+Current projection cannot prove lossless source-staff versus display-staff ownership for non-empty cross-staff placements. A future V4 notation document with placements must therefore remain pending/fail-closed until a separately admitted projection exists.
 
-A projection gap does not roll back or alter a valid canonical topology edit. It only blocks lossy renderer output. SSE-09 does not claim V3-native topology MusicXML round trip.
+Import may not reconstruct source ownership by nearest staff, first occurrence, beam geometry or duplicated voice ordinal. Renderer hits must resolve to the original source semantic identity, not the display staff position.
+
+## Migration safety
+
+Proposed V3 notation -> V4 notation migration is additive with empty placements. V4 -> V3 is lossless-only and requires an empty placement collection. Moving canonical events to another staff to simulate downgrade is forbidden.
 
 ## Product boundary
 
-SSE-09 adds no SesliTab V3 product cutover, network/persistence/server revision authority, publication or production write authority. Existing product hosts remain noncanonical.
+SSE-10 design adds no SesliTab V4 cutover, network/persistence/server revision authority, publication or production write authority. Cross-staff display alone does not change playback pitch/timing.
 
-## Human gates
+## Human gate
 
-Human approval remains required before cross-staff canonical ownership, polymeter/non-controlling topology, part groups, arbitrary transposition/percussion maps, V3-native topology exchange if it expands semantics materially, material dependency/license risk, AI/renderer/host canonical authority, E8-D invocation, or production/public-write activation.
+Explicit human approval is required before the SSE-10 design is frozen and before any `NotationDocumentV4`, V4 migration/session/renderer, cross-staff authoring or topology integration runtime is implemented.
 
-## Next gate
-
-SSE-10 is the explicit cross-staff design gate. No cross-staff note relocation, beam, tie, slur, tuplet or ornament ownership is admitted by SSE-09.
+Full candidate: `docs/cross-staff-relation-contract.md` and `.json`.

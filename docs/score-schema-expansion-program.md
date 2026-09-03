@@ -1,74 +1,69 @@
 # SCORE-SCHEMA-EXPANSION Program
 
-Status: **SSE-09 COMPLETE / MERGED**
+Status: **SSE-09 COMPLETE / MERGED; SSE-10 DESIGN CANDIDATE / HUMAN REVIEW REQUIRED**
 
-SSE-00–09 are complete and merged. SSE-09 implements the frozen V3 staff/part topology contract as an additive core runtime. Cross-staff ownership remains the next human-gated design stage.
+SSE-00–09 are complete and merged. SSE-10 now has a bounded design candidate for Sibelius-style cross-staff presentation; runtime implementation has not started.
 
 ## Completed sequence
 
 - **SSE-00–07 — COMPLETE / MERGED:** V2 schema/session, grace/articulation/ornament authoring, bounded MusicXML V2, renderer and SesliTab V2 compatibility.
 - **SSE-08 — COMPLETE / MERGED:** V3 staff/part topology design freeze.
 - **SSE-09 — COMPLETE / MERGED:** V3 topology substrate, migration, history/session, renderer contract and bounded topology authoring.
-- **SSE-10 — HUMAN-GATED DESIGN:** cross-staff canonical relation ownership.
+- **SSE-10 — DESIGN CANDIDATE / HUMAN REVIEW REQUIRED:** cross-staff presentation and relation ownership. Runtime not started.
 
-## V3 runtime
+## SSE-10 fresh-read conclusion
 
-The additive contracts are:
+`ScoreDocumentV3` already owns the exact source part/staff/frame/measure/voice/event hierarchy, and `SemanticAddressV3` already addresses it exactly. Cross-staff notation therefore should not move an event into another canonical staff or create a second score event.
+
+The candidate keeps:
 
 - `ScoreDocumentV3/3.0.0`;
-- `NotationDocumentV3/3.0.0`;
-- `SemanticAddressV3/3.0.0`;
-- `RendererRequestV3/3.0.0`.
+- `SemanticAddressV3/3.0.0`.
 
-A V3 session owns exactly one V3 score+notation pair. V2 remains independently supported; V2 input may migrate once into V3, but no session keeps parallel mutable V2/V3 authority.
+It proposes:
 
-### Topology authority
+- `NotationDocumentV4/4.0.0` with `crossStaffPlacements`.
 
-- document-global `measureFrames` own aligned measure sequence and display number;
-- parts own stable identity, explicit ordinal and stable instrument identity;
-- standard/percussion staffs own canonical measures/voices/events;
-- linked TAB is derivative presentation with `sourceStaffId`, tuning/capo profile and no independent canonical measure/event stream;
-- frame notation owns time/barlines;
-- staff-measure notation owns key/clef;
-- event/note/grace notation retains V2 meaning.
+A placement points from one current `EventAddressV3` to an explicit `displayStaffId`. Source ownership, event/note identity, pitch and timing remain unchanged.
 
-### Migration
+## Initial bounded profile
 
-V2 -> V3 requires proven staff alignment and unambiguous frame notation ownership. Existing musical IDs are preserved; fresh frame/instrument IDs are deterministic and collision-safe. TAB clef does not infer linked TAB topology.
+- normal timed pitched event only (`note` or `chord`);
+- whole event moves as one display unit;
+- source and display staff are distinct `standard` staffs in the same part;
+- same global frame correspondence is required;
+- no rest/grace/percussion/linked-TAB placement;
+- no split chord;
+- no coordinate or nearest-staff inference.
 
-V3 -> V2 is lossless-only and rejects linked TAB, non-standard topology or V3 metadata that would disappear.
+Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. An existing same-source-voice beam may become visually cross-staff because member events have display assignments. New relations between independent source voices/staffs are not admitted.
 
-### Authoring
+## Migration candidate
 
-SSE-09 admits:
+Notation V3 -> V4 preserves all V3 notation and initializes `crossStaffPlacements=[]`.
 
-- add/remove/reorder part;
-- add/remove/reorder standard/percussion staff;
-- add/remove linked TAB presentation staff;
-- rename part/instrument display metadata.
+V4 -> V3 is lossless-only and requires empty placements. Flattening by moving canonical events into display staffs is forbidden.
 
-All intents use exact revision-bound semantic addresses. New identity plans are explicit. Adding content topology requires effective meter for every frame and creates only explicit full-frame rests; no rhythmic copying/inference is allowed. Removals reject notation orphaning, final-part/final-content-staff deletion and linked-TAB source orphaning.
+## MusicXML / renderer boundary
 
-### History and renderer
+Current serializer uses canonical source-staff streams for `<staff>` and cannot prove source/display ownership round-trip for non-empty placements. Cross-staff MusicXML is therefore not admitted by this design candidate. A future V4 renderer/export contract must remain pending/fail-closed until preservation is explicitly solved.
 
-Accepted topology mutation is one direct-child V3 score revision plus same-revision notation in atomic history.
+## Human gate
 
-Renderer V3 reuses the proven V2 projection only when downgrade and serialization are lossless. Otherwise `V3_XML_PENDING` carries no MusicXML. This preserves canonical topology without lossy renderer output.
+The candidate is documented in `docs/cross-staff-relation-contract.md` and `.json`.
 
-## Product boundary
+No SSE-10 runtime may begin until explicit human approval freezes this design. After approval, implementation must separately prove V4 validation/migration, topology orphan protection, source-identity selection, atomic history, renderer/MusicXML fail-closed behavior and Node 18/20/22 CI.
 
-SSE-09 does not activate SesliTab V3 product cutover or V3-native topology MusicXML import/export. Existing SesliTab V2 integration remains current. MusicXML remains exchange/projection data; renderer/host/Guitar remain noncanonical.
+## Still separately gated
 
-## Explicitly gated
-
-- cross-staff note/beam/tie/slur/tuplet/ornament ownership;
+- split-chord, grace, rest and percussion cross-staff semantics;
+- linked TAB cross-staff targets;
+- relations between independent source voices/staffs;
+- V4-native cross-staff MusicXML round trip;
+- SesliTab V4 product cutover;
 - polymeter/non-controlling topology;
 - part groups/brackets/braces;
 - arbitrary transposition and percussion maps;
-- layout/page/system geometry;
-- playback/MIDI routing;
-- V3-native topology exchange beyond existing lossless projection;
+- layout/page/system geometry as canonical state;
 - E8-D external-engine invocation;
 - persistence/network/public-write/production activation.
-
-Source of truth for topology invariants: `docs/staff-part-topology-contract.md` and `.json`.

@@ -1,83 +1,61 @@
 # Sibelius-style Editor Expansion Plan
 
-Date: 2026-09-02
+Date: 2026-09-03
 
 Goal: evolve ST Score Editor Core into a renderer-independent general score-authoring core without weakening canonical authority, source immutability or fail-closed validation.
 
 ## Completed foundation
 
-The original SEC-NE program and SCORE-SCHEMA-EXPANSION through SSE-09 are COMPLETE / MERGED.
+SCORE-SCHEMA-EXPANSION through SSE-09 is COMPLETE / MERGED: V2 notation expansion, bounded MusicXML, renderer/SesliTab v2 compatibility, V3 staff/part topology and bounded topology authoring.
 
-Completed foundation includes:
+## SSE-10 — Cross-staff presentation — DESIGN CANDIDATE / HUMAN REVIEW REQUIRED
 
-- v2 contract, migration and one canonical v2 session;
-- grace-note authoring;
-- typed articulation authoring;
-- relation-safe ornament authoring;
-- bounded MusicXML v2 semantic round trip;
-- renderer v2 projection and additive OSMD/alphaTab compatibility;
-- SesliTab v2 host facade with no dual-write authority;
-- human-approved SSE-08 V3 staff/part topology contract;
-- bounded SSE-09 V3 staff/part topology runtime and authoring.
+Fresh-read shows that Sibelius-style cross-staff notation can be modeled without moving musical events into another canonical staff.
 
-V2 sessions remain supported. SSE-09 adds a separate V3 session contract; one session owns exactly one versioned canonical score+notation pair and never keeps mutable V2 and V3 canonical copies in parallel.
+The candidate keeps:
 
-## SSE-09 — Staff/part topology implementation — COMPLETE / MERGED
+- `ScoreDocumentV3/3.0.0` as musical/topology authority;
+- `SemanticAddressV3/3.0.0` as source identity;
+- source event staff/measure/voice, pitch, timing and IDs unchanged.
 
-Implemented contracts:
+It proposes `NotationDocumentV4/4.0.0` with explicit `crossStaffPlacements` that map a current pitched normal source event to a distinct standard display staff in the same part.
 
-- `ScoreDocumentV3/3.0.0`;
-- `NotationDocumentV3/3.0.0`;
-- `SemanticAddressV3/3.0.0`;
-- `RendererRequestV3/3.0.0`;
-- guarded V2 -> V3 migration and lossless-only V3 -> V2 downgrade;
-- atomic V3 score+notation history and V3 session.
+### Initial bounded behavior
 
-### Canonical topology
+- note/chord event only;
+- whole event displayed on one target staff;
+- source/display staffs are standard and same-part;
+- no split chord, rest, grace, percussion or linked-TAB target;
+- no coordinate/nearest-staff inference;
+- rendered selection resolves back to original source event/note identity.
 
-The V3 runtime uses document-global stable `measureFrames` as aligned measure-sequence authority. Parts have explicit contiguous ordinals and stable instrument identity. Content-bearing staves are `standard` or `percussion` and own exactly one staff measure per frame.
+### Relation behavior
 
-A `tablature-linked` staff is presentation topology only. It references a same-part standard source staff, owns no independent canonical measure/voice/event/note stream, and does not make string/fret/fingering/voicing canonical.
+Beams, ties, slurs, tuplets and ornaments remain source-owned. Existing source-voice relationships may become visually cross-staff due to display placement, but SSE-10 does not create relations between independent canonical source voices/staffs.
 
-V3 notation owns time/barlines at frame level and key/clef at staff-measure level. V3 addressing includes exact measure-frame identity and remains revision-bound.
+This preserves the current timing and relation authority while enabling the visual notation concept needed for piano-style cross-staff writing.
 
-### Bounded topology authoring
+### Migration / renderer boundary
 
-SSE-09 implements:
+Notation V3 -> V4 would preserve V3 semantics and create an empty placement collection. V4 -> V3 downgrade would be allowed only when placements are empty.
 
-- add/remove/reorder part;
-- add/remove/reorder standard or percussion staff;
-- add/remove linked TAB presentation staff;
-- rename part/instrument display metadata.
+Current MusicXML projection does not prove the distinction between canonical source staff and display staff, so cross-staff MusicXML round trip is not admitted by this candidate. Non-empty placements remain fail-closed/pending until a separate projection contract is designed.
 
-Content-staff creation does not copy or infer rhythm from another staff. Every frame must have effective meter evidence, and the caller supplies fresh identities for deterministic explicit full-frame rest initialization. Missing meter fails closed.
+## After design approval
 
-Removal rejects notation orphaning, stale targets, final-part/final-content-staff deletion, and linked-TAB source removal while the link exists. No implicit cascade or nearest-target retargeting is admitted.
+The first implementation stage may build V4 notation validation/migration, cross-staff placement authoring, atomic history/session integration, topology orphan guards and pending renderer behavior. Runtime work must not begin before explicit human approval freezes the candidate.
 
-### Renderer and MusicXML boundary
+## Remaining gates
 
-`RendererRequestV3` reuses the existing renderer projection only when a V3 pair can be downgraded and serialized without semantic loss. Otherwise it returns `V3_XML_PENDING` with `musicXml: null`.
-
-SSE-09 does not claim V3-native topology MusicXML import/export and does not cut the SesliTab product runtime over to V3. Existing SesliTab v2 integration remains current until a separately admitted integration stage.
-
-## SSE-10 — Cross-staff canonical relation model — HUMAN-GATED DESIGN
-
-Cross-staff beaming, note relocation, ties/slurs/tuplets/ornaments and ownership are not admitted by SSE-09. They require a separately approved canonical relation and preservation contract before implementation.
-
-## Remaining explicit gates
-
-- V3-native topology MusicXML import/export;
-- SesliTab V3 product cutover;
+- split-chord/grace/rest/percussion cross-staff semantics;
+- relations between independent source voices/staffs;
+- cross-staff MusicXML V4 round trip;
+- SesliTab V4 product cutover;
 - polymeter/non-controlling topology;
 - part groups/brackets/braces;
-- arbitrary instrument transposition;
-- percussion-map authoring;
-- page/system/layout geometry;
+- layout geometry as canonical data;
 - playback/MIDI routing;
-- direct external-engine invocation;
-- persistence/network/public-write/production activation;
-- `.mxl` container support.
+- E8-D direct external-engine invocation;
+- persistence/network/public-write/production activation.
 
-## Completion rule
-
-SSE-09 completion means the bounded V3 topology core is implemented, validated and merged. It does not authorize cross-staff semantics, V3 product cutover, V3-native topology MusicXML, persistence/network or production/public-write authority.
+Full candidate: `docs/cross-staff-relation-contract.md` and `.json`.
