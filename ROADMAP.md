@@ -32,21 +32,30 @@ The standalone ST Score Editor App is the active product target. SesliTab V4 pro
   - recovered snapshot revalidated before live adoption;
   - successful apply starts fresh V4 history and clears stale file association;
   - recovery remains noncanonical and `persistenceCapable:false`.
-- **APP-06 — NEXT:** renderer interaction, semantic hit mapping, zoom/navigation.
-- **APP-07 — PLANNED:** local playback transport.
+- **APP-06 — COMPLETE / MERGED:** renderer interaction and viewport.
+  - APP-06A current `RendererRequestV4` lifecycle and stale-render rejection;
+  - APP-06B revision-bound opaque manifest token -> `SemanticAddressV3` selection only;
+  - exact document/revision/renderer-family/contract matching; stale/unknown/mismatch fail closed;
+  - DOM/SVG/coordinate/geometry authority remains forbidden;
+  - cross-staff visual hit resolves original source semantic identity;
+  - APP-06C zoom/pan/native scroll/page navigation is presentation-only;
+  - touch, pointer and keyboard viewport paths create no canonical revision/history entry;
+  - rerender continues to use current canonical revision request.
+- **APP-07 — NEXT / NOT STARTED:** local playback transport.
 - **APP-08 — PLANNED:** MusicXML export/print/PDF workflow.
 - **APP-09 — PLANNED:** iPhone/iPad/desktop hardening, performance, accessibility and standalone release gate.
 
-Local editing still requires no backend/service provider.
+Local editing requires no backend/service provider.
 
-## Product safety result through APP-05
+## Product safety result through APP-06
 
-All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. File APIs and recovery cache cannot directly mutate canonical score state. Recovery can affect the live document only through explicit guarded application after canonical revalidation; silent or stale restore is rejected.
+All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. File APIs and recovery cache cannot directly mutate canonical score state. Renderer presentation, renderer DOM/SVG/geometry and viewport state are noncanonical. Renderer hits can alter selection only after current revision-bound opaque-token resolution; subsequent edits still pass through `EditorSessionV4` validation/history.
 
 ## Still fail-closed / gated
 
 - standalone release before APP-09;
 - SesliTab V4 cutover before APP-09 completion;
+- APP-07 playback implementation is not part of completed APP-06;
 - split-chord/grace/rest/percussion cross-staff placement;
 - linked TAB as cross-staff target;
 - relations between independent source voices/staffs;
