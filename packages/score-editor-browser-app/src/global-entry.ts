@@ -1,9 +1,9 @@
-import { createViewportEnabledStandaloneBrowserAppRuntime } from './viewport-enabled.js';
+import { createPlaybackEnabledStandaloneBrowserAppRuntime } from './playback-enabled.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createViewportEnabledStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createPlaybackEnabledStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createViewportEnabledStandaloneBrowserAppRuntime(),
+  value: createPlaybackEnabledStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
