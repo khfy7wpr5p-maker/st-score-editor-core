@@ -8,8 +8,9 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** the standalone editor app is the primary product target.
 - **APP-00 — COMPLETE / MERGED:** standalone-product authority boundary.
 - **APP-01 — COMPLETE / MERGED:** New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking and V4 document lifecycle.
-- **APP-02 — COMPLETE / MERGED:** basic note/rest/pitch/duration/chord authoring, grace, articulation, ornament and semantic keypad orchestration now compose with topology and cross-staff inside one `EditorHistoryV4`.
-- **APP-03 — NEXT:** independent browser bundle and responsive standalone editor shell.
+- **APP-02 — COMPLETE / MERGED:** basic note/rest/pitch/duration/chord authoring, grace, articulation, ornament and semantic keypad orchestration compose with topology and cross-staff inside one `EditorHistoryV4`.
+- **APP-03 — COMPLETE / MERGED:** independent `STScoreEditorApp` browser bundle, standalone HTML bootstrap and responsive toolbar/keypad/viewport/inspector/status shell.
+- **APP-04 — NEXT:** local file picker/open/save/download workflow without cloud or server authority.
 - **SesliTab V4 product cutover — DEFERRED:** no SesliTab product integration before the standalone app passes APP-09.
 
 ## Standalone product authority
@@ -34,7 +35,18 @@ The app consumes Core; it never becomes a second score authority. Local editing 
 
 APP-02 uses no whole-document V4 -> V2 -> V4 editing bridge. Every accepted musical/keypad/topology/cross-staff edit produces exactly one direct-child canonical revision and one same-revision notation document in the same V4 history.
 
-The V4 keypad surface keeps existing semantic action IDs. Duration/rest actions update timing and dot state atomically; accidental actions update canonical pitch alteration plus display accidental atomically; triplet/tie/slur require explicit revision-bound semantic targets. Renderer geometry and nearest-note inference are forbidden.
+## Standalone browser app
+
+APP-03 adds a separate browser product surface without changing the legacy core browser global:
+
+```text
+STScoreEditorCoreRuntime   <- legacy core browser API
+STScoreEditorApp           <- standalone product API
+```
+
+`npm run build:browser` now emits `st-score-editor-app.js`, an integrity manifest and `st-score-editor-app.html`. The app bundle does not auto-touch DOM on load; the standalone HTML explicitly creates a controller and mounts the responsive shell. The shell exposes toolbar/keypad, a renderer connection slot, semantic inspector and status/error surface while remaining noncanonical.
+
+Renderer implementation is intentionally not bundled in APP-03; that belongs to APP-06. File System Access/save/download behavior belongs to APP-04. Browser build validation rejects external imports and admitted network/persistence capability tokens.
 
 Full productization sequence: `docs/st-score-editor-app-productization.md`.
 
