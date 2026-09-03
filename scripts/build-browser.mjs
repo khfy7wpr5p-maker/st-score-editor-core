@@ -68,7 +68,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-06C standalone app',
+  label: 'APP-07 standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE', version: '1.0.0', runtimeVersion: '1.0.0', standaloneProduct: true,
@@ -83,7 +83,11 @@ await buildBrowserArtifact({
     fileWorkflowBundled: true, recoveryAutosaveBundled: true, browserLocalRecoveryStorage: 'indexedDB',
     recoveryCanonicalAuthority: false, recoveryAutoRestore: false, recoveryExplicitApply: true,
     recoveryApplyRevisionGuard: true, recoveryMaxDocuments: 8,
-    playbackBundled: false, serverRevisionAuthority: false, publicationAuthority: false,
+    playbackBundled: true, playbackCanonicalAuthority: false, playbackEditorAdmissionCoupled: false,
+    playbackNetworkCapable: false, playbackPlanSource: 'ScoreDocumentV3', playbackOutput: 'browser-web-audio-local',
+    playbackDefaultTempoBpm: 120, playbackTempoRange: [20, 300], playbackGraceSemantics: 'deferred-partial',
+    playbackCursorMutationAuthority: false,
+    serverRevisionAuthority: false, publicationAuthority: false,
     entryHtml: 'st-score-editor-app.html'
   })
 });
@@ -112,4 +116,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-06C standalone HTML: PASS');
+console.log('APP-07 standalone HTML: PASS');
