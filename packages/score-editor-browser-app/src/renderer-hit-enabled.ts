@@ -111,7 +111,7 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
     ...base,
     profile: rendererHitEnabledBrowserAppProfile,
     selectRendererHit,
-    selectRenderedScoreNoteRef: (rawRef) => {
+    selectRenderedScoreNoteRef: (rawRef: unknown) => {
       const current = requireCurrentPresentation();
       const hit = createExternalRendererHitFromScoreNoteRefV4(current.score, current.request, rawRef);
       if (hit === null) {
