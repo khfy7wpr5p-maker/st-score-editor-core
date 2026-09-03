@@ -38,9 +38,9 @@ jobs:
           cd "$RUNNER_TEMP/st-score-rendering-layer"
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
           ST_SCORE_RENDERER_SOURCE_REVISION=a8961e0e68a950cbe980162e23c09f23f0ce5d0a npm run export:workstation-runtime
-      - name: Assemble APP-09B preview
+      - name: Assemble stable APP-09B preview
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
-        run: node scripts/assemble-app09b-preview.mjs
+        run: node scripts/assemble-app09b-preview-stable.mjs
       - name: Run APP-09B WebKit preview smoke
         run: node test/app09b-webkit-preview-smoke.mjs
