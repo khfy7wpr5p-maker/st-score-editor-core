@@ -88,7 +88,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-05C standalone app',
+  label: 'APP-05D standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE',
@@ -109,6 +109,8 @@ await buildBrowserArtifact({
     browserLocalRecoveryStorage: 'indexedDB',
     recoveryCanonicalAuthority: false,
     recoveryAutoRestore: false,
+    recoveryExplicitApply: true,
+    recoveryApplyRevisionGuard: true,
     recoveryMaxDocuments: 8,
     playbackBundled: false,
     serverRevisionAuthority: false,
@@ -141,4 +143,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-05C standalone HTML: PASS');
+console.log('APP-05D standalone HTML: PASS');
