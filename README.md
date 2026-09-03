@@ -9,7 +9,8 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **APP-00–04 — COMPLETE / MERGED:** standalone authority, document/runtime, unified V4 authoring, browser shell and bounded local file workflow.
 - **APP-05 — COMPLETE / MERGED:** validated browser-local recovery/autosave with explicit guarded apply; recovery remains noncanonical.
 - **APP-06 — COMPLETE / MERGED:** guarded renderer lifecycle, current-revision opaque-token semantic hit mapping and presentation-only zoom/navigation.
-- **APP-07 — NEXT / NOT STARTED:** local playback transport.
+- **APP-07 — COMPLETE / MERGED:** revision-bound local playback plan and browser-local Web Audio transport; playback remains noncanonical and independent from edit admission.
+- **APP-08 — NEXT / NOT STARTED:** admitted export/print/PDF workflow.
 - **SesliTab V4 product cutover — DEFERRED:** no SesliTab integration before APP-09.
 
 ## Standalone product authority
@@ -20,6 +21,7 @@ ST Score Editor App
         +--> local file workflow (noncanonical)
         +--> IndexedDB recovery cache (noncanonical)
         +--> viewport zoom/pan/page state (presentation-only)
+        +--> local playback transport (noncanonical)
         |
         v
 ScoreEditorAppDocument
@@ -30,6 +32,8 @@ EditorSessionV4
         +--> ScoreDocumentV3
         +--> NotationDocumentV4
         |
+        +--> revision-bound playback plan --> local Web Audio output
+        |
         v
 RendererRequestV4
         |
@@ -37,7 +41,7 @@ RendererRequestV4
         +--> opaque hit token --> SemanticAddressV3 selection
 ```
 
-The app consumes Core; it never becomes a second score authority. Local editing requires no backend/service provider. File handles, recovery records, viewport state, renderer DOM/SVG/geometry and playback state remain noncanonical.
+The app consumes Core; it never becomes a second score authority. Local editing and local playback require no backend/service provider. File handles, recovery records, viewport state, renderer DOM/SVG/geometry and playback state remain noncanonical.
 
 ## Local file and recovery safety
 
@@ -64,6 +68,20 @@ APP-05 adds bounded recovery without creating persistence authority:
 - **APP-06C:** zoom, pan/native scroll and page navigation are presentation-only; touch, pointer and keyboard paths do not create canonical revisions or history entries.
 
 DOM IDs, SVG IDs/paths, selectors, bounding boxes, x/y coordinates and geometry inference never gain canonical authoring authority. Cross-staff visual hits resolve to original source staff/event identity.
+
+## APP-07 local playback result
+
+PR #85 adds a bounded local playback surface without score authority:
+
+- playback plan is derived from the current validated `ScoreDocumentV3` and is bound to document/revision identity;
+- normal note/chord pitches and canonical event timing are scheduled locally; rests contribute timeline extent;
+- playback never uses renderer coordinates or MusicXML as live authority;
+- default tempo is 120 BPM and the bounded 20–300 BPM tempo setting is playback state only, not canonical score state;
+- grace playback timing remains explicitly deferred/partial rather than guessed;
+- play/pause/stop/seek and semantic playback cursor do not create V4 history entries;
+- a canonical revision change stops stale playback;
+- unavailable/empty/audio-error playback does not disable canonical editing or OMR admission;
+- audio output is browser-local Web Audio and requires no network/backend.
 
 ## Canonical pair
 
