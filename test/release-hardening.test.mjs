@@ -106,3 +106,20 @@ test('APP-09 pagehide and hidden visibility trigger best-effort recovery flush w
   assert.equal(flushes, 2);
   lifecycle.dispose();
 });
+
+test('APP-09 best-effort recovery flush swallows synchronous storage failure and remains retryable', () => {
+  const windowTarget = eventTarget();
+  let flushes = 0;
+  const lifecycle = attachReleaseHardeningLifecycleV1(
+    { windowTarget, schedule: callback => { callback(); } },
+    {
+      reapplyPresentation: () => undefined,
+      flushRecovery: () => { flushes += 1; throw new Error('storage unavailable'); }
+    }
+  );
+
+  assert.doesNotThrow(() => { windowTarget.emit('pagehide'); });
+  assert.doesNotThrow(() => { windowTarget.emit('pagehide'); });
+  assert.equal(flushes, 2);
+  lifecycle.dispose();
+});
