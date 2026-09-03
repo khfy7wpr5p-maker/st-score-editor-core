@@ -232,7 +232,7 @@ export const executeVoiceMaterializationV4 = (
     }],
     graceGroups: []
   }].sort((left, right) => left.ordinal - right.ordinal);
-  (candidateMeasure as { voices: typeof nextVoices }).voices = nextVoices;
+  (candidateMeasure as unknown as { voices: typeof nextVoices }).voices = nextVoices;
   (candidate as { revision: { id: string; parentId: string | null } }).revision = {
     id: options.nextRevisionId,
     parentId: score.revision.id
