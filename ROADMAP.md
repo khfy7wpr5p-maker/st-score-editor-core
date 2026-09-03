@@ -19,28 +19,26 @@ The standalone ST Score Editor App is the active product target. SesliTab V4 pro
 
 - **APP-00 — COMPLETE / MERGED:** standalone product/authority contract.
 - **APP-01 — COMPLETE / MERGED:** standalone document runtime: New, MusicXML Open, admitted MusicXML Export, title/origin, dirty/saved tracking and V4 undo/redo.
-- **APP-02 — COMPLETE / MERGED:** unified V4 authoring and semantic keypad execution.
-  - basic pitch/duration/rest/note/chord-tone authoring;
-  - grace authoring;
-  - articulation authoring;
-  - local + bounded spanning ornament authoring;
-  - duration/rest/accidental/dot/triplet/tie/slur keypad semantics;
-  - topology and cross-staff in the same `EditorHistoryV4`;
-  - one direct-child canonical revision per accepted action;
-  - no whole-document V4 -> V2 -> V4 edit bridge.
-- **APP-03 — NEXT:** independent browser bundle and responsive editor shell.
-- **APP-04 — PLANNED:** local file picker/open/save/download workflow.
+- **APP-02 — COMPLETE / MERGED:** unified V4 authoring and semantic keypad execution in one history.
+- **APP-03 — COMPLETE / MERGED:** independent `STScoreEditorApp` browser product surface.
+  - frozen standalone app global separate from legacy core runtime;
+  - self-contained JS bundle + integrity manifest + directly openable HTML bootstrap;
+  - responsive toolbar/keypad/viewport/inspector/status shell;
+  - semantic selection and APP-02 commit delegation;
+  - zero external imports;
+  - no renderer, persistence, network, file-system, playback or server authority.
+- **APP-04 — NEXT:** local file picker/open/save/download workflow.
 - **APP-05 — PLANNED:** browser-local recovery/autosave with validated envelopes.
 - **APP-06 — PLANNED:** renderer interaction, semantic hit mapping, zoom/navigation.
 - **APP-07 — PLANNED:** local playback transport, independent from edit/OMR admission.
 - **APP-08 — PLANNED:** MusicXML export/print/PDF workflow within admitted semantics.
 - **APP-09 — PLANNED:** iPhone/iPad/desktop hardening, performance, accessibility and standalone release gate.
 
-Local editing does not require a backend/service provider. APP-00–02 introduce no persistence/network/server revision authority.
+Local editing does not require a backend/service provider. APP-00–03 introduce no persistence/network/server revision authority.
 
-## APP-02 safety result
+## Product safety result through APP-03
 
-All product edit surfaces now converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. Semantic selection is revision-bound. Keypad actions do not use renderer coordinates. Destructive identity changes fail closed when notation or cross-staff state would be orphaned.
+All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. The standalone browser shell delegates to those APIs and does not become mutation authority. Semantic selection is revision-bound; renderer geometry is not an edit target. Browser bundle validation fails closed on external imports and admitted network/persistence capability tokens.
 
 ## Still fail-closed / gated
 

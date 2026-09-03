@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–02 COMPLETE / MERGED / APP-03 NEXT**
+Status: **ACTIVE / APP-00–03 COMPLETE / MERGED / APP-04 NEXT**
 
 Date: 2026-09-03
 
@@ -28,84 +28,52 @@ Standalone-first authority boundary; SesliTab deferred; no server requirement fo
 ### APP-01 — Document runtime
 Status: **COMPLETE / MERGED**
 
-New score, verified-SHA MusicXML Open, lossless-only MusicXML Export, title/origin, dirty/saved tracking, V4 undo/redo, topology and cross-staff commit entry points. No persistence/network/server authority.
+New score, verified-SHA MusicXML Open, lossless-only MusicXML Export, title/origin, dirty/saved tracking and V4 undo/redo. No persistence/network/server authority.
 
 ### APP-02 — Unified V4 authoring session
 Status: **COMPLETE / MERGED**
 
-APP-02 was split only for implementation/test isolation; all slices now share the same canonical `EditorHistoryV4`.
+Merged PRs #64–68 established native V4 basic, grace, articulation, ornament and semantic keypad authoring. All accepted edits share the same `EditorHistoryV4` with topology/cross-staff, create one direct-child score revision and one same-revision notation document, and use no whole-document V4 -> V2 -> V4 edit bridge.
 
-#### APP-02A — Basic musical authoring
-Merged via PR #64.
+### APP-03 — Standalone browser bundle and application shell
+Status: **COMPLETE / MERGED**
 
-- exact note/chord-tone pitch edit;
-- event duration edit;
-- rest -> note with explicit identity;
-- pitched event -> rest;
-- chord-tone add/remove;
-- stale target and identity collision rejection;
-- note-notation orphan protection;
-- cross-staff conflict protection for destructive rest conversion.
+Merged via PR #70.
 
-#### APP-02B1 — Grace authoring
-Merged via PR #65.
+Implemented:
 
-- grace group create/remove;
-- grace event add/remove/move/replace;
-- grace-note pitch;
-- orphan/stale protection.
+- independent `STScoreEditorApp` frozen browser global;
+- existing `STScoreEditorCoreRuntime` retained as a separate legacy core API;
+- per-instance browser controller over immutable `ScoreEditorAppDocument` state;
+- New/Open/Export API delegation, semantic selection, undo/redo and all APP-02 commit surfaces;
+- explicit `mount(root)` shell lifecycle; bundle evaluation itself does not auto-touch DOM;
+- responsive toolbar and history controls;
+- keypad shell generated from the existing semantic keypad manifest;
+- renderer viewport connection slot;
+- semantic inspector and status/error surface;
+- desktop/tablet/mobile responsive layout;
+- `st-score-editor-app.js` self-contained IIFE;
+- integrity manifest;
+- directly openable `st-score-editor-app.html` bootstrap;
+- browser build failure on external imports or admitted network/persistence capability tokens.
 
-#### APP-02B2 — Articulation authoring
-Merged via PR #66.
-
-- set/toggle/remove articulation;
-- normal and grace event targets;
-- notation validation remains canonical.
-
-#### APP-02B3 — Ornament authoring
-Merged via PR #67.
-
-- local normal/grace ornaments;
-- bounded tremolo and wavy-line spanning relations;
-- same exact source part/staff/frame/measure/voice scope;
-- canonical event order and pitched-endpoint validation;
-- relation-number collision protection.
-
-#### APP-02C — Semantic keypad orchestration
-Merged via PR #68.
-
-Existing semantic keypad action IDs now execute natively against the V4 product pair:
-
-- whole/half/quarter/eighth/16th/32nd duration;
-- equivalent rest values;
-- flat/natural/sharp;
-- dots 0..3;
-- explicit triplet range;
-- explicit tie/slur note pair.
-
-Duration/rest actions synchronize canonical duration with dot state. Accidentals synchronize canonical pitch alteration with display accidental. Triplet/tie/slur require explicit current-revision semantic targets. Renderer geometry and nearest-note inference are forbidden.
-
-`selectSessionSemanticAddressV4` / `selectAppSemanticAddress` admit only current addresses that resolve against the canonical score. All accepted APP-02 edits create exactly one direct-child score revision, one same-revision notation document and one unified history snapshot. No whole-document V4 -> V2 -> V4 editing bridge exists.
+APP-03 does not bundle renderer implementation, file-system workflow, autosave or playback. Advanced triplet/tie/slur remain available through explicit semantic-target APIs but the generic shell keeps those buttons disabled until a range/pair target UI is admitted.
 
 ## Next stage
 
-### APP-03 — Standalone browser bundle and application shell
+### APP-04 — Local file workflow
 Status: **NEXT**
 
-- independent `STScoreEditorApp` browser entry;
-- no SesliTab host dependency;
-- toolbar/keypad shell;
-- score viewport container;
-- semantic selection/inspector surface;
-- status/error surface;
-- responsive desktop/tablet/mobile layout;
-- UI dispatch only through admitted app/session APIs;
-- no DOM/SVG canonical mutation authority.
+Required bounded scope:
 
-### APP-04 — Local file workflow
-Status: **PLANNED**
-
-File System Access API when available, safe file-input fallback, MusicXML open/download/save and local recent-document metadata; no cloud requirement.
+- File System Access API adapter when available;
+- safe `<input type=file>` fallback contract;
+- `.musicxml` / `.xml` open;
+- admitted MusicXML save/download based only on current lossless export;
+- externally completed save must call `markSaved` only after write/download handoff succeeds;
+- file handles, picker state and recent-file metadata remain noncanonical;
+- no cloud/backend requirement;
+- no silent save when current semantics are not exportable.
 
 ### APP-05 — Local recovery/autosave
 Status: **PLANNED**
