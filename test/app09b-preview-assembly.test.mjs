@@ -11,6 +11,7 @@ import {
   assembleApp09BPreview,
   validateRendererRuntimeManifest
 } from '../scripts/assemble-app09b-preview.mjs';
+import { assembleStableApp09BPreview } from '../scripts/assemble-app09b-preview-stable.mjs';
 
 const manifest = (overrides = {}) => ({
   schemaVersion: 1,
@@ -90,6 +91,31 @@ test('APP-09B preview assembly keeps renderer separate and release gates false',
     assert.match(bootstrap, /selectRenderedScoreNoteRef/);
     assert.match(bootstrap, /rendererProfile/);
     assert.equal(copiedManifest.rendererSourceRevision, APP09B_RENDERER_SOURCE_REVISION);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
+
+test('APP-09B stable preview never reparents the live renderer iframe during UI reconciliation', async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-app09b-stable-'));
+  try {
+    const runtimeDir = path.join(temp, 'runtime');
+    const outputDir = path.join(temp, 'out');
+    await mkdir(runtimeDir, { recursive: true });
+    await writeRuntime(runtimeDir);
+    const result = await assembleStableApp09BPreview({ runtimeDir, outputDir });
+    const bootstrap = await readFile(path.join(outputDir, 'st-score-editor-app09b-bootstrap.js'), 'utf8');
+
+    assert.equal(result.standaloneReleaseGatePassed, false);
+    assert.equal(result.seslitabCutoverAuthorized, false);
+    assert.match(bootstrap, /reconcileStableRendererShell/);
+    assert.match(bootstrap, /currentNode\.replaceWith\(nextNode\)/);
+    assert.match(bootstrap, /APP09B_RENDERER_FRAME_REPARENT_BLOCKED/);
+    assert.match(bootstrap, /app09bRendererFrameStable/);
+    assert.doesNotMatch(
+      bootstrap,
+      /if \(frame\.isConnected && root\.contains\(frame\)\) parking\.append\(frame\);\n    nativeReplaceChildren\(\.\.\.nodes\);/
+    );
   } finally {
     await rm(temp, { recursive: true, force: true });
   }

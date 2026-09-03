@@ -1,0 +1,46 @@
+name: APP-09B preview WebKit regression
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Editor Core
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Install Editor Core dependencies and regression Playwright
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+      - name: Install pinned WebKit browser
+        run: npx playwright install --with-deps webkit
+      - name: Build Editor Core browser artifacts
+        run: npm run build:browser
+      - name: Checkout exact ST Score Rendering Layer revision
+        run: |
+          git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
+          cd "$RUNNER_TEMP/st-score-rendering-layer"
+          git checkout --detach a8961e0e68a950cbe980162e23c09f23f0ce5d0a
+      - name: Build exact renderer runtime
+        run: |
+          cd "$RUNNER_TEMP/st-score-rendering-layer"
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          ST_SCORE_RENDERER_SOURCE_REVISION=a8961e0e68a950cbe980162e23c09f23f0ce5d0a npm run export:workstation-runtime
+      - name: Assemble stable APP-09B preview
+        env:
+          ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
+        run: node scripts/assemble-app09b-preview-stable.mjs
+      - name: Run APP-09B WebKit renderer regression
+        run: node scripts/app09b-webkit-preview-regression.mjs
