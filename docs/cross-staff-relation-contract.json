@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.1.1",
   "document_type": "cross_staff_presentation_relation_contract",
   "project": "ST Score Editor Core",
   "stage": "SSE-10",
-  "status": "APPROVED_FROZEN_BOUNDED_RUNTIME_COMPLETE_MERGE_CANDIDATE",
+  "status": "APPROVED_FROZEN_BOUNDED_RUNTIME_COMPLETE_MERGED",
   "date": "2026-09-03",
   "versioning": {
     "score_document": "ScoreDocumentV3/3.0.0",
@@ -141,8 +141,8 @@
     "SESLITAB_V4_PRODUCT_CUTOVER",
     "PERSISTENCE_NETWORK_PUBLIC_WRITE_PRODUCTION"
   ],
-  "completion_gate": {
-    "requires_node_18_20_22_ci": true,
+  "verification": {
+    "node_18_20_22_ci_green_before_merge": true,
     "production_activation_by_merge": false
   }
 }
