@@ -180,12 +180,26 @@ export const createViewportEnabledStandaloneScoreEditorController = (
     event.preventDefault();
   };
   const pointerUp = (event: PointerEvent): void => { if (pointer?.id === event.pointerId) pointer = null; };
-  const unsubscribe = base.subscribe(() => { applyPresentation(); });
+  const nativeScroll = (event: Event): void => {
+    const viewport = viewportElement();
+    if (viewport === null || event.target !== viewport) return;
+    uiState = reduceEditorUiState(uiState, {
+      type: 'SET_VIEWPORT',
+      viewport: { zoom: uiState.viewport.zoom, scrollX: viewport.scrollLeft, scrollY: viewport.scrollTop }
+    });
+    const metrics = pageMetrics();
+    pageIndex = Math.max(0, Math.min(metrics.count - 1, Math.floor(uiState.viewport.scrollY / metrics.height)));
+  };
+  base.subscribe(() => { applyPresentation(); });
 
   const controller: ViewportEnabledStandaloneScoreEditorController = {
     ...base,
     profile: viewportEnabledBrowserAppProfile,
     mount: (nextRoot) => {
+      if (root === nextRoot) {
+        applyPresentation();
+        return;
+      }
       base.mount(nextRoot);
       root = nextRoot;
       root.addEventListener('keydown', keyboard);
@@ -193,6 +207,7 @@ export const createViewportEnabledStandaloneScoreEditorController = (
       root.addEventListener('pointermove', pointerMove);
       root.addEventListener('pointerup', pointerUp);
       root.addEventListener('pointercancel', pointerUp);
+      root.addEventListener('scroll', nativeScroll, true);
       applyPresentation();
     },
     unmount: () => {
@@ -202,10 +217,10 @@ export const createViewportEnabledStandaloneScoreEditorController = (
         root.removeEventListener('pointermove', pointerMove);
         root.removeEventListener('pointerup', pointerUp);
         root.removeEventListener('pointercancel', pointerUp);
+        root.removeEventListener('scroll', nativeScroll, true);
       }
       root = null;
       pointer = null;
-      unsubscribe();
       base.unmount();
     },
     getViewportState: snapshot,
