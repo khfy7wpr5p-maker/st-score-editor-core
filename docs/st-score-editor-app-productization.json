@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-03",
-  "status": "APP_05_COMPLETE_MERGED_APP_06_NEXT",
+  "status": "APP_06_COMPLETE_MERGED_APP_07_NEXT_NOT_STARTED",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_requires": "APP_09_STANDALONE_RELEASE_GATE",
@@ -57,11 +57,51 @@
     "cloud_required":false
   },
   "app_06": {
-    "status":"NEXT",
-    "renderer_interaction":false,
-    "semantic_hit_mapping_required":true,
-    "renderer_geometry_authority":false,
-    "zoom_navigation_noncanonical":true
+    "status":"COMPLETE_MERGED",
+    "app_06a": {
+      "status":"COMPLETE_MERGED",
+      "merge_sha":"dcc69823fefebd17345738c83efb9958b86f2b00",
+      "renderer_lifecycle":true,
+      "current_renderer_request_only":true,
+      "admitted_projection_only":true,
+      "stale_render_result_rejected":true,
+      "revision_change_invalidates_presentation":true,
+      "renderer_canonical_authority":false
+    },
+    "app_06b": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":82,
+      "merge_sha":"0965d9267083ef43501960bff308eb02275a1a9c",
+      "semantic_hit_mapping":true,
+      "hit_canonical_input":"opaque_renderer_request_v4_manifest_token",
+      "document_revision_family_contract_exact_match":true,
+      "stale_unknown_mismatch_fail_closed":true,
+      "dom_svg_coordinate_geometry_authority":false,
+      "valid_hit_selection_only":true,
+      "hit_direct_canonical_mutation":false,
+      "cross_staff_hit_resolves_original_source_identity":true
+    },
+    "app_06c": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":83,
+      "merge_sha":"38b0f6c8d6f66a768927dcbc366138be584c62b6",
+      "viewport_navigation":true,
+      "presentation_only":true,
+      "canonical_authority":false,
+      "coordinate_authoring":false,
+      "zoom_range":[0.25,4],
+      "zoom_step":0.25,
+      "input_modes":["touch","pointer","keyboard"],
+      "responsive_profiles":["iphone","ipad","desktop"],
+      "native_scroll_state_preserved_across_rerender":true,
+      "viewport_change_creates_canonical_revision":false,
+      "rerender_uses_current_revision_request":true
+    }
+  },
+  "app_07": {
+    "status":"NEXT_NOT_STARTED",
+    "playback_implemented":false,
+    "playback_canonical_authority":false
   },
   "stages": [
     {"id":"APP-00","status":"COMPLETE_MERGED"},
@@ -70,20 +110,23 @@
     {"id":"APP-03","status":"COMPLETE_MERGED"},
     {"id":"APP-04","status":"COMPLETE_MERGED"},
     {"id":"APP-05","status":"COMPLETE_MERGED"},
-    {"id":"APP-06","status":"NEXT"},
-    {"id":"APP-07","status":"PLANNED"},
+    {"id":"APP-06","status":"COMPLETE_MERGED"},
+    {"id":"APP-07","status":"NEXT_NOT_STARTED"},
     {"id":"APP-08","status":"PLANNED"},
     {"id":"APP-09","status":"PLANNED"}
   ],
   "global_invariants": {
     "musicxml_exchange_only":true,
     "renderer_canonical_authority":false,
+    "renderer_dom_svg_coordinate_geometry_authority":false,
     "app_shell_canonical_authority":false,
+    "viewport_canonical_authority":false,
+    "coordinate_authoring":false,
     "file_state_canonical_authority":false,
     "autosave_canonical_authority":false,
     "recovery_canonical_authority":false,
     "playback_canonical_authority":false,
     "production_activation_by_merge":false
   },
-  "next_action":"APP_06_RENDERER_INTERACTION_SEMANTIC_HIT_ZOOM_NAVIGATION"
+  "next_action":"APP_07_LOCAL_PLAYBACK_TRANSPORT_FRESH_READ_ONLY_UNTIL_EXPLICIT_IMPLEMENTATION_APPROVAL"
 }
