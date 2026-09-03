@@ -10,6 +10,7 @@ import { executeTopologyAuthoringV4 } from '../../editor-topology-authoring-v4/s
 import type { TopologyAuthoringV3Options } from '../../editor-topology-authoring-v3/src/index.js';
 import { executeBasicAuthoringV4, type BasicAuthoringV4Options } from '../../editor-basic-authoring-v4/src/index.js';
 import { executeGraceAuthoringV4, type GraceAuthoringV4Options } from '../../editor-grace-authoring-v4/src/index.js';
+import { executeArticulationAuthoringV4, type ArticulationAuthoringV4Options } from '../../editor-articulation-authoring-v4/src/index.js';
 
 export const EDITOR_SESSION_V4_VERSION = '4.0.0' as const;
 export interface EditorSessionStateV4 {
@@ -46,6 +47,13 @@ export const commitSessionGraceAuthoringIntentV4 = (session: EditorSessionStateV
   const result = executeGraceAuthoringV4(current.score, current.notation, intent, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
   return state(history, result.selection, 'GRACE_AUTHORING_EDIT_COMMITTED', 'Grace authoring edit committed in the unified V4 history.');
+};
+
+export const commitSessionArticulationAuthoringIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: ArticulationAuthoringV4Options): Readonly<EditorSessionStateV4> => {
+  const current = session.history.present;
+  const result = executeArticulationAuthoringV4(current.score, current.notation, intent, options);
+  const history = commitEditorHistoryV4(session.history, result.score, result.notation);
+  return state(history, result.selection, 'ARTICULATION_AUTHORING_EDIT_COMMITTED', 'Articulation authoring edit committed in the unified V4 history.');
 };
 
 export const commitSessionCrossStaffIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: CrossStaffAuthoringV4Options): Readonly<EditorSessionStateV4> => {

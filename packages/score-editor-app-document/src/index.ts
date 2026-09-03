@@ -6,6 +6,7 @@ import {
   createEditorSessionV4FromV3,
   commitSessionBasicAuthoringIntentV4,
   commitSessionGraceAuthoringIntentV4,
+  commitSessionArticulationAuthoringIntentV4,
   commitSessionCrossStaffIntentV4,
   commitSessionTopologyIntentV4,
   navigateSessionHistoryV4,
@@ -13,6 +14,7 @@ import {
 } from '../../editor-session-controller-v4/src/index.js';
 import type { BasicAuthoringV4Options } from '../../editor-basic-authoring-v4/src/index.js';
 import type { GraceAuthoringV4Options } from '../../editor-grace-authoring-v4/src/index.js';
+import type { ArticulationAuthoringV4Options } from '../../editor-articulation-authoring-v4/src/index.js';
 import type { CrossStaffAuthoringV4Options } from '../../editor-cross-staff-authoring-v4/src/index.js';
 import type { TopologyAuthoringV3Options } from '../../editor-topology-authoring-v3/src/index.js';
 import { importNotationMusicXmlV2 } from '../../musicxml-v2/src/index.js';
@@ -49,6 +51,7 @@ export const exportMusicXmlScoreEditorAppDocument=(document:ScoreEditorAppDocume
 export const markScoreEditorAppDocumentSaved=(document:ScoreEditorAppDocument,title:string=document.title):Readonly<ScoreEditorAppDocument>=>appState(cleanTitle(title,document.title),document.origin,document.session,document.session.history.present.score.revision.id);
 export const commitAppBasicAuthoringIntent=(document:ScoreEditorAppDocument,intent:unknown,options:BasicAuthoringV4Options):Readonly<ScoreEditorAppDocument>=>appState(document.title,document.origin,commitSessionBasicAuthoringIntentV4(document.session,intent,options),document.savedRevisionId);
 export const commitAppGraceAuthoringIntent=(document:ScoreEditorAppDocument,intent:unknown,options:GraceAuthoringV4Options):Readonly<ScoreEditorAppDocument>=>appState(document.title,document.origin,commitSessionGraceAuthoringIntentV4(document.session,intent,options),document.savedRevisionId);
+export const commitAppArticulationAuthoringIntent=(document:ScoreEditorAppDocument,intent:unknown,options:ArticulationAuthoringV4Options):Readonly<ScoreEditorAppDocument>=>appState(document.title,document.origin,commitSessionArticulationAuthoringIntentV4(document.session,intent,options),document.savedRevisionId);
 export const commitAppCrossStaffIntent=(document:ScoreEditorAppDocument,intent:unknown,options:CrossStaffAuthoringV4Options):Readonly<ScoreEditorAppDocument>=>appState(document.title,document.origin,commitSessionCrossStaffIntentV4(document.session,intent,options),document.savedRevisionId);
 export const commitAppTopologyIntent=(document:ScoreEditorAppDocument,intent:unknown,options:TopologyAuthoringV3Options):Readonly<ScoreEditorAppDocument>=>appState(document.title,document.origin,commitSessionTopologyIntentV4(document.session,intent,options),document.savedRevisionId);
 export const navigateAppDocumentHistory=(document:ScoreEditorAppDocument,direction:'UNDO'|'REDO'):Readonly<ScoreEditorAppDocument>=>appState(document.title,document.origin,navigateSessionHistoryV4(document.session,direction),document.savedRevisionId);
