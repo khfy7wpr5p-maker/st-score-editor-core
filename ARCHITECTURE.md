@@ -1,17 +1,18 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP / PRODUCTIZATION is active; APP-00–05 are complete/merged and APP-06 is next.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP / PRODUCTIZATION is active; APP-00–06 are COMPLETE / MERGED and APP-07 is NEXT / NOT STARTED.**
 
 ## Product architecture
 
 ```text
 Standalone HTML / Browser Shell
         |
-        v
-STScoreEditorApp controller
-        |
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
+        +--> viewport zoom/pan/page state (presentation-only)
+        |
+        v
+STScoreEditorApp controller
         |
         v
 ScoreEditorAppDocument
@@ -24,6 +25,10 @@ EditorSessionV4
         |
         v
 RendererRequestV4
+        |
+        +--> admitted MusicXML projection --> attached renderer host (presentation-only)
+        |
+        +--> opaque manifest token --> semantic hit bridge --> SemanticAddressV3 selection
 ```
 
 SesliTab V4 integration is deferred until APP-09. A backend/service provider is not required for the local editing path.
@@ -36,7 +41,9 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is the stable revision-bound source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, renderer DOM/SVG, playback state and future SesliTab state are noncanonical.
+`SemanticAddressV3` is the stable revision-bound source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, viewport state, renderer DOM/SVG/geometry, playback state and future SesliTab state are noncanonical.
+
+The host/UI cannot dual-write canonical score state. Canonical edits continue through `EditorSessionV4` validation and the single unified V4 history.
 
 ## APP-01–04 product substrate
 
@@ -44,54 +51,40 @@ APP-01 owns New/Open/export/dirty/saved document lifecycle. APP-02 composes all 
 
 ## APP-05 local recovery/autosave
 
-APP-05 is complete through PRs #76–79.
+APP-05 is COMPLETE / MERGED through PRs #76–79.
 
-### Recovery envelope
+The recovery payload stores only the current canonical `ScoreDocumentV3 + NotationDocumentV4` pair plus bounded metadata; undo/redo history is not serialized. Admission requires canonical V3/V4 validation, metadata alignment and a SHA-256 integrity digest. Recovery JSON is bounded to 64 MiB.
 
-The recovery payload stores only the current canonical `ScoreDocumentV3 + NotationDocumentV4` pair plus bounded metadata. It does not serialize undo/redo history. Admission requires canonical V3/V4 validation, metadata alignment and a SHA-256 integrity digest. Recovery JSON is bounded to 64 MiB.
+IndexedDB is admitted only in the standalone app bundle for noncanonical recovery cache. The legacy core browser bundle still forbids IndexedDB. At most 8 document records are retained. Autosave is eligible only for dirty documents after at least one accepted history revision. Duplicate revision writes are suppressed, revision/digest races fail closed and corrupt records are rejected.
 
-### Recovery cache and autosave
+There is no automatic restore. `prepareRecoveryApplication()` captures the active document/revision guard; `applyPreparedRecovery()` rejects stale live state and revalidates the canonical pair before adoption. A successful apply starts fresh V4 history and clears stale file association. Recovery storage never becomes canonical authority.
 
-IndexedDB is admitted only in the standalone app bundle for noncanonical recovery cache. The legacy core browser bundle still forbids IndexedDB. At most 8 document records are retained. Autosave is eligible only for dirty documents after at least one accepted history revision. Duplicate revision writes are suppressed. If the canonical revision changes while a digest is being created, that older snapshot is not written and the newer revision is rescheduled.
+## APP-06 renderer interaction and viewport
 
-Corrupt records are isolated and rejected; they are never silently admitted as canonical state.
+APP-06 is COMPLETE / MERGED:
 
-### Explicit restore boundary
+- **APP-06A — renderer lifecycle:** merged at `dcc69823fefebd17345738c83efb9958b86f2b00`. Rendering is driven only by the current guarded `RendererRequestV4` and admitted `renderableMusicXmlV4()` projection. Revision changes invalidate old presentation, and in-flight stale render results are rejected.
+- **APP-06B — semantic renderer hit bridge:** PR #82, merged at `0965d9267083ef43501960bff308eb02275a1a9c`. External renderer hits are admitted only through the current revision-bound opaque `RendererRequestV4` manifest token. Document, revision, renderer family and contract versions must match exactly. Unknown/stale/mismatched hits fail closed.
+- **APP-06C — viewport navigation:** PR #83, merged at `38b0f6c8d6f66a768927dcbc366138be584c62b6`. Zoom, pan/scroll and page navigation are presentation-only. Touch/native scroll, pointer drag and keyboard navigation are supported by the standalone viewport contract without creating canonical revisions.
 
-There is no automatic restore. Recovery uses a two-step flow:
+### Renderer authority boundary
 
-```text
-validated recovery candidate
-        |
-        v
-prepareRecoveryApplication
-        |   captures active document/revision guard
-        v
-explicit applyPreparedRecovery
-        |
-        +--> guard still current? no -> reject
-        +--> canonical V3/V4 revalidation fails? -> reject
-        |
-        v
-affected live document adopts recovered snapshot
-        |
-        +--> fresh V4 history starts at recovered snapshot
-        +--> stale local file association cleared
-        +--> consumed cache cleanup attempted
-```
+Renderer DOM IDs, SVG IDs/paths, CSS selectors, bounding boxes, x/y coordinates, nearest-note/staff heuristics and geometry inference are never canonical edit targets. The browser manifest records renderer authority and coordinate authoring as false.
 
-The controller never silently overwrites a newer live revision. Cache cleanup is noncanonical: if deletion fails after a valid adoption, the applied canonical state is not rolled back merely to satisfy cache cleanup.
+A valid renderer hit resolves to `SemanticAddressV3` and may change selection only. Subsequent keypad/authoring edits still pass through the existing `EditorSessionV4` validation/history route; the hit bridge cannot directly mutate the canonical pair.
 
-The standalone app manifest keeps `persistenceCapable:false`, `networkCapable:false`, `serverRevisionAuthority:false`, `publicationAuthority:false`, `recoveryCanonicalAuthority:false` and `recoveryAutoRestore:false`.
+### Cross-staff identity
 
-## Cross-staff and renderer boundary
+`NotationDocumentV4.crossStaffPlacements[]` assigns display staff without changing canonical source ownership. A cross-staff visual hit resolves back to the original source staff/event semantic identity. Non-empty cross-staff placements remain `CROSS_STAFF_XML_PENDING` with `musicXml = null`; no V4-native cross-staff MusicXML round trip is claimed.
 
-`NotationDocumentV4.crossStaffPlacements[]` assigns display staff without changing canonical source identity. Non-empty placements remain `CROSS_STAFF_XML_PENDING` with `musicXml = null`; no V4-native cross-staff MusicXML round trip is claimed.
+### Viewport authority boundary
+
+Viewport zoom is bounded to `0.25..4`. Zoom, scroll offsets and page position are ephemeral presentation state. They do not create score revisions or history entries. A rerender still uses the current canonical revision request, and APP-06B stale-token rejection remains in force after canonical revision changes.
 
 ## Next product layer
 
-APP-06 is next: renderer interaction, canonical semantic-token hit mapping, zoom/navigation and viewport lifecycle while keeping renderer geometry noncanonical.
+**APP-07 — Local playback transport: NEXT / NOT STARTED.** Playback remains noncanonical and has not been implemented as part of APP-06.
 
 ## Remaining gates
 
-APP-07 playback, APP-08 export/print and APP-09 product hardening remain planned. Cloud/server authority, production/public-write and SesliTab V4 cutover remain separately gated.
+APP-08 export/print and APP-09 product hardening/release remain planned. Standalone release before APP-09, SesliTab V4 cutover before APP-09, V4-native cross-staff MusicXML, cloud/server revision authority, production/public-write and E8-D direct external-engine invocation remain gated.
