@@ -44,3 +44,5 @@ jobs:
         run: node scripts/assemble-app09b-preview-stable.mjs
       - name: Run APP-09B WebKit renderer regression
         run: node scripts/app09b-webkit-preview-regression.mjs
+      - name: Run APP-09B WebKit controlled layout rerender regression
+        run: node scripts/app09b-webkit-layout-rerender-regression.mjs
