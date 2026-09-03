@@ -39,6 +39,54 @@ test('APP-01 creates a standalone blank V4 document and exports admitted MusicXM
   assert.ok(xml.includes('<score-partwise'));
 });
 
+test('APP-10A creates a guitar treble preset with admitted renderer/export projection', () => {
+  const document = createNewScoreEditorAppDocument({ preset: 'GUITAR_TREBLE', idFactory: idFactory() });
+  const score = document.session.history.present.score;
+  assert.equal(score.parts.length, 1);
+  assert.equal(score.parts[0].name, 'Guitar');
+  assert.equal(score.parts[0].staves.length, 1);
+  assert.equal(document.session.renderRequest.projectionStatus, 'V3_COMPATIBLE_XML');
+  const notation = document.session.history.present.notation;
+  assert.equal(notation.measures.length, 1);
+  assert.deepEqual(notation.measures[0].notation.clef, { sign: 'G', line: 2, octaveChange: 0 });
+  const xml = exportMusicXmlScoreEditorAppDocument(document);
+  assert.match(xml, /<part-name>Guitar<\/part-name>/);
+  assert.match(xml, /<sign>G<\/sign>/);
+});
+
+test('APP-10A creates a two-staff piano preset with G/F clefs and round-trippable MusicXML', async () => {
+  const document = createNewScoreEditorAppDocument({ preset: 'PIANO_GRAND_STAFF', idFactory: idFactory() });
+  const score = document.session.history.present.score;
+  assert.equal(score.parts.length, 1);
+  assert.equal(score.parts[0].name, 'Piano');
+  assert.equal(score.parts[0].staves.length, 2);
+  assert.equal(document.session.renderRequest.projectionStatus, 'V3_COMPATIBLE_XML');
+  const notation = document.session.history.present.notation;
+  const clefs = notation.measures.map(entry => entry.notation.clef);
+  assert.deepEqual(clefs, [
+    { sign: 'G', line: 2, octaveChange: 0 },
+    { sign: 'F', line: 4, octaveChange: 0 }
+  ]);
+
+  const xml = exportMusicXmlScoreEditorAppDocument(document);
+  assert.match(xml, /<staves>2<\/staves>/);
+  assert.match(xml, /<staff>1<\/staff>/);
+  assert.match(xml, /<staff>2<\/staff>/);
+  assert.match(xml, /<sign>G<\/sign>/);
+  assert.match(xml, /<sign>F<\/sign>/);
+
+  const reopened = await openMusicXmlScoreEditorAppDocument(xml, { sha256Hex: nodeSha256 });
+  assert.equal(reopened.session.history.present.score.parts[0].staves.length, 2);
+  assert.equal(reopened.session.renderRequest.projectionStatus, 'V3_COMPATIBLE_XML');
+});
+
+test('APP-10A rejects unknown new-score presets instead of silently changing topology', () => {
+  assert.throws(
+    () => createNewScoreEditorAppDocument({ preset: 'UNKNOWN_PRESET', idFactory: idFactory() }),
+    error => error instanceof ScoreEditorAppDocumentError && error.code === 'INVALID_PRESET'
+  );
+});
+
 test('APP-01 save marker tracks dirty state through edit and undo without persistence authority', () => {
   let document = createNewScoreEditorAppDocument({ idFactory: idFactory() });
   document = markScoreEditorAppDocumentSaved(document, 'Saved Score');
