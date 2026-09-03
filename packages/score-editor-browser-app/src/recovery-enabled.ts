@@ -4,6 +4,7 @@ import {
   fileEnabledBrowserAppProfile,
   type FileEnabledStandaloneScoreEditorController
 } from './file-enabled.js';
+import type { ScoreEditorBrowserAppSnapshot } from './index.js';
 import type { ScoreEditorAppDocument } from '../../score-editor-app-document/src/index.js';
 import {
   restoreScoreEditorRecoveryEnvelope,
@@ -23,6 +24,7 @@ import {
 } from '../../score-editor-browser-recovery-storage/src/index.js';
 
 export const RECOVERY_ENABLED_BROWSER_APP_VERSION = '1.0.0' as const;
+export const PREPARED_RECOVERY_APPLICATION_VERSION = '1.0.0' as const;
 
 export const recoveryEnabledBrowserAppProfile = Object.freeze({
   ...fileEnabledBrowserAppProfile,
@@ -30,6 +32,7 @@ export const recoveryEnabledBrowserAppProfile = Object.freeze({
   browserLocalRecoveryStorage: 'indexedDB' as const,
   recoveryCanonicalAuthority: false,
   recoveryAutoRestore: false,
+  recoveryExplicitApply: true,
   persistenceCapable: false
 });
 
@@ -51,12 +54,23 @@ export interface RecoveryEnabledControllerOptions {
   readonly nowEpochMs?: () => number;
 }
 
+export interface PreparedRecoveryApplication {
+  readonly version: typeof PREPARED_RECOVERY_APPLICATION_VERSION;
+  readonly recoveryDocumentId: string;
+  readonly recoveryRevisionId: string;
+  readonly activeDocumentIdAtPrepare: string | null;
+  readonly activeRevisionIdAtPrepare: string | null;
+  readonly document: Readonly<ScoreEditorAppDocument>;
+}
+
 export interface RecoveryEnabledStandaloneScoreEditorController extends Omit<FileEnabledStandaloneScoreEditorController, 'profile' | 'unmount'> {
   readonly profile: typeof recoveryEnabledBrowserAppProfile;
   readonly getRecoveryState: () => Readonly<BrowserRecoveryControllerState>;
   readonly flushRecovery: () => Promise<Readonly<RecoveryStoredRecord> | null>;
   readonly scanRecoveries: () => Promise<Readonly<RecoveryScanResult>>;
   readonly prepareRecovery: (documentId: string, options?: { readonly allowSameDocumentReplace?: boolean }) => Promise<Readonly<ScoreEditorAppDocument>>;
+  readonly prepareRecoveryApplication: (documentId: string, options?: { readonly allowSameDocumentReplace?: boolean }) => Promise<Readonly<PreparedRecoveryApplication>>;
+  readonly applyPreparedRecovery: (prepared: PreparedRecoveryApplication) => Promise<Readonly<ScoreEditorBrowserAppSnapshot>>;
   readonly deleteRecovery: (documentId: string) => Promise<void>;
   readonly unmount: () => void;
 }
@@ -64,7 +78,10 @@ export interface RecoveryEnabledStandaloneScoreEditorController extends Omit<Fil
 export type RecoveryControllerErrorCode =
   | 'RECOVERY_UNAVAILABLE'
   | 'RECOVERY_NOT_FOUND'
-  | 'RECOVERY_PREPARE_FAILED';
+  | 'RECOVERY_PREPARE_FAILED'
+  | 'RECOVERY_PREPARED_INVALID'
+  | 'RECOVERY_APPLY_CONFLICT'
+  | 'RECOVERY_APPLY_FAILED';
 
 export class RecoveryControllerError extends Error {
   readonly code: RecoveryControllerErrorCode;
@@ -80,6 +97,27 @@ export class RecoveryControllerError extends Error {
 
 const controllerDocumentId = (controller: FileEnabledStandaloneScoreEditorController): string | null =>
   controller.getDocument()?.session.history.present.score.id ?? null;
+
+const controllerRevisionId = (controller: FileEnabledStandaloneScoreEditorController): string | null =>
+  controller.getDocument()?.session.history.present.score.revision.id ?? null;
+
+const assertPrepared = (prepared: PreparedRecoveryApplication): Readonly<PreparedRecoveryApplication> => {
+  if (
+    prepared === null || typeof prepared !== 'object' ||
+    prepared.version !== PREPARED_RECOVERY_APPLICATION_VERSION ||
+    typeof prepared.recoveryDocumentId !== 'string' || prepared.recoveryDocumentId.length === 0 ||
+    typeof prepared.recoveryRevisionId !== 'string' || prepared.recoveryRevisionId.length === 0 ||
+    (prepared.activeDocumentIdAtPrepare !== null && (typeof prepared.activeDocumentIdAtPrepare !== 'string' || prepared.activeDocumentIdAtPrepare.length === 0)) ||
+    (prepared.activeRevisionIdAtPrepare !== null && (typeof prepared.activeRevisionIdAtPrepare !== 'string' || prepared.activeRevisionIdAtPrepare.length === 0))
+  ) {
+    throw new RecoveryControllerError('Prepared recovery application is invalid.', 'RECOVERY_PREPARED_INVALID');
+  }
+  const score = prepared.document.session.history.present.score;
+  if (score.id !== prepared.recoveryDocumentId || score.revision.id !== prepared.recoveryRevisionId) {
+    throw new RecoveryControllerError('Prepared recovery metadata does not match its canonical document.', 'RECOVERY_PREPARED_INVALID');
+  }
+  return prepared;
+};
 
 export const createRecoveryEnabledStandaloneScoreEditorController = (
   options: RecoveryEnabledControllerOptions = {}
@@ -137,6 +175,43 @@ export const createRecoveryEnabledStandaloneScoreEditorController = (
     return result;
   };
 
+  const prepareApplication = async (
+    documentId: string,
+    prepareOptions: { readonly allowSameDocumentReplace?: boolean } = {}
+  ): Promise<Readonly<PreparedRecoveryApplication>> => {
+    try {
+      const activeDocumentIdAtPrepare = controllerDocumentId(base);
+      const activeRevisionIdAtPrepare = controllerRevisionId(base);
+      const result = await scan();
+      const candidate = result.valid.find((value) => value.record.documentId === documentId);
+      if (candidate === undefined) {
+        throw new RecoveryControllerError('Requested recovery document was not found.', 'RECOVERY_NOT_FOUND', { documentId });
+      }
+      const recovered = restoreScoreEditorRecoveryEnvelope(candidate.envelope, {
+        activeDocumentId: activeDocumentIdAtPrepare,
+        allowSameDocumentReplace: prepareOptions.allowSameDocumentReplace === true
+      });
+      const prepared = Object.freeze({
+        version: PREPARED_RECOVERY_APPLICATION_VERSION,
+        recoveryDocumentId: candidate.record.documentId,
+        recoveryRevisionId: candidate.record.revisionId,
+        activeDocumentIdAtPrepare,
+        activeRevisionIdAtPrepare,
+        document: recovered
+      });
+      status = Object.freeze({ code: 'RECOVERY_PREPARED', message: `Recovery prepared for ${documentId}; live document was not replaced.` });
+      return prepared;
+    } catch (error) {
+      if (error instanceof RecoveryControllerError) throw error;
+      const value = error as { readonly code?: unknown; readonly message?: unknown };
+      throw new RecoveryControllerError(
+        typeof value?.message === 'string' ? value.message : 'Recovery preparation failed.',
+        'RECOVERY_PREPARE_FAILED',
+        { causeCode: typeof value?.code === 'string' ? value.code : null, documentId }
+      );
+    }
+  };
+
   const controller: RecoveryEnabledStandaloneScoreEditorController = Object.freeze({
     ...base,
     profile: recoveryEnabledBrowserAppProfile,
@@ -160,28 +235,46 @@ export const createRecoveryEnabledStandaloneScoreEditorController = (
       return record;
     },
     scanRecoveries: scan,
-    prepareRecovery: async (documentId: string, prepareOptions: { readonly allowSameDocumentReplace?: boolean } = {}) => {
-      try {
-        const result = await scan();
-        const candidate = result.valid.find((value) => value.record.documentId === documentId);
-        if (candidate === undefined) {
-          throw new RecoveryControllerError('Requested recovery document was not found.', 'RECOVERY_NOT_FOUND', { documentId });
-        }
-        const recovered = restoreScoreEditorRecoveryEnvelope(candidate.envelope, {
-          activeDocumentId: controllerDocumentId(base),
-          allowSameDocumentReplace: prepareOptions.allowSameDocumentReplace === true
+    prepareRecovery: async (documentId: string, prepareOptions: { readonly allowSameDocumentReplace?: boolean } = {}) =>
+      (await prepareApplication(documentId, prepareOptions)).document,
+    prepareRecoveryApplication: prepareApplication,
+    applyPreparedRecovery: async (preparedInput: PreparedRecoveryApplication) => {
+      const prepared = assertPrepared(preparedInput);
+      const activeDocumentId = controllerDocumentId(base);
+      const activeRevisionId = controllerRevisionId(base);
+      if (activeDocumentId !== prepared.activeDocumentIdAtPrepare || activeRevisionId !== prepared.activeRevisionIdAtPrepare) {
+        throw new RecoveryControllerError('Active document changed after recovery preparation; application was rejected.', 'RECOVERY_APPLY_CONFLICT', {
+          activeDocumentId,
+          activeRevisionId,
+          expectedDocumentId: prepared.activeDocumentIdAtPrepare,
+          expectedRevisionId: prepared.activeRevisionIdAtPrepare
         });
-        status = Object.freeze({ code: 'RECOVERY_PREPARED', message: `Recovery prepared for ${documentId}; live document was not replaced.` });
-        return recovered;
-      } catch (error) {
-        if (error instanceof RecoveryControllerError) throw error;
-        const value = error as { readonly code?: unknown; readonly message?: unknown };
-        throw new RecoveryControllerError(
-          typeof value?.message === 'string' ? value.message : 'Recovery preparation failed.',
-          'RECOVERY_PREPARE_FAILED',
-          { causeCode: typeof value?.code === 'string' ? value.code : null, documentId }
-        );
       }
+      const adopted = base.adoptValidatedSnapshot(prepared.document);
+      if (adopted.error !== null || adopted.revisionId !== prepared.recoveryRevisionId || controllerDocumentId(base) !== prepared.recoveryDocumentId) {
+        throw new RecoveryControllerError('Validated recovery snapshot could not be adopted by the live controller.', 'RECOVERY_APPLY_FAILED', {
+          causeCode: adopted.error?.code ?? null,
+          adoptedRevisionId: adopted.revisionId
+        });
+      }
+      base.clearFileAssociation();
+      let cacheCleanupFailed = false;
+      try {
+        await requireCoordinator().deleteRecovery(prepared.recoveryDocumentId);
+      } catch {
+        cacheCleanupFailed = true;
+      }
+      if (lastStoredDocumentId === prepared.recoveryDocumentId) {
+        lastStoredDocumentId = null;
+        lastStoredRevisionId = null;
+      }
+      status = Object.freeze({
+        code: cacheCleanupFailed ? 'RECOVERY_APPLIED_CACHE_REMAINS' : 'RECOVERY_APPLIED',
+        message: cacheCleanupFailed
+          ? `Recovery ${prepared.recoveryRevisionId} applied; stale cache cleanup should be retried.`
+          : `Recovery ${prepared.recoveryRevisionId} applied explicitly; file association and consumed cache record were cleared.`
+      });
+      return base.getSnapshot();
     },
     deleteRecovery: async (documentId: string) => {
       await requireCoordinator().deleteRecovery(documentId);
@@ -213,6 +306,7 @@ export const createRecoveryEnabledStandaloneBrowserAppRuntime = () => {
       createIndexedDbStore: createIndexedDbRecoveryRecordStore,
       scanStore: scanRecoveryRecordStore,
       autoRestore: false,
+      explicitApply: true,
       canonicalAuthority: false
     })
   });
