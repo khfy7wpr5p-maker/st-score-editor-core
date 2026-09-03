@@ -42,6 +42,7 @@ export type ScoreEditorAppDocumentErrorCode =
   | 'INVALID_TITLE'
   | 'ID_FACTORY_UNAVAILABLE'
   | 'CRYPTO_UNAVAILABLE'
+  | 'BLANK_DOCUMENT_INVALID'
   | 'EXPORT_UNAVAILABLE';
 
 export class ScoreEditorAppDocumentError extends Error {
@@ -122,12 +123,17 @@ const blankV2 = (factory: () => string): Readonly<{ score: Readonly<ScoreDocumen
     }]
   });
 
+  const measureTarget = addressEntityV2(score, measureId);
+  if (measureTarget.kind !== 'measure') {
+    throw new ScoreEditorAppDocumentError('Blank score measure identity did not resolve as a measure.', 'BLANK_DOCUMENT_INVALID');
+  }
+
   const notation = createNotationDocumentV2(score, {
     contractVersion: '2.0.0',
     documentId: score.id,
     revisionId: score.revision.id,
     measures: [{
-      target: addressEntityV2(score, measureId),
+      target: measureTarget,
       notation: {
         timeSignature: { beats: 4, beatType: 4 },
         keySignature: { fifths: 0 },
