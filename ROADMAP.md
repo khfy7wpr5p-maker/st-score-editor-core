@@ -15,41 +15,41 @@ Repository reality only; planned capability is not production capability.
 
 ## ST-SCORE-EDITOR-APP / PRODUCTIZATION
 
-The standalone ST Score Editor App is the active product target. SesliTab V4 product cutover is deferred until APP-09.
+The standalone ST Score Editor App is the active product target. SesliTab V4 product cutover is deferred until APP-09 passes.
 
 - **APP-00–04 — COMPLETE / MERGED:** standalone authority, document runtime, unified V4 authoring, browser shell and bounded local file workflow.
 - **APP-05 — COMPLETE / MERGED:** validated browser-local recovery/autosave; explicit guarded apply, no persistence authority.
-- **APP-06 — COMPLETE / MERGED:** renderer interaction and viewport.
-  - current `RendererRequestV4` lifecycle and stale-render rejection;
-  - revision-bound opaque manifest token -> `SemanticAddressV3` selection only;
-  - DOM/SVG/coordinate/geometry authority forbidden;
-  - zoom/pan/native-scroll/page navigation is presentation-only.
-- **APP-07 — COMPLETE / MERGED:** local playback transport through PR #85 / `0608e231b536299086cd3a516c5f221ca41b01e8`.
-  - revision-bound `PlaybackPlanV1` derived from validated `ScoreDocumentV3`;
-  - normal note/chord pitch and canonical event timing scheduled locally;
-  - rests contribute observed timeline extent;
-  - grace playback timing remains explicitly deferred/partial;
-  - browser-local Web Audio output; no network/backend requirement;
-  - play/pause/stop/seek plus semantic playback cursor;
-  - 20–300 BPM playback-only tempo, default 120 BPM, never written to canonical score;
-  - playback operations create no V4 history revision;
-  - canonical revision change stops stale playback;
-  - playback errors do not disable editing/OMR admission.
-- **APP-08 — NEXT / NOT STARTED:** admitted MusicXML export/print/PDF workflow.
-- **APP-09 — PLANNED:** iPhone/iPad/desktop hardening, performance, accessibility and standalone release gate.
+- **APP-06 — COMPLETE / MERGED:** guarded renderer interaction, semantic hit mapping and presentation-only viewport navigation.
+- **APP-07 — COMPLETE / MERGED:** PR #85 / `0608e231b536299086cd3a516c5f221ca41b01e8`.
+  - revision-bound `PlaybackPlanV1` from validated `ScoreDocumentV3`;
+  - browser-local Web Audio transport;
+  - play/pause/stop/seek, semantic cursor and playback-only 20–300 BPM tempo;
+  - grace timing remains explicitly deferred/partial;
+  - no canonical/history/edit-admission authority.
+- **APP-08 — COMPLETE / MERGED:** PR #87 / `1d1c821be4c6192bdf562fcd2d9fde6f90f178fa`.
+  - explicit MusicXML export reuses the admitted lossless export path;
+  - APP-08 export does not call `markSaved` and does not change dirty/saved state;
+  - export creates no canonical revision/history entry;
+  - print/PDF requires an exact current rendered document/revision;
+  - missing/stale/rejected renderer state fails closed before print handoff;
+  - PDF workflow is browser print dialog / Save as PDF only; no direct PDF byte generator is claimed;
+  - print/export state remains noncanonical and has no network/server/publication authority.
+- **APP-09 — NEXT / NOT STARTED:** iPhone/iPad/Safari and desktop hardening, touch/pointer/keyboard validation, performance, recovery, accessibility and standalone release gate.
 
-Local editing and APP-07 local playback require no backend/service provider.
+Local editing, playback and APP-08 orchestration require no backend/service provider.
 
-## Product safety result through APP-07
+## Product safety result through APP-08
 
-All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. File APIs, recovery cache, renderer presentation, viewport state and playback transport cannot directly mutate canonical score state. Renderer hits can alter selection only after current revision-bound opaque-token resolution. Playback cursor may reference revision-bound semantic identity, but playback state never becomes edit authority or history.
+All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. File APIs, recovery cache, renderer presentation, viewport state, playback transport and export/print state cannot directly mutate canonical score state. MusicXML export remains bounded/lossless, while APP-08 export is deliberately distinct from save semantics. Print/PDF can only hand off an exact current renderer presentation and cannot become edit or publication authority.
 
 ## Still fail-closed / gated
 
-- APP-08 export/print/PDF implementation is not started;
-- standalone release before APP-09;
+- APP-09 implementation is not started;
+- standalone release before APP-09 passes;
 - SesliTab V4 cutover before APP-09 completion;
-- grace playback timing semantics beyond APP-07's explicit deferred/partial behavior;
+- `.mxl` container support;
+- direct PDF byte generation;
+- grace playback timing beyond APP-07's explicit deferred/partial behavior;
 - split-chord/grace/rest/percussion cross-staff placement;
 - linked TAB as cross-staff target;
 - relations between independent source voices/staffs;
@@ -60,5 +60,4 @@ All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` se
 - renderer-coordinate authoring, DOM/SVG authority and host dual-write;
 - E8-D direct external-engine invocation;
 - cloud sync/collaboration/server revision authority;
-- public-write/production activation;
-- `.mxl` container support.
+- public-write/production activation.
