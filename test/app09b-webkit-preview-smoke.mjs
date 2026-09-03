@@ -43,16 +43,16 @@ try {
   const automatic=await collect();
   console.log(`APP-09B automatic: ${JSON.stringify({...automatic,coreXml:automatic.coreXml?.slice(0,2200)??null})}`);
 
-  const probe=async(xml,label)=>{
-    const result=await page.evaluate(async({xml,label})=>{const frame=document.querySelector('iframe[data-app09b-renderer-frame="true"]');const api=frame instanceof HTMLIFrameElement?frame.contentWindow?.__ST_SCORE_RENDER_HOST__:null;if(!api)return{label,error:'HOST_UNAVAILABLE',svgCount:-1};try{await api.renderMusicXml({contractVersion:'0.2.0',musicxml:xml,ticket:`probe-${label}`,pageMode:'continuous',autoResize:true,drawTitle:true,drawComposer:true});return{label,error:null,svgCount:frame.contentDocument?.querySelectorAll('svg').length??-1};}catch(error){return{label,error:`${error?.name??'Error'}:${error?.message??String(error)}`,svgCount:frame.contentDocument?.querySelectorAll('svg').length??-1};}}, {xml,label});
+  const probe=async(xml,label,ticket)=>{
+    const result=await page.evaluate(async({xml,label,ticket})=>{const frame=document.querySelector('iframe[data-app09b-renderer-frame="true"]');const api=frame instanceof HTMLIFrameElement?frame.contentWindow?.__ST_SCORE_RENDER_HOST__:null;if(!api)return{label,error:'HOST_UNAVAILABLE',svgCount:-1};try{await api.renderMusicXml({contractVersion:'0.2.0',musicxml:xml,ticket,pageMode:'continuous',autoResize:true,drawTitle:true,drawComposer:true});return{label,error:null,svgCount:frame.contentDocument?.querySelectorAll('svg').length??-1};}catch(error){return{label,error:`${error?.name??'Error'}:${error?.message??String(error)}`,svgCount:frame.contentDocument?.querySelectorAll('svg').length??-1};}}, {xml,label,ticket});
     console.log(`APP-09B probe ${label}: ${JSON.stringify(result)}`);return result;
   };
 
-  const sourceProbe=await probe(sourceXml,'source');
+  const sourceProbe=await probe(sourceXml,'source',101);
   const coreXml=automatic.coreXml??'';
-  const coreProbe=await probe(coreXml,'core');
+  const coreProbe=await probe(coreXml,'core',102);
   const patchedXml=coreXml.replaceAll(/(<voice>[^<]+<\/voice>)/g,'$1\n        <type>quarter</type>');
-  const typePatchedProbe=await probe(patchedXml,'core-plus-type-quarter');
+  const typePatchedProbe=await probe(patchedXml,'core-plus-type-quarter',103);
 
   let forcedRenderError=null;try{await page.evaluate(async()=>{await globalThis.STScoreEditorAppController.renderCurrent();});}catch(error){forcedRenderError=String(error);}
   const afterForced=await collect();
