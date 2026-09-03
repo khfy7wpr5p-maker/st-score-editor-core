@@ -1,6 +1,7 @@
 import type { RendererRequest, RendererProfile } from '../../renderer-contract/src/index.js';
 import { assertRendererProfile } from '../../renderer-contract/src/index.js';
 import { renderableMusicXmlV2, type RendererRequestV2 } from '../../renderer-contract-v2/src/index.js';
+import { renderableMusicXmlV4, type RendererRequestV4 } from '../../renderer-contract-v4/src/index.js';
 
 export const OSMD_INTEGRATION_VERSION = '2.1.1' as const;
 
@@ -25,7 +26,13 @@ export interface OsmdRenderSession {
 }
 
 export class OsmdAdapterError extends Error {
-  readonly code: 'INVALID_OSMD_HOST' | 'WRONG_RENDERER_FAMILY' | 'UNRENDERABLE_V2_REQUEST' | 'OSMD_LOAD_FAILED' | 'OSMD_RENDER_FAILED';
+  readonly code:
+    | 'INVALID_OSMD_HOST'
+    | 'WRONG_RENDERER_FAMILY'
+    | 'UNRENDERABLE_V2_REQUEST'
+    | 'UNRENDERABLE_V4_REQUEST'
+    | 'OSMD_LOAD_FAILED'
+    | 'OSMD_RENDER_FAILED';
   constructor(message: string, code: OsmdAdapterError['code']) {
     super(message);
     this.name = 'OsmdAdapterError';
@@ -108,6 +115,19 @@ export const renderWithOsmdV2 = async (
     musicXml = renderableMusicXmlV2(request);
   } catch {
     throw new OsmdAdapterError('OSMD v2 request does not contain an admitted renderable MusicXML projection.', 'UNRENDERABLE_V2_REQUEST');
+  }
+  return renderXml(host, request.renderer, request.documentId, request.revisionId, musicXml);
+};
+
+export const renderWithOsmdV4 = async (
+  host: OsmdRendererHost,
+  request: RendererRequestV4
+): Promise<Readonly<OsmdRenderSession>> => {
+  let musicXml: string;
+  try {
+    musicXml = renderableMusicXmlV4(request);
+  } catch {
+    throw new OsmdAdapterError('OSMD V4 request does not contain an admitted lossless MusicXML projection.', 'UNRENDERABLE_V4_REQUEST');
   }
   return renderXml(host, request.renderer, request.documentId, request.revisionId, musicXml);
 };
