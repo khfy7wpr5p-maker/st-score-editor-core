@@ -3,7 +3,7 @@
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-03",
-  "status": "APP_01_COMPLETE_MERGE_CANDIDATE",
+  "status": "APP_01_COMPLETE_MERGED_APP_02_NEXT",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_requires": "APP_09_STANDALONE_RELEASE_GATE",
@@ -27,8 +27,8 @@
     "server_revision_authority": false
   },
   "stages": [
-    {"id":"APP-00","status":"COMPLETE_MERGE_CANDIDATE"},
-    {"id":"APP-01","status":"COMPLETE_MERGE_CANDIDATE"},
+    {"id":"APP-00","status":"COMPLETE_MERGED"},
+    {"id":"APP-01","status":"COMPLETE_MERGED"},
     {"id":"APP-02","status":"NEXT"},
     {"id":"APP-03","status":"PLANNED"},
     {"id":"APP-04","status":"PLANNED"},
