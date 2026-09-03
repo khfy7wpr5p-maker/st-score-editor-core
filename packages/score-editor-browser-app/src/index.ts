@@ -164,7 +164,7 @@ export const createStandaloneScoreEditorController = (
   const withRendererProfile = <T extends NewAppDocumentOptions | OpenMusicXmlAppDocumentOptions>(options: T): T =>
     controllerOptions.rendererProfile === undefined || options.rendererProfile !== undefined
       ? options
-      : Object.freeze({ ...options, rendererProfile: controllerOptions.rendererProfile }) as T;
+      : Object.freeze({ ...options, rendererProfile: controllerOptions.rendererProfile }) as unknown as T;
 
   const snapshot = (): Readonly<ScoreEditorBrowserAppSnapshot> => {
     const selection = current?.session.selection ?? null;
