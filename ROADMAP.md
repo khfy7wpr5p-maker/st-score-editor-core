@@ -15,30 +15,32 @@ Repository reality only; planned capability is not production capability.
 
 ## ST-SCORE-EDITOR-APP / PRODUCTIZATION
 
-The standalone ST Score Editor App is the active product target. SesliTab V4 product cutover is deferred until the standalone product passes APP-09.
+The standalone ST Score Editor App is the active product target. SesliTab V4 product cutover is deferred until APP-09.
 
 - **APP-00 — COMPLETE / MERGED:** standalone product/authority contract.
-- **APP-01 — COMPLETE / MERGED:** standalone document runtime: New, MusicXML Open, admitted MusicXML Export, title/origin, dirty/saved tracking and V4 undo/redo.
-- **APP-02 — COMPLETE / MERGED:** unified V4 authoring and semantic keypad execution in one history.
-- **APP-03 — COMPLETE / MERGED:** independent `STScoreEditorApp` browser product surface.
-  - frozen standalone app global separate from legacy core runtime;
-  - self-contained JS bundle + integrity manifest + directly openable HTML bootstrap;
-  - responsive toolbar/keypad/viewport/inspector/status shell;
-  - semantic selection and APP-02 commit delegation;
-  - zero external imports;
-  - no renderer, persistence, network, file-system, playback or server authority.
-- **APP-04 — NEXT:** local file picker/open/save/download workflow.
-- **APP-05 — PLANNED:** browser-local recovery/autosave with validated envelopes.
+- **APP-01 — COMPLETE / MERGED:** standalone document runtime and V4 undo/redo.
+- **APP-02 — COMPLETE / MERGED:** unified V4 authoring + semantic keypad in one history.
+- **APP-03 — COMPLETE / MERGED:** independent `STScoreEditorApp` browser bundle + responsive standalone shell.
+- **APP-04 — COMPLETE / MERGED:** bounded local file workflow.
+  - File System Access open/save adapters where available;
+  - file-input open fallback and download fallback;
+  - `.musicxml/.xml` only, 32 MiB bound, `.mxl` unsupported;
+  - lossless export before write/handoff;
+  - `markSaved` only after successful `write+close` or download handoff;
+  - failed external operation leaves document dirty;
+  - file handle bound to canonical document ID; never reused across a different New document;
+  - browser file state remains noncanonical and `persistenceCapable:false`.
+- **APP-05 — NEXT:** browser-local recovery/autosave with validated envelopes.
 - **APP-06 — PLANNED:** renderer interaction, semantic hit mapping, zoom/navigation.
-- **APP-07 — PLANNED:** local playback transport, independent from edit/OMR admission.
-- **APP-08 — PLANNED:** MusicXML export/print/PDF workflow within admitted semantics.
+- **APP-07 — PLANNED:** local playback transport.
+- **APP-08 — PLANNED:** MusicXML export/print/PDF workflow.
 - **APP-09 — PLANNED:** iPhone/iPad/desktop hardening, performance, accessibility and standalone release gate.
 
-Local editing does not require a backend/service provider. APP-00–03 introduce no persistence/network/server revision authority.
+Local editing still requires no backend/service provider.
 
-## Product safety result through APP-03
+## Product safety result through APP-04
 
-All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. The standalone browser shell delegates to those APIs and does not become mutation authority. Semantic selection is revision-bound; renderer geometry is not an edit target. Browser bundle validation fails closed on external imports and admitted network/persistence capability tokens.
+All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` session/history. Browser file APIs cannot directly mutate canonical score state. Save state is advanced only after an admitted export has successfully crossed the selected local write/download boundary.
 
 ## Still fail-closed / gated
 
@@ -54,5 +56,5 @@ All edit surfaces converge on the same `ScoreDocumentV3 + NotationDocumentV4` se
 - renderer-coordinate authoring, DOM/SVG authority and host dual-write;
 - E8-D direct external-engine invocation;
 - cloud sync/collaboration/server revision authority;
-- persistence/network/public-write/production activation;
+- public-write/production activation;
 - `.mxl` container support.
