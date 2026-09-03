@@ -1,16 +1,44 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. The bounded cross-staff V4 runtime is active as an additive core contract.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP / PRODUCTIZATION is active; APP-00/01 are merge candidates and APP-02 is next.**
+
+## Product architecture
+
+The standalone ST Score Editor App is the current product target. SesliTab V4 product integration is deferred until the standalone app passes its final product gate.
+
+```text
+ST Score Editor App
+        |
+        v
+ScoreEditorAppDocument
+        |
+        v
+EditorSessionV4
+        |
+        +--> ScoreDocumentV3
+        +--> NotationDocumentV4
+        |
+        v
+RendererRequestV4
+```
+
+The app layer owns product concerns such as title, dirty/saved state, file picker state, autosave/recovery metadata, viewport state and playback controls. None of those are canonical score authority.
+
+APP-01 `score-editor-app-document` provides New, MusicXML Open, admitted MusicXML Export, dirty/saved revision tracking, current V4 topology/cross-staff commits and V4 undo/redo. It contains no persistence/network/server authority. An external shell marks a revision saved only after the shell has completed its own local save/export operation.
+
+MusicXML Open binds source identity before import. Browser default hashing uses Web Crypto SHA-256. A host may inject an equivalent verified SHA-256 provider; invalid 64-hex digests fail closed.
+
+APP-02 must unify earlier authoring capabilities under this same V4 history before the visual shell is considered feature-capable. No V4 -> V2 -> V4 lossy editing bridge is admitted.
 
 ## Canonical authority
 
-A session owns exactly one versioned canonical score+notation pair. V2 and V3 score runtimes remain supported. The SSE-10 session pair is:
+A session owns exactly one versioned canonical score+notation pair. V2 and V3 score runtimes remain supported. The active product pair is:
 
 ```text
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-MusicXML is exchange/projection data. Renderer, DOM/SVG, SesliTab host state and Guitar derivative state remain noncanonical.
+MusicXML is exchange/projection data. Renderer, DOM/SVG, application shell state, future SesliTab host state and Guitar derivative state remain noncanonical.
 
 ## V3 source topology remains canonical
 
@@ -54,7 +82,9 @@ V4 -> V3 is lossless-only. Any non-empty placement collection raises an exact do
 
 `editor-history-v4` stores atomic `ScoreDocumentV3 + NotationDocumentV4` snapshots and accepts direct-child revisions only.
 
-`editor-session-controller-v4` supports native V4 sessions, one-time notation V3 -> V4 migration, placement commits, V4-aware topology commits, semantic selection and undo/redo. No parallel mutable V3/V4 notation authorities are retained.
+`editor-session-controller-v4` currently supports native V4 sessions, one-time notation V3 -> V4 migration, placement commits, V4-aware topology commits, semantic selection and undo/redo. No parallel mutable V3/V4 notation authorities are retained.
+
+APP-02 will extend the same session/history authority to the already-existing note/rest, pitch/duration, chord, grace, articulation, ornament and keypad capabilities without downgrading the canonical pair.
 
 ## Renderer boundary
 
@@ -76,10 +106,12 @@ The render manifest is built from canonical `SemanticAddressV3`. A visually cros
 
 Current MusicXML serializers derive `<staff>` from canonical source streams and cannot yet prove source/display separation on round trip. No V4 cross-staff MusicXML export/import is claimed.
 
-## Product boundary
+## Service-provider boundary
 
-SSE-10 does not activate SesliTab V4 product cutover, persistence, network/server revisions, publication or production write authority. Playback pitch/timing is unchanged by display placement.
+A backend/service provider is not required for the standalone local editing path. Browser-local files, local recovery and local playback may be layered above the canonical session without granting them mutation authority.
+
+Cloud accounts, sync/collaboration, remote storage, heavy OMR/AI and publishing are optional later services and remain outside the current authority model.
 
 ## Remaining gates
 
-Split-chord/grace/rest/percussion cross-staff semantics, linked TAB cross-staff targets, relations between independent source voices/staffs, V4-native MusicXML round trip, SesliTab V4 cutover, polymeter, layout geometry as canonical state, playback/MIDI routing and production/public-write remain separately gated.
+Split-chord/grace/rest/percussion cross-staff semantics, linked TAB cross-staff targets, relations between independent source voices/staffs, V4-native MusicXML round trip, SesliTab V4 cutover, polymeter, layout geometry as canonical state, cloud/network authority and production/public-write remain separately gated.
