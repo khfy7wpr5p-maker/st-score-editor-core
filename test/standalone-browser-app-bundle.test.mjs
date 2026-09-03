@@ -6,6 +6,7 @@ import vm from 'node:vm';
 
 const appBundlePath = new URL('../dist/browser/st-score-editor-app.js', import.meta.url);
 const appManifestPath = new URL('../dist/browser/st-score-editor-app.manifest.json', import.meta.url);
+const appHtmlPath = new URL('../dist/browser/st-score-editor-app.html', import.meta.url);
 const coreBundlePath = new URL('../dist/browser/st-score-editor-core.runtime.js', import.meta.url);
 
 const readAppArtifact = async () => ({
@@ -19,6 +20,7 @@ test('APP-03A standalone browser artifact is self-contained and non-authoritativ
   assert.equal(manifest.version, '1.0.0');
   assert.equal(manifest.runtimeVersion, '1.0.0');
   assert.equal(manifest.artifact, 'st-score-editor-app.js');
+  assert.equal(manifest.entryHtml, 'st-score-editor-app.html');
   assert.equal(manifest.global, 'STScoreEditorApp');
   assert.equal(manifest.format, 'iife');
   assert.equal(manifest.target, 'es2022');
@@ -35,6 +37,15 @@ test('APP-03A standalone browser artifact is self-contained and non-authoritativ
   assert.equal(manifest.externalImports, 0);
   assert.equal(manifest.bytes, bundle.byteLength);
   assert.equal(manifest.sha256, createHash('sha256').update(bundle).digest('hex'));
+});
+
+test('APP-03A emits an independently openable HTML bootstrap without taking canonical authority', async () => {
+  const html = await readFile(appHtmlPath, 'utf8');
+  assert.match(html, /<meta name="viewport"/);
+  assert.match(html, /st-score-editor-app\.js/);
+  assert.match(html, /STScoreEditorApp\.createController\(\)/);
+  assert.match(html, /controller\.mount\(root\)/);
+  assert.doesNotMatch(html, /XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB/);
 });
 
 test('APP-03A app and legacy core globals coexist without authority collision', async () => {
