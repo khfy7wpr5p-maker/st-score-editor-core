@@ -58,6 +58,7 @@ export interface FileEnabledStandaloneScoreEditorController extends Omit<Standal
   readonly mount: (root: HTMLElement) => void;
   readonly unmount: () => void;
   readonly getFileWorkflowState: () => Readonly<BrowserFileControllerState>;
+  readonly clearFileAssociation: () => void;
   readonly openLocalFile: (file: BrowserMusicXmlFileLike) => Promise<Readonly<ScoreEditorBrowserAppSnapshot>>;
   readonly openFromPicker: (host?: BrowserFileWorkflowHost) => Promise<Readonly<ScoreEditorBrowserAppSnapshot>>;
   readonly saveToFile: (host?: BrowserFileWorkflowHost) => Promise<Readonly<ScoreEditorBrowserAppSnapshot>>;
@@ -105,6 +106,12 @@ export const createFileEnabledStandaloneScoreEditorController = (): Readonly<Fil
   const setStatus = (code: string, message: string): void => {
     fileStatus = Object.freeze({ code, message });
     decorate();
+  };
+
+  const clearAssociation = (): void => {
+    fileHandle = null;
+    associatedDocumentId = null;
+    associatedFileName = null;
   };
 
   const state = (): Readonly<BrowserFileControllerState> => {
@@ -191,11 +198,7 @@ export const createFileEnabledStandaloneScoreEditorController = (): Readonly<Fil
 
   base.subscribe(() => {
     const currentDocumentId = documentId(base);
-    if (associatedDocumentId !== null && currentDocumentId !== associatedDocumentId) {
-      fileHandle = null;
-      associatedDocumentId = null;
-      associatedFileName = null;
-    }
+    if (associatedDocumentId !== null && currentDocumentId !== associatedDocumentId) clearAssociation();
     decorate();
   });
 
@@ -205,6 +208,7 @@ export const createFileEnabledStandaloneScoreEditorController = (): Readonly<Fil
     mount: (nextRoot: HTMLElement) => { root = nextRoot; base.mount(nextRoot); decorate(); },
     unmount: () => { base.unmount(); root = null; },
     getFileWorkflowState: state,
+    clearFileAssociation: () => { clearAssociation(); setStatus('FILE_ASSOCIATION_CLEARED', 'File association cleared.'); },
     openLocalFile: async (file: BrowserMusicXmlFileLike) => {
       try {
         const read = await readMusicXmlBrowserFile(file);
