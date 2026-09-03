@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { build } from 'esbuild';
 
 const OUT_DIR = 'dist/browser';
+const STANDALONE_APP_BUNDLE_MAX_BYTES = 524_288;
 const COMMON_FORBIDDEN_TOKENS = [
   'node:',
   'XMLHttpRequest',
@@ -18,7 +19,7 @@ const APP_FORBIDDEN_TOKENS = [...COMMON_FORBIDDEN_TOKENS];
 
 await mkdir(OUT_DIR, { recursive: true });
 
-const buildBrowserArtifact = async ({ entryPoint, artifact, manifestFile, globalName, manifest, label, forbiddenTokens }) => {
+const buildBrowserArtifact = async ({ entryPoint, artifact, manifestFile, globalName, manifest, label, forbiddenTokens, maxBytes = null }) => {
   const outFile = `${OUT_DIR}/${artifact}`;
   const result = await build({
     entryPoints: [entryPoint],
@@ -39,10 +40,12 @@ const buildBrowserArtifact = async ({ entryPoint, artifact, manifestFile, global
   const text = bundle.toString('utf8');
   for (const token of forbiddenTokens) if (text.includes(token)) throw new Error(`${label} browser bundle contains forbidden capability token: ${token}`);
   if (!text.includes(globalName)) throw new Error(`${label} browser bundle does not expose ${globalName}.`);
+  if (maxBytes !== null && bundle.byteLength > maxBytes) throw new Error(`${label} browser bundle exceeds release budget: ${bundle.byteLength} > ${maxBytes}`);
   const description = Object.freeze({
     ...manifest,
     bundler: Object.freeze({ package: 'esbuild', version: '0.28.2', license: 'MIT' }),
     artifact, format: 'iife', target: 'es2022', global: globalName, externalImports: 0,
+    ...(maxBytes === null ? {} : { maxBytes }),
     bytes: bundle.byteLength, sha256: createHash('sha256').update(bundle).digest('hex')
   });
   await writeFile(`${OUT_DIR}/${manifestFile}`, `${JSON.stringify(description, null, 2)}\n`, 'utf8');
@@ -68,8 +71,9 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-08 standalone app',
+  label: 'APP-09 standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
+  maxBytes: STANDALONE_APP_BUNDLE_MAX_BYTES,
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE', version: '1.0.0', runtimeVersion: '1.0.0', standaloneProduct: true,
     canonicalAuthority: false, networkCapable: false, persistenceCapable: false,
@@ -90,6 +94,12 @@ await buildBrowserArtifact({
     exportPrintBundled: true, musicXmlExportCanonicalAuthority: false, musicXmlExportMarksSaved: false,
     printCanonicalAuthority: false, printRequiresCurrentRendererRevision: true, printNetworkCapable: false,
     pdfWorkflow: 'browser-print-dialog-save-as-pdf', pdfBytesGenerated: false,
+    releaseHardeningBundled: true, hardeningCanonicalAuthority: false, hardeningHistoryMutationAuthority: false,
+    hardeningNetworkAuthority: false, dynamicViewportUnits: true, safeAreaInsets: true,
+    coarsePointerTargetMinCssPx: 44, focusVisibleStyling: true, reducedMotionStyling: true,
+    resizeOrientationReapplyPresentation: true, pageHideRecoveryFlush: true, accessibilityStatusLiveRegion: true,
+    browserContractTargets: ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'],
+    manualDeviceValidationRequired: true, standaloneReleaseGatePassed: false, seslitabCutoverAuthorized: false,
     serverRevisionAuthority: false, publicationAuthority: false,
     entryHtml: 'st-score-editor-app.html'
   })
@@ -101,7 +111,7 @@ const standaloneHtml = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ST Score Editor</title>
-<style>html,body,#st-score-editor-app-root{margin:0;width:100%;height:100%;min-height:100%;}body{overflow:hidden;}</style>
+<style>html,body,#st-score-editor-app-root{margin:0;width:100%;height:100%;min-height:100%;}body{overflow:hidden;overscroll-behavior:none;}@supports(height:100dvh){html,body,#st-score-editor-app-root{height:100dvh;min-height:100dvh;}}</style>
 </head>
 <body>
 <div id="st-score-editor-app-root"></div>
@@ -119,4 +129,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-08 standalone HTML: PASS');
+console.log('APP-09 standalone HTML: PASS');
