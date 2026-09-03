@@ -134,7 +134,7 @@ const tokenForEntity = (request: RendererRequestV4, kind: 'note' | 'grace-note',
       ? entry.address.kind === 'note' && entry.address.noteId === id
       : entry.address.kind === 'grace-note' && entry.address.graceNoteId === id
   );
-  return matches.length === 1 ? matches[0].token : null;
+  return matches.length === 1 ? matches[0]!.token : null;
 };
 const emitNormalEvent = (request: RendererRequestV4, event: ScoreEvent, voice: number): readonly EmittedRenderedNote[] => {
   if (event.kind === 'rest') return [Object.freeze({ voice, token: null })];
@@ -166,6 +166,7 @@ export const resolveRenderedScoreNoteRefTokenV4 = (
   const partIndex = score.parts.findIndex((_part, index) => `P${index + 1}` === ref.partId);
   if (partIndex < 0 || ref.measureIndex >= score.measureFrames.length) return null;
   const part = score.parts[partIndex];
+  if (part === undefined) return null;
   const emitted: EmittedRenderedNote[] = [];
   for (const staff of [...contentStavesV3(part)].sort((left, right) => left.ordinal - right.ordinal)) {
     const measure = staff.measures[ref.measureIndex];
