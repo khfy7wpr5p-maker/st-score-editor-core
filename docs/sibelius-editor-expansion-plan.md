@@ -6,11 +6,9 @@ Goal: evolve ST Score Editor Core into a renderer-independent general score-auth
 
 ## Completed foundation
 
-SCORE-SCHEMA-EXPANSION through SSE-09 is COMPLETE / MERGED: V2 notation expansion, bounded MusicXML, renderer/SesliTab V2 compatibility, V3 staff/part topology and bounded topology authoring.
+SCORE-SCHEMA-EXPANSION through SSE-10 bounded scope is COMPLETE / MERGED: V2 notation expansion, bounded MusicXML, renderer/SesliTab V2 compatibility, V3 staff/part topology and bounded topology authoring, plus the first Notation V4 cross-staff presentation runtime.
 
-The SSE-10 cross-staff presentation design is APPROVED / FROZEN / MERGED. Its first bounded V4 runtime is implemented on this merge candidate.
-
-## SSE-10 — Cross-staff presentation runtime
+## SSE-10 — Cross-staff presentation — COMPLETE / MERGED
 
 Cross-staff notation is modeled without moving musical events into another canonical staff.
 
@@ -38,7 +36,7 @@ Beams, ties, slurs, tuplets and ornaments remain source-owned. Existing source-v
 
 ### Runtime surfaces
 
-Implemented:
+Merged:
 
 - exact Notation V4 validation;
 - deterministic V3 -> V4 notation migration;
