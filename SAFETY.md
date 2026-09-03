@@ -6,48 +6,62 @@ The active versioned score remains canonical; notation is same-document/same-rev
 
 ## SSE-09 V3 topology safety
 
-V3 topology authoring remains governed by the frozen SSE-08 model: explicit measure frames, stable IDs, guarded migration, no rhythmic invention on new staff creation, no notation orphaning, derivative linked TAB, atomic V3 history and no parallel mutable V2/V3 authority.
+V3 topology authoring remains governed by the frozen SSE-08 model: explicit measure frames, stable IDs, guarded migration, no rhythmic invention on new staff creation, no notation orphaning, derivative linked TAB, atomic history and no parallel mutable score authorities.
 
-## SSE-10 design-candidate safety
+## SSE-10 V4 cross-staff safety
 
-SSE-10 is design only. No cross-staff runtime authority is activated by this candidate.
-
-The proposed safety rule is that cross-staff display **never moves canonical musical ownership**.
+The SSE-10 design is approved and frozen. The bounded runtime preserves the central invariant: **cross-staff display never moves canonical musical ownership**.
 
 - source part/staff/frame/measure/voice remain unchanged;
 - event/note IDs remain unchanged;
 - pitch/onset/duration remain unchanged;
 - display staff is notation semantics only;
-- initial source and display staffs must be distinct `standard` staffs in the same part;
-- only pitched normal `note`/`chord` events are admitted initially;
-- rests, grace events, percussion, linked TAB targets and split chords remain unsupported;
-- no nearest-staff or coordinate inference is allowed;
-- one source event may have at most one display-staff assignment.
+- source/display staffs must be distinct `standard` staffs in the same part;
+- only pitched normal `note`/`chord` events are admitted;
+- rest, grace, percussion, linked TAB and split-chord placement are rejected;
+- one source event has at most one display-staff assignment;
+- no nearest-staff, coordinate or renderer inference is allowed.
 
-Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. Visual cross-staff placement does not authorize new relations between independent source voices/staffs.
+Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. Visual cross-staff placement does not authorize relations between independent source voices/staffs.
 
-## Topology safety with future V4 notation
+## Authoring and revision safety
 
-A source/display staff cannot be removed if doing so would orphan a cross-staff placement unless explicit placement removal is part of the same admitted atomic transaction. Staff reorder preserves assignments by stable IDs. Silent cascade or nearest-surviving-staff retargeting is forbidden.
+Cross-staff placement intents require a current revision-bound `EventAddressV3`, explicit `displayStaffId` and fresh next revision ID. Accepted edits create one direct-child `ScoreDocumentV3` revision without changing musical content, then rebind the entire `NotationDocumentV4` to that same revision.
 
-Current SSE-09 topology runtime remains unchanged until an explicitly approved V4 integration stage composes these checks.
+A stale source event, same-staff target, rest target, non-standard target or cross-part target fails closed. No partial placement apply is admitted.
 
-## Renderer / MusicXML safety
+## Topology safety with V4 notation
 
-Current projection cannot prove lossless source-staff versus display-staff ownership for non-empty cross-staff placements. A future V4 notation document with placements must therefore remain pending/fail-closed until a separately admitted projection exists.
+`editor-topology-authoring-v4` composes the existing SSE-09 topology engine with V4 placement validation.
 
-Import may not reconstruct source ownership by nearest staff, first occurrence, beam geometry or duplicated voice ordinal. Renderer hits must resolve to the original source semantic identity, not the display staff position.
+A topology edit is first calculated as a candidate. Current placements are then rebound against the candidate score. If any source/display staff or part disappeared, the candidate is rejected as `CROSS_STAFF_ORPHAN_RISK`; no implicit cascade is committed.
+
+Staff reorder preserves assignments by stable IDs. Nearest surviving staff retargeting is forbidden.
 
 ## Migration safety
 
-Proposed V3 notation -> V4 notation migration is additive with empty placements. V4 -> V3 is lossless-only and requires an empty placement collection. Moving canonical events to another staff to simulate downgrade is forbidden.
+Notation V3 -> V4 is additive with `crossStaffPlacements=[]`.
+
+V4 -> V3 is lossless-only and requires an empty placement collection. Moving canonical events to another staff to simulate downgrade is forbidden.
+
+## Renderer / MusicXML safety
+
+`RendererRequestV4` may reuse the existing V3/V2 projection only when the placement collection is empty and the lower projection is already lossless.
+
+Any non-empty placement returns `CROSS_STAFF_XML_PENDING` and `musicXml:null`. Current MusicXML projection cannot yet prove canonical source-staff versus display-staff ownership on round trip.
+
+Renderer manifests contain source `SemanticAddressV3` identities. A rendered cross-staff hit must resolve to the original source event/note ancestry, never to display staff geometry.
+
+Import may not reconstruct source ownership from nearest staff, first occurrence, beam geometry or reused voice ordinal.
+
+## History / session safety
+
+V4 history stores one atomic `ScoreDocumentV3 + NotationDocumentV4` pair and accepts direct-child commits only. Undo/redo restores exact snapshots. V4 session migration does not retain a second mutable notation authority.
 
 ## Product boundary
 
-SSE-10 design adds no SesliTab V4 cutover, network/persistence/server revision authority, publication or production write authority. Cross-staff display alone does not change playback pitch/timing.
+SSE-10 adds no SesliTab V4 product cutover, network/persistence/server revision authority, publication or production write authority. Cross-staff display alone does not change playback pitch/timing.
 
-## Human gate
+## Remaining gates
 
-Explicit human approval is required before the SSE-10 design is frozen and before any `NotationDocumentV4`, V4 migration/session/renderer, cross-staff authoring or topology integration runtime is implemented.
-
-Full candidate: `docs/cross-staff-relation-contract.md` and `.json`.
+Explicit approval remains required before split-chord/grace/rest/percussion cross-staff semantics, linked TAB cross-staff targets, cross-source-staff relation authoring, V4-native MusicXML round trip, SesliTab V4 cutover, polymeter/non-controlling topology, material dependency/license changes, E8-D invocation or production/public-write activation.

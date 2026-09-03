@@ -1,62 +1,74 @@
 # SCORE-SCHEMA-EXPANSION Program
 
-Status: **SSE-09 COMPLETE / MERGED; SSE-10 DESIGN CANDIDATE / HUMAN REVIEW REQUIRED**
+Status: **SSE-10 DESIGN APPROVED/FROZEN; BOUNDED RUNTIME COMPLETE / MERGE CANDIDATE**
 
-SSE-00–09 are complete and merged. SSE-10 now has a bounded design candidate for Sibelius-style cross-staff presentation; runtime implementation has not started.
+SSE-00–09 are complete and merged. The SSE-10 cross-staff presentation design is approved, frozen and merged. The first bounded V4 runtime is implemented on this merge candidate.
 
 ## Completed sequence
 
 - **SSE-00–07 — COMPLETE / MERGED:** V2 schema/session, grace/articulation/ornament authoring, bounded MusicXML V2, renderer and SesliTab V2 compatibility.
 - **SSE-08 — COMPLETE / MERGED:** V3 staff/part topology design freeze.
 - **SSE-09 — COMPLETE / MERGED:** V3 topology substrate, migration, history/session, renderer contract and bounded topology authoring.
-- **SSE-10 — DESIGN CANDIDATE / HUMAN REVIEW REQUIRED:** cross-staff presentation and relation ownership. Runtime not started.
+- **SSE-10 design — APPROVED / FROZEN / MERGED:** cross-staff presentation and relation ownership.
+- **SSE-10 runtime — COMPLETE / MERGE CANDIDATE:** bounded Notation V4 placement runtime.
 
-## SSE-10 fresh-read conclusion
+## SSE-10 runtime contracts
 
-`ScoreDocumentV3` already owns the exact source part/staff/frame/measure/voice/event hierarchy, and `SemanticAddressV3` already addresses it exactly. Cross-staff notation therefore should not move an event into another canonical staff or create a second score event.
+The runtime keeps:
 
-The candidate keeps:
+- `ScoreDocumentV3/3.0.0` as musical/topology authority;
+- `SemanticAddressV3/3.0.0` as source semantic identity.
 
-- `ScoreDocumentV3/3.0.0`;
-- `SemanticAddressV3/3.0.0`.
+It adds:
 
-It proposes:
+- `NotationDocumentV4/4.0.0`;
+- `schema-migration-v3-v4/1.0.0`;
+- `editor-cross-staff-authoring-v4/1.0.0`;
+- `editor-topology-authoring-v4/1.0.0`;
+- `editor-history-v4/4.0.0`;
+- `editor-session-controller-v4/4.0.0`;
+- `RendererRequestV4/4.0.0`.
 
-- `NotationDocumentV4/4.0.0` with `crossStaffPlacements`.
+## Admitted cross-staff profile
 
-A placement points from one current `EventAddressV3` to an explicit `displayStaffId`. Source ownership, event/note identity, pitch and timing remain unchanged.
-
-## Initial bounded profile
+A placement maps one current `EventAddressV3` to an explicit display staff ID.
 
 - normal timed pitched event only (`note` or `chord`);
-- whole event moves as one display unit;
-- source and display staff are distinct `standard` staffs in the same part;
-- same global frame correspondence is required;
+- whole event moves visually as one unit;
+- source/display are distinct standard staffs in the same part;
+- same frame correspondence is required;
+- source staff/measure/voice, event/note IDs, pitch and timing remain unchanged;
 - no rest/grace/percussion/linked-TAB placement;
 - no split chord;
 - no coordinate or nearest-staff inference.
 
-Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. An existing same-source-voice beam may become visually cross-staff because member events have display assignments. New relations between independent source voices/staffs are not admitted.
+Existing beam/tie/slur/tuplet/ornament semantics remain source-owned. Visual placement does not widen relation authoring across independent canonical source voices/staffs.
 
-## Migration candidate
+## Migration and history
 
-Notation V3 -> V4 preserves all V3 notation and initializes `crossStaffPlacements=[]`.
+Notation V3 -> V4 preserves all existing notation and initializes an empty placement collection.
 
-V4 -> V3 is lossless-only and requires empty placements. Flattening by moving canonical events into display staffs is forbidden.
+V4 -> V3 is lossless-only and rejects any non-empty placement set. No canonical event is moved to simulate downgrade.
 
-## MusicXML / renderer boundary
+Accepted placement edits create one direct-child score revision without changing musical content and bind V4 notation to that revision. V4 history/session uses one atomic score-v3 + notation-v4 pair with unified undo/redo.
 
-Current serializer uses canonical source-staff streams for `<staff>` and cannot prove source/display ownership round-trip for non-empty placements. Cross-staff MusicXML is therefore not admitted by this design candidate. A future V4 renderer/export contract must remain pending/fail-closed until preservation is explicitly solved.
+## Topology composition
 
-## Human gate
+The V4 topology wrapper reuses SSE-09 topology behavior and then revalidates every placement against the resulting score. Removal of a source/display staff or part that would orphan placement semantics rejects the whole candidate. Staff reorder remains safe by stable IDs.
 
-The candidate is documented in `docs/cross-staff-relation-contract.md` and `.json`.
+## Renderer / MusicXML boundary
 
-No SSE-10 runtime may begin until explicit human approval freezes this design. After approval, implementation must separately prove V4 validation/migration, topology orphan protection, source-identity selection, atomic history, renderer/MusicXML fail-closed behavior and Node 18/20/22 CI.
+Empty V4 placement sets may reuse the existing lossless V3/V2 renderer projection. Non-empty placements return `CROSS_STAFF_XML_PENDING` and no MusicXML.
+
+Renderer tokens keep original source `SemanticAddressV3` ancestry. Cross-staff MusicXML round trip remains unimplemented and separately gated.
+
+## Product boundary
+
+SesliTab V4 product cutover is not activated. MusicXML remains exchange/projection data; renderer/host/Guitar remain noncanonical. Persistence/network/public-write/production activation remains separate.
 
 ## Still separately gated
 
-- split-chord, grace, rest and percussion cross-staff semantics;
+- split-chord/grace/rest/percussion cross-staff semantics;
 - linked TAB cross-staff targets;
 - relations between independent source voices/staffs;
 - V4-native cross-staff MusicXML round trip;
@@ -67,3 +79,5 @@ No SSE-10 runtime may begin until explicit human approval freezes this design. A
 - layout/page/system geometry as canonical state;
 - E8-D external-engine invocation;
 - persistence/network/public-write/production activation.
+
+Source of truth: `docs/cross-staff-relation-contract.md` and `.json`.

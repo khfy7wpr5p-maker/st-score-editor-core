@@ -6,48 +6,63 @@ Goal: evolve ST Score Editor Core into a renderer-independent general score-auth
 
 ## Completed foundation
 
-SCORE-SCHEMA-EXPANSION through SSE-09 is COMPLETE / MERGED: V2 notation expansion, bounded MusicXML, renderer/SesliTab v2 compatibility, V3 staff/part topology and bounded topology authoring.
+SCORE-SCHEMA-EXPANSION through SSE-09 is COMPLETE / MERGED: V2 notation expansion, bounded MusicXML, renderer/SesliTab V2 compatibility, V3 staff/part topology and bounded topology authoring.
 
-## SSE-10 — Cross-staff presentation — DESIGN CANDIDATE / HUMAN REVIEW REQUIRED
+The SSE-10 cross-staff presentation design is APPROVED / FROZEN / MERGED. Its first bounded V4 runtime is implemented on this merge candidate.
 
-Fresh-read shows that Sibelius-style cross-staff notation can be modeled without moving musical events into another canonical staff.
+## SSE-10 — Cross-staff presentation runtime
 
-The candidate keeps:
+Cross-staff notation is modeled without moving musical events into another canonical staff.
+
+The runtime keeps:
 
 - `ScoreDocumentV3/3.0.0` as musical/topology authority;
 - `SemanticAddressV3/3.0.0` as source identity;
 - source event staff/measure/voice, pitch, timing and IDs unchanged.
 
-It proposes `NotationDocumentV4/4.0.0` with explicit `crossStaffPlacements` that map a current pitched normal source event to a distinct standard display staff in the same part.
+It adds `NotationDocumentV4/4.0.0` with explicit `crossStaffPlacements` mapping a current pitched normal source event to a distinct standard display staff in the same part.
 
 ### Initial bounded behavior
 
 - note/chord event only;
 - whole event displayed on one target staff;
-- source/display staffs are standard and same-part;
+- source/display staffs are distinct standard staffs in the same part;
+- same measure-frame correspondence required;
 - no split chord, rest, grace, percussion or linked-TAB target;
 - no coordinate/nearest-staff inference;
-- rendered selection resolves back to original source event/note identity.
+- rendered selection resolves to original source semantic identity.
 
 ### Relation behavior
 
 Beams, ties, slurs, tuplets and ornaments remain source-owned. Existing source-voice relationships may become visually cross-staff due to display placement, but SSE-10 does not create relations between independent canonical source voices/staffs.
 
-This preserves the current timing and relation authority while enabling the visual notation concept needed for piano-style cross-staff writing.
+### Runtime surfaces
 
-### Migration / renderer boundary
+Implemented:
 
-Notation V3 -> V4 would preserve V3 semantics and create an empty placement collection. V4 -> V3 downgrade would be allowed only when placements are empty.
+- exact Notation V4 validation;
+- deterministic V3 -> V4 notation migration;
+- lossless-only V4 -> V3 downgrade;
+- explicit set/remove placement authoring;
+- V4-aware topology orphan guards;
+- atomic score-v3 + notation-v4 history/session;
+- fail-closed RendererRequestV4;
+- source-identity renderer token mapping.
 
-Current MusicXML projection does not prove the distinction between canonical source staff and display staff, so cross-staff MusicXML round trip is not admitted by this candidate. Non-empty placements remain fail-closed/pending until a separate projection contract is designed.
+### Renderer / MusicXML boundary
 
-## After design approval
+Empty placement sets may reuse the existing lossless V3/V2 MusicXML path. Non-empty placements return `CROSS_STAFF_XML_PENDING` with no XML.
 
-The first implementation stage may build V4 notation validation/migration, cross-staff placement authoring, atomic history/session integration, topology orphan guards and pending renderer behavior. Runtime work must not begin before explicit human approval freezes the candidate.
+Current MusicXML projection cannot yet prove canonical source staff versus display staff ownership round trip. V4-native cross-staff MusicXML therefore remains a separate future stage.
+
+### Product boundary
+
+SesliTab V4 product cutover is not part of SSE-10 runtime. Playback timing/pitch is unchanged by display placement. Renderer/host geometry remains noncanonical.
 
 ## Remaining gates
 
 - split-chord/grace/rest/percussion cross-staff semantics;
+- linked TAB cross-staff targets;
 - relations between independent source voices/staffs;
 - cross-staff MusicXML V4 round trip;
 - SesliTab V4 product cutover;
@@ -58,4 +73,4 @@ The first implementation stage may build V4 notation validation/migration, cross
 - E8-D direct external-engine invocation;
 - persistence/network/public-write/production activation.
 
-Full candidate: `docs/cross-staff-relation-contract.md` and `.json`.
+Full frozen contract: `docs/cross-staff-relation-contract.md` and `.json`.
