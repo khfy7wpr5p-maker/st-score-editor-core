@@ -17,6 +17,7 @@ import { renderableMusicXmlV4, RendererContractV4Error } from '../../renderer-co
 export const SCORE_EDITOR_APP_DOCUMENT_VERSION = '1.0.0' as const;
 
 export type AppDocumentOrigin = 'NEW' | 'MUSICXML';
+export type AppSha256Provider = (text: string) => Promise<string>;
 
 export interface ScoreEditorAppDocument {
   readonly version: typeof SCORE_EDITOR_APP_DOCUMENT_VERSION;
@@ -36,12 +37,14 @@ export interface OpenMusicXmlAppDocumentOptions {
   readonly title?: string;
   readonly documentId?: string;
   readonly revisionId?: string;
+  readonly sha256Hex?: AppSha256Provider;
 }
 
 export type ScoreEditorAppDocumentErrorCode =
   | 'INVALID_TITLE'
   | 'ID_FACTORY_UNAVAILABLE'
   | 'CRYPTO_UNAVAILABLE'
+  | 'INVALID_SHA256_RESULT'
   | 'BLANK_DOCUMENT_INVALID'
   | 'EXPORT_UNAVAILABLE';
 
@@ -149,7 +152,7 @@ const blankV2 = (factory: () => string): Readonly<{ score: Readonly<ScoreDocumen
   return Object.freeze({ score, notation });
 };
 
-const sha256Hex = async (text: string): Promise<string> => {
+const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string> => {
   const cryptoValue = globalThis.crypto as Crypto | undefined;
   if (cryptoValue === undefined || cryptoValue.subtle === undefined) {
     throw new ScoreEditorAppDocumentError('Web Crypto SHA-256 support is required for MusicXML source identity.', 'CRYPTO_UNAVAILABLE');
@@ -157,6 +160,14 @@ const sha256Hex = async (text: string): Promise<string> => {
   const bytes = new TextEncoder().encode(text);
   const digest = await cryptoValue.subtle.digest('SHA-256', bytes);
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+};
+
+const verifiedSha256Hex = async (text: string, provider: AppSha256Provider): Promise<string> => {
+  const digest = await provider(text);
+  if (!/^[0-9a-f]{64}$/.test(digest)) {
+    throw new ScoreEditorAppDocumentError('SHA-256 provider returned an invalid digest.', 'INVALID_SHA256_RESULT');
+  }
+  return digest;
 };
 
 export const createNewScoreEditorAppDocument = (
@@ -175,7 +186,7 @@ export const openMusicXmlScoreEditorAppDocument = async (
 ): Promise<Readonly<ScoreEditorAppDocument>> => {
   const bytes = new TextEncoder().encode(musicXml);
   const source = Object.freeze({
-    sha256: await sha256Hex(musicXml),
+    sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
     format: 'musicxml' as const,
     byteLength: bytes.byteLength
   });
