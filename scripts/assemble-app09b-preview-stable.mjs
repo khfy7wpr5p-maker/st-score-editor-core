@@ -77,8 +77,22 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   return manifest;
 }
 
+export async function assembleStableApp09BPreviewCli({
+  runtimeDir,
+  outputDir = defaultOutputDir,
+  includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1'
+} = {}) {
+  if (includeIosDiagnostic) {
+    const { assembleIosDeviceDiagnosticApp09BPreview } = await import('./assemble-app09b-ios-device-diagnostic.mjs');
+    return assembleIosDeviceDiagnosticApp09BPreview({ runtimeDir, outputDir });
+  }
+  return assembleStableApp09BPreview({ runtimeDir, outputDir });
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
-  const result = await assembleStableApp09BPreview({ runtimeDir });
-  console.log(`APP-09B stable preview assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion})`);
+  const includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1';
+  const result = await assembleStableApp09BPreviewCli({ runtimeDir, includeIosDiagnostic });
+  const mode = includeIosDiagnostic ? 'stable preview + iOS device diagnostic' : 'stable preview';
+  console.log(`APP-09B ${mode} assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion})`);
 }
