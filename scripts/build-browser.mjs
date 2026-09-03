@@ -68,7 +68,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-06B standalone app',
+  label: 'APP-06C standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE', version: '1.0.0', runtimeVersion: '1.0.0', standaloneProduct: true,
@@ -77,6 +77,9 @@ await buildBrowserArtifact({
     rendererAutoRender: false, rendererFamily: 'osmd', rendererExactHostVersion: '2.1.1', staleRenderResultRejected: true,
     semanticRendererHitBridgeBundled: true, rendererHitCanonicalInput: 'opaque-renderer-request-v4-manifest-token',
     rendererDomSvgCoordinateAuthority: false, staleRendererHitRejected: true,
+    viewportNavigationBundled: true, viewportPresentationOnly: true, viewportCanonicalAuthority: false, coordinateAuthoring: false,
+    viewportZoomRange: [0.25, 4], viewportZoomStep: 0.25,
+    viewportInputModes: ['touch', 'pointer', 'keyboard'], responsiveViewportProfiles: ['iphone', 'ipad', 'desktop'],
     fileWorkflowBundled: true, recoveryAutosaveBundled: true, browserLocalRecoveryStorage: 'indexedDB',
     recoveryCanonicalAuthority: false, recoveryAutoRestore: false, recoveryExplicitApply: true,
     recoveryApplyRevisionGuard: true, recoveryMaxDocuments: 8,
@@ -109,4 +112,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-06B standalone HTML: PASS');
+console.log('APP-06C standalone HTML: PASS');
