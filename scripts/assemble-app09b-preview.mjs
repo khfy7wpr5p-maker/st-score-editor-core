@@ -211,7 +211,7 @@ const previewBootstrap = `(() => {
             musicxml,
             ticket,
             pageMode: 'continuous',
-            autoResize: true,
+            autoResize: false,
             drawTitle: true,
             drawComposer: true
           });
@@ -340,6 +340,8 @@ export async function assembleApp09BPreview({ runtimeDir, outputDir = defaultOut
     }),
     rendererImplementationBundledIntoEditorCore: false,
     rendererRuntimeSameOriginIsolated: true,
+    interactiveRendererAutoResize: false,
+    resizeOrientationControlledRendererRerender: true,
     rendererHitRequiresExactRenderEpoch: true,
     rendererHitRequiresExactSourceId: true,
     rendererHitCanonicalInput: 'opaque-renderer-request-v4-manifest-token',
@@ -354,5 +356,5 @@ export async function assembleApp09BPreview({ runtimeDir, outputDir = defaultOut
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
   const result = await assembleApp09BPreview({ runtimeDir });
-  console.log(`APP-09B preview assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion})`);
+  console.log(`APP-09B preview assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, autoResize=false controlled-host)`);
 }
