@@ -1,4 +1,4 @@
-name: APP-09B preview WebKit diagnostic
+name: APP-09B preview WebKit regression
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
-      - name: Install Editor Core dependencies and diagnostic Playwright
+      - name: Install Editor Core dependencies and regression Playwright
         run: |
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
@@ -42,5 +42,5 @@ jobs:
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
         run: node scripts/assemble-app09b-preview-stable.mjs
-      - name: Run APP-09B WebKit preview smoke
-        run: node test/app09b-webkit-preview-smoke.mjs
+      - name: Run APP-09B WebKit renderer regression
+        run: node scripts/app09b-webkit-preview-regression.mjs
