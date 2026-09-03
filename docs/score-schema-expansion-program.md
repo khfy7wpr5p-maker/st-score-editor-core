@@ -1,8 +1,8 @@
 # SCORE-SCHEMA-EXPANSION Program
 
-Status: **SSE-10 DESIGN APPROVED/FROZEN; BOUNDED RUNTIME COMPLETE / MERGE CANDIDATE**
+Status: **SSE-10 DESIGN APPROVED/FROZEN; BOUNDED RUNTIME COMPLETE / MERGED**
 
-SSE-00–09 are complete and merged. The SSE-10 cross-staff presentation design is approved, frozen and merged. The first bounded V4 runtime is implemented on this merge candidate.
+SSE-00–10 bounded stages are complete and merged. The SSE-10 cross-staff presentation design is frozen and its first Notation V4 runtime is now part of `main`.
 
 ## Completed sequence
 
@@ -10,7 +10,7 @@ SSE-00–09 are complete and merged. The SSE-10 cross-staff presentation design 
 - **SSE-08 — COMPLETE / MERGED:** V3 staff/part topology design freeze.
 - **SSE-09 — COMPLETE / MERGED:** V3 topology substrate, migration, history/session, renderer contract and bounded topology authoring.
 - **SSE-10 design — APPROVED / FROZEN / MERGED:** cross-staff presentation and relation ownership.
-- **SSE-10 runtime — COMPLETE / MERGE CANDIDATE:** bounded Notation V4 placement runtime.
+- **SSE-10 runtime — COMPLETE / MERGED:** bounded Notation V4 placement runtime.
 
 ## SSE-10 runtime contracts
 

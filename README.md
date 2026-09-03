@@ -4,11 +4,11 @@ Security-first, renderer-independent semantic score-editing core for ST score pr
 
 ## Current reality
 
-SCORE-SCHEMA-EXPANSION is implemented through **SSE-10 bounded cross-staff notation runtime** on this merge candidate.
+SCORE-SCHEMA-EXPANSION is implemented through **SSE-10 bounded cross-staff notation runtime**.
 
 - **SSE-00–09 — COMPLETE / MERGED:** v2 schema/session, grace/articulation/ornament authoring, bounded MusicXML v2, renderer/SesliTab v2 compatibility, V3 staff/part topology contract and bounded V3 topology runtime.
 - **SSE-10 design — APPROVED / FROZEN / MERGED:** cross-staff presentation ownership keeps musical ownership on the source staff/voice.
-- **SSE-10 runtime — COMPLETE / MERGE CANDIDATE:** `NotationDocumentV4`, guarded V3↔V4 notation migration, cross-staff placement authoring, V4-aware topology safety, atomic V4 history/session and fail-closed renderer projection.
+- **SSE-10 runtime — COMPLETE / MERGED:** `NotationDocumentV4`, guarded V3↔V4 notation migration, cross-staff placement authoring, V4-aware topology safety, atomic V4 history/session and fail-closed renderer projection.
 
 ## SSE-10 canonical boundary
 

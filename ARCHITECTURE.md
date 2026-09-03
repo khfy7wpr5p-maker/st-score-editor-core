@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–09 are merged. SSE-10 design is approved/frozen; bounded cross-staff V4 runtime is implemented on this merge candidate.**
+Status: **SEC-NE and SSE-00–10 are merged. The bounded cross-staff V4 runtime is active as an additive core contract.**
 
 ## Canonical authority
 
