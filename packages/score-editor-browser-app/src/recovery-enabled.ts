@@ -4,7 +4,7 @@ import {
   fileEnabledBrowserAppProfile,
   type FileEnabledStandaloneScoreEditorController
 } from './file-enabled.js';
-import type { ScoreEditorBrowserAppSnapshot } from './index.js';
+import type { ScoreEditorBrowserAppSnapshot, StandaloneScoreEditorControllerOptions } from './index.js';
 import type { ScoreEditorAppDocument } from '../../score-editor-app-document/src/index.js';
 import {
   restoreScoreEditorRecoveryEnvelope,
@@ -47,7 +47,7 @@ export interface BrowserRecoveryControllerState {
   readonly status: { readonly code: string; readonly message: string };
 }
 
-export interface RecoveryEnabledControllerOptions {
+export interface RecoveryEnabledControllerOptions extends StandaloneScoreEditorControllerOptions {
   readonly store?: RecoveryRecordStore;
   readonly sha256Hex?: RecoverySha256Provider;
   readonly autosaveDelayMs?: number;
@@ -122,7 +122,7 @@ const assertPrepared = (prepared: PreparedRecoveryApplication): Readonly<Prepare
 export const createRecoveryEnabledStandaloneScoreEditorController = (
   options: RecoveryEnabledControllerOptions = {}
 ): Readonly<RecoveryEnabledStandaloneScoreEditorController> => {
-  const base = createFileEnabledStandaloneScoreEditorController();
+  const base = createFileEnabledStandaloneScoreEditorController(options);
   let store: RecoveryRecordStore | null = options.store ?? null;
   let coordinator: Readonly<RecoveryAutosaveCoordinator> | null = null;
   let validCandidateCount = 0;
