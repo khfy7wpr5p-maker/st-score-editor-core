@@ -48,10 +48,24 @@ test('APP-03A emits an independently openable HTML bootstrap without taking cano
   assert.doesNotMatch(html, /XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB/);
 });
 
+test('APP-04A app global exposes bounded local-file primitives without becoming persistence authority', async () => {
+  const { bundle } = await readAppArtifact();
+  const context = vm.createContext({ TextEncoder });
+  vm.runInContext(bundle.toString('utf8'), context, { filename: 'st-score-editor-app.js' });
+  const workflow = context.STScoreEditorApp.fileWorkflow;
+  assert.ok(workflow);
+  assert.equal(typeof workflow.readFile, 'function');
+  assert.equal(typeof workflow.pickFile, 'function');
+  assert.equal(typeof workflow.writeFile, 'function');
+  assert.equal(typeof workflow.createDownloadArtifact, 'function');
+  assert.ok(workflow.maxLocalMusicXmlBytes > 0);
+  assert.equal(Object.isFrozen(workflow), true);
+});
+
 test('APP-03A app and legacy core globals coexist without authority collision', async () => {
   const { bundle } = await readAppArtifact();
   const coreBundle = await readFile(coreBundlePath);
-  const context = vm.createContext({});
+  const context = vm.createContext({ TextEncoder });
   vm.runInContext(coreBundle.toString('utf8'), context, { filename: 'st-score-editor-core.runtime.js' });
   vm.runInContext(bundle.toString('utf8'), context, { filename: 'st-score-editor-app.js' });
 
