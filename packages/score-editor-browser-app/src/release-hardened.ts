@@ -87,9 +87,13 @@ export const attachReleaseHardeningLifecycleV1 = (
   const requestRecoveryFlush = (): void => {
     if (disposed || recoveryFlushInFlight) return;
     recoveryFlushInFlight = true;
-    void Promise.resolve(callbacks.flushRecovery())
-      .catch(() => undefined)
-      .finally(() => { recoveryFlushInFlight = false; });
+    try {
+      void Promise.resolve(callbacks.flushRecovery())
+        .catch(() => undefined)
+        .finally(() => { recoveryFlushInFlight = false; });
+    } catch {
+      recoveryFlushInFlight = false;
+    }
   };
 
   const onLayout = (): void => { requestPresentationReapply(); };
