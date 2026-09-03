@@ -3,7 +3,8 @@ import {
   createStandaloneScoreEditorController,
   standaloneBrowserAppProfile,
   type ScoreEditorBrowserAppSnapshot,
-  type StandaloneScoreEditorController
+  type StandaloneScoreEditorController,
+  type StandaloneScoreEditorControllerOptions
 } from './index.js';
 import {
   browserFileWorkflowCapabilities,
@@ -95,8 +96,10 @@ const defaultDownloadHandoff: BrowserDownloadHandoff = async (artifact) => {
   }
 };
 
-export const createFileEnabledStandaloneScoreEditorController = (): Readonly<FileEnabledStandaloneScoreEditorController> => {
-  const base = createStandaloneScoreEditorController();
+export const createFileEnabledStandaloneScoreEditorController = (
+  options: StandaloneScoreEditorControllerOptions = {}
+): Readonly<FileEnabledStandaloneScoreEditorController> => {
+  const base = createStandaloneScoreEditorController(options);
   let fileHandle: BrowserFileHandleLike | null = null;
   let associatedDocumentId: string | null = null;
   let associatedFileName: string | null = null;
