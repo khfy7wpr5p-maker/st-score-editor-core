@@ -58,11 +58,23 @@ const setup = async () => {
     nowEpochMs: () => 7000
   });
   controller.newDocument({ title: 'Recovery Apply', idFactory: idFactory() });
+  const initialDocument = controller.getDocument();
+  assert.ok(initialDocument);
+  const documentId = initialDocument.session.history.present.score.id;
+
+  // Establish the local file association while the blank score is still inside
+  // the admitted lossless MusicXML projection. APP-05D must not weaken export
+  // gates merely to construct a recovery/file-association regression fixture.
+  await controller.saveToFile({ async showSaveFilePicker() { return writableHandle('recovery-apply.musicxml'); } });
+  assert.equal(controller.getFileWorkflowState().associatedDocumentId, documentId);
+
   renamePart(controller, 'recovery-apply-rev-1', 'Recovered Revision');
   const stored = await controller.flushRecovery();
   assert.ok(stored);
-  await controller.saveToFile({ async showSaveFilePicker() { return writableHandle('recovery-apply.musicxml'); } });
-  assert.equal(controller.getFileWorkflowState().associatedDocumentId, stored.documentId);
+  assert.equal(stored.documentId, documentId);
+  assert.equal(stored.revisionId, 'recovery-apply-rev-1');
+  assert.equal(controller.getFileWorkflowState().associatedDocumentId, documentId);
+
   renamePart(controller, 'recovery-apply-rev-2', 'Live Revision');
   return { controller, store, stored };
 };
