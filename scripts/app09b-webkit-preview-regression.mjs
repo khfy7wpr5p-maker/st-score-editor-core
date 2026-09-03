@@ -129,6 +129,78 @@ try {
     throw new Error(`render epoch evidence missing: ${JSON.stringify(initial)}`);
   }
 
+  const hitPoint = await page.evaluate(() => {
+    const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
+    if (!(frame instanceof HTMLIFrameElement)) throw new Error('APP09B_RENDERER_FRAME_MISSING');
+    const child = frame.contentDocument;
+    const api = frame.contentWindow?.__ST_SCORE_RENDER_HOST__;
+    if (!child || !api || typeof api.hitTestNoteDetailed !== 'function') {
+      throw new Error('APP09B_RENDERER_HIT_HOST_MISSING');
+    }
+    const frameRect = frame.getBoundingClientRect();
+    const candidates = [...child.querySelectorAll('svg *')];
+    for (const candidate of candidates) {
+      if (!(candidate instanceof frame.contentWindow.Element)) continue;
+      const rect = candidate.getBoundingClientRect();
+      if (!Number.isFinite(rect.left) || !Number.isFinite(rect.top) || rect.width <= 0 || rect.height <= 0) continue;
+      const points = [
+        [0.5, 0.5], [0.25, 0.5], [0.75, 0.5], [0.5, 0.25], [0.5, 0.75]
+      ];
+      for (const [fx, fy] of points) {
+        const childX = rect.left + rect.width * fx;
+        const childY = rect.top + rect.height * fy;
+        if (childX < 0 || childY < 0 || childX > frame.clientWidth || childY > frame.clientHeight) continue;
+        let hit;
+        try {
+          hit = api.hitTestNoteDetailed({ clientX: childX, clientY: childY });
+        } catch {
+          continue;
+        }
+        if (hit?.kind === 'HIT') {
+          return {
+            childX,
+            childY,
+            pageX: frameRect.left + childX,
+            pageY: frameRect.top + childY,
+            target: hit.target,
+            renderEpoch: hit.renderEpoch,
+            sourceId: hit.sourceId ?? null
+          };
+        }
+      }
+    }
+    return null;
+  });
+
+  if (hitPoint === null) {
+    throw new Error('APP-09B renderer produced SVG but no exact note hit point was discoverable.');
+  }
+  if (hitPoint.renderEpoch !== initial.renderEpoch || hitPoint.sourceId !== initial.sourceId) {
+    throw new Error(`APP-09B exact hit evidence was stale before touch: ${JSON.stringify({ hitPoint, initial })}`);
+  }
+
+  await page.touchscreen.tap(hitPoint.pageX, hitPoint.pageY);
+  await page.waitForFunction(() => document.documentElement.dataset.app09bLastHit !== undefined, null, { timeout: 5000 });
+  const interaction = await page.evaluate(() => {
+    const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
+    const child = frame instanceof HTMLIFrameElement ? frame.contentDocument : null;
+    const snapshot = globalThis.STScoreEditorAppController?.getSnapshot?.() ?? null;
+    return {
+      lastHit: document.documentElement.dataset.app09bLastHit ?? null,
+      selectionKind: snapshot?.selectionKind ?? null,
+      highlightedCount: child?.querySelectorAll('.st-score-highlight').length ?? -1
+    };
+  });
+  if (interaction.lastHit !== 'selected') {
+    throw new Error(`APP-09B touch did not complete selection bridge: ${JSON.stringify({ hitPoint, interaction })}`);
+  }
+  if (interaction.selectionKind === null) {
+    throw new Error(`APP-09B touch reported selected but canonical selection stayed empty: ${JSON.stringify(interaction)}`);
+  }
+  if (interaction.highlightedCount < 1) {
+    throw new Error(`APP-09B touch selected canonically but produced no renderer highlight: ${JSON.stringify(interaction)}`);
+  }
+
   const persistence = await page.evaluate(async (musicxml) => {
     const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
     if (!(frame instanceof HTMLIFrameElement)) throw new Error('APP09B_RENDERER_FRAME_MISSING');
@@ -161,7 +233,7 @@ try {
     throw new Error(`APP-09B WebKit console errors: ${consoleErrors.slice(-12).join(' | ')}`);
   }
 
-  console.log(`APP-09B WebKit regression: PASS (${JSON.stringify({ initial, persistence })})`);
+  console.log(`APP-09B WebKit regression: PASS (${JSON.stringify({ initial, hitPoint, interaction, persistence })})`);
 } finally {
   if (browser !== undefined) await browser.close();
   await new Promise((resolve) => server.close(resolve));
