@@ -8,7 +8,8 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** standalone editor app is the primary product target.
 - **APP-00–04 — COMPLETE / MERGED:** standalone authority, document/runtime, unified V4 authoring, browser shell and bounded local file workflow.
 - **APP-05 — COMPLETE / MERGED:** validated browser-local recovery/autosave with explicit guarded apply; recovery remains noncanonical.
-- **APP-06 — NEXT:** renderer interaction, semantic hit mapping, zoom and navigation.
+- **APP-06 — COMPLETE / MERGED:** guarded renderer lifecycle, current-revision opaque-token semantic hit mapping and presentation-only zoom/navigation.
+- **APP-07 — NEXT / NOT STARTED:** local playback transport.
 - **SesliTab V4 product cutover — DEFERRED:** no SesliTab integration before APP-09.
 
 ## Standalone product authority
@@ -18,6 +19,7 @@ ST Score Editor App
         |
         +--> local file workflow (noncanonical)
         +--> IndexedDB recovery cache (noncanonical)
+        +--> viewport zoom/pan/page state (presentation-only)
         |
         v
 ScoreEditorAppDocument
@@ -30,9 +32,12 @@ EditorSessionV4
         |
         v
 RendererRequestV4
+        |
+        +--> admitted projection --> renderer host (presentation-only)
+        +--> opaque hit token --> SemanticAddressV3 selection
 ```
 
-The app consumes Core; it never becomes a second score authority. Local editing requires no backend/service provider. File handles, recovery records, viewport state, renderer DOM/SVG and playback state remain noncanonical.
+The app consumes Core; it never becomes a second score authority. Local editing requires no backend/service provider. File handles, recovery records, viewport state, renderer DOM/SVG/geometry and playback state remain noncanonical.
 
 ## Local file and recovery safety
 
@@ -52,7 +57,13 @@ APP-05 adds bounded recovery without creating persistence authority:
 - successful apply starts a fresh V4 history and clears stale file association;
 - recovery cache/storage never becomes canonical, server or publication authority.
 
-Full productization sequence: `docs/st-score-editor-app-productization.md`.
+## APP-06 renderer and viewport result
+
+- **APP-06A:** renderer presentation is driven only by the current guarded `RendererRequestV4` and admitted projection; stale in-flight render results and prior-revision presentation are rejected/invalidated.
+- **APP-06B:** renderer hits must carry the exact current document/revision/family/contract plus a bounded opaque manifest token. Valid hits resolve to `SemanticAddressV3` selection only. Unknown, stale or mismatched hits fail closed.
+- **APP-06C:** zoom, pan/native scroll and page navigation are presentation-only; touch, pointer and keyboard paths do not create canonical revisions or history entries.
+
+DOM IDs, SVG IDs/paths, selectors, bounding boxes, x/y coordinates and geometry inference never gain canonical authoring authority. Cross-staff visual hits resolve to original source staff/event identity.
 
 ## Canonical pair
 
@@ -64,6 +75,8 @@ ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 
 ## Renderer / MusicXML boundary
 
-Renderer tokens resolve original source semantic identity. MusicXML remains exchange/projection data. Non-empty cross-staff placements still return `CROSS_STAFF_XML_PENDING` with `musicXml: null`; no silent flattening is admitted.
+MusicXML remains exchange/projection data. Non-empty cross-staff placements still return `CROSS_STAFF_XML_PENDING` with `musicXml: null`; no silent flattening is admitted.
 
 Runtime dependencies remain `saxes@6.0.0` and `xmlchars@2.2.0`. Split-chord/grace/rest/percussion cross-staff semantics, independent-source-staff relations, V4-native cross-staff MusicXML, cloud/server authority, production/public-write and SesliTab V4 cutover remain gated.
+
+Full productization sequence: `docs/st-score-editor-app-productization.md`.
