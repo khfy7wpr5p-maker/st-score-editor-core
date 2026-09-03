@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/index.js';
+import {
+  createStandaloneBrowserAppRuntime,
+  createStandaloneScoreEditorController,
+  NEW_SCORE_TOOLBAR_PRESETS
+} from '../dist/packages/score-editor-browser-app/src/index.js';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 
 const deterministicIdFactory = () => {
@@ -20,6 +24,37 @@ test('APP-03A controller owns one standalone document view over the canonical V4
   assert.equal(created.title, 'Standalone Test');
   assert.equal(created.dirty, true);
   assert.equal(controller.getDocument()?.session.history.past.length, 0);
+});
+
+test('APP-10B exposes only the admitted Guitar and Piano presets in the compact browser surface', () => {
+  assert.deepEqual(NEW_SCORE_TOOLBAR_PRESETS, [
+    { preset: 'GUITAR_TREBLE', label: 'Guitar' },
+    { preset: 'PIANO_GRAND_STAFF', label: 'Piano' }
+  ]);
+  const runtime = createStandaloneBrowserAppRuntime();
+  assert.equal(runtime.profile.newScorePresetSelectorAvailable, true);
+  assert.deepEqual(runtime.newScorePresets, NEW_SCORE_TOOLBAR_PRESETS);
+});
+
+test('APP-10B browser controller forwards explicit Guitar and Piano preset choices without changing legacy API default', () => {
+  const controller = createStandaloneScoreEditorController();
+  controller.newDocument({ preset: 'GUITAR_TREBLE', idFactory: deterministicIdFactory() });
+  let document = controller.getDocument();
+  assert.ok(document);
+  assert.equal(document.session.history.present.score.parts[0].name, 'Guitar');
+  assert.equal(document.session.history.present.score.parts[0].staves.length, 1);
+
+  controller.newDocument({ preset: 'PIANO_GRAND_STAFF', idFactory: deterministicIdFactory() });
+  document = controller.getDocument();
+  assert.ok(document);
+  assert.equal(document.session.history.present.score.parts[0].name, 'Piano');
+  assert.equal(document.session.history.present.score.parts[0].staves.length, 2);
+
+  controller.newDocument({ idFactory: deterministicIdFactory() });
+  document = controller.getDocument();
+  assert.ok(document);
+  assert.equal(document.session.history.present.score.parts[0].name, 'Piano');
+  assert.equal(document.session.history.present.score.parts[0].staves.length, 1);
 });
 
 test('APP-03A semantic selection and keypad commit use the same V4 document history', () => {

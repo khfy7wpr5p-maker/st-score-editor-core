@@ -23,12 +23,19 @@ import {
   commitAppTopologyIntent,
   navigateAppDocumentHistory,
   type NewAppDocumentOptions,
+  type NewScorePreset,
   type OpenMusicXmlAppDocumentOptions,
   type ScoreEditorAppDocument
 } from '../../score-editor-app-document/src/index.js';
 import { adoptScoreEditorAppDocumentSnapshot } from '../../score-editor-app-snapshot-adoption/src/index.js';
 
 export const SCORE_EDITOR_BROWSER_APP_VERSION = '1.0.0' as const;
+
+export const NEW_SCORE_TOOLBAR_PRESETS = Object.freeze([
+  Object.freeze({ preset: 'GUITAR_TREBLE' as const, label: 'Guitar' as const }),
+  Object.freeze({ preset: 'PIANO_GRAND_STAFF' as const, label: 'Piano' as const })
+]);
+export type NewScoreToolbarPreset = typeof NEW_SCORE_TOOLBAR_PRESETS[number]['preset'];
 
 export const standaloneBrowserAppProfile = Object.freeze({
   version: SCORE_EDITOR_BROWSER_APP_VERSION,
@@ -44,7 +51,8 @@ export const standaloneBrowserAppProfile = Object.freeze({
   playbackBundled: false,
   localCommitAvailable: true,
   keypadManifestAvailable: true,
-  responsiveShellAvailable: true
+  responsiveShellAvailable: true,
+  newScorePresetSelectorAvailable: true
 });
 
 export interface ScoreEditorBrowserAppSnapshot {
@@ -125,7 +133,7 @@ const ADVANCED_KEYPAD = new Set<EditorKeypadActionId>(['tuplet.triplet', 'tie.ed
 
 const SHELL_CSS = `
 .stse-app{box-sizing:border-box;display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:320px;height:100%;font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f8;color:#171719}
-.stse-app *{box-sizing:border-box}.stse-toolbar{display:flex;gap:8px;align-items:center;padding:10px;border-bottom:1px solid #d7d7dc;background:#fff;overflow-x:auto}.stse-toolbar button,.stse-keypad button{font:inherit;border:1px solid #c9c9cf;background:#fff;border-radius:7px;padding:7px 10px;cursor:pointer}.stse-toolbar button:disabled,.stse-keypad button:disabled{opacity:.45;cursor:not-allowed}.stse-title{font-weight:650;margin-right:auto;white-space:nowrap}.stse-dirty{font-size:12px;color:#6c6c73}.stse-main{display:grid;grid-template-columns:minmax(0,1fr) 280px;min-height:0}.stse-workspace{display:grid;grid-template-rows:minmax(180px,1fr) auto;min-width:0;min-height:0}.stse-viewport{margin:12px;padding:16px;border:1px solid #d7d7dc;border-radius:10px;background:#fff;overflow:auto;min-height:180px}.stse-viewport-placeholder{display:grid;place-items:center;height:100%;min-height:150px;color:#777780;text-align:center}.stse-keypad{display:flex;gap:6px;padding:10px 12px;border-top:1px solid #d7d7dc;overflow-x:auto;background:#fff}.stse-keypad-group{display:flex;gap:4px;padding-right:8px;border-right:1px solid #e0e0e4}.stse-keypad-group:last-child{border-right:0}.stse-side{border-left:1px solid #d7d7dc;background:#fff;padding:12px;overflow:auto}.stse-side h2{font-size:13px;margin:0 0 8px}.stse-inspector{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.stse-status{display:flex;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid #d7d7dc;background:#fff;font-size:12px}.stse-error{color:#9e1b1b;font-weight:600}.stse-status-message{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stse-app *{box-sizing:border-box}.stse-toolbar{display:flex;gap:8px;align-items:center;padding:10px;border-bottom:1px solid #d7d7dc;background:#fff;overflow-x:auto}.stse-toolbar button,.stse-toolbar select,.stse-keypad button{font:inherit;border:1px solid #c9c9cf;background:#fff;border-radius:7px;padding:7px 10px;cursor:pointer}.stse-toolbar button:disabled,.stse-keypad button:disabled{opacity:.45;cursor:not-allowed}.stse-new-score-type{max-width:92px}.stse-title{font-weight:650;margin-right:auto;white-space:nowrap}.stse-dirty{font-size:12px;color:#6c6c73}.stse-main{display:grid;grid-template-columns:minmax(0,1fr) 280px;min-height:0}.stse-workspace{display:grid;grid-template-rows:minmax(180px,1fr) auto;min-width:0;min-height:0}.stse-viewport{margin:12px;padding:16px;border:1px solid #d7d7dc;border-radius:10px;background:#fff;overflow:auto;min-height:180px}.stse-viewport-placeholder{display:grid;place-items:center;height:100%;min-height:150px;color:#777780;text-align:center}.stse-keypad{display:flex;gap:6px;padding:10px 12px;border-top:1px solid #d7d7dc;overflow-x:auto;background:#fff}.stse-keypad-group{display:flex;gap:4px;padding-right:8px;border-right:1px solid #e0e0e4}.stse-keypad-group:last-child{border-right:0}.stse-side{border-left:1px solid #d7d7dc;background:#fff;padding:12px;overflow:auto}.stse-side h2{font-size:13px;margin:0 0 8px}.stse-inspector{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.stse-status{display:flex;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid #d7d7dc;background:#fff;font-size:12px}.stse-error{color:#9e1b1b;font-weight:600}.stse-status-message{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:760px){.stse-app{min-height:420px}.stse-main{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.stse-side{border-left:0;border-top:1px solid #d7d7dc;max-height:150px}.stse-toolbar{padding:8px}.stse-viewport{margin:8px}.stse-keypad{padding:8px}}
 `;
 
@@ -160,6 +168,7 @@ export const createStandaloneScoreEditorController = (
   let current: Readonly<ScoreEditorAppDocument> | null = null;
   let lastError: Readonly<{ code: string; message: string }> | null = null;
   let root: HTMLElement | null = null;
+  let newScorePreset: NewScoreToolbarPreset = 'GUITAR_TREBLE';
   const listeners = new Set<ScoreEditorBrowserAppListener>();
   const withRendererProfile = <T extends NewAppDocumentOptions | OpenMusicXmlAppDocumentOptions>(options: T): T =>
     controllerOptions.rendererProfile === undefined || options.rendererProfile !== undefined
@@ -224,17 +233,32 @@ export const createStandaloneScoreEditorController = (
     const dirty = owner.createElement('span');
     dirty.className = 'stse-dirty';
     dirty.textContent = current?.dirty ? 'Unsaved' : current === null ? '' : 'Saved';
+    const presetSelect = owner.createElement('select');
+    presetSelect.className = 'stse-new-score-type';
+    presetSelect.setAttribute('aria-label', 'New score type');
+    presetSelect.setAttribute('data-st-new-score-type', 'true');
+    for (const descriptor of NEW_SCORE_TOOLBAR_PRESETS) {
+      const option = owner.createElement('option');
+      option.value = descriptor.preset;
+      option.textContent = descriptor.label;
+      presetSelect.append(option);
+    }
+    presetSelect.value = newScorePreset;
+    presetSelect.addEventListener('change', () => {
+      const candidate = presetSelect.value as NewScorePreset;
+      if (candidate === 'GUITAR_TREBLE' || candidate === 'PIANO_GRAND_STAFF') newScorePreset = candidate;
+    });
     const newButton = owner.createElement('button');
     newButton.type = 'button';
     newButton.textContent = 'New';
-    newButton.addEventListener('click', () => { controller.newDocument(); });
+    newButton.addEventListener('click', () => { controller.newDocument({ preset: newScorePreset }); });
     const undoButton = owner.createElement('button');
     undoButton.type = 'button'; undoButton.textContent = 'Undo'; undoButton.disabled = current === null || current.session.history.past.length === 0;
     undoButton.addEventListener('click', () => { controller.undo(); });
     const redoButton = owner.createElement('button');
     redoButton.type = 'button'; redoButton.textContent = 'Redo'; redoButton.disabled = current === null || current.session.history.future.length === 0;
     redoButton.addEventListener('click', () => { controller.redo(); });
-    toolbar.append(title, dirty, newButton, undoButton, redoButton);
+    toolbar.append(title, dirty, presetSelect, newButton, undoButton, redoButton);
 
     const main = owner.createElement('div'); main.className = 'stse-main';
     const workspace = owner.createElement('div'); workspace.className = 'stse-workspace';
@@ -317,6 +341,7 @@ export const createStandaloneScoreEditorController = (
 export const createStandaloneBrowserAppRuntime = () => Object.freeze({
   runtimeVersion: SCORE_EDITOR_BROWSER_APP_VERSION,
   profile: standaloneBrowserAppProfile,
+  newScorePresets: NEW_SCORE_TOOLBAR_PRESETS,
   keypadManifest: getEditorKeypadManifest(),
   createController: createStandaloneScoreEditorController
 });
