@@ -8,6 +8,7 @@ import { createRendererRequestV4, resolveRenderTokenV4, type RendererRequestV4 }
 import { executeCrossStaffAuthoringV4, type CrossStaffAuthoringV4Options } from '../../editor-cross-staff-authoring-v4/src/index.js';
 import { executeTopologyAuthoringV4 } from '../../editor-topology-authoring-v4/src/index.js';
 import type { TopologyAuthoringV3Options } from '../../editor-topology-authoring-v3/src/index.js';
+import { executeBasicAuthoringV4, type BasicAuthoringV4Options } from '../../editor-basic-authoring-v4/src/index.js';
 
 export const EDITOR_SESSION_V4_VERSION = '4.0.0' as const;
 export interface EditorSessionStateV4 {
@@ -30,6 +31,13 @@ export const createEditorSessionV4FromV3 = (scoreInput: ScoreDocumentV3, notatio
   const score = createScoreDocumentV3(scoreInput);
   const notation = createNotationDocumentV3(score, notationInput);
   return state(createEditorHistoryV4(score, migrateNotationV3ToV4(score, notation)), null, 'MIGRATED_READY', 'Notation V3 migrated once into canonical V4 session.');
+};
+
+export const commitSessionBasicAuthoringIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: BasicAuthoringV4Options): Readonly<EditorSessionStateV4> => {
+  const current = session.history.present;
+  const result = executeBasicAuthoringV4(current.score, current.notation, intent, options);
+  const history = commitEditorHistoryV4(session.history, result.score, result.notation);
+  return state(history, result.selection, 'BASIC_AUTHORING_EDIT_COMMITTED', 'Basic musical authoring edit committed in the unified V4 history.');
 };
 
 export const commitSessionCrossStaffIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: CrossStaffAuthoringV4Options): Readonly<EditorSessionStateV4> => {
