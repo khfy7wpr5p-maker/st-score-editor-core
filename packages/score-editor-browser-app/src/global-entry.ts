@@ -1,9 +1,9 @@
-import { createRendererEnabledStandaloneBrowserAppRuntime } from './renderer-enabled.js';
+import { createRendererHitEnabledStandaloneBrowserAppRuntime } from './renderer-hit-enabled.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createRendererEnabledStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createRendererHitEnabledStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createRendererEnabledStandaloneBrowserAppRuntime(),
+  value: createRendererHitEnabledStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
