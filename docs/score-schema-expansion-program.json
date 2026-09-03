@@ -1,18 +1,22 @@
 {
-  "schema_version": "1.10.0",
+  "schema_version": "1.10.1",
   "document_type": "score_schema_expansion_program",
   "project": "ST Score Editor Core",
   "program": "SCORE-SCHEMA-EXPANSION",
   "stage": "SSE-10",
-  "status": "DESIGN_CANDIDATE_HUMAN_REVIEW_REQUIRED_RUNTIME_NOT_STARTED",
-  "completed_through": "SSE-09",
+  "status": "BOUNDED_RUNTIME_COMPLETE_MERGE_CANDIDATE",
+  "completed_merged_through": "SSE-09",
+  "sse_10_design": "APPROVED_FROZEN_MERGED",
   "supported_runtime_score_versions": ["1.0.0", "2.0.0", "3.0.0"],
-  "sse_10_candidate": {
+  "supported_runtime_notation_versions": ["1.0.0", "2.0.0", "3.0.0", "4.0.0"],
+  "sse_10": {
     "score_document_change_required": false,
     "score_document": "ScoreDocumentV3/3.0.0",
     "semantic_address_change_required": false,
     "semantic_address": "SemanticAddressV3/3.0.0",
-    "proposed_notation_document": "NotationDocumentV4/4.0.0",
+    "notation_document": "NotationDocumentV4/4.0.0",
+    "renderer_request": "RendererRequestV4/4.0.0",
+    "v4_session": true,
     "adds_cross_staff_placements": true,
     "canonical_event_moves_staff": false,
     "source_voice_ownership_preserved": true,
@@ -20,6 +24,7 @@
     "initial_normal_pitched_event_only": true,
     "source_display_staff_role": "standard",
     "same_part_required": true,
+    "same_frame_required": true,
     "whole_event_only": true,
     "split_chord": false,
     "grace_rest_percussion": false,
@@ -28,9 +33,14 @@
     "independent_source_staff_relations_admitted": false,
     "v3_to_v4_empty_placement_migration": true,
     "v4_to_v3_lossless_only_when_empty": true,
+    "cross_staff_authoring": ["SET_CROSS_STAFF_PLACEMENT", "REMOVE_CROSS_STAFF_PLACEMENT"],
+    "topology_orphan_protection": true,
+    "atomic_score_v3_notation_v4_history": true,
+    "renderer_source_identity_manifest": true,
+    "nonempty_renderer_status": "CROSS_STAFF_XML_PENDING",
     "cross_staff_musicxml_roundtrip_admitted": false,
     "seslitab_v4_cutover": false,
-    "runtime_implemented": false
+    "runtime_implemented": true
   },
   "stages": [
     {"id":"SSE-00","status":"COMPLETE_MERGED"},
@@ -43,7 +53,7 @@
     {"id":"SSE-07","status":"COMPLETE_MERGED"},
     {"id":"SSE-08","status":"COMPLETE_MERGED"},
     {"id":"SSE-09","status":"COMPLETE_MERGED"},
-    {"id":"SSE-10","status":"DESIGN_CANDIDATE_HUMAN_REVIEW_REQUIRED"}
+    {"id":"SSE-10","status":"COMPLETE_MERGE_CANDIDATE"}
   ],
   "global_invariants": {
     "source_immutable": true,
@@ -54,7 +64,8 @@
     "renderer_canonical_authority": false,
     "host_dual_write": false,
     "guitar_string_fret_authority": "DERIVATIVE_ONLY",
-    "production_activation_by_merge": false
+    "production_activation_by_merge": false,
+    "new_runtime_dependency": false
   },
-  "next_action": "HUMAN_REVIEW_SSE_10_DESIGN_CANDIDATE_BEFORE_FREEZE_OR_RUNTIME"
+  "next_action": "FINAL_EXACT_HEAD_NODE_18_20_22_CI_THEN_SQUASH_MERGE"
 }
