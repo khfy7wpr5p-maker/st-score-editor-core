@@ -1,12 +1,13 @@
 {
-  "schema_version": "1.8.0",
+  "schema_version": "1.9.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-03",
-  "status": "APP_08_COMPLETE_MERGED_APP_09_NEXT_NOT_STARTED",
+  "status": "APP_09_AUTOMATED_HARDENING_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_PENDING",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
-  "seslitab_cutover_requires": "APP_09_STANDALONE_RELEASE_GATE",
+  "seslitab_cutover_authorized": false,
+  "seslitab_cutover_requires": "APP_09_MANUAL_STANDALONE_RELEASE_MATRIX_PASS",
   "canonical_pair": {
     "score": "ScoreDocumentV3/3.0.0",
     "notation": "NotationDocumentV4/4.0.0",
@@ -87,8 +88,36 @@
     "new_runtime_dependency_added":false
   },
   "app_09": {
-    "status":"NEXT_NOT_STARTED",
-    "standalone_release_gate":true
+    "status":"AUTOMATED_HARDENING_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_PENDING",
+    "merge_pr":89,
+    "merge_sha":"2731490575550e38e65e9f4af576b25255b0d9d9",
+    "automated_hardening_implemented":true,
+    "release_hardening_version":"1.0.0",
+    "dynamic_viewport_units":true,
+    "safe_area_insets":true,
+    "viewport_fit_cover":true,
+    "coarse_pointer_min_css_px":44,
+    "focus_visible_styling":true,
+    "reduced_motion_styling":true,
+    "accessibility_status_live_region":true,
+    "resize_orientation_visual_viewport_reapply_presentation":true,
+    "presentation_reapply_creates_editor_history_revision":false,
+    "pagehide_hidden_recovery_flush":true,
+    "recovery_flush_failure_nonfatal":true,
+    "standalone_bundle_max_bytes":524288,
+    "browser_contract_targets":["ios-safari","ipad-safari","desktop-safari","chromium","firefox"],
+    "automated_ci_node_versions":[18,20,22],
+    "automated_ci_exact_head_passed":true,
+    "manual_device_validation_required":true,
+    "manual_device_matrix_status":"PENDING",
+    "standalone_release_gate_passed":false,
+    "seslitab_cutover_authorized":false,
+    "hardening_canonical_authority":false,
+    "hardening_history_mutation_authority":false,
+    "hardening_network_authority":false,
+    "server_revision_authority":false,
+    "publication_authority":false,
+    "new_runtime_dependency_added":false
   },
   "stages": [
     {"id":"APP-00","status":"COMPLETE_MERGED"},
@@ -100,7 +129,8 @@
     {"id":"APP-06","status":"COMPLETE_MERGED"},
     {"id":"APP-07","status":"COMPLETE_MERGED"},
     {"id":"APP-08","status":"COMPLETE_MERGED"},
-    {"id":"APP-09","status":"NEXT_NOT_STARTED"}
+    {"id":"APP-09A","status":"COMPLETE_MERGED"},
+    {"id":"APP-09B","status":"PENDING_MANUAL_DEVICE_BROWSER_MATRIX"}
   ],
   "global_invariants": {
     "musicxml_exchange_only":true,
@@ -115,8 +145,9 @@
     "playback_canonical_authority":false,
     "export_canonical_authority":false,
     "print_canonical_authority":false,
+    "release_hardening_canonical_authority":false,
     "direct_pdf_generation_claimed":false,
     "production_activation_by_merge":false
   },
-  "next_action":"APP_09_PRODUCT_HARDENING_FRESH_READ_ONLY_UNTIL_EXPLICIT_IMPLEMENTATION_APPROVAL"
+  "next_action":"APP_09_MANUAL_DEVICE_BROWSER_MATRIX_REQUIRED_BEFORE_STANDALONE_RELEASE_OR_SESLITAB_CUTOVER"
 }

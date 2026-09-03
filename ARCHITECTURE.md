@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP / PRODUCTIZATION is active; APP-00–08 are COMPLETE / MERGED and APP-09 is NEXT / NOT STARTED.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–08 are COMPLETE / MERGED. APP-09 automated hardening is COMPLETE / MERGED; the manual standalone device/browser release matrix remains PENDING.**
 
 ## Product architecture
 
@@ -9,7 +9,7 @@ Standalone HTML / Browser Shell
         |
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
-        +--> viewport state (presentation-only)
+        +--> viewport + APP-09 responsive hardening (presentation-only)
         +--> playback transport state (noncanonical)
         +--> export/print state (noncanonical)
         |
@@ -36,7 +36,7 @@ RendererRequestV4
         +--> exact current presentation --> browser print / Save as PDF
 ```
 
-A backend/service provider is not required for local editing, APP-07 playback or APP-08 export/print orchestration. SesliTab V4 integration remains deferred until APP-09 passes.
+A backend/service provider is not required for local editing, playback, export/print or APP-09 responsive hardening. SesliTab V4 integration remains unauthorized until the APP-09 manual device/browser release matrix passes.
 
 ## Canonical authority
 
@@ -46,56 +46,79 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, viewport state, renderer DOM/SVG/geometry, playback state and export/print state are noncanonical.
+`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
 
-Host/UI/playback/export/print layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history.
+Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history.
 
-## APP-01–05 product substrate
+## APP-01–08 product substrate
 
-APP-01 owns New/Open/export/dirty/saved document lifecycle. APP-02 composes admitted V4 authoring in one history. APP-03 provides the standalone browser bundle/shell. APP-04 provides bounded `.musicxml/.xml` local open/save/download. APP-05 provides bounded browser-local recovery/autosave with explicit guarded apply.
-
-## APP-06 renderer interaction and viewport
-
-APP-06 is COMPLETE / MERGED. Rendering is driven only by current guarded `RendererRequestV4`; opaque current-revision manifest tokens resolve to semantic selection only; stale render/hit state fails closed. Renderer DOM/SVG/coordinates/geometry are never canonical edit targets. Viewport zoom/pan/native-scroll/page navigation is presentation-only.
+APP-01 owns document lifecycle. APP-02 composes admitted V4 authoring in one history. APP-03 provides the standalone browser bundle/shell. APP-04 provides bounded `.musicxml/.xml` local file workflow. APP-05 provides bounded browser-local recovery. APP-06 provides guarded renderer interaction and presentation-only viewport navigation. APP-07 provides revision-bound local playback. APP-08 provides noncanonical MusicXML export and exact-current-revision browser print/PDF handoff.
 
 Cross-staff presentation preserves original source ownership. Non-empty cross-staff placements still remain `CROSS_STAFF_XML_PENDING` with `musicXml = null`.
 
-## APP-07 local playback transport
+## APP-09 automated hardening
 
-APP-07 is COMPLETE / MERGED through PR #85 / `0608e231b536299086cd3a516c5f221ca41b01e8`.
+APP-09 automated hardening is merged through PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`.
 
-`PlaybackPlanV1` is a revision-bound derivative of validated `ScoreDocumentV3`; it is not a second score authority. Normal note/chord pitch and canonical onset/duration are scheduled locally, while unsupported grace timing stays explicit `deferred/partial`. Browser Web Audio transport supports play/pause/stop/seek and playback-only 20–300 BPM tempo. Playback never creates V4 history and stale playback stops on canonical revision change.
+### Responsive/mobile presentation boundary
 
-## APP-08 export/print/PDF workflow
+The release-hardening wrapper sits above APP-08 and has no canonical or history mutation authority. It adds:
 
-APP-08 is COMPLETE / MERGED through PR #87 / `1d1c821be4c6192bdf562fcd2d9fde6f90f178fa`.
+- `100dvh` dynamic viewport sizing with `100vh` fallback;
+- safe-area inset padding for notched/mobile browser layouts;
+- `viewport-fit=cover` standalone bootstrap;
+- 44 CSS px coarse-pointer action targets;
+- presentation-only reapply of existing zoom/scroll state after window resize, orientation change, `pageshow` and `visualViewport.resize`;
+- no coordinate-based score mutation or renderer geometry authority.
 
-### MusicXML export boundary
+The lifecycle reapply calls the existing viewport controller with the already-current presentation values. It does not synthesize score edits, alter `SemanticAddressV3`, or append V4 history.
 
-APP-08 exposes a distinct `Export XML` handoff using the existing admitted lossless MusicXML exporter. It is intentionally not the APP-04 save workflow:
+### Recovery lifecycle boundary
 
-- export uses the current canonical score/notation pair only;
-- lossless export admission still applies;
-- export handoff creates no V4 history entry or canonical revision;
-- successful export does not call `markSaved` and does not change dirty/saved identity;
-- export state/revision reporting is presentation-only.
+`pagehide` and hidden-document transitions request a best-effort `flushRecovery()` through the existing browser-local recovery layer. Concurrent flushes are coalesced; async rejection and synchronous storage failure are swallowed at this lifecycle boundary because recovery failure must not become a canonical/editor crash path.
 
-### Print/PDF boundary
+Recovery remains bounded, local and noncanonical. APP-09 does not turn recovery into persistence/server authority.
 
-`printCurrent()` first uses the existing guarded renderer lifecycle, then verifies that the accepted renderer presentation still matches the exact expected document and revision before invoking the browser print host.
+### Accessibility boundary
 
-Missing renderer attachment, rejected/pending projection, render failure or stale revision fails closed before print handoff. The print layer cannot select or mutate score content and creates no V4 history revision.
+APP-09 adds presentation semantics only:
 
-APP-08's PDF workflow is `browser-print-dialog-save-as-pdf`. The repository does **not** claim direct PDF byte generation. Print-specific CSS hides editor controls and resets presentation zoom only for paper output.
+- toolbar landmark/label;
+- score viewport region/label;
+- keypad grouping;
+- inspector label;
+- polite atomic status live region;
+- visible keyboard focus;
+- reduced-motion styling.
 
-### Export/print authority result
+These attributes may improve interaction/readout but cannot select or edit score content outside existing semantic controller paths.
 
-APP-08 has no canonical, persistence, network, server-revision or publication authority. It introduces no schema change, `.mxl` support, SesliTab integration or E8-D invocation.
+### Automated performance/release gate
 
-## Next product layer
+The standalone app browser build has a hard 512 KiB (`524288` bytes) bundle budget. The build fails if the emitted application bundle exceeds this limit. Existing forbidden capability-token, self-contained bundle and integrity-manifest checks remain in force.
 
-**APP-09 — Product hardening and standalone release gate: NEXT / NOT STARTED.** Planned scope is iPhone/iPad/Safari and desktop browser hardening, touch/pointer/keyboard validation, performance, recovery, accessibility and release checklist.
+The browser contract targets recorded by APP-09 are:
+
+```text
+ios-safari
+ipad-safari
+desktop-safari
+chromium
+firefox
+```
+
+Automated Node 18/20/22 validation and full build/test passed on the exact PR #89 head. These checks validate repository contracts and generated artifacts; they do not constitute physical-device/browser execution.
+
+## Standalone release gate status
+
+`manualDeviceValidationRequired = true`
+
+`standaloneReleaseGatePassed = false`
+
+`seslitabCutoverAuthorized = false`
+
+Therefore APP-09 automated implementation is merged, but APP-09 as a product release gate is not complete. Real-device/browser validation must satisfy `docs/app-09-standalone-release-gate.md` before standalone release approval or SesliTab V4 cutover.
 
 ## Remaining gates
 
-Standalone release before APP-09 passes, SesliTab V4 cutover before APP-09, `.mxl`, V4-native cross-staff MusicXML, unsupported advanced cross-staff scopes, cloud/server revision authority, public-write/production activation and E8-D direct external-engine invocation remain gated.
+Manual APP-09 device/browser validation, SesliTab V4 cutover, `.mxl`, V4-native cross-staff MusicXML, unsupported advanced cross-staff scopes, cloud/server revision authority, public-write/production activation and E8-D direct external-engine invocation remain gated.
