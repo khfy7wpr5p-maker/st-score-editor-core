@@ -21,6 +21,7 @@ export const releaseHardenedBrowserAppProfile = Object.freeze({
   focusVisibleStyling: true,
   reducedMotionStyling: true,
   resizeOrientationReapplyPresentation: true,
+  resizeOrientationControlledRendererRerender: true,
   pageHideRecoveryFlush: true,
   accessibilityStatusLiveRegion: true,
   browserContractTargets: Object.freeze(['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'] as const),
@@ -156,6 +157,9 @@ export const createReleaseHardenedStandaloneScoreEditorController = (
   const base = createExportPrintEnabledStandaloneScoreEditorController(options);
   let root: HTMLElement | null = null;
   let lifecycle: Readonly<ReleaseHardeningLifecycleV1> | null = null;
+  let rendererRerenderInFlight = false;
+  let rendererRerenderPending = false;
+  let rendererRerenderGeneration = 0;
 
   const decorate = (): void => {
     if (root === null) return;
@@ -185,10 +189,43 @@ export const createReleaseHardenedStandaloneScoreEditorController = (
     status?.setAttribute('aria-atomic', 'true');
   };
 
+  const requestControlledRendererRerender = (): void => {
+    if (root === null || base.getSnapshot().revisionId === null || !base.getRendererState().attached) return;
+    if (rendererRerenderInFlight) {
+      rendererRerenderPending = true;
+      return;
+    }
+    rendererRerenderInFlight = true;
+    const generation = rendererRerenderGeneration;
+    const run = async (): Promise<void> => {
+      try {
+        do {
+          rendererRerenderPending = false;
+          if (
+            root === null || generation !== rendererRerenderGeneration ||
+            base.getSnapshot().revisionId === null || !base.getRendererState().attached
+          ) break;
+          try {
+            await base.renderCurrent();
+          } catch {
+            // Layout rerender is presentation-only. Renderer lifecycle already rejects stale/failed output fail-closed.
+          }
+        } while (rendererRerenderPending);
+      } finally {
+        rendererRerenderInFlight = false;
+        if (rendererRerenderPending && root !== null && generation === rendererRerenderGeneration) {
+          requestControlledRendererRerender();
+        }
+      }
+    };
+    void run();
+  };
+
   const reapplyPresentation = (): void => {
     const viewport = base.getViewportState();
     base.setViewport({ zoom: viewport.zoom, scrollX: viewport.scrollX, scrollY: viewport.scrollY });
     decorate();
+    requestControlledRendererRerender();
   };
 
   base.subscribe(() => { decorate(); });
@@ -203,6 +240,8 @@ export const createReleaseHardenedStandaloneScoreEditorController = (
         return;
       }
       lifecycle?.dispose();
+      rendererRerenderGeneration += 1;
+      rendererRerenderPending = false;
       base.mount(nextRoot);
       root = nextRoot;
       decorate();
@@ -215,6 +254,8 @@ export const createReleaseHardenedStandaloneScoreEditorController = (
     unmount: () => {
       lifecycle?.dispose();
       lifecycle = null;
+      rendererRerenderGeneration += 1;
+      rendererRerenderPending = false;
       root = null;
       base.unmount();
     }
@@ -240,6 +281,7 @@ export const createReleaseHardenedStandaloneBrowserAppRuntime = () => {
       focusVisibleStyling: true,
       reducedMotionStyling: true,
       resizeOrientationReapplyPresentation: true,
+      resizeOrientationControlledRendererRerender: true,
       pageHideRecoveryFlush: true,
       accessibilityStatusLiveRegion: true,
       browserContractTargets: releaseHardenedBrowserAppProfile.browserContractTargets,
