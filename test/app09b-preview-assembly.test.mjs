@@ -11,7 +11,10 @@ import {
   assembleApp09BPreview,
   validateRendererRuntimeManifest
 } from '../scripts/assemble-app09b-preview.mjs';
-import { assembleStableApp09BPreview } from '../scripts/assemble-app09b-preview-stable.mjs';
+import {
+  assembleStableApp09BPreview,
+  assembleStableApp09BPreviewCli
+} from '../scripts/assemble-app09b-preview-stable.mjs';
 
 const manifest = (overrides = {}) => ({
   schemaVersion: 1,
@@ -116,6 +119,41 @@ test('APP-09B stable preview never reparents the live renderer iframe during UI 
       bootstrap,
       /if \(frame\.isConnected && root\.contains\(frame\)\) parking\.append\(frame\);\n    nativeReplaceChildren\(\.\.\.nodes\);/
     );
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
+
+test('APP-09B stable CLI can add the physical iOS diagnostic to the same service output', async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-app09b-single-service-'));
+  try {
+    const runtimeDir = path.join(temp, 'runtime');
+    const outputDir = path.join(temp, 'out');
+    await mkdir(runtimeDir, { recursive: true });
+    await writeRuntime(runtimeDir);
+
+    const result = await assembleStableApp09BPreviewCli({
+      runtimeDir,
+      outputDir,
+      includeIosDiagnostic: true
+    });
+
+    const diagnosticHtml = await readFile(
+      path.join(outputDir, 'st-score-editor-app09b-ios-device-diagnostic.html'),
+      'utf8'
+    );
+    const diagnosticJs = await readFile(
+      path.join(outputDir, 'st-score-editor-app09b-ios-device-diagnostic.js'),
+      'utf8'
+    );
+
+    assert.equal(result.standaloneReleaseGatePassed, false);
+    assert.equal(result.seslitabCutoverAuthorized, false);
+    assert.match(diagnosticHtml, /st-score-editor-app09b-ios-device-diagnostic\.js/);
+    assert.match(diagnosticJs, /addEventListener\('pointerup'/);
+    assert.match(diagnosticJs, /addEventListener\('touchend'/);
+    assert.match(diagnosticJs, /addEventListener\('click'/);
+    assert.match(diagnosticJs, /SELECTED via/);
   } finally {
     await rm(temp, { recursive: true, force: true });
   }
