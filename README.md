@@ -4,20 +4,20 @@ Security-first, renderer-independent semantic score-editing core for the standal
 
 ## Current reality
 
-- **SSE-00–10 — COMPLETE / MERGED:** canonical V2/V3 score+notation evolution, bounded MusicXML, V3 staff/part topology and bounded V4 cross-staff runtime.
+- **SSE-00–10 — COMPLETE / MERGED:** canonical V3/V4 score+notation, bounded MusicXML, topology and cross-staff runtime.
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** standalone editor app is the primary product target.
-- **APP-00 — COMPLETE / MERGED:** standalone-product authority boundary.
-- **APP-01 — COMPLETE / MERGED:** New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking and V4 document lifecycle.
-- **APP-02 — COMPLETE / MERGED:** basic authoring, grace, articulation, ornament and semantic keypad in one V4 history with topology/cross-staff.
-- **APP-03 — COMPLETE / MERGED:** independent `STScoreEditorApp` browser bundle, standalone HTML bootstrap and responsive shell.
-- **APP-04 — COMPLETE / MERGED:** bounded browser-local `.musicxml/.xml` Open / Save / Download workflow with File System Access adapter and file-input/download fallbacks.
-- **APP-05 — NEXT:** validated browser-local recovery/autosave envelopes; recovery remains noncanonical.
+- **APP-00–04 — COMPLETE / MERGED:** standalone authority, document/runtime, unified V4 authoring, browser shell and bounded local file workflow.
+- **APP-05 — COMPLETE / MERGED:** validated browser-local recovery/autosave with explicit guarded apply; recovery remains noncanonical.
+- **APP-06 — NEXT:** renderer interaction, semantic hit mapping, zoom and navigation.
 - **SesliTab V4 product cutover — DEFERRED:** no SesliTab integration before APP-09.
 
 ## Standalone product authority
 
 ```text
 ST Score Editor App
+        |
+        +--> local file workflow (noncanonical)
+        +--> IndexedDB recovery cache (noncanonical)
         |
         v
 ScoreEditorAppDocument
@@ -34,21 +34,23 @@ RendererRequestV4
 
 The app consumes Core; it never becomes a second score authority. Local editing requires no backend/service provider. File handles, recovery records, viewport state, renderer DOM/SVG and playback state remain noncanonical.
 
-## Browser product and file workflow
+## Local file and recovery safety
 
-`npm run build:browser` emits the legacy core runtime plus a separate `STScoreEditorApp` bundle and directly openable HTML shell. The app bundle is self-contained with zero external imports and no network/server authority.
+APP-04 admits `.musicxml/.xml` only, with a 32 MiB local bound. Lossless export must succeed before write/download. `markSaved` occurs only after `write + close` or successful download handoff; external failure leaves the document dirty. File handles are bound to the canonical document ID.
 
-APP-04 adds bounded local file behavior:
+APP-05 adds bounded recovery without creating persistence authority:
 
-- `.musicxml` and `.xml` only; `.mxl` remains unsupported;
-- 32 MiB local MusicXML bound;
-- File System Access open/save when available;
-- hidden file-input open fallback and download fallback;
-- current document-bound file handles only; a handle is never reused after `New` creates a different canonical document;
-- lossless export is evaluated before any write/download handoff;
-- `markSaved` occurs only after `write + close` or a successful download handoff;
-- failed write/handoff leaves the document dirty;
-- `persistenceCapable` remains false because the file layer is user-selected local handoff, not canonical/server revision authority.
+- current canonical `ScoreDocumentV3 + NotationDocumentV4` snapshot only;
+- SHA-256 integrity plus canonical/metadata validation;
+- 64 MiB recovery-envelope bound;
+- IndexedDB cache, maximum 8 document records;
+- autosave only after accepted dirty revisions;
+- revision-race protection prevents an older digest/snapshot from overwriting a newer live revision;
+- corrupt records fail closed;
+- no automatic restore;
+- explicit recovery apply revalidates canonical state and checks the active document/revision has not changed since prepare;
+- successful apply starts a fresh V4 history and clears stale file association;
+- recovery cache/storage never becomes canonical, server or publication authority.
 
 Full productization sequence: `docs/st-score-editor-app-productization.md`.
 
