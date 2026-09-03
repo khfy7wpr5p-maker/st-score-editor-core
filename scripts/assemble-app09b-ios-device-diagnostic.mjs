@@ -178,7 +178,8 @@ export async function assembleIosDeviceDiagnosticApp09BPreview({ runtimeDir, out
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
-  const result = await assembleIosDeviceDiagnosticApp09BPreview({ runtimeDir });
+  const outputDir = process.env.ST_APP09B_OUTPUT_DIR || defaultOutputDir;
+  const result = await assembleIosDeviceDiagnosticApp09BPreview({ runtimeDir, outputDir });
   console.log(
     `APP-09B iOS device diagnostic assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion})`,
   );
