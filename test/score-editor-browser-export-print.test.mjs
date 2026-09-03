@@ -63,6 +63,10 @@ test('APP-08 print/PDF renders exact current revision then hands only presentati
 test('APP-08 print fails closed without an attached current renderer and never invokes print host',async()=>{
   const value=controller();
   value.newDocument({idFactory:idFactory()});
+  const before=value.getDocument();
+  const dirtyBefore=before.dirty;
+  const revisionBefore=before.session.history.present.score.revision.id;
+  const historyBefore=before.session.history.past.length;
   let prints=0;
   await assert.rejects(
     ()=>value.printCurrent({print:()=>{prints+=1;}}),
@@ -70,5 +74,8 @@ test('APP-08 print fails closed without an attached current renderer and never i
   );
   assert.equal(prints,0);
   assert.equal(value.getExportPrintState().lastPrintedRevisionId,null);
-  assert.equal(value.getDocument().dirty,false);
+  const after=value.getDocument();
+  assert.equal(after.dirty,dirtyBefore);
+  assert.equal(after.session.history.present.score.revision.id,revisionBefore);
+  assert.equal(after.session.history.past.length,historyBefore);
 });
