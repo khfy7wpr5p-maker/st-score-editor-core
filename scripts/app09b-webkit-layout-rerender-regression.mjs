@@ -58,27 +58,37 @@ async function currentState(page) {
       revision: state?.snapshot?.revisionId ?? null,
       renderedRevision: state?.renderer?.renderedRevisionId ?? null,
       rendererStatus: state?.renderer?.status?.code ?? null,
+      rendererAttached: state?.renderer?.attached ?? null,
       renderEpoch: state?.renderEvidence?.renderEpoch ?? null,
       sourceId: state?.renderEvidence?.sourceId ?? null,
       svgCount: frame instanceof HTMLIFrameElement ? (frame.contentDocument?.querySelectorAll('svg').length ?? 0) : -1,
       sameFrameWindow: frame instanceof HTMLIFrameElement && frame.contentWindow === globalThis.__APP09B_LAYOUT_FRAME_WINDOW__,
-      sameRendererHost: frame instanceof HTMLIFrameElement && frame.contentWindow?.__ST_SCORE_RENDER_HOST__ === globalThis.__APP09B_LAYOUT_RENDERER_HOST__
+      sameRendererHost: frame instanceof HTMLIFrameElement && frame.contentWindow?.__ST_SCORE_RENDER_HOST__ === globalThis.__APP09B_LAYOUT_RENDERER_HOST__,
+      controllerProfile: globalThis.STScoreEditorAppController?.profile ?? null,
+      runtimeProfile: globalThis.STScoreEditorApp?.profile ?? null,
+      events: globalThis.__APP09B_LAYOUT_EVENTS__ ?? null,
+      viewport: { width: innerWidth, height: innerHeight, visualWidth: visualViewport?.width ?? null, visualHeight: visualViewport?.height ?? null }
     };
   });
 }
 
-async function waitForNewEpoch(page, previousEpoch) {
-  await page.waitForFunction((before) => {
-    const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
-    const state = globalThis.STScoreEditorApp09B?.getState?.() ?? null;
-    return document.documentElement.dataset.app09bRendererFrameStable === 'true' &&
-      state?.snapshot?.revisionId !== null &&
-      state?.renderer?.renderedRevisionId === state?.snapshot?.revisionId &&
-      state?.renderer?.status?.code === 'RENDERED_CURRENT_REVISION' &&
-      typeof state?.renderEvidence?.renderEpoch === 'string' &&
-      state.renderEvidence.renderEpoch !== before &&
-      (frame instanceof HTMLIFrameElement ? (frame.contentDocument?.querySelectorAll('svg').length ?? 0) : 0) > 0;
-  }, previousEpoch, { timeout: 30000 });
+async function waitForNewEpoch(page, previousEpoch, stage) {
+  try {
+    await page.waitForFunction((before) => {
+      const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
+      const state = globalThis.STScoreEditorApp09B?.getState?.() ?? null;
+      return document.documentElement.dataset.app09bRendererFrameStable === 'true' &&
+        state?.snapshot?.revisionId !== null &&
+        state?.renderer?.renderedRevisionId === state?.snapshot?.revisionId &&
+        state?.renderer?.status?.code === 'RENDERED_CURRENT_REVISION' &&
+        typeof state?.renderEvidence?.renderEpoch === 'string' &&
+        state.renderEvidence.renderEpoch !== before &&
+        (frame instanceof HTMLIFrameElement ? (frame.contentDocument?.querySelectorAll('svg').length ?? 0) : 0) > 0;
+    }, previousEpoch, { timeout: 5000 });
+  } catch (error) {
+    const diagnostic = await currentState(page);
+    throw new Error(`APP-09B ${stage} produced no fresh renderEpoch after layout signal: ${JSON.stringify(diagnostic)}; ${String(error?.message ?? error)}`);
+  }
 }
 
 async function probeAndTap(page, noteIndex) {
@@ -176,23 +186,30 @@ try {
     if (!(frame instanceof HTMLIFrameElement)) throw new Error('APP09B_LAYOUT_RENDERER_FRAME_MISSING');
     globalThis.__APP09B_LAYOUT_FRAME_WINDOW__ = frame.contentWindow;
     globalThis.__APP09B_LAYOUT_RENDERER_HOST__ = frame.contentWindow?.__ST_SCORE_RENDER_HOST__;
+    const events = { windowResize: 0, orientationchange: 0, visualViewportResize: 0 };
+    globalThis.__APP09B_LAYOUT_EVENTS__ = events;
+    addEventListener('resize', () => { events.windowResize += 1; });
+    addEventListener('orientationchange', () => { events.orientationchange += 1; });
+    visualViewport?.addEventListener('resize', () => { events.visualViewportResize += 1; });
     const state = globalThis.STScoreEditorApp09B?.getState?.() ?? null;
     return {
       renderEpoch: state?.renderEvidence?.renderEpoch ?? null,
-      revision: state?.snapshot?.revisionId ?? null
+      revision: state?.snapshot?.revisionId ?? null,
+      controllerProfile: globalThis.STScoreEditorAppController?.profile ?? null,
+      runtimeProfile: globalThis.STScoreEditorApp?.profile ?? null
     };
   });
   if (typeof initial.renderEpoch !== 'string' || initial.revision === null) throw new Error(`APP-09B initial evidence missing: ${JSON.stringify(initial)}`);
 
   await page.setViewportSize({ width: 844, height: 390 });
-  await waitForNewEpoch(page, initial.renderEpoch);
+  await waitForNewEpoch(page, initial.renderEpoch, 'landscape');
   const landscape = await currentState(page);
   if (!landscape.sameFrameWindow || !landscape.sameRendererHost) throw new Error(`APP-09B renderer browsing context changed in landscape: ${JSON.stringify(landscape)}`);
   if (landscape.revision !== initial.revision || landscape.renderedRevision !== initial.revision) throw new Error(`APP-09B canonical revision changed during layout rerender: ${JSON.stringify({ initial, landscape })}`);
   const landscapeInteraction = await probeAndTap(page, 1);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await waitForNewEpoch(page, landscape.renderEpoch);
+  await waitForNewEpoch(page, landscape.renderEpoch, 'portrait-restore');
   const portrait = await currentState(page);
   if (!portrait.sameFrameWindow || !portrait.sameRendererHost) throw new Error(`APP-09B renderer browsing context changed after portrait restore: ${JSON.stringify(portrait)}`);
   if (portrait.revision !== initial.revision || portrait.renderedRevision !== initial.revision) throw new Error(`APP-09B canonical revision changed after portrait restore: ${JSON.stringify({ initial, portrait })}`);
