@@ -8,8 +8,8 @@ SCORE-SCHEMA-EXPANSION is implemented through **SSE-10 bounded cross-staff notat
 
 - **SSE-00–10 — COMPLETE / MERGED:** canonical V2/V3 score+notation evolution, grace/articulation/ornament authoring, bounded MusicXML, renderer compatibility, V3 staff/part topology and bounded V4 cross-staff runtime.
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** the standalone editor app is now the primary product target.
-- **APP-00 — COMPLETE / MERGE CANDIDATE:** standalone-product authority boundary is documented.
-- **APP-01 — COMPLETE / MERGE CANDIDATE:** reusable standalone document runtime supports New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking, V4 undo/redo and current V4 topology/cross-staff commits.
+- **APP-00 — COMPLETE / MERGED:** standalone-product authority boundary is documented.
+- **APP-01 — COMPLETE / MERGED:** reusable standalone document runtime supports New, MusicXML Open, lossless-only MusicXML Export, dirty/saved revision tracking, V4 undo/redo and current V4 topology/cross-staff commits.
 - **APP-02 — NEXT:** compose the existing note/rest/pitch/duration/chord/grace/articulation/ornament/keypad capabilities into one canonical V4 product session.
 - **SesliTab V4 product cutover — DEFERRED:** it must not begin before the standalone app passes the final product gate.
 

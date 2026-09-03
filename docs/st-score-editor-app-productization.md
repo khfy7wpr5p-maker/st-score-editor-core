@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-01 IMPLEMENTATION**
+Status: **ACTIVE / APP-00–01 COMPLETE / MERGED / APP-02 NEXT**
 
 Date: 2026-09-03
 
@@ -32,19 +32,19 @@ ScoreDocumentV3 + NotationDocumentV4
 
 UI state, file picker state, autosave state, renderer DOM/SVG, playback cursor and recent-file metadata are product state only. They cannot directly rewrite canonical score/notation structures.
 
-## Fresh-read product gap
+## Current product gap
 
-The repository has a mature core through SSE-10, but product exposure is not yet unified.
+APP-01 is merged and provides the standalone document lifecycle. The remaining immediate gap is unified product authoring.
 
 Current V4 session directly exposes topology and cross-staff authoring. Earlier note-entry, pitch/duration, grace, articulation, ornament and keypad capabilities are not yet all composed through the same V4 product session.
 
-Therefore a visual shell must not be declared feature-complete until this authoring gap is closed. Productization prioritizes one canonical product session before broad UI work.
+Therefore a visual shell must not be declared feature-complete until APP-02 closes this gap.
 
 ## Program sequence
 
 ### APP-00 — Standalone product contract
 
-Status: **COMPLETE IN CURRENT BRANCH / MERGE CANDIDATE WITH APP-01**
+Status: **COMPLETE / MERGED**
 
 - standalone app is the primary product target;
 - SesliTab cutover deferred;
@@ -54,23 +54,23 @@ Status: **COMPLETE IN CURRENT BRANCH / MERGE CANDIDATE WITH APP-01**
 
 ### APP-01 — Document runtime
 
-Status: **IMPLEMENTATION**
+Status: **COMPLETE / MERGED**
 
-Goal: create the first reusable standalone application document controller.
-
-Admitted operations:
+Implemented:
 
 - New score;
-- MusicXML Open;
+- MusicXML Open with verified SHA-256 source identity;
 - MusicXML Export when lossless projection is admitted;
 - title/origin metadata;
 - dirty/saved revision tracking;
 - V4 undo/redo;
 - currently available V4 topology/cross-staff commits.
 
-Important: APP-01 contains **no persistence authority**. `markSaved` records that an external product shell successfully saved/exported the current revision; it does not write files itself.
+APP-01 contains **no persistence authority**. `markSaved` records that an external product shell successfully saved/exported the current revision; it does not write files itself.
 
 ### APP-02 — Unified V4 authoring session
+
+Status: **NEXT**
 
 Required before declaring the editor shell feature-capable.
 
