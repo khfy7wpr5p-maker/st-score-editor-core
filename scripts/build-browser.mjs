@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { build } from 'esbuild';
 
 const OUT_DIR = 'dist/browser';
-const FORBIDDEN_TOKENS = [
+const COMMON_FORBIDDEN_TOKENS = [
   'node:',
   'XMLHttpRequest',
   'WebSocket',
@@ -11,13 +11,14 @@ const FORBIDDEN_TOKENS = [
   'navigator.sendBeacon',
   'localStorage',
   'sessionStorage',
-  'indexedDB',
   'document.cookie'
 ];
+const CORE_FORBIDDEN_TOKENS = [...COMMON_FORBIDDEN_TOKENS, 'indexedDB'];
+const APP_FORBIDDEN_TOKENS = [...COMMON_FORBIDDEN_TOKENS];
 
 await mkdir(OUT_DIR, { recursive: true });
 
-const buildBrowserArtifact = async ({ entryPoint, artifact, manifestFile, globalName, manifest, label }) => {
+const buildBrowserArtifact = async ({ entryPoint, artifact, manifestFile, globalName, manifest, label, forbiddenTokens }) => {
   const outFile = `${OUT_DIR}/${artifact}`;
   const result = await build({
     entryPoints: [entryPoint],
@@ -42,7 +43,7 @@ const buildBrowserArtifact = async ({ entryPoint, artifact, manifestFile, global
 
   const bundle = await readFile(outFile);
   const text = bundle.toString('utf8');
-  for (const token of FORBIDDEN_TOKENS) {
+  for (const token of forbiddenTokens) {
     if (text.includes(token)) throw new Error(`${label} browser bundle contains forbidden capability token: ${token}`);
   }
   if (!text.includes(globalName)) throw new Error(`${label} browser bundle does not expose ${globalName}.`);
@@ -68,12 +69,14 @@ await buildBrowserArtifact({
   manifestFile: 'st-score-editor-core.runtime.manifest.json',
   globalName: 'STScoreEditorCoreRuntime',
   label: 'E7-H core',
+  forbiddenTokens: CORE_FORBIDDEN_TOKENS,
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_CORE_BROWSER_BUNDLE',
     version: '1.0.0',
     runtimeVersion: '1.0.0',
     networkCapable: false,
     persistenceCapable: false,
+    recoveryStorageBundled: false,
     serverRevisionAuthority: false,
     approvalAuthority: false,
     publicationAuthority: false
@@ -85,7 +88,8 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-04B standalone app',
+  label: 'APP-05C standalone app',
+  forbiddenTokens: APP_FORBIDDEN_TOKENS,
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE',
     version: '1.0.0',
@@ -101,6 +105,11 @@ await buildBrowserArtifact({
     fileInputFallback: true,
     downloadFallback: true,
     markSavedAfterSuccessfulHandoffOnly: true,
+    recoveryAutosaveBundled: true,
+    browserLocalRecoveryStorage: 'indexedDB',
+    recoveryCanonicalAuthority: false,
+    recoveryAutoRestore: false,
+    recoveryMaxDocuments: 8,
     playbackBundled: false,
     serverRevisionAuthority: false,
     publicationAuthority: false,
@@ -132,4 +141,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-04B standalone HTML: PASS');
+console.log('APP-05C standalone HTML: PASS');
