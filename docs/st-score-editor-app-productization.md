@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–04 COMPLETE / MERGED / APP-05 NEXT**
+Status: **ACTIVE / APP-00–05 COMPLETE / MERGED / APP-06 NEXT**
 
 Date: 2026-09-03
 
@@ -31,60 +31,54 @@ Independent frozen `STScoreEditorApp` global, self-contained JS bundle, integrit
 ### APP-04 — Local file workflow
 Status: **COMPLETE / MERGED**
 
-Merged via PR #72 (adapter) and PR #73 (controller/shell integration).
+PRs #72–73 provide bounded `.musicxml/.xml` open/save/download, File System Access where available, fallback paths, 32 MiB bound, lossless-export-first save ordering and document-bound file handles. `.mxl` remains unsupported.
+
+### APP-05 — Local recovery/autosave
+Status: **COMPLETE / MERGED**
+
+Merged through PRs #76–79.
 
 Implemented bounded behavior:
 
-- File System Access open picker when available;
-- hidden `<input type=file>` fallback;
-- `.musicxml` / `.xml` text only;
-- 32 MiB local file/text limit;
-- `.mxl` remains unsupported;
-- File System Access save with explicit `write` then `close`;
-- abort-on-write-failure when supported;
-- download fallback and explicit Download action;
-- normalized `.musicxml` output names;
-- file handles associated with the canonical document ID;
-- old handle is not reused after a different `New` document is created.
-
-Save-state ordering is fixed:
-
-```text
-lossless export succeeds
-        |
-        +--> write + close succeeds
-        |             OR
-        +--> download handoff succeeds
-                      |
-                      v
-                   markSaved
-```
-
-Failure before the handoff boundary leaves the document dirty. File/picker status remains noncanonical. The browser bundle records `fileWorkflowBundled:true` while preserving `persistenceCapable:false`, `networkCapable:false`, `serverRevisionAuthority:false` and `publicationAuthority:false`.
+- current canonical `ScoreDocumentV3 + NotationDocumentV4` snapshot only;
+- title/origin/saved-revision/document/revision/timestamp metadata;
+- SHA-256 integrity over normalized payload;
+- 64 MiB recovery JSON bound;
+- strict canonical V3/V4 and metadata validation;
+- fresh V4 history on restore; prior undo/redo history is intentionally not serialized;
+- browser-local IndexedDB recovery cache only in the standalone app bundle;
+- legacy core browser bundle remains no-IndexedDB;
+- maximum 8 distinct recovery document records;
+- autosave only for dirty documents after accepted edit history exists;
+- duplicate revision writes suppressed;
+- digest/revision race protection prevents stale snapshots from being written after the live canonical revision advances;
+- corrupt records isolated and rejected;
+- missing IndexedDB degrades recovery only and does not block editing/file workflow;
+- no automatic restore;
+- `prepareRecoveryApplication()` captures active document/revision state without live replacement;
+- `applyPreparedRecovery()` rejects if live state changed after prepare;
+- recovered canonical pair is revalidated again before adoption;
+- successful apply begins a fresh V4 history at the recovered snapshot and clears stale local file association;
+- consumed cache cleanup is noncanonical and cannot become score authority;
+- `persistenceCapable:false`, no network/cloud/server/publication authority.
 
 ## Next stage
 
-### APP-05 — Local recovery/autosave
+### APP-06 — Renderer interaction
 Status: **NEXT**
 
 Required bounded scope:
 
-- browser-local recovery envelope for the current canonical V4 snapshot;
-- schema/version/document/revision metadata;
-- integrity digest over serialized recovery payload;
-- explicit validation before recovery admission;
-- recovery storage never becomes mutation/canonical authority;
-- autosave captures immutable snapshots after accepted revisions, not partial in-flight edits;
-- stale/foreign/corrupt recovery records fail closed;
-- recovery must never silently overwrite a newer active session;
-- explicit restore decision at the app/controller boundary;
-- bounded retention/cleanup;
-- no cloud/backend requirement.
-
-### APP-06 — Renderer interaction
-Status: **PLANNED**
-
-OSMD primary standard notation, admitted derivative TAB rendering, semantic token hit mapping, zoom/navigation and no renderer geometry authority.
+- connect the standalone viewport to the admitted standard-notation renderer path;
+- render only from current `RendererRequestV4`/admitted projection;
+- semantic hit mapping must resolve through current opaque renderer tokens to `SemanticAddressV3`;
+- no DOM/SVG/coordinate identity may become an edit target;
+- stale renderer request/hit tokens fail closed;
+- zoom and page/system navigation remain presentation state;
+- renderer lifecycle follows canonical revision changes without becoming history/score authority;
+- unsupported V4 projection remains visibly pending/fail-closed;
+- derivative guitar/TAB rendering remains separately bounded;
+- no backend/cloud requirement.
 
 ### APP-07 — Playback
 Status: **PLANNED**
