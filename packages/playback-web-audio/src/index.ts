@@ -218,7 +218,7 @@ export const createBrowserWebAudioHostV1 = (): PlaybackAudioHostV1 => {
       if (disposed) throw new PlaybackTransportV1Error('Web Audio host is disposed.', 'AUDIO_OPERATION_FAILED');
       if (context.state === 'suspended') await context.resume();
     },
-    scheduleTone: (frequencyHz, startSeconds, durationSeconds, gainValue) => {
+    scheduleTone: (frequencyHz: number, startSeconds: number, durationSeconds: number, gainValue: number) => {
       if (disposed) throw new PlaybackTransportV1Error('Web Audio host is disposed.', 'AUDIO_OPERATION_FAILED');
       const oscillator = context.createOscillator();
       const gain = context.createGain();
