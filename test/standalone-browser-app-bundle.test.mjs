@@ -14,7 +14,7 @@ const readAppArtifact = async () => ({
   manifest: JSON.parse(await readFile(appManifestPath, 'utf8'))
 });
 
-test('APP-05D standalone browser artifact is recovery-enabled without canonical persistence authority', async () => {
+test('APP-07 standalone browser artifact is playback-enabled without canonical/persistence/network authority', async () => {
   const { bundle, manifest } = await readAppArtifact();
   assert.equal(manifest.contract, 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE');
   assert.equal(manifest.version, '1.0.0');
@@ -38,7 +38,16 @@ test('APP-05D standalone browser artifact is recovery-enabled without canonical 
   assert.equal(manifest.recoveryExplicitApply, true);
   assert.equal(manifest.recoveryApplyRevisionGuard, true);
   assert.equal(manifest.recoveryMaxDocuments, 8);
-  assert.equal(manifest.playbackBundled, false);
+  assert.equal(manifest.playbackBundled, true);
+  assert.equal(manifest.playbackCanonicalAuthority, false);
+  assert.equal(manifest.playbackEditorAdmissionCoupled, false);
+  assert.equal(manifest.playbackNetworkCapable, false);
+  assert.equal(manifest.playbackPlanSource, 'ScoreDocumentV3');
+  assert.equal(manifest.playbackOutput, 'browser-web-audio-local');
+  assert.equal(manifest.playbackDefaultTempoBpm, 120);
+  assert.deepEqual(manifest.playbackTempoRange, [20, 300]);
+  assert.equal(manifest.playbackGraceSemantics, 'deferred-partial');
+  assert.equal(manifest.playbackCursorMutationAuthority, false);
   assert.equal(manifest.serverRevisionAuthority, false);
   assert.equal(manifest.publicationAuthority, false);
   assert.equal(manifest.externalImports, 0);
@@ -53,13 +62,13 @@ test('APP-05D IndexedDB admission is isolated to standalone recovery bundle, nev
   assert.doesNotMatch(coreBundle.toString('utf8'), /indexedDB/);
 });
 
-test('APP-03–05 standalone HTML bootstrap stays local and contains no silent recovery/apply script', async () => {
+test('APP-03–07 standalone HTML bootstrap stays local and contains no silent recovery/playback script', async () => {
   const html = await readFile(appHtmlPath, 'utf8');
   assert.match(html, /<meta name="viewport"/);
   assert.match(html, /st-score-editor-app\.js/);
   assert.match(html, /STScoreEditorApp\.createController\(\)/);
   assert.match(html, /controller\.mount\(root\)/);
-  assert.doesNotMatch(html, /XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|prepareRecovery|applyPreparedRecovery|restoreRecovery/);
+  assert.doesNotMatch(html, /XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|prepareRecovery|applyPreparedRecovery|restoreRecovery|playbackPlay\(/);
 });
 
 test('APP-05D global exposes explicit recovery API and degrades safely when IndexedDB is unavailable', async () => {
@@ -88,6 +97,26 @@ test('APP-05D global exposes explicit recovery API and degrades safely when Inde
   assert.equal(Object.isFrozen(controller), true);
 });
 
+test('APP-07 global exposes local playback API but does not require Web Audio merely to construct the editor', async () => {
+  const { bundle } = await readAppArtifact();
+  const context = vm.createContext({ TextEncoder, Blob, URL: class URL {} });
+  vm.runInContext(bundle.toString('utf8'), context, { filename: 'st-score-editor-app.js' });
+  const app = context.STScoreEditorApp;
+  assert.ok(app.playback);
+  assert.equal(app.playback.bundled, true);
+  assert.equal(app.playback.canonicalAuthority, false);
+  assert.equal(app.playback.editorAdmissionCoupled, false);
+  assert.equal(app.playback.networkCapable, false);
+  assert.equal(app.playback.gracePlayback, 'deferred-partial');
+  const controller = app.createController();
+  assert.equal(typeof controller.playbackPlay, 'function');
+  assert.equal(typeof controller.playbackPause, 'function');
+  assert.equal(typeof controller.playbackStop, 'function');
+  assert.equal(typeof controller.playbackSeek, 'function');
+  assert.equal(typeof controller.playbackSetTempo, 'function');
+  assert.equal(controller.getPlaybackState().available, false);
+});
+
 test('APP-03A app and legacy core globals coexist without authority collision', async () => {
   const { bundle } = await readAppArtifact();
   const coreBundle = await readFile(coreBundlePath);
@@ -101,6 +130,7 @@ test('APP-03A app and legacy core globals coexist without authority collision', 
   assert.equal(context.STScoreEditorApp.profile.persistenceCapable, false);
   assert.equal(context.STScoreEditorApp.profile.recoveryCanonicalAuthority, false);
   assert.equal(context.STScoreEditorApp.profile.recoveryAutoRestore, false);
+  assert.equal(context.STScoreEditorApp.profile.playbackCanonicalAuthority, false);
   const descriptor = Object.getOwnPropertyDescriptor(context, 'STScoreEditorApp');
   assert.equal(descriptor?.writable, false);
   assert.equal(descriptor?.configurable, false);
