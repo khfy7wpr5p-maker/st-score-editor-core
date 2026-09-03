@@ -48,11 +48,11 @@ try {
     console.log(`APP-09B probe ${label}: ${JSON.stringify(result)}`);return result;
   };
 
-  const sourceProbe=await probe(sourceXml,'source',101);
+  const sourceProbe=await probe(sourceXml,'source','101');
   const coreXml=automatic.coreXml??'';
-  const coreProbe=await probe(coreXml,'core',102);
+  const coreProbe=await probe(coreXml,'core','102');
   const patchedXml=coreXml.replaceAll(/(<voice>[^<]+<\/voice>)/g,'$1\n        <type>quarter</type>');
-  const typePatchedProbe=await probe(patchedXml,'core-plus-type-quarter',103);
+  const typePatchedProbe=await probe(patchedXml,'core-plus-type-quarter','103');
 
   let forcedRenderError=null;try{await page.evaluate(async()=>{await globalThis.STScoreEditorAppController.renderCurrent();});}catch(error){forcedRenderError=String(error);}
   const afterForced=await collect();
