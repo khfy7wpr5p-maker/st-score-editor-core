@@ -142,7 +142,7 @@ export const createMeasureFrameAuthoringStandaloneScoreEditorController = (
         contentStaffs.find(staff => staff.role === 'standard') ?? contentStaffs[0];
       if (anchorStaff === undefined) throw new MeasureFrameAuthoringError('No content staff is available for measure growth.', 'ORIGIN_NOT_ADMITTED');
 
-      const frameId = freshId('frame');
+      const frameId = `frame:${score.measureFrames.length + 1}`;
       const staffRestIds = contentStaffs.map(staff => Object.freeze({
         staffId: staff.id,
         measureId: freshId('measure'),
