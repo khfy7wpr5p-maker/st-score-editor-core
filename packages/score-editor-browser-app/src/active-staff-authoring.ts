@@ -101,6 +101,7 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
 ): Readonly<ActiveStaffAuthoringStandaloneScoreEditorController> => {
   const base = createSelectedNoteEditingStandaloneScoreEditorController(options);
   let root: HTMLElement | null = null;
+  let initialSelectionSyncInFlight = false;
 
   const currentContext = (): StaffContext | null => {
     const documentValue = base.getDocument();
@@ -150,17 +151,18 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
     });
   };
 
-  const selectInitialNewScoreAnchor = (): void => {
+  const selectInitialNewScoreAnchor = (): boolean => {
     const documentValue = base.getDocument();
-    if (documentValue === null || documentValue.origin !== 'NEW') return;
+    if (documentValue === null || documentValue.origin !== 'NEW' || documentValue.session.selection !== null) return false;
     const score = documentValue.session.history.present.score;
     const staff = score.parts[0]?.staves.find(item => item.role === 'standard');
-    if (staff === undefined || staff.role !== 'standard') return;
+    if (staff === undefined || staff.role !== 'standard') return false;
     const measure = staff.measures[0];
     const voice = measure?.voices.find(item => item.ordinal === 1) ?? measure?.voices[0];
     const event = voice?.events[0];
     const targetId = event?.id ?? voice?.id ?? measure?.id ?? staff.id;
     base.select(addressEntityV3(score, targetId));
+    return true;
   };
 
   const decorate = (): void => {
@@ -187,14 +189,24 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
     palette.prepend(group);
   };
 
-  base.subscribe(() => { decorate(); });
+  base.subscribe(() => {
+    if (!initialSelectionSyncInFlight) {
+      initialSelectionSyncInFlight = true;
+      try {
+        if (selectInitialNewScoreAnchor()) return;
+      } finally {
+        initialSelectionSyncInFlight = false;
+      }
+    }
+    decorate();
+  });
 
   const controller: ActiveStaffAuthoringStandaloneScoreEditorController = {
     ...base,
     profile: activeStaffAuthoringBrowserAppProfile,
     newDocument: (newOptions) => {
-      const snapshot = base.newDocument(newOptions);
-      if (snapshot.error === null) selectInitialNewScoreAnchor();
+      base.newDocument(newOptions);
+      if (!initialSelectionSyncInFlight) selectInitialNewScoreAnchor();
       decorate();
       return base.getSnapshot();
     },
