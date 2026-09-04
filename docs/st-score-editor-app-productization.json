@@ -3,7 +3,7 @@
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-04",
-  "status": "APP_10G_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_DEFERRED_REQUIRED_BEFORE_RELEASE",
+  "status": "APP_10H_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_DEFERRED_REQUIRED_BEFORE_RELEASE",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_authorized": false,
@@ -126,7 +126,7 @@
     "full_iphone_release_matrix_passed":false
   },
   "app_10": {
-    "status":"APP_10A_TO_10G_COMPLETE_MERGED",
+    "status":"APP_10A_TO_10H_COMPLETE_MERGED",
     "app_10a": {
       "status":"COMPLETE_MERGED",
       "merge_pr":103,
@@ -194,6 +194,27 @@
       "new_score_initial_anchor_creates_history":false,
       "renderer_coordinate_authority":false,
       "webkit_piano_staff_voice5_isolation_regression":true
+    },
+    "app_10h": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":113,
+      "merge_sha":"8eccb176ec9b21e50b0a98ce207deb160a16f220",
+      "measure_frame_append":"SYNTHETIC_NEW_SCORE_END_ONLY",
+      "append_one_frame_per_action":true,
+      "proven_effective_meter_required":true,
+      "all_content_staves_same_global_frame":true,
+      "new_measure_voice_1_explicit_full_measure_rest":true,
+      "voice_2_to_5_auto_materialized":false,
+      "linked_tablature_owns_measure":false,
+      "imported_musicxml_automatic_measure_growth":false,
+      "deterministic_lossless_frame_identity_sequence":"frame:N",
+      "non_lossless_frame_identity_fail_closed":true,
+      "unified_editor_session_history":true,
+      "selection_move_after_append_creates_history":false,
+      "renderer_coordinate_authority":false,
+      "musicxml_two_measure_piano_roundtrip_covered":true,
+      "webkit_measure_growth_selected_edit_delete_regression":true,
+      "webkit_piano_staff_voice5_after_growth_regression":true
     }
   },
   "stage_07_semantic_renderer_locator": {
@@ -238,6 +259,7 @@
     {"id":"APP-10E","status":"COMPLETE_MERGED"},
     {"id":"APP-10F","status":"COMPLETE_MERGED"},
     {"id":"APP-10G","status":"COMPLETE_MERGED"},
+    {"id":"APP-10H","status":"COMPLETE_MERGED"},
     {"id":"STAGE-07-SEMANTIC-RENDERER-LOCATOR","status":"COMPLETE_MERGED"}
   ],
   "global_invariants": {
@@ -248,6 +270,7 @@
     "authoring_palette_canonical_authority":false,
     "active_staff_canonical_authority":false,
     "active_voice_canonical_authority":false,
+    "measure_navigation_canonical_authority":false,
     "viewport_canonical_authority":false,
     "coordinate_authoring":false,
     "file_state_canonical_authority":false,
@@ -261,5 +284,5 @@
     "production_activation_by_merge":false
   },
   "current_development_phase":"STANDALONE_AUTHORING_WORKSPACE_EXPANSION",
-  "next_action":"SELECT_NEXT_AUTHORING_GAP_FROM_FRESH_REPOSITORY_REALITY_AFTER_APP_10G_KEEP_RELEASE_MATRIX_DEFERRED_BUT_RELEASE_BLOCKING"
+  "next_action":"PREFLIGHT_APP_10I_PRESENTATION_ONLY_SEMANTIC_MEASURE_NAVIGATION_ACTIVE_FRAME_CONTEXT_FROM_FRESH_REPOSITORY_REALITY_KEEP_RELEASE_MATRIX_DEFERRED_BUT_RELEASE_BLOCKING"
 }
