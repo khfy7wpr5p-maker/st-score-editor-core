@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10G are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10H are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
@@ -14,6 +14,7 @@ Standalone HTML / Browser Shell
         |      +--> pitch / accidental / octave / duration
         |      +--> bounded note entry
         |      +--> exact selected-note Pitch / Duration / Delete
+        |      +--> bounded Add measure for admitted synthetic scores
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
         +--> viewport + APP-09 responsive hardening (presentation-only)
@@ -34,6 +35,7 @@ EditorSessionV4
         |
         +--> revision-bound insertion positions
         +--> safe Voice materialization for proven synthetic measures
+        +--> append-only synthetic measure-frame topology mutation
         +--> exact selected-note/chord-tone authoring intents
         +--> unified authoring history / undo / redo
         +--> PlaybackPlanV1 --> local Web Audio
@@ -58,7 +60,7 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
+`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice/measure-navigation choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
 
 Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history.
 
@@ -123,7 +125,32 @@ Staff switching creates no canonical history revision. It never uses DOM/SVG coo
 
 A newly created synthetic Guitar/Piano score receives a presentation-only exact semantic authoring anchor on the first standard staff / first frame / Voice 1 explicit event. This solves blank-score entry without granting renderer-rest hit authority and without creating history.
 
-WebKit regression covers APP-10E note entry, APP-10F selected-note editing, APP-10G Piano Staff switching with lower-staff Voice 5 isolation, and the existing APP-09B renderer/orientation regression chain.
+### APP-10H — bounded synthetic measure-frame growth
+
+PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220` closes the one-frame synthetic-score authoring limit without reviving the legacy structural-authoring model or creating a parallel score authority.
+
+The new `APPEND_SYNTHETIC_MEASURE_FRAME` topology intent lives in the current V4 topology path and is committed through `EditorSessionV4` as exactly one canonical history revision. Its admission profile is deliberately narrow:
+
+- only NEW/synthetic scores are exposed by the browser workflow;
+- append is end-only; middle insertion, reorder and measure deletion remain outside scope;
+- the revision-bound document target must be current;
+- effective meter must be proven from canonical notation inheritance before a frame is created;
+- one document-global frame is appended and every content-bearing standard/percussion staff receives exactly one `StaffMeasureV3` aligned to that frame;
+- each new measure starts with Voice 1 plus one explicit full-measure rest at onset zero;
+- Voice 2–5 remain explicit APP-10D materialization and are never invented by measure append;
+- tablature-linked staves keep the existing ownership contract and receive no owned measure;
+- imported MusicXML automatic growth fails closed;
+- renderer DOM/SVG/coordinates/nearest visual timing provide no identity or timing authority.
+
+The admitted synthetic MusicXML bridge requires deterministic frame identity. APP-10H therefore preserves the sequence `frame:1`, `frame:2`, ... and the core rejects a custom/non-lossless next frame identity. This keeps the existing lossless V3→V2 MusicXML projection available instead of silently degrading to a pending projection.
+
+After the one canonical append commit, the browser may move selection to the exact new explicit-rest `SemanticAddressV3`; that navigation is presentation-only and creates no second history revision. Undo/redo therefore reverses/restores the append through the same V4 history used by Voice creation, note entry and selected-note editing.
+
+Core regression covers Guitar/Piano alignment, full-measure rests, undo/redo, stale target, missing meter evidence, imported-score fail-closed behavior, deterministic frame identity and Piano two-measure MusicXML export/re-import. WebKit additionally covers Guitar measure growth followed by APP-10F pitch/duration/delete, and Piano frame growth followed by Staff 2 → Voice 5 → note entry → Staff 1 isolation. APP-10E/F/G and APP-09B renderer/orientation regressions remain in the same exact-head gate.
+
+## Next bounded authoring candidate
+
+Fresh repository audit after APP-10H found exact semantic selection primitives but no browser product surface for moving authoring context between previous/next measure frames. The recommended next bounded package is **APP-10I — presentation-only semantic measure navigation / active measure-frame context**. It is planning only and must be fresh-read before implementation. Navigation itself must not create history, must preserve exact semantic Staff/Voice context where it exists, must not materialize a missing Voice implicitly, must fail closed on stale/invalid identities, and must not derive frame identity from renderer coordinates or DOM/SVG geometry.
 
 ## Stage 07 semantic ↔ renderer presentation identity
 
