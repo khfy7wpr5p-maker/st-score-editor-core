@@ -1,12 +1,12 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10G COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
+Status: **ACTIVE / APP-00–10H COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
 
 Date: 2026-09-04
 
 ## Product decision
 
-ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice state is noncanonical. Local product operation requires no backend.
+ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice/measure-navigation state is noncanonical. Local product operation requires no backend.
 
 Device/browser validation is intentionally deferred during the current authoring-workspace development phase. Deferral is not release approval: `standaloneReleaseGatePassed` and `seslitabCutoverAuthorized` remain false.
 
@@ -108,7 +108,28 @@ PR #111 / `47076403a2a41a322f7ee28c7595d55555fc05c7`.
 
 Adds Staff S1/S2/... controls for standard staves in the current part. Staff switching is exact same-part/same-frame semantic selection only, creates no history and cannot materialize a missing Voice. The active Voice ordinal is preserved; if that Voice is absent on the target Staff, selection lands on the exact measure until the user explicitly activates/materializes the Voice through the existing admitted path.
 
-New synthetic scores receive a presentation-only exact initial authoring anchor on the first standard staff / first frame / Voice 1 event. This enables blank-score authoring without granting renderer-rest hit or coordinate authority. WebKit covers Piano S1 → S2 → Voice 5 → note entry → S1 plus APP-10E/F and APP-09B renderer/orientation regressions.
+New synthetic scores receive a presentation-only exact initial authoring anchor on the first standard staff / first frame / Voice 1 event. This enables blank-score authoring without granting renderer-rest hit or coordinate authority.
+
+### APP-10H — Bounded synthetic measure-frame growth
+Status: **COMPLETE / MERGED**
+
+PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220`.
+
+APP-10H adds one compact browser `Add measure` action backed by the current `editor-topology-authoring-v4 -> EditorSessionV4` path rather than a parallel structural editor. Admission is deliberately bounded:
+
+- browser exposure is NEW/synthetic-score only;
+- exactly one measure frame is appended at the document end per action;
+- effective meter must be proven before append;
+- all content-bearing standard/percussion staves receive exactly one new `StaffMeasureV3` aligned to the same global frame;
+- each new measure starts with Voice 1 plus an explicit full-measure rest;
+- Voice 2–5 remain explicit APP-10D materialization;
+- tablature-linked staves retain the existing no-owned-measure contract;
+- imported MusicXML automatic measure growth fails closed;
+- custom/non-lossless frame identity fails closed; the admitted synthetic path preserves deterministic `frame:1`, `frame:2`, ... identity so existing lossless MusicXML projection/export remains available;
+- append is exactly one canonical V4 history revision; moving selection to the new exact rest after append is presentation-only and creates no additional revision;
+- renderer DOM/SVG/coordinates/geometry have no measure/timing authority.
+
+Core tests cover Guitar/Piano frame alignment, explicit full-measure rests, undo/redo, stale-target and missing-meter rejection, imported-score rejection, deterministic frame identity, and Piano two-measure MusicXML export/re-import. Exact-head WebKit covers Guitar measure growth followed by APP-10F pitch/duration/delete, Piano Add measure → Staff 2 → Voice 5 → note → Staff 1 isolation, APP-10E/F/G, and the APP-09B renderer/orientation chain.
 
 ## Stage 07 — Exact semantic-to-render presentation locators
 Status: **COMPLETE / MERGED**
@@ -141,7 +162,7 @@ seslitabCutoverAuthorized = false
 
 ## Current development action
 
-Continue standalone authoring-workspace expansion after APP-10G and Stage 07. The earlier high-priority gaps for selected-note edit/delete and explicit Staff targeting are closed. Select the next package from fresh repository gaps, prioritizing multi-Voice authoring ergonomics and existing semantic capabilities that are not yet exposed safely in the browser.
+Fresh repository audit after APP-10H found exact semantic selection substrate but no browser product surface for previous/next measure-frame authoring context. The recommended next bounded package is **APP-10I — presentation-only semantic measure navigation / active measure-frame context**. This is planning only, not COMPLETE. Its preflight must confirm no equivalent existing surface before implementation; navigation itself must create no history, must preserve exact Staff/Voice semantics where available, must not implicitly materialize a missing Voice, must fail closed on stale/invalid targets, and must not use renderer coordinates/DOM/SVG as measure identity.
 
 The device/browser matrix must be resumed before any standalone release closeout. A separate evidence-backed closeout is required before `standaloneReleaseGatePassed` can become true, and SesliTab product integration/cutover remains a later separate program.
 
