@@ -155,6 +155,20 @@ const effectiveMeterAtEnd = (score: ScoreDocumentV3, notation: NotationDocumentV
   return durationFromMeter(active.beats, active.beatType);
 };
 
+const expectedLosslessFrameId = (score: ScoreDocumentV3): string => {
+  for (const [index, frame] of score.measureFrames.entries()) {
+    const expected = `frame:${index + 1}`;
+    if (frame.id !== expected) {
+      throw new TopologyAuthoringV4Error(
+        'Synthetic measure-frame append requires the current lossless deterministic frame identity sequence.',
+        'IDENTITY_PLAN_INVALID',
+        { frameId: frame.id, expectedFrameId: expected }
+      );
+    }
+  }
+  return `frame:${score.measureFrames.length + 1}`;
+};
+
 const parseAppendIntent = (
   score: ScoreDocumentV3,
   raw: unknown
@@ -205,6 +219,14 @@ const parseAppendIntent = (
   });
 
   const frameId = parseId(raw.frameId, 'frameId');
+  const expectedFrameId = expectedLosslessFrameId(score);
+  if (frameId !== expectedFrameId) {
+    throw new TopologyAuthoringV4Error(
+      'Synthetic measure-frame identity must preserve the admitted lossless MusicXML frame sequence.',
+      'IDENTITY_PLAN_INVALID',
+      { frameId, expectedFrameId }
+    );
+  }
   const newIds = [frameId, ...staffRestIds.flatMap(item => [item.measureId, item.voiceId, item.restEventId])];
   const currentIds = createSemanticAddressIndexV3(score).byEntityId;
   if (new Set(newIds).size !== newIds.length || newIds.some(value => currentIds.has(value))) {
