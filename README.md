@@ -8,7 +8,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** standalone editor app is the primary product target.
 - **APP-00–08 — COMPLETE / MERGED:** document/runtime, unified V4 authoring, browser shell, local files/recovery, guarded renderer interaction, viewport, local playback and bounded export/print.
 - **APP-09 / APP-09B — AUTOMATED HARDENING COMPLETE / PHYSICAL IPHONE BLOCKER RESOLVED:** responsive/accessibility/recovery guards are merged; host-controlled renderer rerender fixes the physical iPhone Safari selection/orientation failure without renderer authority expansion.
-- **APP-10A–G — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, and explicit semantic Staff switching for multi-staff scores.
+- **APP-10A–H — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, and bounded append-only synthetic measure-frame growth.
 - **Stage 07 semantic → renderer presentation locators — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391` adds exact read-only current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup.
 - **Standalone release gate — DEFERRED FOR CURRENT DEVELOPMENT / STILL REQUIRED:** remaining physical Windows/Android/iOS browser evidence must be completed before release.
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED:** no cutover until the standalone release matrix passes.
@@ -19,7 +19,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 ST Score Editor App
         |
         +--> Guitar / Piano New-score selector (presentation state)
-        +--> authoring palette: Staff / Voice 1–5 / pitch / accidental / octave / duration
+        +--> authoring palette: Staff / Voice 1–5 / pitch / accidental / octave / duration / Add measure
         +--> exact selected-note Pitch / Duration / Delete actions
         +--> local file workflow (noncanonical)
         +--> IndexedDB recovery cache (noncanonical)
@@ -37,6 +37,7 @@ EditorSessionV4
         +--> NotationDocumentV4
         +--> revision-bound insertion positions / bounded note entry
         +--> safe synthetic-score Voice materialization
+        +--> append-only synthetic measure-frame growth under proven meter
         +--> exact selected-note/chord-tone edits
         +--> unified undo / redo
         +--> revision-bound playback plan --> local Web Audio output
@@ -51,7 +52,7 @@ RendererRequestV4
         +--> exact current rendered revision --> browser print dialog / Save as PDF
 ```
 
-The app consumes Core; it never becomes a second score authority. File handles, recovery records, authoring-palette/Staff/Voice state, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state remain noncanonical.
+The app consumes Core; it never becomes a second score authority. File handles, recovery records, authoring-palette/Staff/Voice/measure-navigation state, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state remain noncanonical.
 
 ## APP-10 authoring result
 
@@ -66,8 +67,11 @@ The current standalone browser can create admitted Guitar or Piano scores and pe
 - note entry operates on revision-bound explicit-rest windows rather than renderer coordinates or hidden-silence guessing;
 - browser controls expose pitch C–B, flat/natural/sharp, octave and whole through 1/16 duration;
 - an exact selected note can apply palette pitch and duration; Delete converts a single-note event to rest or removes only the exact selected chord tone;
-- Voice creation, note entry and selected-note mutations participate in unified `EditorSessionV4` undo/redo;
-- WebKit regression covers APP-10E note entry, APP-10F selected-note editing, APP-10G Piano Staff switching/Voice-5 isolation, and the APP-09B renderer/orientation chain.
+- APP-10H PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220` adds one compact `Add measure` control for NEW synthetic scores only;
+- APP-10H appends exactly one document-global measure frame at the end, requires proven effective meter, gives every content-bearing staff one aligned `StaffMeasureV3` with Voice 1 + an explicit full-measure rest, leaves linked TAB measure ownership unchanged, and keeps imported MusicXML automatic growth fail-closed;
+- the admitted synthetic path preserves deterministic `frame:1`, `frame:2`, ... identity so the existing lossless V3→V2 MusicXML projection remains available; non-lossless frame identity fails closed;
+- Voice creation, measure append, note entry and selected-note mutations participate in unified `EditorSessionV4` undo/redo; moving selection to the new exact rest after append creates no extra canonical revision;
+- WebKit regression covers APP-10E note entry, APP-10F selected-note editing including edit/delete after measure growth, APP-10G Piano Staff switching/Voice-5 isolation, APP-10H Guitar/Piano measure growth, and the APP-09B renderer/orientation chain.
 
 ## Renderer identity boundary
 
@@ -89,7 +93,11 @@ DOM/SVG identifiers, coordinates, nearest-note distance, pitch guesses and radiu
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` remains canonical source identity. MusicXML remains exchange/projection data. Renderer, authoring palette, Staff/Voice choice, print and responsive-browser state never move canonical events outside `EditorSessionV4` authoring paths.
+`SemanticAddressV3` remains canonical source identity. MusicXML remains exchange/projection data. Renderer, authoring palette, Staff/Voice/measure choice, print and responsive-browser state never move canonical events outside `EditorSessionV4` authoring paths.
+
+## Next bounded authoring candidate
+
+Fresh repository audit after APP-10H found no browser surface for previous/next measure-frame authoring context. Generic exact semantic selection already exists, so the next recommended bounded package is **APP-10I — presentation-only semantic measure navigation / active measure-frame context**. This is planning only, not a completed capability: it must preserve exact SemanticAddressV3 identity, create no history merely by navigating, avoid implicit Voice materialization, and grant no renderer-coordinate authority.
 
 ## Remaining release gate
 
