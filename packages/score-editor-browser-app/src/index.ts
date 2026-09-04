@@ -8,6 +8,8 @@ import type { OrnamentAuthoringV4Options } from '../../editor-ornament-authoring
 import type { EditorKeypadV4Options } from '../../editor-keypad-execution-v4/src/index.js';
 import type { CrossStaffAuthoringV4Options } from '../../editor-cross-staff-authoring-v4/src/index.js';
 import type { TopologyAuthoringV3Options } from '../../editor-topology-authoring-v3/src/index.js';
+import type { PositionNoteEntryV4Options } from '../../editor-position-note-entry-v4/src/index.js';
+import type { VoiceMaterializationV4Options } from '../../editor-voice-materialization-v4/src/index.js';
 import {
   createNewScoreEditorAppDocument,
   openMusicXmlScoreEditorAppDocument,
@@ -27,6 +29,8 @@ import {
   type OpenMusicXmlAppDocumentOptions,
   type ScoreEditorAppDocument
 } from '../../score-editor-app-document/src/index.js';
+import { commitScoreEditorAppPositionNoteEntryV4 } from '../../score-editor-app-position-note-entry/src/index.js';
+import { commitScoreEditorAppVoiceMaterializationV4 } from '../../score-editor-app-voice-materialization/src/index.js';
 import { adoptScoreEditorAppDocumentSnapshot } from '../../score-editor-app-snapshot-adoption/src/index.js';
 
 export const SCORE_EDITOR_BROWSER_APP_VERSION = '1.0.0' as const;
@@ -52,7 +56,9 @@ export const standaloneBrowserAppProfile = Object.freeze({
   localCommitAvailable: true,
   keypadManifestAvailable: true,
   responsiveShellAvailable: true,
-  newScorePresetSelectorAvailable: true
+  newScorePresetSelectorAvailable: true,
+  positionNoteEntryAvailable: true,
+  boundedVoiceMaterializationAvailable: true
 });
 
 export interface ScoreEditorBrowserAppSnapshot {
@@ -160,6 +166,8 @@ export interface StandaloneScoreEditorController {
   readonly commitKeypad: (action: unknown, advancedTarget?: unknown, options?: EditorKeypadV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly commitCrossStaff: (intent: unknown, options: CrossStaffAuthoringV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly commitTopology: (intent: unknown, options: TopologyAuthoringV3Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly commitPositionNoteEntry: (position: unknown, intent: unknown, options: PositionNoteEntryV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly commitVoiceMaterialization: (intent: unknown, options: VoiceMaterializationV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
 }
 
 export const createStandaloneScoreEditorController = (
@@ -333,7 +341,9 @@ export const createStandaloneScoreEditorController = (
       return mutate(() => commitAppKeypadAction(requireDocument(), parsed, advancedTarget, resolvedOptions));
     },
     commitCrossStaff: (intent, options) => mutate(() => commitAppCrossStaffIntent(requireDocument(), intent, options)),
-    commitTopology: (intent, options) => mutate(() => commitAppTopologyIntent(requireDocument(), intent, options))
+    commitTopology: (intent, options) => mutate(() => commitAppTopologyIntent(requireDocument(), intent, options)),
+    commitPositionNoteEntry: (position, intent, options) => mutate(() => commitScoreEditorAppPositionNoteEntryV4(requireDocument(), position, intent, options)),
+    commitVoiceMaterialization: (intent, options) => mutate(() => commitScoreEditorAppVoiceMaterializationV4(requireDocument(), intent, options))
   };
   return Object.freeze(controller);
 };

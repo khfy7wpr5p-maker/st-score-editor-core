@@ -1,9 +1,9 @@
-import { createReleaseHardenedStandaloneBrowserAppRuntime } from './release-hardened.js';
+import { createAuthoringWorkspaceStandaloneBrowserAppRuntime } from './authoring-workspace.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createReleaseHardenedStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createAuthoringWorkspaceStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createReleaseHardenedStandaloneBrowserAppRuntime(),
+  value: createAuthoringWorkspaceStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
