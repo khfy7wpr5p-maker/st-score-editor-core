@@ -70,7 +70,7 @@ try {
     throw new Error(`APP-10E authoring bootstrap mismatch: ${JSON.stringify(bootstrap)}`);
   }
 
-  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByRole('button', { name: 'New', exact: true }).click();
   await page.waitForFunction(() => globalThis.STScoreEditorAppController?.getSnapshot?.().hasDocument === true);
   await page.evaluate(() => {
     const controller = globalThis.STScoreEditorAppController;
@@ -80,17 +80,17 @@ try {
     controller.select(entry.address);
   });
 
-  await page.getByRole('button', { name: 'Voice 5' }).click();
+  await page.getByRole('button', { name: 'Voice 5', exact: true }).click();
   await page.waitForFunction(() => {
     const state = globalThis.STScoreEditorAppController?.getAuthoringState?.();
     return state?.activeVoiceOrdinal === 5 && state.availableVoices.includes(5);
   });
 
-  await page.getByRole('button', { name: 'Pitch F' }).click();
-  await page.getByRole('button', { name: 'Sharp' }).click();
-  await page.getByRole('combobox', { name: 'Octave' }).selectOption('5');
-  await page.getByRole('button', { name: 'Duration 1/8' }).click();
-  await page.getByRole('button', { name: 'Enter note at selected event time' }).click();
+  await page.getByRole('button', { name: 'Pitch F', exact: true }).click();
+  await page.getByRole('button', { name: 'Sharp', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Octave', exact: true }).selectOption('5');
+  await page.getByRole('button', { name: 'Duration 1/8', exact: true }).click();
+  await page.getByRole('button', { name: 'Enter note at selected event time', exact: true }).click();
   await page.waitForFunction(() => globalThis.STScoreEditorAppController?.getAuthoringState?.().status?.code === 'NOTE_ENTERED');
 
   const guitar = await page.evaluate(() => {
@@ -117,7 +117,7 @@ try {
     throw new Error(`APP-10E Guitar Voice-5 entry mismatch: ${JSON.stringify(guitar)}`);
   }
 
-  await page.getByRole('button', { name: 'Undo' }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   const afterUndo = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
     const v5 = d.session.history.present.score.parts[0].staves[0].measures[0].voices.find(v => v.ordinal === 5);
@@ -125,7 +125,7 @@ try {
   });
   if (afterUndo.past !== 1 || afterUndo.kind !== 'rest') throw new Error(`APP-10E note undo mismatch: ${JSON.stringify(afterUndo)}`);
 
-  await page.getByRole('button', { name: 'Redo' }).click();
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
   const afterRedo = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
     const v5 = d.session.history.present.score.parts[0].staves[0].measures[0].voices.find(v => v.ordinal === 5);
@@ -133,8 +133,8 @@ try {
   });
   if (afterRedo.past !== 2 || afterRedo.kind !== 'note') throw new Error(`APP-10E note redo mismatch: ${JSON.stringify(afterRedo)}`);
 
-  await page.getByRole('button', { name: 'Undo' }).click();
-  await page.getByRole('button', { name: 'Undo' }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   const afterVoiceUndo = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
     return {
@@ -146,8 +146,8 @@ try {
     throw new Error(`APP-10E Voice materialization undo mismatch: ${JSON.stringify(afterVoiceUndo)}`);
   }
 
-  await page.getByRole('combobox', { name: 'New score type' }).selectOption('PIANO_GRAND_STAFF');
-  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByRole('combobox', { name: 'New score type', exact: true }).selectOption('PIANO_GRAND_STAFF');
+  await page.getByRole('button', { name: 'New', exact: true }).click();
   await page.waitForFunction(() => globalThis.STScoreEditorAppController?.getDocument?.()?.session?.history?.present?.score?.parts?.[0]?.staves?.length === 2);
   await page.evaluate(() => {
     const controller = globalThis.STScoreEditorAppController;
@@ -158,8 +158,8 @@ try {
     if (!entry) throw new Error('APP10E_PIANO_LOWER_EVENT_MISSING');
     controller.select(entry.address);
   });
-  await page.getByRole('button', { name: 'Voice 5' }).click();
-  await page.getByRole('button', { name: 'Enter note at selected event time' }).click();
+  await page.getByRole('button', { name: 'Voice 5', exact: true }).click();
+  await page.getByRole('button', { name: 'Enter note at selected event time', exact: true }).click();
   await page.waitForFunction(() => globalThis.STScoreEditorAppController?.getAuthoringState?.().status?.code === 'NOTE_ENTERED');
 
   const piano = await page.evaluate(() => {
