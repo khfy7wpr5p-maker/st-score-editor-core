@@ -32,6 +32,8 @@ jobs:
         run: node scripts/app10e-webkit-authoring-workspace-regression.mjs
       - name: Run APP-10F WebKit selected-note editing regression
         run: node scripts/app10f-webkit-selected-note-editing-regression.mjs
+      - name: Run APP-10G WebKit active-staff authoring regression
+        run: node scripts/app10g-webkit-active-staff-regression.mjs
       - name: Checkout exact ST Score Rendering Layer revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
