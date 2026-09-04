@@ -1,12 +1,17 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–08 are COMPLETE / MERGED. APP-09 automated hardening is COMPLETE / MERGED; the manual standalone device/browser release matrix remains PENDING.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10E are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
 ```text
 Standalone HTML / Browser Shell
         |
+        +--> Guitar / Piano New-score selector (presentation state)
+        +--> APP-10E authoring palette
+        |      +--> Voice 1–5
+        |      +--> pitch / accidental / octave / duration
+        |      +--> bounded note entry
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
         +--> viewport + APP-09 responsive hardening (presentation-only)
@@ -25,6 +30,9 @@ EditorSessionV4
         +--> ScoreDocumentV3
         +--> NotationDocumentV4
         |
+        +--> revision-bound insertion positions
+        +--> safe Voice materialization for proven synthetic measures
+        +--> unified authoring history / undo / redo
         +--> PlaybackPlanV1 --> local Web Audio
         +--> admitted lossless MusicXML --> explicit export handoff
         |
@@ -32,11 +40,12 @@ EditorSessionV4
 RendererRequestV4
         |
         +--> admitted MusicXML projection --> attached renderer host
-        +--> opaque manifest token --> SemanticAddressV3 selection
+        +--> renderer ScoreNoteRef --> opaque manifest token --> SemanticAddressV3 selection
+        +--> SemanticAddressV3 --> exact ScoreNoteRef / ScoreMeasureRef presentation locator
         +--> exact current presentation --> browser print / Save as PDF
 ```
 
-A backend/service provider is not required for local editing, playback, export/print or APP-09 responsive hardening. SesliTab V4 integration remains unauthorized until the APP-09 manual device/browser release matrix passes.
+A backend/service provider is not required for local editing, playback, export/print, APP-09 responsive hardening or APP-10 authoring. SesliTab V4 integration remains unauthorized until the standalone device/browser release matrix passes.
 
 ## Canonical authority
 
@@ -46,7 +55,7 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
+`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Voice choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
 
 Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history.
 
@@ -56,69 +65,77 @@ APP-01 owns document lifecycle. APP-02 composes admitted V4 authoring in one his
 
 Cross-staff presentation preserves original source ownership. Non-empty cross-staff placements still remain `CROSS_STAFF_XML_PENDING` with `musicXml = null`.
 
-## APP-09 automated hardening
+## APP-09 / APP-09B presentation hardening
 
-APP-09 automated hardening is merged through PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`.
+APP-09 automated hardening remains presentation/recovery only. It provides dynamic viewport sizing, safe-area support, coarse-pointer target sizing, accessibility semantics, best-effort recovery lifecycle handling and the standalone bundle budget without canonical/history authority.
 
-### Responsive/mobile presentation boundary
+APP-09B resolved the physical iPhone renderer interaction blocker without weakening the renderer boundary. Interactive OSMD runs with `autoResize:false`; resize/orientation/`visualViewport` lifecycle requests a controlled render of the exact current revision so the renderer rebuilds its live SVG and ownership index. This rerender is presentation-only and creates no canonical revision.
 
-The release-hardening wrapper sits above APP-08 and has no canonical or history mutation authority. It adds:
+Physical iPhone Safari evidence proved note selection and portrait → landscape → portrait selection after the permanent policy. That evidence is not equivalent to completion of the full release matrix.
 
-- `100dvh` dynamic viewport sizing with `100vh` fallback;
-- safe-area inset padding for notched/mobile browser layouts;
-- `viewport-fit=cover` standalone bootstrap;
-- 44 CSS px coarse-pointer action targets;
-- presentation-only reapply of existing zoom/scroll state after window resize, orientation change, `pageshow` and `visualViewport.resize`;
-- no coordinate-based score mutation or renderer geometry authority.
+## APP-10 standalone authoring workspace
 
-The lifecycle reapply calls the existing viewport controller with the already-current presentation values. It does not synthesize score edits, alter `SemanticAddressV3`, or append V4 history.
+### APP-10A/B — admitted score starts
 
-### Recovery lifecycle boundary
+The user-facing New workflow admits two explicit product presets:
 
-`pagehide` and hidden-document transitions request a best-effort `flushRecovery()` through the existing browser-local recovery layer. Concurrent flushes are coalesced; async rejection and synchronous storage failure are swallowed at this lifecycle boundary because recovery failure must not become a canonical/editor crash path.
+- `GUITAR_TREBLE`: one standard G-clef staff;
+- `PIANO_GRAND_STAFF`: one Piano part with two standard G/F staves.
 
-Recovery remains bounded, local and noncanonical. APP-09 does not turn recovery into persistence/server authority.
+Both are canonical V4 app documents from creation. The Piano grand-staff preset has admitted renderer/export projection and MusicXML export/re-import coverage. The compact Guitar/Piano selector is presentation state only; it does not become score authority.
 
-### Accessibility boundary
+### APP-10C — position note entry and Voice targeting
 
-APP-09 adds presentation semantics only:
+Authoring uses revision-bound insertion positions. Active Voice targeting is bounded to ordinals 1–5. Note entry may only replace/split an exact explicit-rest window; it does not infer timing from renderer coordinates, hidden silence or nearest visual position. Stale insertion positions fail closed.
 
-- toolbar landmark/label;
-- score viewport region/label;
-- keypad grouping;
-- inspector label;
-- polite atomic status live region;
-- visible keyboard focus;
-- reduced-motion styling.
+### APP-10D — missing Voice materialization
 
-These attributes may improve interaction/readout but cannot select or edit score content outside existing semantic controller paths.
+A missing Voice 1–5 may be materialized only for a synthetic/new score when the current canonical measure proves exact full-measure coverage. The new Voice starts as one explicit full-measure rest with fresh identities. Imported MusicXML does not receive automatic invented Voices.
 
-### Automated performance/release gate
+### APP-10E — browser authoring surface
 
-The standalone app browser build has a hard 512 KiB (`524288` bytes) bundle budget. The build fails if the emitted application bundle exceeds this limit. Existing forbidden capability-token, self-contained bundle and integrity-manifest checks remain in force.
+The standalone browser runtime exposes a compact authoring workspace with:
 
-The browser contract targets recorded by APP-09 are:
+- Voice 1–5;
+- pitch C–B;
+- flat / natural / sharp;
+- octave selection;
+- durations from whole through 1/16;
+- bounded note entry at the selected semantic event time.
+
+Voice materialization and note entry stay in the same `EditorSessionV4` history, so undo/redo remains unified. WebKit regression covers Guitar Voice-5 authoring and Piano lower-staff isolation.
+
+## Stage 07 semantic ↔ renderer presentation identity
+
+Stage 07, merged through PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`, completes the exact reverse presentation lookup needed for issue/score synchronization:
 
 ```text
-ios-safari
-ipad-safari
-desktop-safari
-chromium
-firefox
+Renderer hit direction:
+ScoreNoteRef
+   -> opaque current-revision manifest token
+   -> SemanticAddressV3
+   -> editor-owned selection
+
+Presentation lookup direction:
+SemanticAddressV3
+   -> exact current-revision ScoreNoteRef or ScoreMeasureRef
+   -> renderer highlight/cursor locator
 ```
 
-Automated Node 18/20/22 validation and full build/test passed on the exact PR #89 head. These checks validate repository contracts and generated artifacts; they do not constitute physical-device/browser execution.
+The reverse lookup is read-only. It does not select, edit or append history merely by resolving a locator. Non-note targets abstain from note highlighting while their exact measure locator may still be available. Stale presentation identity remains fail-closed.
 
-## Standalone release gate status
+Neither direction accepts DOM/SVG identifiers, renderer coordinates, nearest-note distance, pitch guessing or radius heuristics as canonical evidence.
 
-`manualDeviceValidationRequired = true`
+## Release gate status
 
-`standaloneReleaseGatePassed = false`
+```text
+manualDeviceValidationRequired = true
+standaloneReleaseGatePassed = false
+seslitabCutoverAuthorized = false
+```
 
-`seslitabCutoverAuthorized = false`
-
-Therefore APP-09 automated implementation is merged, but APP-09 as a product release gate is not complete. Real-device/browser validation must satisfy `docs/app-09-standalone-release-gate.md` before standalone release approval or SesliTab V4 cutover.
+Device validation is currently deferred while authoring-workspace development continues. Before release, the required practical matrix must be completed and recorded. Current required targets are real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox; real iPad Safari remains a deferred secondary validation target. Existing iPhone evidence is partial and does not by itself close the gate.
 
 ## Remaining gates
 
-Manual APP-09 device/browser validation, SesliTab V4 cutover, `.mxl`, V4-native cross-staff MusicXML, unsupported advanced cross-staff scopes, cloud/server revision authority, public-write/production activation and E8-D direct external-engine invocation remain gated.
+Manual device/browser validation, SesliTab V4 cutover, `.mxl`, V4-native cross-staff MusicXML, unsupported advanced cross-staff scopes, direct PDF-byte generation, cloud/server revision authority, public-write/production activation and E8-D direct external-engine invocation remain gated.

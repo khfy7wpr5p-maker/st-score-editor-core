@@ -16,37 +16,68 @@ Repository reality only; planned capability is not production capability.
 ## ST-SCORE-EDITOR-APP / PRODUCTIZATION
 
 - **APP-00–08 — COMPLETE / MERGED:** standalone authority, V4 authoring, browser shell, local file/recovery, guarded renderer/viewport, local playback and bounded export/print.
-- **APP-09 automated hardening — COMPLETE / MERGED:** PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`.
-  - iOS/iPad-oriented `100dvh`, `viewport-fit=cover` and safe-area support;
-  - 44 CSS px coarse-pointer targets;
-  - keyboard `focus-visible`, reduced-motion and ARIA status/landmark hardening;
-  - resize/orientation/`visualViewport` presentation reapply without canonical mutation;
-  - best-effort recovery flush on `pagehide`/hidden transitions;
-  - standalone app bundle hard limit: 512 KiB;
-  - automated Node 18/20/22 validation + full build/test green;
-  - no canonical/history/network/server/publication authority.
-- **APP-09 manual standalone release matrix — PENDING / REQUIRED:** real iPhone Safari, iPad Safari, desktop Safari, Chromium and Firefox execution evidence.
-- **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the manual APP-09 release matrix passes.
+- **APP-09 automated hardening — COMPLETE / MERGED:** responsive/mobile/accessibility/recovery lifecycle hardening and 512 KiB standalone bundle limit.
+- **APP-09B renderer/mobile interaction blocker — RESOLVED / MERGED:** host-controlled rerender with OSMD `autoResize:false`; physical iPhone Safari selection and portrait → landscape → portrait interaction evidence obtained. This does not close the full release matrix.
+- **APP-10A — COMPLETE / MERGED:** bounded `GUITAR_TREBLE` and `PIANO_GRAND_STAFF` new-score presets; Piano grand staff uses one Piano part with G/F staves and admitted MusicXML render/export/re-import.
+- **APP-10B — COMPLETE / MERGED:** compact Guitar/Piano New-score selector; selector state is presentation-only and the legacy programmatic default remains compatible.
+- **APP-10C — COMPLETE / MERGED:** revision-bound insertion positions, bounded active Voice 1–5 targeting and explicit-rest-only position note entry; Voice 1–5 MusicXML round trip is covered.
+- **APP-10D — COMPLETE / MERGED:** missing Voice 1–5 materialization only for synthetic/new scores with proven exact full-measure coverage; imported MusicXML automatic Voice creation remains fail-closed.
+- **APP-10E — COMPLETE / MERGED:** standalone browser authoring workspace with Voice 1–5, pitch C–B, flat/natural/sharp, octave, 1 through 1/16 duration, note entry and unified undo/redo. Guitar Voice-5 and Piano lower-staff isolation are WebKit-regressed.
+- **Stage 07 semantic → renderer presentation locator — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`; exact current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup is read-only and complements the existing `ScoreNoteRef -> opaque token -> SemanticAddressV3` hit path.
+- **Manual standalone release matrix — DEFERRED FOR CURRENT DEVELOPMENT / REQUIRED BEFORE RELEASE:** physical/browser validation remains release-blocking.
+- **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the standalone release matrix passes.
 
-## Product safety result through APP-09 automated hardening
+## Current product architecture phase
 
-All score edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. File APIs, recovery, renderer presentation, viewport state, playback, export/print and release-hardening state cannot directly mutate canonical score state. APP-09 lifecycle events may reapply presentation or request recovery flush only.
+The project has moved beyond establishing the score-editing substrate and is now in **standalone authoring-workspace expansion**. The working product path is:
 
-The automated release manifest deliberately records:
+```text
+Guitar/Piano New score
+        -> active staff / Voice 1–5
+        -> bounded note-entry palette
+        -> EditorSessionV4 canonical commit
+        -> unified undo/redo
+        -> MusicXML projection/export
+        -> renderer presentation
+```
+
+All score edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. File APIs, recovery, renderer presentation, viewport state, playback, export/print, authoring palette state and release-hardening state cannot directly mutate canonical score state.
+
+Renderer interaction remains bidirectional only at the presentation/identity layer:
+
+```text
+renderer ScoreNoteRef -> opaque current-revision token -> SemanticAddressV3 selection
+SemanticAddressV3 -> exact current-revision ScoreNoteRef / ScoreMeasureRef -> presentation locator
+```
+
+Neither direction grants DOM/SVG/coordinate/geometry authority.
+
+## Release matrix status
+
+The release manifest deliberately remains:
 
 - `manualDeviceValidationRequired: true`
 - `standaloneReleaseGatePassed: false`
 - `seslitabCutoverAuthorized: false`
 
-This prevents a green Node CI run from being mistaken for real-device release approval.
+Current practical release targets are:
 
-## Next action
+- real iPhone Safari — partial physical evidence exists, including selection and orientation G4 PASS;
+- Android Chrome — required, pending;
+- Windows 10/11 Edge — required, pending;
+- Windows Chrome — required, pending;
+- Windows Firefox — required, pending;
+- real iPad Safari — deferred secondary validation.
 
-Run and record the manual matrix in `docs/app-09-standalone-release-gate.md` before any standalone release approval or SesliTab V4 cutover.
+Device validation is intentionally deferred while standalone authoring development continues. It must be resumed and completed before any standalone release approval or SesliTab cutover.
+
+## Next development action
+
+Continue standalone authoring-workspace expansion on top of APP-10E and Stage 07. The next implementation package should be selected from fresh repository gaps, with priority on explicit active-staff editing, note delete/replace/add workflows and multi-Voice authoring ergonomics. Do not open release or SesliTab gates as part of feature development.
 
 ## Still fail-closed / gated
 
-- APP-09 real-device/browser matrix;
+- remaining real-device/browser release matrix;
 - standalone release until that matrix passes;
 - SesliTab V4 cutover until standalone release gate passes;
 - `.mxl` container support;

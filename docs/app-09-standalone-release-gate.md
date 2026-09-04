@@ -1,12 +1,16 @@
 # APP-09 Standalone Release Gate
 
-Status: **MANUAL DEVICE / BROWSER MATRIX PENDING**
+Status: **DEFERRED FOR CURRENT DEVELOPMENT / MANUAL DEVICE-BROWSER MATRIX REQUIRED BEFORE RELEASE**
 
 Runtime hardening source: PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`
 
-Automated repository validation: **PASS** on Node 18 / 20 / 22.
+Permanent iPhone renderer interaction policy: PR #102 / `c6615a314b41bcdded1e968df353070179453d16`
 
-This checklist is intentionally separate from automated CI. A green Node build is not evidence that Safari/mobile viewport, audio gesture, browser print, touch hit behavior or lifecycle recovery work correctly on real devices.
+Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10E.
+
+This checklist is intentionally separate from automated CI. A green build is not evidence that real mobile viewport, audio gesture, browser print, touch/pointer behavior or lifecycle recovery works correctly on every required platform.
+
+The matrix is currently deferred while standalone authoring development continues. Deferral does not relax this gate and does not authorize standalone release or SesliTab cutover.
 
 ## Release invariants
 
@@ -23,25 +27,45 @@ Every manual run must preserve these invariants:
 - recovery remains browser-local/noncanonical;
 - no network/server/publication authority is introduced.
 
-## Required browser matrix
+## Required browser/device matrix
 
 | Target | Status | Evidence required |
 | --- | --- | --- |
-| Real iPhone Safari | PENDING | device/iOS/Safari version + scenario results |
-| Real iPad Safari | PENDING | device/iPadOS/Safari version + scenario results |
-| Desktop Safari | PENDING | macOS/Safari version + scenario results |
-| Desktop Chromium | PENDING | browser/OS version + scenario results |
-| Desktop Firefox | PENDING | browser/OS version + scenario results |
+| Real iPhone Safari | PARTIAL — G4 PASS | remaining applicable scenario results + device/iOS/Safari version |
+| Android Chrome | PENDING | real device + Android/Chrome version + scenario results |
+| Windows 10/11 Edge | PENDING | Windows/Edge version + scenario results |
+| Windows Chrome | PENDING | Windows/Chrome version + scenario results |
+| Windows Firefox | PENDING | Windows/Firefox version + scenario results |
 
-## Required scenarios per target
+### Secondary validation
+
+| Target | Status | Role |
+| --- | --- | --- |
+| Real iPad Safari | DEFERRED / PENDING | secondary tablet/Safari validation; useful but not a substitute for required Windows/Android evidence |
+
+Mac desktop Safari is not a primary required target for the current product matrix. Safari mobile-engine evidence is carried by iPhone, with iPad retained as secondary validation.
+
+## Existing physical iPhone evidence
+
+Physical iPhone Safari testing isolated and fixed the renderer selection/orientation blocker. After the permanent APP-09B policy:
+
+- semantic note selection works;
+- portrait selection works;
+- landscape selection works;
+- returning to portrait preserves working selection;
+- G4 portrait → landscape → portrait interaction is PASS.
+
+This is partial evidence. The iPhone row remains incomplete until all applicable release scenarios required for the final closeout are recorded.
+
+## Required scenarios per required target
 
 Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 
 ### G1 — Bootstrap and layout
 
 - standalone HTML opens without bootstrap error;
-- toolbar, score viewport, inspector/status and keypad are usable;
-- no content is trapped under device safe areas/notch/home indicator;
+- toolbar, score viewport, inspector/status and keypad/authoring controls are usable;
+- no content is trapped under device safe areas/notch/home indicator where applicable;
 - mobile viewport fills the visible browser area without persistent phantom overflow;
 - desktop layout remains usable after window resizing.
 
@@ -57,9 +81,9 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 ### G3 — Touch / pointer / keyboard
 
 - touch/pointer targets are practically usable at the device scale;
-- toolbar/keypad coarse-pointer targets are at least the APP-09 44 CSS px contract;
+- coarse-pointer controls satisfy the APP-09 minimum target contract where applicable;
 - keyboard focus is visibly indicated on desktop;
-- keyboard viewport/navigation shortcuts do not create canonical revisions;
+- keyboard viewport/navigation actions do not create canonical revisions;
 - touch/pointer viewport activity does not create canonical revisions.
 
 ### G4 — Orientation and dynamic viewport
@@ -72,6 +96,8 @@ On mobile/tablet:
 - selection does not silently switch to another semantic event;
 - current canonical revision/history is unchanged by the orientation/viewport transition itself;
 - renderer presentation remains aligned with the current revision.
+
+For the physically tested iPhone path this scenario is already **PASS**.
 
 ### G5 — Playback independence
 
@@ -110,7 +136,7 @@ On mobile/tablet:
 
 - toolbar and score viewport expose meaningful accessible labels/roles;
 - status updates are exposed as a polite live region;
-- keyboard focus remains visible;
+- keyboard focus remains visible where applicable;
 - reduced-motion OS/browser preference does not break layout or controls;
 - accessibility presentation changes do not alter canonical state.
 
@@ -125,7 +151,7 @@ On mobile/tablet:
 
 APP-09 standalone release gate may be marked PASS only when:
 
-1. all five required browser targets have recorded evidence;
+1. all five required targets have recorded applicable evidence;
 2. G1–G10 have no unresolved release-blocking failure on applicable targets;
 3. any discovered regression has a linked fix + exact-head green CI + rerun evidence on affected targets;
 4. canonical/noncanonical authority invariants remain unchanged;
