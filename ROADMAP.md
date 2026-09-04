@@ -26,6 +26,7 @@ Repository reality only; planned capability is not production capability.
 - **APP-10F — COMPLETE / MERGED:** PR #110 / `bc0c094af4a6e7b937882a3b09cfe6fd199f439a`; exact selected-note pitch edit, selected pitched-event duration edit, note-event Delete→rest and exact chord-tone Delete use existing V4 intents and unified history. APP-10F WebKit covers enter → pitch → duration → delete → undo plus chord-tone deletion.
 - **APP-10G — COMPLETE / MERGED:** PR #111 / `47076403a2a41a322f7ee28c7595d55555fc05c7`; explicit semantic Staff S1/S2/... switching is same-part/same-frame only, creates no history and cannot create a missing Voice. New synthetic scores receive a presentation-only exact initial authoring anchor. WebKit covers Piano S1→S2→Voice 5→note entry→S1 while preserving Staff isolation.
 - **APP-10H — COMPLETE / MERGED:** PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220`; bounded append-only measure-frame growth for NEW synthetic scores. Proven effective meter is required; every content-bearing staff receives one aligned new measure with Voice 1 + explicit full-measure rest; linked TAB remains measure-less; imported MusicXML automatic growth fails closed. Deterministic `frame:N` identity preserves the admitted lossless MusicXML projection, and APP-10H WebKit covers Guitar/Piano growth plus APP-10F edit/delete after growth.
+- **APP-10I — COMPLETE / MERGED:** PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4`; presentation-only previous/next semantic measure navigation. Navigation remains same-part/same-staff and adjacent-frame only, preserves active Voice presentation context, carries onset to a containing canonical event when available, falls back to the exact target measure when the active Voice is absent, and never materializes a Voice or creates history merely by navigating. Imported MusicXML navigation is admitted after exact frame-bearing semantic selection. APP-10I WebKit covers navigation→edit plus Piano missing-Voice fallback and explicit later Voice materialization.
 - **Stage 07 semantic → renderer presentation locator — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`; exact current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup is read-only and complements the existing `ScoreNoteRef -> opaque token -> SemanticAddressV3` hit path.
 - **Manual standalone release matrix — DEFERRED FOR CURRENT DEVELOPMENT / REQUIRED BEFORE RELEASE:** physical/browser validation remains release-blocking.
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the standalone release matrix passes.
@@ -37,9 +38,10 @@ The project is in **standalone authoring-workspace expansion**. The working prod
 ```text
 Guitar/Piano New score
         -> exact semantic Staff + Voice 1–5 context
+        -> previous/next semantic measure-frame navigation
         -> bounded note-entry / selected-note editing palette
         -> bounded synthetic end-of-score measure append
-        -> EditorSessionV4 canonical commit
+        -> EditorSessionV4 canonical commit for actual edits
         -> unified undo/redo
         -> MusicXML projection/export
         -> renderer presentation
@@ -77,9 +79,9 @@ Device validation is intentionally deferred while standalone authoring developme
 
 ## Next development action
 
-Fresh repository audit after APP-10H found no browser product surface for moving authoring context to the previous/next semantic measure frame, even though exact `SemanticAddressV3` selection already exists in the substrate. The next recommended bounded package is **APP-10I — presentation-only semantic measure navigation / active measure-frame context**. This is a planning recommendation, not COMPLETE: navigation must create no canonical history, preserve exact Staff/Voice semantics where available, never implicitly materialize a missing Voice, fail closed on stale/invalid targets, and never infer measure identity from renderer coordinates/DOM/SVG.
+APP-10I closes the basic previous/next multi-measure authoring-context gap. Do a new fresh repository audit before naming APP-10J or another package. Prioritize the highest-value remaining browser authoring gap that can reuse existing semantic primitives without creating a second mutation path. Candidate areas may include unexposed existing notation-editing primitives, chord-entry ergonomics or other bounded authoring workflows, but none is selected or COMPLETE until repository evidence supports it.
 
-If fresh APP-10I preflight finds an existing equivalent surface, do not duplicate it; return to remaining real authoring gaps. Do not open release or SesliTab gates as part of feature development.
+Do not open release or SesliTab gates as part of feature development.
 
 ## Still fail-closed / gated
 
