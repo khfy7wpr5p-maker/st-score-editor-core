@@ -36,6 +36,8 @@ jobs:
         run: node scripts/app10g-webkit-active-staff-regression.mjs
       - name: Run APP-10H WebKit measure-frame authoring regression
         run: node scripts/app10h-webkit-measure-frame-regression.mjs
+      - name: Run APP-10I WebKit semantic measure navigation regression
+        run: node scripts/app10i-webkit-measure-navigation-regression.mjs
       - name: Checkout exact ST Score Rendering Layer revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
