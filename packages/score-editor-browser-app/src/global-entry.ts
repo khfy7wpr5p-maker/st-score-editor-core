@@ -1,9 +1,9 @@
-import { createAuthoringWorkspaceStandaloneBrowserAppRuntime } from './authoring-workspace.js';
+import { createSelectedNoteEditingStandaloneBrowserAppRuntime } from './selected-note-editing.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createAuthoringWorkspaceStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createSelectedNoteEditingStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createAuthoringWorkspaceStandaloneBrowserAppRuntime(),
+  value: createSelectedNoteEditingStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
