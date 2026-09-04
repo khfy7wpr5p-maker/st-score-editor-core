@@ -6,7 +6,7 @@ Runtime hardening source: PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`
 
 Permanent iPhone renderer interaction policy: PR #102 / `c6615a314b41bcdded1e968df353070179453d16`
 
-Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10H, including APP-10E note entry, APP-10F selected-note editing, APP-10G explicit Staff switching, APP-10H bounded synthetic measure growth and the APP-09B renderer/orientation chain. APP-10H exact-head WebKit additionally exercises selected pitch/duration/delete after measure growth and Piano Staff 2 / Voice 5 isolation on the new frame.
+Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10I, including APP-10E note entry, APP-10F selected-note editing, APP-10G explicit Staff switching, APP-10H bounded synthetic measure growth, APP-10I semantic previous/next measure navigation and the APP-09B renderer/orientation chain. APP-10I exact-head WebKit additionally exercises navigation followed by editing and Piano Staff 2 / Voice 5 missing-Voice fallback without implicit materialization.
 
 This checklist is intentionally separate from automated CI. A green build is not evidence that real mobile viewport, audio gesture, browser print, touch/pointer behavior or lifecycle recovery works correctly on every required platform.
 
@@ -19,8 +19,9 @@ Every manual run must preserve these invariants:
 - `ScoreDocumentV3 + NotationDocumentV4` remains the only canonical score pair;
 - no Staff/Voice/measure-navigation palette action, viewport/orientation/touch/playback/export/print/recovery action may create an unintended V4 history revision;
 - Staff switching itself is presentation-only and may not materialize a missing Voice;
+- previous/next semantic measure navigation is presentation-only, must preserve exact Staff context, and may not materialize a missing Voice or create history;
 - measure-frame append, where admitted, is one explicit `EditorSessionV4` canonical mutation; post-append selection/navigation must not create an additional history revision;
-- imported MusicXML automatic measure growth remains fail-closed;
+- imported MusicXML automatic measure growth remains fail-closed while imported semantic measure navigation is allowed only from exact frame-bearing semantic context;
 - renderer DOM/SVG/coordinates/geometry never become edit or measure/timing authority;
 - MusicXML remains exchange/projection only;
 - unsupported cross-staff MusicXML remains fail-closed;
@@ -68,7 +69,8 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 
 - standalone HTML opens without bootstrap error;
 - toolbar, score viewport, inspector/status and keypad/authoring controls are usable;
-- Staff, Voice and admitted Add measure controls remain usable and do not duplicate after rerender;
+- Staff, Voice, previous/next measure and admitted Add measure controls remain usable and do not duplicate after rerender;
+- active measure indication remains coherent after semantic navigation and rerender;
 - no content is trapped under device safe areas/notch/home indicator where applicable;
 - mobile viewport fills the visible browser area without persistent phantom overflow;
 - desktop layout remains usable after window resizing.
@@ -80,7 +82,9 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 - select a note through the semantic hit bridge;
 - perform at least one admitted edit;
 - exercise exact selected-note pitch/duration/delete where applicable;
-- confirm imported MusicXML does not expose/admit automatic Add measure growth;
+- on a multi-measure score, navigate previous/next by semantic measure context and verify navigation alone adds no history revision;
+- where the active Voice is missing in an adjacent measure, verify navigation selects the exact target measure without implicitly materializing that Voice; explicit later Voice materialization remains a separate admitted action only where allowed;
+- confirm imported MusicXML supports exact semantic previous/next measure navigation after frame-bearing selection but does not expose/admit automatic Add measure growth;
 - create a NEW Guitar or Piano score and, where applicable, append one admitted measure; verify the new frame is exact, editing remains available, and undo/redo reverses/restores the append through unified V4 history;
 - on Piano, verify both standard staves remain aligned to the same new frame and Staff/Voice isolation remains intact;
 - undo and redo operate in unified V4 history;
@@ -90,6 +94,7 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 
 - touch/pointer targets are practically usable at the device scale;
 - coarse-pointer controls satisfy the APP-09 minimum target contract where applicable;
+- previous/next measure controls are practically usable without accidental duplicate activation;
 - keyboard focus is visibly indicated on desktop;
 - keyboard viewport/navigation actions do not create canonical revisions;
 - touch/pointer viewport activity does not create canonical revisions.
@@ -101,17 +106,19 @@ On mobile/tablet:
 - change portrait -> landscape -> portrait;
 - show/hide browser chrome where applicable;
 - zoom/scroll presentation remains coherent after each transition;
-- selection does not silently switch to another semantic event;
+- selection does not silently switch to another semantic event or measure;
+- active semantic measure context remains coherent after the transition;
 - current canonical revision/history is unchanged by the orientation/viewport transition itself;
 - renderer presentation remains aligned with the current revision.
 
-For the physically tested iPhone path this scenario is already **PASS**.
+For the physically tested iPhone path this scenario is already **PASS** for the pre-APP-10I interaction evidence. APP-10I measure-navigation behavior still requires normal final release-matrix coverage; no new physical-device PASS is claimed by automated WebKit.
 
 ### G5 — Playback independence
 
 - playback starts from an admitted score after a user gesture;
 - play/pause/stop/seek operate;
 - changing canonical score revision stops stale playback;
+- semantic measure navigation alone does not create a revision or corrupt playback/edit admission state;
 - playback unavailable/error does not prevent further score editing;
 - playback state/tempo/cursor does not create V4 history entries.
 
@@ -128,6 +135,7 @@ For the physically tested iPhone path this scenario is already **PASS**.
 
 - export current MusicXML successfully;
 - for an admitted NEW Guitar/Piano score with APP-10H growth, export/re-import preserves the appended measure count and Piano two-staff frame alignment;
+- after re-import, exact semantic measure navigation remains available from frame-bearing selection without changing imported score topology;
 - exported document is generated through the admitted lossless path;
 - export does not mark a dirty document saved;
 - export does not add a canonical revision/history entry;
@@ -144,7 +152,8 @@ For the physically tested iPhone path this scenario is already **PASS**.
 ### G9 — Accessibility presentation
 
 - toolbar and score viewport expose meaningful accessible labels/roles;
-- Staff/Voice/Add measure and authoring controls have usable accessible names;
+- Staff/Voice/previous-next measure/Add measure and authoring controls have usable accessible names;
+- active measure indication is understandable to assistive technology;
 - status updates are exposed as a polite live region;
 - keyboard focus remains visible where applicable;
 - reduced-motion OS/browser preference does not break layout or controls;
@@ -153,8 +162,8 @@ For the physically tested iPhone path this scenario is already **PASS**.
 ### G10 — Performance / stability
 
 - standalone app bundle remains within the automated 512 KiB budget;
-- repeated edit -> Add measure where admitted -> render -> playback -> orientation/resize cycles do not accumulate obvious duplicate listeners or duplicate UI controls;
-- repeated Staff/Voice switching does not create unintended history or duplicate authoring controls;
+- repeated edit -> semantic measure navigation -> Add measure where admitted -> render -> playback -> orientation/resize cycles do not accumulate obvious duplicate listeners or duplicate UI controls;
+- repeated Staff/Voice/measure switching does not create unintended history or duplicate authoring controls;
 - repeated admitted measure append keeps exact frame/staff alignment and does not create duplicate controls or implicit Voices;
 - no recurring crash, frozen viewport or lost score interaction appears during the run;
 - no unexpected network dependency is required for local editing/playback/export/print orchestration.

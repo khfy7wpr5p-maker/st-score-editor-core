@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10H are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10I are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
@@ -11,6 +11,7 @@ Standalone HTML / Browser Shell
         +--> APP-10 authoring palette
         |      +--> exact semantic Staff selection
         |      +--> Voice 1–5
+        |      +--> previous / active measure / next semantic navigation
         |      +--> pitch / accidental / octave / duration
         |      +--> bounded note entry
         |      +--> exact selected-note Pitch / Duration / Delete
@@ -62,7 +63,7 @@ ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 
 `SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice/measure-navigation choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
 
-Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history.
+Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history. APP-10G Staff switching and APP-10I measure navigation reuse exact semantic selection and therefore change presentation context without creating a canonical history revision.
 
 ## APP-01–08 product substrate
 
@@ -148,9 +149,28 @@ After the one canonical append commit, the browser may move selection to the exa
 
 Core regression covers Guitar/Piano alignment, full-measure rests, undo/redo, stale target, missing meter evidence, imported-score fail-closed behavior, deterministic frame identity and Piano two-measure MusicXML export/re-import. WebKit additionally covers Guitar measure growth followed by APP-10F pitch/duration/delete, and Piano frame growth followed by Staff 2 → Voice 5 → note entry → Staff 1 isolation. APP-10E/F/G and APP-09B renderer/orientation regressions remain in the same exact-head gate.
 
+### APP-10I — semantic previous/next measure navigation
+
+PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4` adds a presentation-only multi-measure authoring context without introducing a new mutation authority.
+
+The browser exposes compact previous / active measure / next controls. Navigation derives its target only from the current revision's `SemanticAddressV3` selection and canonical `measureFrames` ordering:
+
+- target is the immediately adjacent global measure frame only;
+- part and Staff identity are preserved exactly;
+- active Voice 1–5 remains presentation state and is preserved across navigation;
+- when the active Voice exists in the target measure, the current semantic onset is carried to the exact containing canonical event where available;
+- when the active Voice does not exist in the target measure, selection falls back to that exact measure; navigation never materializes the missing Voice;
+- the existing explicit Voice action remains the only admitted route to synthetic missing-Voice materialization;
+- navigation itself calls exact semantic selection and creates no canonical history revision;
+- imported MusicXML may use measure navigation after the user has an exact frame-bearing semantic selection;
+- document/part/staff-only selection has no frame context and fails closed rather than guessing;
+- renderer DOM/SVG IDs, coordinates, nearest geometry and pitch inference have no navigation authority.
+
+WebKit proves Guitar M3→M2→edit→M3 with history changing only for actual edits, and Piano Staff 2 + Voice 5 navigation from a frame where Voice 5 exists to an adjacent measure where it does not. The target safely becomes the exact Staff 2 measure, Voice 5 is not invented, and only a later explicit Voice 5 action materializes it under the existing APP-10D rules. APP-10E/F/G/H and APP-09B renderer/orientation regressions remain in the same exact-head gate.
+
 ## Next bounded authoring candidate
 
-Fresh repository audit after APP-10H found exact semantic selection primitives but no browser product surface for moving authoring context between previous/next measure frames. The recommended next bounded package is **APP-10I — presentation-only semantic measure navigation / active measure-frame context**. It is planning only and must be fresh-read before implementation. Navigation itself must not create history, must preserve exact semantic Staff/Voice context where it exists, must not materialize a missing Voice implicitly, must fail closed on stale/invalid identities, and must not derive frame identity from renderer coordinates or DOM/SVG geometry.
+APP-10I closes the basic multi-measure semantic navigation gap. No APP-10J scope is declared yet. Fresh repository reality must be audited before selecting the next bounded authoring package; existing semantic capabilities should be reused rather than duplicated, and planned capability must not be documented as implemented.
 
 ## Stage 07 semantic ↔ renderer presentation identity
 

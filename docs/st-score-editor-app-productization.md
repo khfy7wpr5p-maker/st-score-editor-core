@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10H COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
+Status: **ACTIVE / APP-00–10I COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
 
 Date: 2026-09-04
 
@@ -131,6 +131,26 @@ APP-10H adds one compact browser `Add measure` action backed by the current `edi
 
 Core tests cover Guitar/Piano frame alignment, explicit full-measure rests, undo/redo, stale-target and missing-meter rejection, imported-score rejection, deterministic frame identity, and Piano two-measure MusicXML export/re-import. Exact-head WebKit covers Guitar measure growth followed by APP-10F pitch/duration/delete, Piano Add measure → Staff 2 → Voice 5 → note → Staff 1 isolation, APP-10E/F/G, and the APP-09B renderer/orientation chain.
 
+### APP-10I — Presentation-only semantic measure navigation
+Status: **COMPLETE / MERGED**
+
+PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4`.
+
+APP-10I exposes compact previous / active measure / next controls without creating a second score authority. It reuses exact current-revision semantic selection:
+
+- only the immediately previous or next global `measureFrame` is targeted;
+- part and Staff identity are preserved exactly;
+- active Voice 1–5 remains presentation context and is preserved;
+- when that Voice exists in the target measure, the current onset is carried to the containing canonical event when one exists;
+- when that Voice is absent, selection falls back to the exact target measure; navigation itself never materializes the missing Voice;
+- explicit Voice materialization remains the existing APP-10D path and requires a separate user action;
+- semantic measure navigation creates no canonical history revision;
+- imported MusicXML navigation is admitted after exact frame-bearing semantic selection even though imported automatic measure growth remains fail-closed;
+- missing frame context and unavailable adjacent frames fail closed;
+- renderer DOM/SVG/coordinates/nearest geometry have no target authority.
+
+Core tests cover Guitar previous/next history invariance, Piano exact Staff preservation without implicit Voice creation, imported MusicXML semantic navigation and missing-context fail-closed behavior. Exact-head WebKit covers Guitar M3 → M2 → note edit → M3 with history changing only for actual edits, plus Piano Staff 2 + Voice 5 navigation to a target measure missing Voice 5, exact measure fallback, and later explicit Voice materialization. APP-10E/F/G/H and the APP-09B renderer/orientation chain remain green in the same gate.
+
 ## Stage 07 — Exact semantic-to-render presentation locators
 Status: **COMPLETE / MERGED**
 
@@ -162,7 +182,7 @@ seslitabCutoverAuthorized = false
 
 ## Current development action
 
-Fresh repository audit after APP-10H found exact semantic selection substrate but no browser product surface for previous/next measure-frame authoring context. The recommended next bounded package is **APP-10I — presentation-only semantic measure navigation / active measure-frame context**. This is planning only, not COMPLETE. Its preflight must confirm no equivalent existing surface before implementation; navigation itself must create no history, must preserve exact Staff/Voice semantics where available, must not implicitly materialize a missing Voice, must fail closed on stale/invalid targets, and must not use renderer coordinates/DOM/SVG as measure identity.
+APP-10I closes the basic multi-measure semantic navigation gap. Do not declare APP-10J yet. Perform a fresh repository audit to identify the highest-value remaining browser authoring gap, prioritizing reuse of already-admitted semantic primitives over new mutation paths. Candidate areas are hypotheses only until the audit proves them.
 
 The device/browser matrix must be resumed before any standalone release closeout. A separate evidence-backed closeout is required before `standaloneReleaseGatePassed` can become true, and SesliTab product integration/cutover remains a later separate program.
 
