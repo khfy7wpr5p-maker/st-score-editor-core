@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { webcrypto } from 'node:crypto';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 import { createSelectedNoteEditingStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/selected-note-editing.js';
+
+if (globalThis.crypto === undefined || typeof globalThis.crypto.randomUUID !== 'function') {
+  Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
+}
 
 const firstStandardMeasure = (documentValue) => {
   const staff = documentValue.session.history.present.score.parts[0]?.staves[0];
