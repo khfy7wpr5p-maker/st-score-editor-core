@@ -81,12 +81,15 @@ try {
       selectionKind: d.session.selection?.kind ?? null,
       selectionFrameId: d.session.selection?.frameId ?? null,
       lastFrameId: score.measureFrames.at(-1)?.id ?? null,
+      frameId: score.measureFrames.at(-1)?.id ?? null,
+      projectionStatus: d.session.renderRequest.projectionStatus,
       past: d.session.history.past.length,
       state: controller.getMeasureFrameAuthoringState()
     };
   });
   if (afterAppend.frames !== 2 || afterAppend.measures !== 2 || afterAppend.selectionKind !== 'event' ||
-      afterAppend.selectionFrameId !== afterAppend.lastFrameId || afterAppend.past !== 2 || !afterAppend.state.canAppendMeasure) {
+      afterAppend.selectionFrameId !== afterAppend.lastFrameId || afterAppend.frameId !== 'frame:2' ||
+      afterAppend.projectionStatus !== 'V3_COMPATIBLE_XML' || afterAppend.past !== 2 || !afterAppend.state.canAppendMeasure) {
     throw new Error(`APP-10H Guitar append mismatch: ${JSON.stringify(afterAppend)}`);
   }
 
@@ -106,20 +109,73 @@ try {
     throw new Error(`APP-10H measure-2 authoring mismatch: ${JSON.stringify(authoredMeasure2)}`);
   }
 
+  await page.getByRole('button', { name: 'Pitch G', exact: true }).click();
+  await page.getByRole('button', { name: 'Sharp', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Octave' }).selectOption('5');
+  await page.getByRole('button', { name: 'Apply palette pitch to selected note', exact: true }).click();
+  await page.getByRole('button', { name: 'Duration 1/8', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply palette duration to selected pitched event', exact: true }).click();
+  const editedAfterGrowth = await page.evaluate(() => {
+    const d = globalThis.STScoreEditorAppController.getDocument();
+    const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard')?.measures[1]?.voices[0]?.events[0];
+    return {
+      kind: event?.kind ?? null,
+      pitch: event?.kind === 'note' ? event.note.pitch : null,
+      duration: event?.duration ?? null,
+      frames: d.session.history.present.score.measureFrames.length,
+      past: d.session.history.past.length
+    };
+  });
+  if (editedAfterGrowth.kind !== 'note' || JSON.stringify(editedAfterGrowth.pitch) !== JSON.stringify({ step: 'G', alter: 1, octave: 5 }) ||
+      JSON.stringify(editedAfterGrowth.duration) !== JSON.stringify({ numerator: 1, denominator: 8 }) ||
+      editedAfterGrowth.frames !== 2 || editedAfterGrowth.past !== 5) {
+    throw new Error(`APP-10H selected edit after growth mismatch: ${JSON.stringify(editedAfterGrowth)}`);
+  }
+
+  await page.getByRole('button', { name: 'Delete selected pitched content', exact: true }).click();
+  const deletedAfterGrowth = await page.evaluate(() => {
+    const d = globalThis.STScoreEditorAppController.getDocument();
+    const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard')?.measures[1]?.voices[0]?.events[0];
+    return { kind: event?.kind ?? null, frames: d.session.history.present.score.measureFrames.length, past: d.session.history.past.length };
+  });
+  if (deletedAfterGrowth.kind !== 'rest' || deletedAfterGrowth.frames !== 2 || deletedAfterGrowth.past !== 6) {
+    throw new Error(`APP-10H selected delete after growth mismatch: ${JSON.stringify(deletedAfterGrowth)}`);
+  }
+
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  const undoDelete = await page.evaluate(() => {
+    const d = globalThis.STScoreEditorAppController.getDocument();
+    const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard')?.measures[1]?.voices[0]?.events[0];
+    return { kind: event?.kind ?? null, pitch: event?.kind === 'note' ? event.note.pitch : null, past: d.session.history.past.length };
+  });
+  if (undoDelete.kind !== 'note' || JSON.stringify(undoDelete.pitch) !== JSON.stringify({ step: 'G', alter: 1, octave: 5 }) || undoDelete.past !== 5) {
+    throw new Error(`APP-10H selected delete undo mismatch: ${JSON.stringify(undoDelete)}`);
+  }
+
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   const afterUndo = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
     const staff = d.session.history.present.score.parts[0].staves.find(item => item.role === 'standard');
-    return { frames: d.session.history.present.score.measureFrames.length, hasNote: staff?.measures[1]?.voices[0]?.events.some(event => event.kind === 'note') ?? false };
+    return {
+      frames: d.session.history.present.score.measureFrames.length,
+      hasNote: staff?.measures[1]?.voices[0]?.events.some(event => event.kind === 'note') ?? false,
+      past: d.session.history.past.length
+    };
   });
-  if (afterUndo.frames !== 2 || afterUndo.hasNote) throw new Error(`APP-10H undo mismatch: ${JSON.stringify(afterUndo)}`);
+  if (afterUndo.frames !== 2 || afterUndo.hasNote || afterUndo.past !== 2) throw new Error(`APP-10H undo-to-empty-measure mismatch: ${JSON.stringify(afterUndo)}`);
   await page.getByRole('button', { name: 'Redo', exact: true }).click();
   const afterRedo = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
     const staff = d.session.history.present.score.parts[0].staves.find(item => item.role === 'standard');
-    return { frames: d.session.history.present.score.measureFrames.length, hasNote: staff?.measures[1]?.voices[0]?.events.some(event => event.kind === 'note') ?? false };
+    return {
+      frames: d.session.history.present.score.measureFrames.length,
+      hasNote: staff?.measures[1]?.voices[0]?.events.some(event => event.kind === 'note') ?? false,
+      past: d.session.history.past.length
+    };
   });
-  if (afterRedo.frames !== 2 || !afterRedo.hasNote) throw new Error(`APP-10H redo mismatch: ${JSON.stringify(afterRedo)}`);
+  if (afterRedo.frames !== 2 || !afterRedo.hasNote || afterRedo.past !== 3) throw new Error(`APP-10H redo mismatch: ${JSON.stringify(afterRedo)}`);
 
   await page.getByRole('combobox', { name: 'New score type', exact: true }).selectOption('PIANO_GRAND_STAFF');
   await page.getByRole('button', { name: 'New', exact: true }).click();
@@ -143,6 +199,7 @@ try {
       upperFrame: upper?.measures[1]?.frameId ?? null,
       lowerFrame: lower?.measures[1]?.frameId ?? null,
       frameId: frame?.id ?? null,
+      projectionStatus: d.session.renderRequest.projectionStatus,
       lowerVoice5HasNote: voice5?.events.some(event => event.kind === 'note') ?? false,
       upperMeasure2Voices: upper?.measures[1]?.voices.length ?? 0,
       activeStaff: controller.getActiveStaffState().activeStaffOrdinal,
@@ -150,7 +207,8 @@ try {
     };
   });
   if (lowerVoice5.frames !== 2 || lowerVoice5.upperFrame !== lowerVoice5.frameId || lowerVoice5.lowerFrame !== lowerVoice5.frameId ||
-      !lowerVoice5.lowerVoice5HasNote || lowerVoice5.upperMeasure2Voices !== 1 || lowerVoice5.activeStaff !== 2 || lowerVoice5.activeVoice !== 5) {
+      lowerVoice5.frameId !== 'frame:2' || lowerVoice5.projectionStatus !== 'V3_COMPATIBLE_XML' || !lowerVoice5.lowerVoice5HasNote ||
+      lowerVoice5.upperMeasure2Voices !== 1 || lowerVoice5.activeStaff !== 2 || lowerVoice5.activeVoice !== 5) {
     throw new Error(`APP-10H Piano Staff-2 Voice-5 mismatch: ${JSON.stringify(lowerVoice5)}`);
   }
 
