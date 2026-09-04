@@ -1,13 +1,13 @@
 {
-  "schema_version": "1.9.0",
+  "schema_version": "2.0.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
-  "date": "2026-09-03",
-  "status": "APP_09_AUTOMATED_HARDENING_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_PENDING",
+  "date": "2026-09-04",
+  "status": "APP_10E_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_DEFERRED_REQUIRED_BEFORE_RELEASE",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_authorized": false,
-  "seslitab_cutover_requires": "APP_09_MANUAL_STANDALONE_RELEASE_MATRIX_PASS",
+  "seslitab_cutover_requires": "MANUAL_STANDALONE_RELEASE_MATRIX_PASS",
   "canonical_pair": {
     "score": "ScoreDocumentV3/3.0.0",
     "notation": "NotationDocumentV4/4.0.0",
@@ -44,7 +44,7 @@
   "app_06": {
     "status":"COMPLETE_MERGED",
     "renderer_current_revision_only":true,
-    "semantic_hit_mapping":"opaque_renderer_request_v4_manifest_token_to_SemanticAddressV3",
+    "semantic_hit_mapping":"ScoreNoteRef_to_opaque_renderer_request_v4_manifest_token_to_SemanticAddressV3",
     "stale_renderer_state_fail_closed":true,
     "dom_svg_coordinate_geometry_authority":false,
     "viewport_presentation_only":true
@@ -88,7 +88,7 @@
     "new_runtime_dependency_added":false
   },
   "app_09": {
-    "status":"AUTOMATED_HARDENING_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_PENDING",
+    "status":"AUTOMATED_HARDENING_COMPLETE_MERGED_RELEASE_MATRIX_DEFERRED_PENDING",
     "merge_pr":89,
     "merge_sha":"2731490575550e38e65e9f4af576b25255b0d9d9",
     "automated_hardening_implemented":true,
@@ -100,24 +100,103 @@
     "focus_visible_styling":true,
     "reduced_motion_styling":true,
     "accessibility_status_live_region":true,
-    "resize_orientation_visual_viewport_reapply_presentation":true,
-    "presentation_reapply_creates_editor_history_revision":false,
     "pagehide_hidden_recovery_flush":true,
     "recovery_flush_failure_nonfatal":true,
     "standalone_bundle_max_bytes":524288,
-    "browser_contract_targets":["ios-safari","ipad-safari","desktop-safari","chromium","firefox"],
     "automated_ci_node_versions":[18,20,22],
-    "automated_ci_exact_head_passed":true,
     "manual_device_validation_required":true,
-    "manual_device_matrix_status":"PENDING",
+    "manual_device_matrix_status":"DEFERRED_PENDING",
     "standalone_release_gate_passed":false,
     "seslitab_cutover_authorized":false,
     "hardening_canonical_authority":false,
     "hardening_history_mutation_authority":false,
     "hardening_network_authority":false,
     "server_revision_authority":false,
-    "publication_authority":false,
-    "new_runtime_dependency_added":false
+    "publication_authority":false
+  },
+  "app_09b_renderer_interaction": {
+    "status":"PHYSICAL_IPHONE_BLOCKER_RESOLVED_RELEASE_MATRIX_OPEN",
+    "permanent_policy_merge_pr":102,
+    "permanent_policy_merge_sha":"c6615a314b41bcdded1e968df353070179453d16",
+    "osmd_auto_resize":false,
+    "resize_orientation_visual_viewport_behavior":"HOST_CONTROLLED_CURRENT_REVISION_RERENDER",
+    "rerender_canonical_mutation":false,
+    "physical_iphone_note_selection_passed":true,
+    "physical_iphone_portrait_landscape_portrait_g4_passed":true,
+    "full_iphone_release_matrix_passed":false
+  },
+  "app_10": {
+    "status":"APP_10A_TO_10E_COMPLETE_MERGED",
+    "app_10a": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":103,
+      "merge_sha":"d6cbc4ef51e00b391a1ba0652102d2b0195309eb",
+      "presets":["GUITAR_TREBLE","PIANO_GRAND_STAFF"],
+      "piano_grand_staff_g_f_clefs":true,
+      "musicxml_export_reimport_covered":true
+    },
+    "app_10b": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":104,
+      "merge_sha":"82cc840815149ffbfd10511b98798e64a5b74214",
+      "browser_new_score_selector":["Guitar","Piano"],
+      "selector_canonical_authority":false
+    },
+    "app_10c": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":105,
+      "merge_sha":"019907c83836722d718a36214f18ad20b523438d",
+      "revision_bound_insertion_position":true,
+      "active_voice_ordinals":[1,2,3,4,5],
+      "explicit_rest_only_note_entry":true,
+      "renderer_coordinate_timing_inference":false,
+      "voice_1_to_5_musicxml_roundtrip_covered":true
+    },
+    "app_10d": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":106,
+      "merge_sha":"a618792e242efc745b6ec8e63380883c8ed85549",
+      "missing_voice_materialization_ordinals":[1,2,3,4,5],
+      "synthetic_new_score_only":true,
+      "requires_proven_exact_full_measure_coverage":true,
+      "imported_musicxml_auto_voice_creation":false
+    },
+    "app_10e": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":107,
+      "merge_sha":"2a018e709935336d8fadef91daa8990fffd69afd",
+      "authoring_workspace_bundled":true,
+      "voice_buttons":[1,2,3,4,5],
+      "pitch_steps":["C","D","E","F","G","A","B"],
+      "accidentals":["flat","natural","sharp"],
+      "duration_denominators":[1,2,4,8,16],
+      "unified_editor_session_history":true,
+      "guitar_voice_5_webkit_regression":true,
+      "piano_lower_staff_isolation_webkit_regression":true
+    }
+  },
+  "stage_07_semantic_renderer_locator": {
+    "status":"COMPLETE_MERGED",
+    "merge_pr":108,
+    "merge_sha":"9429116bd5c92d4db4c4edbb21b307c6c74c2391",
+    "semantic_address_to_score_note_ref":true,
+    "semantic_address_to_score_measure_ref":true,
+    "reverse_lookup_read_only":true,
+    "stale_presentation_fail_closed":true,
+    "dom_svg_coordinate_nearest_pitch_radius_inference":false
+  },
+  "manual_release_matrix": {
+    "status":"DEFERRED_PENDING_REQUIRED_BEFORE_RELEASE",
+    "required_targets":[
+      {"target":"real_iphone_safari","status":"PARTIAL_EVIDENCE_G4_PASS"},
+      {"target":"android_chrome","status":"PENDING"},
+      {"target":"windows_edge","status":"PENDING"},
+      {"target":"windows_chrome","status":"PENDING"},
+      {"target":"windows_firefox","status":"PENDING"}
+    ],
+    "secondary_targets":[
+      {"target":"real_ipad_safari","status":"DEFERRED_PENDING"}
+    ]
   },
   "stages": [
     {"id":"APP-00","status":"COMPLETE_MERGED"},
@@ -130,13 +209,20 @@
     {"id":"APP-07","status":"COMPLETE_MERGED"},
     {"id":"APP-08","status":"COMPLETE_MERGED"},
     {"id":"APP-09A","status":"COMPLETE_MERGED"},
-    {"id":"APP-09B","status":"PENDING_MANUAL_DEVICE_BROWSER_MATRIX"}
+    {"id":"APP-09B","status":"BLOCKER_RESOLVED_RELEASE_MATRIX_DEFERRED_PENDING"},
+    {"id":"APP-10A","status":"COMPLETE_MERGED"},
+    {"id":"APP-10B","status":"COMPLETE_MERGED"},
+    {"id":"APP-10C","status":"COMPLETE_MERGED"},
+    {"id":"APP-10D","status":"COMPLETE_MERGED"},
+    {"id":"APP-10E","status":"COMPLETE_MERGED"},
+    {"id":"STAGE-07-SEMANTIC-RENDERER-LOCATOR","status":"COMPLETE_MERGED"}
   ],
   "global_invariants": {
     "musicxml_exchange_only":true,
     "renderer_canonical_authority":false,
     "renderer_dom_svg_coordinate_geometry_authority":false,
     "app_shell_canonical_authority":false,
+    "authoring_palette_canonical_authority":false,
     "viewport_canonical_authority":false,
     "coordinate_authoring":false,
     "file_state_canonical_authority":false,
@@ -149,5 +235,6 @@
     "direct_pdf_generation_claimed":false,
     "production_activation_by_merge":false
   },
-  "next_action":"APP_09_MANUAL_DEVICE_BROWSER_MATRIX_REQUIRED_BEFORE_STANDALONE_RELEASE_OR_SESLITAB_CUTOVER"
+  "current_development_phase":"STANDALONE_AUTHORING_WORKSPACE_EXPANSION",
+  "next_action":"SELECT_NEXT_AUTHORING_GAP_FROM_FRESH_REPOSITORY_REALITY_KEEP_RELEASE_MATRIX_DEFERRED_BUT_RELEASE_BLOCKING"
 }
