@@ -1,5 +1,6 @@
 import type { ScoreEditorBrowserAppSnapshot } from './index.js';
 import type { RecoveryEnabledControllerOptions } from './recovery-enabled.js';
+import type { SemanticAddressV3 } from '../../addressing-v3/src/index.js';
 import {
   createRendererEnabledStandaloneBrowserAppRuntime,
   createRendererEnabledStandaloneScoreEditorController,
@@ -9,7 +10,11 @@ import {
 import {
   EDITOR_RENDERER_SELECTION_BRIDGE_V4_VERSION,
   createExternalRendererHitFromScoreNoteRefV4,
-  resolveExternalRendererHitV4
+  resolveExternalRendererHitV4,
+  resolveSemanticAddressRenderedScoreMeasureRefV4,
+  resolveSemanticAddressRenderedScoreNoteRefV4,
+  type RenderedScoreMeasureRefV4,
+  type RenderedScoreNoteRefV4
 } from '../../editor-renderer-selection-bridge-v4/src/index.js';
 
 export const RENDERER_HIT_ENABLED_BROWSER_APP_VERSION = '1.0.0' as const;
@@ -43,6 +48,8 @@ export interface RendererHitEnabledStandaloneScoreEditorController extends Omit<
   readonly profile: typeof rendererHitEnabledBrowserAppProfile;
   readonly selectRendererHit: (rawHit: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly selectRenderedScoreNoteRef: (rawRef: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly resolveRenderedScoreNoteRef: (address: SemanticAddressV3) => Readonly<RenderedScoreNoteRefV4> | null;
+  readonly resolveRenderedScoreMeasureRef: (address: SemanticAddressV3) => Readonly<RenderedScoreMeasureRefV4> | null;
 }
 
 export const createRendererHitEnabledStandaloneScoreEditorController = (
@@ -121,6 +128,14 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
         );
       }
       return selectRendererHit(hit);
+    },
+    resolveRenderedScoreNoteRef: (address: SemanticAddressV3) => {
+      const current = requireCurrentPresentation();
+      return resolveSemanticAddressRenderedScoreNoteRefV4(current.score, current.request, address);
+    },
+    resolveRenderedScoreMeasureRef: (address: SemanticAddressV3) => {
+      const current = requireCurrentPresentation();
+      return resolveSemanticAddressRenderedScoreMeasureRefV4(current.score, current.request, address);
     }
   });
   return controller;

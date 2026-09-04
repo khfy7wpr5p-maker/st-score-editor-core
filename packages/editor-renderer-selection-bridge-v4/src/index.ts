@@ -8,7 +8,7 @@ import {
   type RendererRequestV4
 } from '../../renderer-contract-v4/src/index.js';
 import type { RendererFamily } from '../../renderer-contract/src/index.js';
-import type { SemanticAddressV3 } from '../../addressing-v3/src/index.js';
+import { resolveSemanticAddressV3, type SemanticAddressV3 } from '../../addressing-v3/src/index.js';
 
 export const EDITOR_RENDERER_SELECTION_BRIDGE_V4_VERSION = '4.0.0' as const;
 export const MAX_EXTERNAL_HIT_TOKEN_LENGTH_V4 = 256 as const;
@@ -28,6 +28,11 @@ export interface RenderedScoreNoteRefV4 {
   readonly measureIndex: number;
   readonly noteIndex: number;
   readonly voice?: number;
+}
+
+export interface RenderedScoreMeasureRefV4 {
+  readonly partId: string;
+  readonly measureIndex: number;
 }
 
 export type EditorRendererSelectionBridgeV4ErrorCode =
@@ -149,27 +154,28 @@ const emitGraceEvent = (request: RendererRequestV4, event: GraceEvent, voice: nu
 const graceGroupFor = (groups: readonly GraceGroup[], anchorEventId: string, placement: 'before' | 'after'): GraceGroup | null =>
   groups.find((group) => group.anchorEventId === anchorEventId && group.placement === placement) ?? null;
 
-export const resolveRenderedScoreNoteRefTokenV4 = (
-  score: ScoreDocumentV3,
-  request: RendererRequestV4,
-  rawRef: unknown
-): string | null => {
+const assertCurrentRequest = (score: ScoreDocumentV3, request: RendererRequestV4): void => {
   if (
     request.contractVersion !== RENDER_REQUEST_V4_VERSION ||
     request.manifest.contractVersion !== RENDER_MANIFEST_V4_VERSION ||
     request.documentId !== score.id || request.revisionId !== score.revision.id ||
     request.manifest.documentId !== score.id || request.manifest.revisionId !== score.revision.id
   ) {
-    throw new EditorRendererSelectionBridgeV4Error('Rendered note locator belongs to a stale or invalid V4 render request.', 'STALE_EXTERNAL_HIT');
+    throw new EditorRendererSelectionBridgeV4Error('Rendered locator belongs to a stale or invalid V4 render request.', 'STALE_EXTERNAL_HIT');
   }
-  const ref = parseRenderedScoreNoteRefV4(rawRef);
-  const partIndex = score.parts.findIndex((_part, index) => `P${index + 1}` === ref.partId);
-  if (partIndex < 0 || ref.measureIndex >= score.measureFrames.length) return null;
+};
+
+const emittedForPartMeasure = (
+  score: ScoreDocumentV3,
+  request: RendererRequestV4,
+  partIndex: number,
+  measureIndex: number
+): readonly EmittedRenderedNote[] | null => {
   const part = score.parts[partIndex];
-  if (part === undefined) return null;
+  if (part === undefined || measureIndex < 0 || measureIndex >= score.measureFrames.length) return null;
   const emitted: EmittedRenderedNote[] = [];
   for (const staff of [...contentStavesV3(part)].sort((left, right) => left.ordinal - right.ordinal)) {
-    const measure = staff.measures[ref.measureIndex];
+    const measure = staff.measures[measureIndex];
     if (measure === undefined) return null;
     for (const voice of [...measure.voices].sort((left, right) => left.ordinal - right.ordinal)) {
       for (const event of voice.events) {
@@ -181,12 +187,71 @@ export const resolveRenderedScoreNoteRefTokenV4 = (
       }
     }
   }
+  return Object.freeze(emitted);
+};
+
+export const resolveRenderedScoreNoteRefTokenV4 = (
+  score: ScoreDocumentV3,
+  request: RendererRequestV4,
+  rawRef: unknown
+): string | null => {
+  assertCurrentRequest(score, request);
+  const ref = parseRenderedScoreNoteRefV4(rawRef);
+  const partIndex = score.parts.findIndex((_part, index) => `P${index + 1}` === ref.partId);
+  if (partIndex < 0) return null;
+  const emitted = emittedForPartMeasure(score, request, partIndex, ref.measureIndex);
+  if (emitted === null) return null;
   const selected = ref.voice === undefined
     ? emitted[ref.noteIndex]
     : emitted.filter((entry) => entry.voice === ref.voice)[ref.noteIndex];
   if (selected === undefined || selected.token === null) return null;
   resolveRenderTokenV4(score, request, selected.token);
   return selected.token;
+};
+
+export const resolveSemanticAddressRenderedScoreNoteRefV4 = (
+  score: ScoreDocumentV3,
+  request: RendererRequestV4,
+  rawAddress: SemanticAddressV3
+): Readonly<RenderedScoreNoteRefV4> | null => {
+  assertCurrentRequest(score, request);
+  resolveSemanticAddressV3(score, rawAddress);
+  if (rawAddress.kind !== 'note' && rawAddress.kind !== 'grace-note') return null;
+  const token = rawAddress.kind === 'note'
+    ? tokenForEntity(request, 'note', rawAddress.noteId)
+    : tokenForEntity(request, 'grace-note', rawAddress.graceNoteId);
+  if (token === null) return null;
+  resolveRenderTokenV4(score, request, token);
+  const partIndex = score.parts.findIndex((part) => part.id === rawAddress.partId);
+  const measureIndex = score.measureFrames.findIndex((frame) => frame.id === rawAddress.frameId);
+  if (partIndex < 0 || measureIndex < 0) return null;
+  const emitted = emittedForPartMeasure(score, request, partIndex, measureIndex);
+  if (emitted === null) return null;
+  const matches = emitted.filter((entry) => entry.token === token);
+  if (matches.length !== 1) return null;
+  const voice = matches[0]!.voice;
+  const withinVoice = emitted.filter((entry) => entry.voice === voice);
+  const noteIndex = withinVoice.findIndex((entry) => entry.token === token);
+  if (noteIndex < 0) return null;
+  return Object.freeze({ partId: `P${partIndex + 1}`, measureIndex, noteIndex, voice });
+};
+
+export const resolveSemanticAddressRenderedScoreMeasureRefV4 = (
+  score: ScoreDocumentV3,
+  request: RendererRequestV4,
+  rawAddress: SemanticAddressV3
+): Readonly<RenderedScoreMeasureRefV4> | null => {
+  assertCurrentRequest(score, request);
+  resolveSemanticAddressV3(score, rawAddress);
+  if (
+    rawAddress.kind !== 'measure' && rawAddress.kind !== 'voice' && rawAddress.kind !== 'event' &&
+    rawAddress.kind !== 'note' && rawAddress.kind !== 'grace-group' && rawAddress.kind !== 'grace-event' &&
+    rawAddress.kind !== 'grace-note'
+  ) return null;
+  const partIndex = score.parts.findIndex((part) => part.id === rawAddress.partId);
+  const measureIndex = score.measureFrames.findIndex((frame) => frame.id === rawAddress.frameId);
+  if (partIndex < 0 || measureIndex < 0) return null;
+  return Object.freeze({ partId: `P${partIndex + 1}`, measureIndex });
 };
 
 export const createExternalRendererHitFromScoreNoteRefV4 = (
