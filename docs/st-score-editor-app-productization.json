@@ -3,7 +3,7 @@
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-04",
-  "status": "APP_10H_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_DEFERRED_REQUIRED_BEFORE_RELEASE",
+  "status": "APP_10I_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_DEFERRED_REQUIRED_BEFORE_RELEASE",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_authorized": false,
@@ -126,7 +126,7 @@
     "full_iphone_release_matrix_passed":false
   },
   "app_10": {
-    "status":"APP_10A_TO_10H_COMPLETE_MERGED",
+    "status":"APP_10A_TO_10I_COMPLETE_MERGED",
     "app_10a": {
       "status":"COMPLETE_MERGED",
       "merge_pr":103,
@@ -215,6 +215,22 @@
       "musicxml_two_measure_piano_roundtrip_covered":true,
       "webkit_measure_growth_selected_edit_delete_regression":true,
       "webkit_piano_staff_voice5_after_growth_regression":true
+    },
+    "app_10i": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":115,
+      "merge_sha":"65e58c5a13760121c24a603e071aa72ec13f31d4",
+      "measure_navigation":"SAME_PART_SAME_STAFF_ADJACENT_FRAME_SEMANTIC_ONLY",
+      "navigation_creates_history":false,
+      "active_voice_context_preserved":true,
+      "onset_carry":"EXACT_CONTAINING_EVENT_WHEN_AVAILABLE",
+      "missing_active_voice_fallback":"EXACT_TARGET_MEASURE",
+      "navigation_materializes_missing_voice":false,
+      "imported_musicxml_measure_navigation":true,
+      "missing_frame_context_fail_closed":true,
+      "renderer_coordinate_authority":false,
+      "webkit_navigation_then_edit_regression":true,
+      "webkit_piano_missing_voice_fallback_regression":true
     }
   },
   "stage_07_semantic_renderer_locator": {
@@ -260,6 +276,7 @@
     {"id":"APP-10F","status":"COMPLETE_MERGED"},
     {"id":"APP-10G","status":"COMPLETE_MERGED"},
     {"id":"APP-10H","status":"COMPLETE_MERGED"},
+    {"id":"APP-10I","status":"COMPLETE_MERGED"},
     {"id":"STAGE-07-SEMANTIC-RENDERER-LOCATOR","status":"COMPLETE_MERGED"}
   ],
   "global_invariants": {
@@ -284,5 +301,5 @@
     "production_activation_by_merge":false
   },
   "current_development_phase":"STANDALONE_AUTHORING_WORKSPACE_EXPANSION",
-  "next_action":"PREFLIGHT_APP_10I_PRESENTATION_ONLY_SEMANTIC_MEASURE_NAVIGATION_ACTIVE_FRAME_CONTEXT_FROM_FRESH_REPOSITORY_REALITY_KEEP_RELEASE_MATRIX_DEFERRED_BUT_RELEASE_BLOCKING"
+  "next_action":"FRESH_REPOSITORY_AUDIT_AFTER_APP_10I_SELECT_HIGHEST_VALUE_REMAINING_BOUNDED_AUTHORING_GAP_KEEP_RELEASE_MATRIX_DEFERRED_BUT_RELEASE_BLOCKING"
 }
