@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { webcrypto } from 'node:crypto';
 import { createRendererHitEnabledStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/renderer-hit-enabled.js';
+
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
+    value: webcrypto,
+    configurable: true
+  });
+}
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0">
@@ -75,7 +83,8 @@ test('Stage 07 exact reverse bridge maps current SemanticAddress to renderer not
 
 test('Stage 07 reverse bridge refuses non-note highlight while still resolving its exact measure cursor', async () => {
   const value = controller();
-  await value.openMusicXml(xml, { title: 'Stage 07 measure locator' });
+  const opened = await value.openMusicXml(xml, { title: 'Stage 07 measure locator' });
+  assert.equal(opened.error, null);
   value.attachOsmdRenderer(host());
   await value.renderCurrent();
   const document = value.getDocument();
