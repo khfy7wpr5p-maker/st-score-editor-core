@@ -22,26 +22,28 @@ Repository reality only; planned capability is not production capability.
 - **APP-10B — COMPLETE / MERGED:** compact Guitar/Piano New-score selector; selector state is presentation-only and the legacy programmatic default remains compatible.
 - **APP-10C — COMPLETE / MERGED:** revision-bound insertion positions, bounded active Voice 1–5 targeting and explicit-rest-only position note entry; Voice 1–5 MusicXML round trip is covered.
 - **APP-10D — COMPLETE / MERGED:** missing Voice 1–5 materialization only for synthetic/new scores with proven exact full-measure coverage; imported MusicXML automatic Voice creation remains fail-closed.
-- **APP-10E — COMPLETE / MERGED:** standalone browser authoring workspace with Voice 1–5, pitch C–B, flat/natural/sharp, octave, 1 through 1/16 duration, note entry and unified undo/redo. Guitar Voice-5 and Piano lower-staff isolation are WebKit-regressed.
+- **APP-10E — COMPLETE / MERGED:** standalone browser authoring workspace with Voice 1–5, pitch C–B, flat/natural/sharp, octave, 1 through 1/16 duration, note entry and unified undo/redo.
+- **APP-10F — COMPLETE / MERGED:** PR #110 / `bc0c094af4a6e7b937882a3b09cfe6fd199f439a`; exact selected-note pitch edit, selected pitched-event duration edit, note-event Delete→rest and exact chord-tone Delete use existing V4 intents and unified history. APP-10F WebKit covers enter → pitch → duration → delete → undo plus chord-tone deletion.
+- **APP-10G — COMPLETE / MERGED:** PR #111 / `47076403a2a41a322f7ee28c7595d55555fc05c7`; explicit semantic Staff S1/S2/... switching is same-part/same-frame only, creates no history and cannot create a missing Voice. New synthetic scores receive a presentation-only exact initial authoring anchor. WebKit covers Piano S1→S2→Voice 5→note entry→S1 while preserving Staff isolation.
 - **Stage 07 semantic → renderer presentation locator — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`; exact current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup is read-only and complements the existing `ScoreNoteRef -> opaque token -> SemanticAddressV3` hit path.
 - **Manual standalone release matrix — DEFERRED FOR CURRENT DEVELOPMENT / REQUIRED BEFORE RELEASE:** physical/browser validation remains release-blocking.
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the standalone release matrix passes.
 
 ## Current product architecture phase
 
-The project has moved beyond establishing the score-editing substrate and is now in **standalone authoring-workspace expansion**. The working product path is:
+The project is in **standalone authoring-workspace expansion**. The working product path is:
 
 ```text
 Guitar/Piano New score
-        -> active staff / Voice 1–5
-        -> bounded note-entry palette
+        -> exact semantic Staff + Voice 1–5 context
+        -> bounded note-entry / selected-note editing palette
         -> EditorSessionV4 canonical commit
         -> unified undo/redo
         -> MusicXML projection/export
         -> renderer presentation
 ```
 
-All score edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. File APIs, recovery, renderer presentation, viewport state, playback, export/print, authoring palette state and release-hardening state cannot directly mutate canonical score state.
+All score edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. File APIs, recovery, renderer presentation, viewport state, playback, export/print, authoring palette/Staff/Voice state and release-hardening state cannot directly mutate canonical score state.
 
 Renderer interaction remains bidirectional only at the presentation/identity layer:
 
@@ -73,7 +75,7 @@ Device validation is intentionally deferred while standalone authoring developme
 
 ## Next development action
 
-Continue standalone authoring-workspace expansion on top of APP-10E and Stage 07. The next implementation package should be selected from fresh repository gaps, with priority on explicit active-staff editing, note delete/replace/add workflows and multi-Voice authoring ergonomics. Do not open release or SesliTab gates as part of feature development.
+Continue from fresh repository reality after APP-10G. The earlier high-priority gaps for exact selected-note edit/delete and explicit active-Staff targeting are now closed. Select the next bounded authoring package from remaining real gaps, with priority on multi-Voice authoring ergonomics and still-unexposed existing semantic editing capabilities. Do not open release or SesliTab gates as part of feature development.
 
 ## Still fail-closed / gated
 

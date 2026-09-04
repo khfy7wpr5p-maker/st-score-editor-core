@@ -1,9 +1,9 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-04",
-  "status": "APP_10E_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_DEFERRED_REQUIRED_BEFORE_RELEASE",
+  "status": "APP_10G_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_DEFERRED_REQUIRED_BEFORE_RELEASE",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "seslitab_product_cutover_deferred": true,
   "seslitab_cutover_authorized": false,
@@ -126,7 +126,7 @@
     "full_iphone_release_matrix_passed":false
   },
   "app_10": {
-    "status":"APP_10A_TO_10E_COMPLETE_MERGED",
+    "status":"APP_10A_TO_10G_COMPLETE_MERGED",
     "app_10a": {
       "status":"COMPLETE_MERGED",
       "merge_pr":103,
@@ -170,9 +170,30 @@
       "pitch_steps":["C","D","E","F","G","A","B"],
       "accidentals":["flat","natural","sharp"],
       "duration_denominators":[1,2,4,8,16],
+      "unified_editor_session_history":true
+    },
+    "app_10f": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":110,
+      "merge_sha":"bc0c094af4a6e7b937882a3b09cfe6fd199f439a",
+      "selected_pitch_edit":"EXACT_NOTE_SELECTION_ONLY",
+      "selected_duration_edit":"EXACT_PITCHED_EVENT_ONLY",
+      "selected_delete":"SINGLE_NOTE_TO_REST_OR_EXACT_CHORD_TONE",
       "unified_editor_session_history":true,
-      "guitar_voice_5_webkit_regression":true,
-      "piano_lower_staff_isolation_webkit_regression":true
+      "renderer_coordinate_authority":false,
+      "webkit_regression":true
+    },
+    "app_10g": {
+      "status":"COMPLETE_MERGED",
+      "merge_pr":111,
+      "merge_sha":"47076403a2a41a322f7ee28c7595d55555fc05c7",
+      "active_staff_selection":"SAME_PART_SAME_FRAME_SEMANTIC_ONLY",
+      "staff_switch_creates_history":false,
+      "staff_switch_materializes_missing_voice":false,
+      "new_score_initial_semantic_anchor":true,
+      "new_score_initial_anchor_creates_history":false,
+      "renderer_coordinate_authority":false,
+      "webkit_piano_staff_voice5_isolation_regression":true
     }
   },
   "stage_07_semantic_renderer_locator": {
@@ -215,6 +236,8 @@
     {"id":"APP-10C","status":"COMPLETE_MERGED"},
     {"id":"APP-10D","status":"COMPLETE_MERGED"},
     {"id":"APP-10E","status":"COMPLETE_MERGED"},
+    {"id":"APP-10F","status":"COMPLETE_MERGED"},
+    {"id":"APP-10G","status":"COMPLETE_MERGED"},
     {"id":"STAGE-07-SEMANTIC-RENDERER-LOCATOR","status":"COMPLETE_MERGED"}
   ],
   "global_invariants": {
@@ -223,6 +246,8 @@
     "renderer_dom_svg_coordinate_geometry_authority":false,
     "app_shell_canonical_authority":false,
     "authoring_palette_canonical_authority":false,
+    "active_staff_canonical_authority":false,
+    "active_voice_canonical_authority":false,
     "viewport_canonical_authority":false,
     "coordinate_authoring":false,
     "file_state_canonical_authority":false,
@@ -236,5 +261,5 @@
     "production_activation_by_merge":false
   },
   "current_development_phase":"STANDALONE_AUTHORING_WORKSPACE_EXPANSION",
-  "next_action":"SELECT_NEXT_AUTHORING_GAP_FROM_FRESH_REPOSITORY_REALITY_KEEP_RELEASE_MATRIX_DEFERRED_BUT_RELEASE_BLOCKING"
+  "next_action":"SELECT_NEXT_AUTHORING_GAP_FROM_FRESH_REPOSITORY_REALITY_AFTER_APP_10G_KEEP_RELEASE_MATRIX_DEFERRED_BUT_RELEASE_BLOCKING"
 }

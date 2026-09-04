@@ -1,12 +1,12 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10E COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
+Status: **ACTIVE / APP-00–10G COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
 
 Date: 2026-09-04
 
 ## Product decision
 
-ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette state is noncanonical. Local product operation requires no backend.
+ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice state is noncanonical. Local product operation requires no backend.
 
 Device/browser validation is intentionally deferred during the current authoring-workspace development phase. Deferral is not release approval: `standaloneReleaseGatePassed` and `seslitabCutoverAuthorized` remain false.
 
@@ -92,7 +92,23 @@ Status: **COMPLETE / MERGED**
 
 PR #107 / `2a018e709935336d8fadef91daa8990fffd69afd`.
 
-The standalone browser authoring surface now exposes Voice 1–5, pitch C–B, flat/natural/sharp, octave, whole through 1/16 duration and bounded note entry. Voice materialization and note entry use one `EditorSessionV4` history; undo/redo remains unified. WebKit regression covers Guitar Voice-5 entry and Piano lower-staff isolation.
+The standalone browser authoring surface exposes Voice 1–5, pitch C–B, flat/natural/sharp, octave, whole through 1/16 duration and bounded note entry. Voice materialization and note entry use one `EditorSessionV4` history; undo/redo remains unified.
+
+### APP-10F — Exact selected-note editing
+Status: **COMPLETE / MERGED**
+
+PR #110 / `bc0c094af4a6e7b937882a3b09cfe6fd199f439a`.
+
+Adds browser controls for exact selected-note pitch edit, exact selected pitched-event duration edit, and bounded Delete. A single-note event becomes an explicit rest; an exact selected chord tone removes only that tone. Existing `editor-basic-authoring-v4` intents remain the mutation authority and all accepted edits stay in unified `EditorSessionV4` history. No coordinate/DOM/SVG target inference is admitted.
+
+### APP-10G — Explicit semantic active Staff
+Status: **COMPLETE / MERGED**
+
+PR #111 / `47076403a2a41a322f7ee28c7595d55555fc05c7`.
+
+Adds Staff S1/S2/... controls for standard staves in the current part. Staff switching is exact same-part/same-frame semantic selection only, creates no history and cannot materialize a missing Voice. The active Voice ordinal is preserved; if that Voice is absent on the target Staff, selection lands on the exact measure until the user explicitly activates/materializes the Voice through the existing admitted path.
+
+New synthetic scores receive a presentation-only exact initial authoring anchor on the first standard staff / first frame / Voice 1 event. This enables blank-score authoring without granting renderer-rest hit or coordinate authority. WebKit covers Piano S1 → S2 → Voice 5 → note entry → S1 plus APP-10E/F and APP-09B renderer/orientation regressions.
 
 ## Stage 07 — Exact semantic-to-render presentation locators
 Status: **COMPLETE / MERGED**
@@ -125,7 +141,7 @@ seslitabCutoverAuthorized = false
 
 ## Current development action
 
-Continue standalone authoring-workspace expansion after APP-10E and Stage 07. Fresh repository gaps should determine the next package, prioritizing explicit active-staff editing, note add/delete/replace behavior and multi-Voice authoring ergonomics while preserving the canonical/noncanonical boundary.
+Continue standalone authoring-workspace expansion after APP-10G and Stage 07. The earlier high-priority gaps for selected-note edit/delete and explicit Staff targeting are closed. Select the next package from fresh repository gaps, prioritizing multi-Voice authoring ergonomics and existing semantic capabilities that are not yet exposed safely in the browser.
 
 The device/browser matrix must be resumed before any standalone release closeout. A separate evidence-backed closeout is required before `standaloneReleaseGatePassed` can become true, and SesliTab product integration/cutover remains a later separate program.
 

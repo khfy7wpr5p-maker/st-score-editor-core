@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10E are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10G are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
@@ -8,10 +8,12 @@ Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10E ar
 Standalone HTML / Browser Shell
         |
         +--> Guitar / Piano New-score selector (presentation state)
-        +--> APP-10E authoring palette
+        +--> APP-10 authoring palette
+        |      +--> exact semantic Staff selection
         |      +--> Voice 1–5
         |      +--> pitch / accidental / octave / duration
         |      +--> bounded note entry
+        |      +--> exact selected-note Pitch / Duration / Delete
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
         +--> viewport + APP-09 responsive hardening (presentation-only)
@@ -32,6 +34,7 @@ EditorSessionV4
         |
         +--> revision-bound insertion positions
         +--> safe Voice materialization for proven synthetic measures
+        +--> exact selected-note/chord-tone authoring intents
         +--> unified authoring history / undo / redo
         +--> PlaybackPlanV1 --> local Web Audio
         +--> admitted lossless MusicXML --> explicit export handoff
@@ -55,7 +58,7 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Voice choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
+`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
 
 Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history.
 
@@ -94,16 +97,33 @@ A missing Voice 1–5 may be materialized only for a synthetic/new score when th
 
 ### APP-10E — browser authoring surface
 
-The standalone browser runtime exposes a compact authoring workspace with:
+The standalone browser runtime exposes a compact authoring workspace with Voice 1–5, pitch C–B, flat/natural/sharp, octave selection, durations from whole through 1/16 and bounded note entry at the selected semantic event time.
 
-- Voice 1–5;
-- pitch C–B;
-- flat / natural / sharp;
-- octave selection;
-- durations from whole through 1/16;
-- bounded note entry at the selected semantic event time.
+Voice materialization and note entry stay in the same `EditorSessionV4` history, so undo/redo remains unified.
 
-Voice materialization and note entry stay in the same `EditorSessionV4` history, so undo/redo remains unified. WebKit regression covers Guitar Voice-5 authoring and Piano lower-staff isolation.
+### APP-10F — exact selected-note editing
+
+PR #110 / `bc0c094af4a6e7b937882a3b09cfe6fd199f439a` exposes existing V4 semantic authoring primitives through the browser without introducing a second mutation path:
+
+- exact selected note may apply the current palette pitch;
+- exact selected pitched event may apply the current palette duration;
+- Delete on a single-note event converts that event to an explicit rest;
+- Delete on an exact selected chord tone removes only that tone and preserves the remaining event/tone;
+- all mutations use unified `EditorSessionV4` history and remain stale-target/fail-closed.
+
+The browser layer does not infer a target from renderer coordinates or geometry.
+
+### APP-10G — explicit active Staff context
+
+PR #111 / `47076403a2a41a322f7ee28c7595d55555fc05c7` adds presentation-only active Staff controls for standard staves in the current part.
+
+Staff switching is admitted only through exact same-part/same-measure-frame semantic identity. It preserves the current active Voice ordinal but cannot materialize that Voice on the target Staff. If the active Voice does not exist there, selection lands on the exact target measure and the user must explicitly invoke the existing Voice materialization action where admitted.
+
+Staff switching creates no canonical history revision. It never uses DOM/SVG coordinates, nearest-staff geometry or pitch inference.
+
+A newly created synthetic Guitar/Piano score receives a presentation-only exact semantic authoring anchor on the first standard staff / first frame / Voice 1 explicit event. This solves blank-score entry without granting renderer-rest hit authority and without creating history.
+
+WebKit regression covers APP-10E note entry, APP-10F selected-note editing, APP-10G Piano Staff switching with lower-staff Voice 5 isolation, and the existing APP-09B renderer/orientation regression chain.
 
 ## Stage 07 semantic ↔ renderer presentation identity
 
