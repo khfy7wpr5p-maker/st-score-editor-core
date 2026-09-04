@@ -106,8 +106,7 @@ await buildBrowserArtifact({
     selectedPitchEdit: 'exact-note-selection-only', selectedDurationEdit: 'exact-pitched-event-only',
     selectedDelete: 'single-note-to-rest-or-exact-chord-tone', selectedEditingHistory: 'EditorSessionV4',
     selectedEditingRendererCoordinateAuthority: false, selectedEditingNetworkAuthority: false,
-    browserContractTargets: ['ios-safari', 'android-chrome', 'windows-edge', 'windows-chrome', 'windows-firefox'],
-    secondaryBrowserContractTargets: ['ipad-safari'],
+    browserContractTargets: ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'],
     manualDeviceValidationRequired: true, standaloneReleaseGatePassed: false, seslitabCutoverAuthorized: false,
     serverRevisionAuthority: false, publicationAuthority: false,
     entryHtml: 'st-score-editor-app.html'
