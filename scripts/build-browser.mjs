@@ -71,7 +71,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-10H standalone app',
+  label: 'APP-10I standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   maxBytes: STANDALONE_APP_BUNDLE_MAX_BYTES,
   manifest: Object.freeze({
@@ -116,6 +116,11 @@ await buildBrowserArtifact({
     measureFrameAppend: 'synthetic-new-score-end-only', measureFrameMeterProofRequired: true,
     measureFrameHistory: 'EditorSessionV4', importedMusicXmlAutomaticMeasureGrowth: false,
     measureFrameRendererCoordinateAuthority: false, measureFrameNetworkAuthority: false,
+    measureNavigationBundled: true, measureNavigationCanonicalAuthority: false,
+    measureNavigationSelection: 'same-part-same-staff-adjacent-frame-semantic-only',
+    measureNavigationHistoryMutationAuthority: false, measureNavigationVoiceMaterializationAuthority: false,
+    measureNavigationOnsetCarry: 'exact-containing-event-when-available', importedMusicXmlMeasureNavigation: true,
+    measureNavigationRendererCoordinateAuthority: false, measureNavigationNetworkAuthority: false,
     browserContractTargets: ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'],
     manualDeviceValidationRequired: true, standaloneReleaseGatePassed: false, seslitabCutoverAuthorized: false,
     serverRevisionAuthority: false, publicationAuthority: false,
@@ -147,4 +152,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-10H standalone HTML: PASS');
+console.log('APP-10I standalone HTML: PASS');
