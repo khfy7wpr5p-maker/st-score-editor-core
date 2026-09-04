@@ -21,7 +21,7 @@ const directIntent = (score, prefix) => ({
   version: '1.0.0',
   type: 'APPEND_SYNTHETIC_MEASURE_FRAME',
   target: addressEntityV3(score, score.id),
-  frameId: `frame:${prefix}`,
+  frameId: `frame:${score.measureFrames.length + 1}`,
   displayNumber: String(score.measureFrames.length + 1),
   staffRestIds: score.parts.flatMap(part => part.staves.filter(staff => staff.role !== 'tablature-linked').map(staff => ({
     staffId: staff.id,
@@ -44,6 +44,7 @@ test('APP-10H Guitar append creates one aligned frame with Voice 1 full-measure 
   assert.ok(documentValue);
   const score = documentValue.session.history.present.score;
   assert.equal(score.measureFrames.length, 2);
+  assert.equal(score.measureFrames[1].id, 'frame:2');
   assert.equal(contentStaves(documentValue).length, 1);
   const staff = contentStaves(documentValue)[0];
   assert.equal(staff.measures.length, 2);
@@ -77,6 +78,7 @@ test('APP-10H Piano append adds one measure on both standard staves in the same 
   const score = documentValue.session.history.present.score;
   const staves = standardStaves(documentValue);
   assert.equal(score.measureFrames.length, 2);
+  assert.equal(score.measureFrames[1].id, 'frame:2');
   assert.equal(staves.length, 2);
   assert.equal(staves[0].measures.length, 2);
   assert.equal(staves[1].measures.length, 2);
@@ -100,7 +102,7 @@ test('APP-10H imported MusicXML automatic measure growth fails closed', async ()
   );
 });
 
-test('APP-10H missing effective meter and stale document target fail closed', () => {
+test('APP-10H missing effective meter, non-lossless frame identity, and stale document target fail closed', () => {
   const documentValue = createNewScoreEditorAppDocument({ preset: 'GUITAR_TREBLE' });
   const score = documentValue.session.history.present.score;
   const notation = documentValue.session.history.present.notation;
@@ -121,6 +123,12 @@ test('APP-10H missing effective meter and stale document target fail closed', ()
     error => error?.code === 'METER_EVIDENCE_MISSING'
   );
 
+  const invalidIdentity = { ...directIntent(score, 'bad-frame'), frameId: 'frame:custom' };
+  assert.throws(
+    () => executeTopologyAuthoringV4(score, notation, invalidIdentity, { nextRevisionId: 'rev:bad-frame' }),
+    error => error?.code === 'IDENTITY_PLAN_INVALID'
+  );
+
   const first = executeTopologyAuthoringV4(score, notation, directIntent(score, 'first'), { nextRevisionId: 'rev:first' });
   const stale = directIntent(score, 'stale');
   assert.throws(
@@ -135,6 +143,7 @@ test('APP-10H Piano two-measure export and re-import preserve frame count and st
   controller.appendMeasure();
   const documentValue = controller.getDocument();
   assert.ok(documentValue);
+  assert.equal(documentValue.session.renderRequest.projectionStatus, 'V3_COMPATIBLE_XML');
   const xml = exportMusicXmlScoreEditorAppDocument(documentValue);
   const reopened = await openMusicXmlScoreEditorAppDocument(xml, { sha256Hex: async () => '2'.repeat(64) });
   const score = reopened.session.history.present.score;
