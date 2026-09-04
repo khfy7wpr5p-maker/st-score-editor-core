@@ -21,6 +21,8 @@ export const activeStaffAuthoringBrowserAppProfile = Object.freeze({
   activeStaffSelection: 'same-part-same-frame-semantic-only' as const,
   activeStaffHistoryMutationAuthority: false,
   activeStaffVoiceMaterializationAuthority: false,
+  newScoreInitialSelection: 'first-standard-staff-first-frame-voice1-explicit-event' as const,
+  newScoreInitialSelectionHistoryMutationAuthority: false,
   activeStaffRendererCoordinateAuthority: false,
   activeStaffNetworkAuthority: false
 });
@@ -114,8 +116,7 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
 
     let onset: Rational | null = null;
     if (selection.kind === 'event' || selection.kind === 'note') {
-      const eventId = selection.kind === 'event' ? selection.eventId : selection.eventId;
-      const eventAddress = addressEntityV3(score, eventId);
+      const eventAddress = addressEntityV3(score, selection.eventId);
       if (eventAddress.kind === 'event') {
         const resolved = resolveSemanticAddressV3(score, eventAddress);
         if (resolved.kind === 'event') onset = resolved.value.onset;
@@ -149,6 +150,19 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
     });
   };
 
+  const selectInitialNewScoreAnchor = (): void => {
+    const documentValue = base.getDocument();
+    if (documentValue === null || documentValue.origin !== 'NEW') return;
+    const score = documentValue.session.history.present.score;
+    const staff = score.parts[0]?.staves.find(item => item.role === 'standard');
+    if (staff === undefined || staff.role !== 'standard') return;
+    const measure = staff.measures[0];
+    const voice = measure?.voices.find(item => item.ordinal === 1) ?? measure?.voices[0];
+    const event = voice?.events[0];
+    const targetId = event?.id ?? voice?.id ?? measure?.id ?? staff.id;
+    base.select(addressEntityV3(score, targetId));
+  };
+
   const decorate = (): void => {
     if (root === null) return;
     const palette = root.querySelector<HTMLElement>('[data-st-authoring-palette]');
@@ -178,6 +192,12 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
   const controller: ActiveStaffAuthoringStandaloneScoreEditorController = {
     ...base,
     profile: activeStaffAuthoringBrowserAppProfile,
+    newDocument: (newOptions) => {
+      const snapshot = base.newDocument(newOptions);
+      if (snapshot.error === null) selectInitialNewScoreAnchor();
+      decorate();
+      return base.getSnapshot();
+    },
     getActiveStaffState: state,
     setActiveStaff: (staffId) => {
       const documentValue = base.getDocument();
@@ -207,8 +227,7 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
           if (event !== null) targetId = event.id;
         }
       }
-      const target = addressEntityV3(score, targetId);
-      base.select(target);
+      base.select(addressEntityV3(score, targetId));
       decorate();
       return state();
     },
@@ -232,6 +251,8 @@ export const createActiveStaffAuthoringStandaloneBrowserAppRuntime = () => {
       selection: 'same-part-same-frame-semantic-only',
       historyMutationAuthority: false,
       voiceMaterializationAuthority: false,
+      newScoreInitialSelection: 'first-standard-staff-first-frame-voice1-explicit-event',
+      newScoreInitialSelectionHistoryMutationAuthority: false,
       rendererCoordinateAuthority: false,
       networkAuthority: false
     })
