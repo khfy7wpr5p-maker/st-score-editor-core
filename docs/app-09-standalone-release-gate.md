@@ -6,7 +6,7 @@ Runtime hardening source: PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`
 
 Permanent iPhone renderer interaction policy: PR #102 / `c6615a314b41bcdded1e968df353070179453d16`
 
-Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10G, including APP-10E note entry, APP-10F selected-note editing, APP-10G explicit Staff switching and the APP-09B renderer/orientation chain.
+Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10H, including APP-10E note entry, APP-10F selected-note editing, APP-10G explicit Staff switching, APP-10H bounded synthetic measure growth and the APP-09B renderer/orientation chain. APP-10H exact-head WebKit additionally exercises selected pitch/duration/delete after measure growth and Piano Staff 2 / Voice 5 isolation on the new frame.
 
 This checklist is intentionally separate from automated CI. A green build is not evidence that real mobile viewport, audio gesture, browser print, touch/pointer behavior or lifecycle recovery works correctly on every required platform.
 
@@ -17,9 +17,11 @@ The matrix is currently deferred while standalone authoring development continue
 Every manual run must preserve these invariants:
 
 - `ScoreDocumentV3 + NotationDocumentV4` remains the only canonical score pair;
-- no Staff/Voice palette action, viewport/orientation/touch/playback/export/print/recovery action may create an unintended V4 history revision;
+- no Staff/Voice/measure-navigation palette action, viewport/orientation/touch/playback/export/print/recovery action may create an unintended V4 history revision;
 - Staff switching itself is presentation-only and may not materialize a missing Voice;
-- renderer DOM/SVG/coordinates/geometry never become edit authority;
+- measure-frame append, where admitted, is one explicit `EditorSessionV4` canonical mutation; post-append selection/navigation must not create an additional history revision;
+- imported MusicXML automatic measure growth remains fail-closed;
+- renderer DOM/SVG/coordinates/geometry never become edit or measure/timing authority;
 - MusicXML remains exchange/projection only;
 - unsupported cross-staff MusicXML remains fail-closed;
 - playback failure must not disable editing or OMR admission;
@@ -66,7 +68,7 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 
 - standalone HTML opens without bootstrap error;
 - toolbar, score viewport, inspector/status and keypad/authoring controls are usable;
-- Staff and Voice controls remain usable and do not duplicate after rerender;
+- Staff, Voice and admitted Add measure controls remain usable and do not duplicate after rerender;
 - no content is trapped under device safe areas/notch/home indicator where applicable;
 - mobile viewport fills the visible browser area without persistent phantom overflow;
 - desktop layout remains usable after window resizing.
@@ -78,8 +80,11 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 - select a note through the semantic hit bridge;
 - perform at least one admitted edit;
 - exercise exact selected-note pitch/duration/delete where applicable;
+- confirm imported MusicXML does not expose/admit automatic Add measure growth;
+- create a NEW Guitar or Piano score and, where applicable, append one admitted measure; verify the new frame is exact, editing remains available, and undo/redo reverses/restores the append through unified V4 history;
+- on Piano, verify both standard staves remain aligned to the same new frame and Staff/Voice isolation remains intact;
 - undo and redo operate in unified V4 history;
-- no renderer coordinate/DOM identifier is exposed as an edit target.
+- no renderer coordinate/DOM identifier is exposed as an edit or measure target.
 
 ### G3 — Touch / pointer / keyboard
 
@@ -122,6 +127,7 @@ For the physically tested iPhone path this scenario is already **PASS**.
 ### G7 — MusicXML export
 
 - export current MusicXML successfully;
+- for an admitted NEW Guitar/Piano score with APP-10H growth, export/re-import preserves the appended measure count and Piano two-staff frame alignment;
 - exported document is generated through the admitted lossless path;
 - export does not mark a dirty document saved;
 - export does not add a canonical revision/history entry;
@@ -138,7 +144,7 @@ For the physically tested iPhone path this scenario is already **PASS**.
 ### G9 — Accessibility presentation
 
 - toolbar and score viewport expose meaningful accessible labels/roles;
-- Staff/Voice and authoring controls have usable accessible names;
+- Staff/Voice/Add measure and authoring controls have usable accessible names;
 - status updates are exposed as a polite live region;
 - keyboard focus remains visible where applicable;
 - reduced-motion OS/browser preference does not break layout or controls;
@@ -147,8 +153,9 @@ For the physically tested iPhone path this scenario is already **PASS**.
 ### G10 — Performance / stability
 
 - standalone app bundle remains within the automated 512 KiB budget;
-- repeated edit -> render -> playback -> orientation/resize cycles do not accumulate obvious duplicate listeners or duplicate UI controls;
+- repeated edit -> Add measure where admitted -> render -> playback -> orientation/resize cycles do not accumulate obvious duplicate listeners or duplicate UI controls;
 - repeated Staff/Voice switching does not create unintended history or duplicate authoring controls;
+- repeated admitted measure append keeps exact frame/staff alignment and does not create duplicate controls or implicit Voices;
 - no recurring crash, frozen viewport or lost score interaction appears during the run;
 - no unexpected network dependency is required for local editing/playback/export/print orchestration.
 
