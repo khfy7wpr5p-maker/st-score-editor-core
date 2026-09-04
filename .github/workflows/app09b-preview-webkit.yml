@@ -28,6 +28,8 @@ jobs:
         run: npx playwright install --with-deps webkit
       - name: Build Editor Core browser artifacts
         run: npm run build:browser
+      - name: Run APP-10E WebKit authoring workspace regression
+        run: node scripts/app10e-webkit-authoring-workspace-regression.mjs
       - name: Checkout exact ST Score Rendering Layer revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
