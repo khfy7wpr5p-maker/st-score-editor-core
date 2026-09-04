@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
+import { rendererProfileForIntegration } from '../dist/packages/renderer-contract/src/index.js';
 import { createRendererHitEnabledStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/renderer-hit-enabled.js';
 
 if (!globalThis.crypto) {
@@ -32,6 +33,8 @@ const memoryStore = () => {
   });
 };
 
+const integrationProfile = rendererProfileForIntegration('st-score-rendering-layer');
+
 const host = () => ({
   packageName: 'opensheetmusicdisplay',
   packageVersion: '2.1.2',
@@ -40,6 +43,7 @@ const host = () => ({
 });
 
 const controller = () => createRendererHitEnabledStandaloneScoreEditorController({
+  rendererProfile: integrationProfile,
   store: memoryStore(),
   autosaveDelayMs: 60_000,
   sha256Hex: async () => 'a'.repeat(64)
