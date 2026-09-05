@@ -1,9 +1,9 @@
-import { createLocalOrnamentTogglesStandaloneBrowserAppRuntime } from './local-ornament-toggles.js';
+import { createExplicitAccidentalsStandaloneBrowserAppRuntime } from './explicit-accidentals.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createLocalOrnamentTogglesStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createExplicitAccidentalsStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createLocalOrnamentTogglesStandaloneBrowserAppRuntime(),
+  value: createExplicitAccidentalsStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
