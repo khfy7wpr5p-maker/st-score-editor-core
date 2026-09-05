@@ -40,6 +40,8 @@ jobs:
         run: node scripts/app10i-webkit-measure-navigation-regression.mjs
       - name: Run APP-10J WebKit bounded chord-tone authoring regression
         run: node scripts/app10j-webkit-chord-tone-authoring-regression.mjs
+      - name: Run APP-10K WebKit bounded articulation toggles regression
+        run: node scripts/app10k-webkit-articulation-toggles-regression.mjs
       - name: Checkout exact ST Score Rendering Layer revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
