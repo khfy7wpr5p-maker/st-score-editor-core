@@ -1,9 +1,9 @@
-import { createExplicitAccidentalsStandaloneBrowserAppRuntime } from './explicit-accidentals.js';
+import { createExtendedArticulationTogglesStandaloneBrowserAppRuntime } from './extended-articulation-toggles.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createExplicitAccidentalsStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createExtendedArticulationTogglesStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createExplicitAccidentalsStandaloneBrowserAppRuntime(),
+  value: createExtendedArticulationTogglesStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
