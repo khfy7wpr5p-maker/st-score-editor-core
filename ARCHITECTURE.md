@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10K are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10L are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
@@ -17,6 +17,7 @@ Standalone HTML / Browser Shell
         |      +--> exact selected-note Pitch / Duration / Delete
         |      +--> exact selected pitched-event +Tone
         |      +--> bounded Staccato / Accent / Tenuto toggles
+        |      +--> bounded Trill / Turn / Mordent local ornament toggles
         |      +--> bounded Add measure for admitted synthetic scores
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
@@ -41,6 +42,7 @@ EditorSessionV4
         +--> append-only synthetic measure-frame topology mutation
         +--> exact basic authoring intents including ADD_CHORD_TONE / REMOVE_CHORD_TONE
         +--> exact V4 articulation authoring intents
+        +--> exact V4 local ornament authoring intents
         +--> unified authoring history / undo / redo
         +--> PlaybackPlanV1 --> local Web Audio
         +--> admitted lossless MusicXML --> explicit export handoff
@@ -64,7 +66,7 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice/measure-navigation/articulation-control choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
+`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice/measure-navigation/articulation/ornament-control choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
 
 Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history. APP-10G Staff switching and APP-10I measure navigation reuse exact semantic selection and therefore change presentation context without creating a canonical history revision.
 
@@ -118,22 +120,7 @@ PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4` adds presentation-only prev
 
 ### APP-10J — bounded chord-tone authoring
 
-PR #117 / `578203792d43548c5b174ab7bd29da4819b22275` exposes the already-admitted V4 `ADD_CHORD_TONE` primitive through the standalone palette rather than introducing a new chord mutation model.
-
-The browser contract is deliberately narrow:
-
-- one compact `+Tone` action is exposed;
-- current selection must resolve exactly to a pitched normal event or one exact note inside that event;
-- rests, document/part/staff/measure/voice selections and stale/non-resolving targets fail closed;
-- each action adds exactly one fresh note identity using the current palette pitch;
-- a single-note event becomes a chord while preserving event onset/duration and original tone identity;
-- an existing chord gains exactly one new tone;
-- the newly created tone becomes exact `SemanticAddressV3` note selection;
-- the action uses the existing `commitBasic -> ADD_CHORD_TONE -> EditorSessionV4` path and creates exactly one canonical history revision;
-- APP-10F exact chord-tone Delete remains the complementary removal path;
-- imported MusicXML exact chord-tone authoring is admitted and covered by lossless export/re-import;
-- renderer DOM/SVG/coordinates/nearest geometry never infer the event or pitch target;
-- palette state remains presentation-only; it supplies the requested pitch but cannot mutate score state by itself.
+PR #117 / `578203792d43548c5b174ab7bd29da4819b22275` exposes the already-admitted V4 `ADD_CHORD_TONE` primitive through the standalone palette rather than introducing a new chord mutation model. Exact pitched event/note selection is required, one fresh tone is added per action, the new tone becomes exact selection, and APP-10F exact chord-tone Delete remains the removal path.
 
 ### APP-10K — bounded exact articulation toggles
 
@@ -147,17 +134,36 @@ The admitted browser profile is:
 - new browser-authored specs use `placement:'auto'` and `direction:null`;
 - if exactly one articulation of the requested kind already exists, the browser removes that exact existing spec rather than normalizing or guessing its placement;
 - if more than one same-kind spec exists, the state is ambiguous and that browser toggle fails closed;
-- unsupported articulation kinds cannot be passed through the bounded browser method;
 - every accepted add/remove uses the existing `commitArticulation -> EditorSessionV4` path and creates one canonical history revision;
 - imported MusicXML articulation add remains inside the admitted lossless projection and is covered by export/re-import;
-- renderer DOM/SVG IDs, coordinates, nearest geometry and visual mark position have no authoring authority;
+- renderer DOM/SVG IDs, coordinates, nearest geometry and visual mark position have no authoring authority.
+
+### APP-10L — bounded exact local ornament toggles
+
+PR #121 / `aeb08ecd71cad9a0b09b3ab44493d9fde5f19178` exposes a deliberately bounded single-event subset of existing `editor-ornament-authoring-v4` capability.
+
+The admitted browser profile is:
+
+- compact Trill (`trill-mark`), Turn (`turn`) and Mordent (`mordent`) controls only;
+- current selection must resolve exactly to a pitched normal event or a note whose exact parent event is resolved semantically;
+- rests, measure/document selections and other non-event targets fail closed;
+- new browser-authored local ornaments use `placement:'auto'` and `accidentalMarks:[]`;
+- if exactly one same-kind local ornament already exists, the browser removes that exact existing `OrnamentSpec`, preserving imported placement and accidental-mark semantics instead of rewriting them;
+- if multiple same-kind local ornaments exist, the browser marks the kind ambiguous and fails closed rather than choosing one;
+- unsupported local ornament kinds cannot pass through the bounded browser method;
+- every accepted add/remove uses the existing `commitOrnament -> TOGGLE_LOCAL_ORNAMENT/REMOVE_LOCAL_ORNAMENT -> EditorSessionV4` path and creates one canonical history revision;
+- spanning tremolo and wavy-line relation creation/removal are explicitly outside APP-10L because they require multi-endpoint contracts;
+- grace-event ornament targeting is explicitly outside APP-10L;
+- imported MusicXML local ornament authoring remains inside the admitted lossless projection and is covered by export/re-import;
+- exact removal coverage includes an imported-style ornament with explicit placement and accidental-mark semantics;
+- renderer DOM/SVG IDs, coordinates, nearest geometry and visual ornament position have no authoring authority;
 - control pressed/disabled state is derived from current canonical notation semantics and is itself noncanonical.
 
-Core coverage proves Staccato/Accent/Tenuto add/remove, undo/redo, imported MusicXML round-trip, exact removal of an imported-style placed articulation, ambiguous same-kind fail-closed behavior, unsupported-kind rejection and non-pitched selection rejection. WebKit proves articulation on a Guitar chord event, separate articulation state across APP-10H/10I multi-measure navigation, and Piano Staff 2 / Voice 5 isolation while APP-10E/F/G/H/I/J and APP-09B remain in the same exact-head gate.
+Core coverage proves Trill/Turn/Mordent add/remove, undo/redo, imported MusicXML round-trip, exact removal of imported placed/accidental-mark ornament semantics, ambiguous same-kind fail-closed behavior, unsupported-kind rejection and non-pitched selection rejection. WebKit proves local ornament authoring on a Guitar chord event, separate local ornament state across APP-10H/10I multi-measure navigation, and Piano Staff 2 / Voice 5 isolation while APP-10E/F/G/H/I/J/K and APP-09B remain in the same exact-head gate.
 
 ## Next bounded authoring candidate
 
-APP-10K closes the first compact articulation exposure gap. No APP-10L scope is declared yet. Fresh repository reality must be audited before selecting the next bounded authoring package. Existing ornament, grace and keypad/relation primitives remain candidates, but multi-target workflows require explicit selection contracts and must not be inferred from renderer geometry.
+APP-10L closes the first compact local-ornament exposure gap. No APP-10M scope is declared yet. Fresh repository reality must be audited before selecting the next bounded authoring package. Multi-target tremolo/wavy-line, tie/slur and grace workflows require explicit endpoint/target-selection contracts and must not be inferred from renderer geometry.
 
 ## Stage 07 semantic ↔ renderer presentation identity
 
