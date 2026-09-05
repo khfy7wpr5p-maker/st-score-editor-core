@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10J are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10K are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
@@ -16,6 +16,7 @@ Standalone HTML / Browser Shell
         |      +--> bounded note entry
         |      +--> exact selected-note Pitch / Duration / Delete
         |      +--> exact selected pitched-event +Tone
+        |      +--> bounded Staccato / Accent / Tenuto toggles
         |      +--> bounded Add measure for admitted synthetic scores
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
@@ -39,6 +40,7 @@ EditorSessionV4
         +--> safe Voice materialization for proven synthetic measures
         +--> append-only synthetic measure-frame topology mutation
         +--> exact basic authoring intents including ADD_CHORD_TONE / REMOVE_CHORD_TONE
+        +--> exact V4 articulation authoring intents
         +--> unified authoring history / undo / redo
         +--> PlaybackPlanV1 --> local Web Audio
         +--> admitted lossless MusicXML --> explicit export handoff
@@ -62,7 +64,7 @@ One product session owns exactly one current pair:
 ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 ```
 
-`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice/measure-navigation choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
+`SemanticAddressV3` is revision-bound canonical source identity. MusicXML is exchange/projection data. Browser file handles, recovery state, shell state, active palette/Staff/Voice/measure-navigation/articulation-control choice, viewport state, renderer DOM/SVG/geometry, playback state, export/print state and release-hardening state are noncanonical.
 
 Host/UI/playback/export/print/hardening layers cannot dual-write canonical score state. Canonical edits continue only through `EditorSessionV4` validation and unified V4 history. APP-10G Staff switching and APP-10I measure navigation reuse exact semantic selection and therefore change presentation context without creating a canonical history revision.
 
@@ -133,11 +135,29 @@ The browser contract is deliberately narrow:
 - renderer DOM/SVG/coordinates/nearest geometry never infer the event or pitch target;
 - palette state remains presentation-only; it supplies the requested pitch but cannot mutate score state by itself.
 
-Core coverage proves note→chord, repeated tone addition, exact tone deletion, undo/redo, imported MusicXML chord add + export/re-import, and fail-closed rest/non-event selection. WebKit proves Guitar chord add/delete, chord authoring across APP-10H/10I multi-measure flow, and Piano Staff 2 / Voice 5 chord isolation while retaining APP-10E/F/G/H/I and APP-09B regressions in the same exact-head gate.
+### APP-10K — bounded exact articulation toggles
+
+PR #119 / `9fb9acc93d8121edff2ed97dee26d1213d035966` exposes a deliberately small notation-mark surface on top of the existing `editor-articulation-authoring-v4` path.
+
+The admitted browser profile is:
+
+- compact Staccato, Accent and Tenuto controls only;
+- current selection must resolve exactly to a pitched normal event or a note whose exact parent event is resolved semantically;
+- rests and non-event selections fail closed;
+- new browser-authored specs use `placement:'auto'` and `direction:null`;
+- if exactly one articulation of the requested kind already exists, the browser removes that exact existing spec rather than normalizing or guessing its placement;
+- if more than one same-kind spec exists, the state is ambiguous and that browser toggle fails closed;
+- unsupported articulation kinds cannot be passed through the bounded browser method;
+- every accepted add/remove uses the existing `commitArticulation -> EditorSessionV4` path and creates one canonical history revision;
+- imported MusicXML articulation add remains inside the admitted lossless projection and is covered by export/re-import;
+- renderer DOM/SVG IDs, coordinates, nearest geometry and visual mark position have no authoring authority;
+- control pressed/disabled state is derived from current canonical notation semantics and is itself noncanonical.
+
+Core coverage proves Staccato/Accent/Tenuto add/remove, undo/redo, imported MusicXML round-trip, exact removal of an imported-style placed articulation, ambiguous same-kind fail-closed behavior, unsupported-kind rejection and non-pitched selection rejection. WebKit proves articulation on a Guitar chord event, separate articulation state across APP-10H/10I multi-measure navigation, and Piano Staff 2 / Voice 5 isolation while APP-10E/F/G/H/I/J and APP-09B remain in the same exact-head gate.
 
 ## Next bounded authoring candidate
 
-APP-10J closes the basic chord construction asymmetry. No APP-10K scope is declared yet. Fresh repository reality must be audited before selecting the next bounded authoring package. Existing articulation, ornament, grace and keypad primitives are candidates only; planned capability must not be documented as implemented.
+APP-10K closes the first compact articulation exposure gap. No APP-10L scope is declared yet. Fresh repository reality must be audited before selecting the next bounded authoring package. Existing ornament, grace and keypad/relation primitives remain candidates, but multi-target workflows require explicit selection contracts and must not be inferred from renderer geometry.
 
 ## Stage 07 semantic ↔ renderer presentation identity
 
