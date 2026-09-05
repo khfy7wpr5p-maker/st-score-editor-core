@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10I are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10J are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
@@ -15,6 +15,7 @@ Standalone HTML / Browser Shell
         |      +--> pitch / accidental / octave / duration
         |      +--> bounded note entry
         |      +--> exact selected-note Pitch / Duration / Delete
+        |      +--> exact selected pitched-event +Tone
         |      +--> bounded Add measure for admitted synthetic scores
         +--> browser-local file workflow (noncanonical)
         +--> recovery/autosave cache (noncanonical)
@@ -37,7 +38,7 @@ EditorSessionV4
         +--> revision-bound insertion positions
         +--> safe Voice materialization for proven synthetic measures
         +--> append-only synthetic measure-frame topology mutation
-        +--> exact selected-note/chord-tone authoring intents
+        +--> exact basic authoring intents including ADD_CHORD_TONE / REMOVE_CHORD_TONE
         +--> unified authoring history / undo / redo
         +--> PlaybackPlanV1 --> local Web Audio
         +--> admitted lossless MusicXML --> explicit export handoff
@@ -83,12 +84,7 @@ Physical iPhone Safari evidence proved note selection and portrait → landscape
 
 ### APP-10A/B — admitted score starts
 
-The user-facing New workflow admits two explicit product presets:
-
-- `GUITAR_TREBLE`: one standard G-clef staff;
-- `PIANO_GRAND_STAFF`: one Piano part with two standard G/F staves.
-
-Both are canonical V4 app documents from creation. The Piano grand-staff preset has admitted renderer/export projection and MusicXML export/re-import coverage. The compact Guitar/Piano selector is presentation state only; it does not become score authority.
+The user-facing New workflow admits two explicit product presets: `GUITAR_TREBLE` and `PIANO_GRAND_STAFF`. Both are canonical V4 app documents from creation. Piano grand staff is one Piano part with G/F standard staves and has admitted renderer/export/re-import coverage. The selector is presentation state only.
 
 ### APP-10C — position note entry and Voice targeting
 
@@ -100,96 +96,60 @@ A missing Voice 1–5 may be materialized only for a synthetic/new score when th
 
 ### APP-10E — browser authoring surface
 
-The standalone browser runtime exposes a compact authoring workspace with Voice 1–5, pitch C–B, flat/natural/sharp, octave selection, durations from whole through 1/16 and bounded note entry at the selected semantic event time.
-
-Voice materialization and note entry stay in the same `EditorSessionV4` history, so undo/redo remains unified.
+The standalone browser runtime exposes Voice 1–5, pitch C–B, flat/natural/sharp, octave, whole through 1/16 duration and bounded note entry. Voice materialization and note entry stay in the same `EditorSessionV4` history.
 
 ### APP-10F — exact selected-note editing
 
-PR #110 / `bc0c094af4a6e7b937882a3b09cfe6fd199f439a` exposes existing V4 semantic authoring primitives through the browser without introducing a second mutation path:
-
-- exact selected note may apply the current palette pitch;
-- exact selected pitched event may apply the current palette duration;
-- Delete on a single-note event converts that event to an explicit rest;
-- Delete on an exact selected chord tone removes only that tone and preserves the remaining event/tone;
-- all mutations use unified `EditorSessionV4` history and remain stale-target/fail-closed.
-
-The browser layer does not infer a target from renderer coordinates or geometry.
+PR #110 / `bc0c094af4a6e7b937882a3b09cfe6fd199f439a` exposes exact selected-note pitch edit, exact pitched-event duration edit, single-note-event Delete→rest and exact chord-tone Delete. Existing V4 basic-authoring intents remain the mutation authority; renderer geometry never chooses the target.
 
 ### APP-10G — explicit active Staff context
 
-PR #111 / `47076403a2a41a322f7ee28c7595d55555fc05c7` adds presentation-only active Staff controls for standard staves in the current part.
-
-Staff switching is admitted only through exact same-part/same-measure-frame semantic identity. It preserves the current active Voice ordinal but cannot materialize that Voice on the target Staff. If the active Voice does not exist there, selection lands on the exact target measure and the user must explicitly invoke the existing Voice materialization action where admitted.
-
-Staff switching creates no canonical history revision. It never uses DOM/SVG coordinates, nearest-staff geometry or pitch inference.
-
-A newly created synthetic Guitar/Piano score receives a presentation-only exact semantic authoring anchor on the first standard staff / first frame / Voice 1 explicit event. This solves blank-score entry without granting renderer-rest hit authority and without creating history.
+PR #111 / `47076403a2a41a322f7ee28c7595d55555fc05c7` adds presentation-only Staff controls. Staff switching is exact same-part/same-frame semantic selection, preserves active Voice context, creates no history and cannot materialize a missing Voice. New synthetic scores receive a presentation-only exact initial semantic anchor.
 
 ### APP-10H — bounded synthetic measure-frame growth
 
-PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220` closes the one-frame synthetic-score authoring limit without reviving the legacy structural-authoring model or creating a parallel score authority.
-
-The new `APPEND_SYNTHETIC_MEASURE_FRAME` topology intent lives in the current V4 topology path and is committed through `EditorSessionV4` as exactly one canonical history revision. Its admission profile is deliberately narrow:
-
-- only NEW/synthetic scores are exposed by the browser workflow;
-- append is end-only; middle insertion, reorder and measure deletion remain outside scope;
-- the revision-bound document target must be current;
-- effective meter must be proven from canonical notation inheritance before a frame is created;
-- one document-global frame is appended and every content-bearing standard/percussion staff receives exactly one `StaffMeasureV3` aligned to that frame;
-- each new measure starts with Voice 1 plus one explicit full-measure rest at onset zero;
-- Voice 2–5 remain explicit APP-10D materialization and are never invented by measure append;
-- tablature-linked staves keep the existing ownership contract and receive no owned measure;
-- imported MusicXML automatic growth fails closed;
-- renderer DOM/SVG/coordinates/nearest visual timing provide no identity or timing authority.
-
-The admitted synthetic MusicXML bridge requires deterministic frame identity. APP-10H therefore preserves the sequence `frame:1`, `frame:2`, ... and the core rejects a custom/non-lossless next frame identity. This keeps the existing lossless V3→V2 MusicXML projection available instead of silently degrading to a pending projection.
-
-After the one canonical append commit, the browser may move selection to the exact new explicit-rest `SemanticAddressV3`; that navigation is presentation-only and creates no second history revision. Undo/redo therefore reverses/restores the append through the same V4 history used by Voice creation, note entry and selected-note editing.
-
-Core regression covers Guitar/Piano alignment, full-measure rests, undo/redo, stale target, missing meter evidence, imported-score fail-closed behavior, deterministic frame identity and Piano two-measure MusicXML export/re-import. WebKit additionally covers Guitar measure growth followed by APP-10F pitch/duration/delete, and Piano frame growth followed by Staff 2 → Voice 5 → note entry → Staff 1 isolation. APP-10E/F/G and APP-09B renderer/orientation regressions remain in the same exact-head gate.
+PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220` adds end-only synthetic measure-frame growth through the V4 topology/history path. Effective meter must be proven, every content-bearing staff gains one measure aligned to the same global frame, each new measure starts with Voice 1 + explicit full-measure rest, Voice 2–5 remain explicit, linked TAB owns no measure, and imported MusicXML automatic growth fails closed. Deterministic `frame:1`, `frame:2`, ... identity preserves the admitted lossless MusicXML bridge.
 
 ### APP-10I — semantic previous/next measure navigation
 
-PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4` adds a presentation-only multi-measure authoring context without introducing a new mutation authority.
+PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4` adds presentation-only previous/active/next measure controls. Navigation is same-part/same-staff and adjacent-frame only, preserves active Voice context, carries the semantic onset to a containing event where possible, falls back to the exact measure when the active Voice is absent, never materializes a Voice and creates no canonical history revision. Imported MusicXML navigation is admitted from exact frame-bearing semantic context.
 
-The browser exposes compact previous / active measure / next controls. Navigation derives its target only from the current revision's `SemanticAddressV3` selection and canonical `measureFrames` ordering:
+### APP-10J — bounded chord-tone authoring
 
-- target is the immediately adjacent global measure frame only;
-- part and Staff identity are preserved exactly;
-- active Voice 1–5 remains presentation state and is preserved across navigation;
-- when the active Voice exists in the target measure, the current semantic onset is carried to the exact containing canonical event where available;
-- when the active Voice does not exist in the target measure, selection falls back to that exact measure; navigation never materializes the missing Voice;
-- the existing explicit Voice action remains the only admitted route to synthetic missing-Voice materialization;
-- navigation itself calls exact semantic selection and creates no canonical history revision;
-- imported MusicXML may use measure navigation after the user has an exact frame-bearing semantic selection;
-- document/part/staff-only selection has no frame context and fails closed rather than guessing;
-- renderer DOM/SVG IDs, coordinates, nearest geometry and pitch inference have no navigation authority.
+PR #117 / `578203792d43548c5b174ab7bd29da4819b22275` exposes the already-admitted V4 `ADD_CHORD_TONE` primitive through the standalone palette rather than introducing a new chord mutation model.
 
-WebKit proves Guitar M3→M2→edit→M3 with history changing only for actual edits, and Piano Staff 2 + Voice 5 navigation from a frame where Voice 5 exists to an adjacent measure where it does not. The target safely becomes the exact Staff 2 measure, Voice 5 is not invented, and only a later explicit Voice 5 action materializes it under the existing APP-10D rules. APP-10E/F/G/H and APP-09B renderer/orientation regressions remain in the same exact-head gate.
+The browser contract is deliberately narrow:
+
+- one compact `+Tone` action is exposed;
+- current selection must resolve exactly to a pitched normal event or one exact note inside that event;
+- rests, document/part/staff/measure/voice selections and stale/non-resolving targets fail closed;
+- each action adds exactly one fresh note identity using the current palette pitch;
+- a single-note event becomes a chord while preserving event onset/duration and original tone identity;
+- an existing chord gains exactly one new tone;
+- the newly created tone becomes exact `SemanticAddressV3` note selection;
+- the action uses the existing `commitBasic -> ADD_CHORD_TONE -> EditorSessionV4` path and creates exactly one canonical history revision;
+- APP-10F exact chord-tone Delete remains the complementary removal path;
+- imported MusicXML exact chord-tone authoring is admitted and covered by lossless export/re-import;
+- renderer DOM/SVG/coordinates/nearest geometry never infer the event or pitch target;
+- palette state remains presentation-only; it supplies the requested pitch but cannot mutate score state by itself.
+
+Core coverage proves note→chord, repeated tone addition, exact tone deletion, undo/redo, imported MusicXML chord add + export/re-import, and fail-closed rest/non-event selection. WebKit proves Guitar chord add/delete, chord authoring across APP-10H/10I multi-measure flow, and Piano Staff 2 / Voice 5 chord isolation while retaining APP-10E/F/G/H/I and APP-09B regressions in the same exact-head gate.
 
 ## Next bounded authoring candidate
 
-APP-10I closes the basic multi-measure semantic navigation gap. No APP-10J scope is declared yet. Fresh repository reality must be audited before selecting the next bounded authoring package; existing semantic capabilities should be reused rather than duplicated, and planned capability must not be documented as implemented.
+APP-10J closes the basic chord construction asymmetry. No APP-10K scope is declared yet. Fresh repository reality must be audited before selecting the next bounded authoring package. Existing articulation, ornament, grace and keypad primitives are candidates only; planned capability must not be documented as implemented.
 
 ## Stage 07 semantic ↔ renderer presentation identity
 
-Stage 07, merged through PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`, completes the exact reverse presentation lookup needed for issue/score synchronization:
+Stage 07, merged through PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`, completes exact read-only reverse presentation lookup:
 
 ```text
 Renderer hit direction:
-ScoreNoteRef
-   -> opaque current-revision manifest token
-   -> SemanticAddressV3
-   -> editor-owned selection
+ScoreNoteRef -> opaque current-revision manifest token -> SemanticAddressV3 -> editor-owned selection
 
 Presentation lookup direction:
-SemanticAddressV3
-   -> exact current-revision ScoreNoteRef or ScoreMeasureRef
-   -> renderer highlight/cursor locator
+SemanticAddressV3 -> exact current-revision ScoreNoteRef or ScoreMeasureRef -> renderer highlight/cursor locator
 ```
-
-The reverse lookup is read-only. It does not select, edit or append history merely by resolving a locator. Non-note targets abstain from note highlighting while their exact measure locator may still be available. Stale presentation identity remains fail-closed.
 
 Neither direction accepts DOM/SVG identifiers, renderer coordinates, nearest-note distance, pitch guessing or radius heuristics as canonical evidence.
 
@@ -201,7 +161,7 @@ standaloneReleaseGatePassed = false
 seslitabCutoverAuthorized = false
 ```
 
-Device validation is currently deferred while authoring-workspace development continues. Before release, the required practical matrix must be completed and recorded. Current required targets are real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox; real iPad Safari remains a deferred secondary validation target. Existing iPhone evidence is partial and does not by itself close the gate.
+Device validation is currently deferred while authoring-workspace development continues. Before release, the required practical matrix must be completed and recorded. Current required targets remain real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox; real iPad Safari remains secondary. Existing iPhone evidence is partial and does not close the gate.
 
 ## Remaining gates
 

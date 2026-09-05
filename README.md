@@ -8,7 +8,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** standalone editor app is the primary product target.
 - **APP-00–08 — COMPLETE / MERGED:** document/runtime, unified V4 authoring, browser shell, local files/recovery, guarded renderer interaction, viewport, local playback and bounded export/print.
 - **APP-09 / APP-09B — AUTOMATED HARDENING COMPLETE / PHYSICAL IPHONE BLOCKER RESOLVED:** responsive/accessibility/recovery guards are merged; host-controlled renderer rerender fixes the physical iPhone Safari selection/orientation failure without renderer authority expansion.
-- **APP-10A–I — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, bounded append-only synthetic measure-frame growth, and presentation-only semantic previous/next measure navigation.
+- **APP-10A–J — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, bounded append-only synthetic measure-frame growth, presentation-only semantic previous/next measure navigation, and exact palette-driven chord-tone authoring.
 - **Stage 07 semantic → renderer presentation locators — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391` adds exact read-only current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup.
 - **Standalone release gate — DEFERRED FOR CURRENT DEVELOPMENT / STILL REQUIRED:** remaining physical Windows/Android/iOS browser evidence must be completed before release.
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED:** no cutover until the standalone release matrix passes.
@@ -19,7 +19,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 ST Score Editor App
         |
         +--> Guitar / Piano New-score selector (presentation state)
-        +--> authoring palette: Staff / Voice 1–5 / pitch / accidental / octave / duration / Add measure / previous-next measure
+        +--> authoring palette: Staff / Voice 1–5 / pitch / accidental / octave / duration / Add measure / previous-next measure / +Tone
         +--> exact selected-note Pitch / Duration / Delete actions
         +--> local file workflow (noncanonical)
         +--> IndexedDB recovery cache (noncanonical)
@@ -38,7 +38,7 @@ EditorSessionV4
         +--> revision-bound insertion positions / bounded note entry
         +--> safe synthetic-score Voice materialization
         +--> append-only synthetic measure-frame growth under proven meter
-        +--> exact selected-note/chord-tone edits
+        +--> exact selected-note/chord-tone mutations through existing V4 basic authoring
         +--> unified undo / redo
         +--> revision-bound playback plan --> local Web Audio output
         +--> admitted lossless MusicXML --> explicit export handoff
@@ -73,8 +73,12 @@ The current standalone browser can create admitted Guitar or Piano scores and pe
 - APP-10I PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4` adds compact previous/active-measure/next controls on top of exact semantic selection;
 - APP-10I navigation remains same-part/same-staff and adjacent-frame only, preserves active Voice 1–5 presentation context, carries the current onset to a containing canonical event where available, and falls back to the exact target measure when that Voice is absent instead of implicitly creating it;
 - measure navigation itself creates no canonical history revision and is available for imported MusicXML after an exact frame-bearing semantic selection; renderer DOM/SVG/coordinates/geometry never determine the target;
-- Voice creation, measure append, note entry and selected-note mutations participate in unified `EditorSessionV4` undo/redo; Staff/measure navigation remains presentation-only;
-- WebKit regression covers APP-10E note entry, APP-10F selected-note editing including edit/delete after measure growth, APP-10G Piano Staff switching/Voice-5 isolation, APP-10H Guitar/Piano measure growth, APP-10I navigation followed by editing and Piano missing-Voice fallback, and the APP-09B renderer/orientation chain.
+- APP-10J PR #117 / `578203792d43548c5b174ab7bd29da4819b22275` exposes the existing V4 `ADD_CHORD_TONE` primitive through one compact `+Tone` action;
+- APP-10J requires an exact pitched event/note semantic selection, adds the current palette pitch as exactly one fresh tone per action, converts a single-note event into a chord or extends an existing chord, and selects the newly created exact note;
+- rests and non-event selections fail closed; renderer coordinates/DOM/SVG/geometry never infer the chord target;
+- imported MusicXML exact chord-tone authoring is admitted and covered by lossless export/re-import; existing exact chord-tone Delete remains the complementary removal path;
+- Voice creation, measure append, note entry, selected-note mutations and chord-tone mutations participate in unified `EditorSessionV4` undo/redo; Staff/measure navigation remains presentation-only;
+- WebKit regression covers APP-10E note entry, APP-10F selected-note editing, APP-10G Piano Staff/Voice isolation, APP-10H Guitar/Piano measure growth, APP-10I navigation, APP-10J Guitar/Piano chord authoring and exact tone deletion, and the APP-09B renderer/orientation chain.
 
 ## Renderer identity boundary
 
@@ -100,7 +104,7 @@ ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 
 ## Next bounded authoring candidate
 
-APP-10I closes the basic multi-measure navigation gap. The next package is intentionally **not preselected**. Fresh repository reality must be audited for the highest-value remaining authoring gap, especially existing semantic edit capabilities not yet exposed safely in the browser. Planned capability must not be presented as implemented, and release/SesliTab gates must remain unchanged during feature development.
+APP-10J closes the basic user-facing chord construction asymmetry: exact tones can now be added as well as removed. The next package is intentionally **not preselected**. Fresh repository reality must be audited before naming APP-10K, with preference for reusing already-admitted semantic notation primitives rather than creating new mutation paths.
 
 ## Remaining release gate
 
