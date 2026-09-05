@@ -1,12 +1,12 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10K COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
+Status: **ACTIVE / APP-00–10L COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
 
 Date: 2026-09-05
 
 ## Product decision
 
-ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice/measure-navigation/chord-tone/articulation-control state is noncanonical. Local product operation requires no backend.
+ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice/measure-navigation/chord-tone/articulation/ornament-control state is noncanonical. Local product operation requires no backend.
 
 Device/browser validation is intentionally deferred during the current authoring-workspace development phase. Deferral is not release approval: `standaloneReleaseGatePassed` and `seslitabCutoverAuthorized` remain false.
 
@@ -115,55 +115,21 @@ Status: **COMPLETE / MERGED**
 
 PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220`.
 
-APP-10H adds one compact browser `Add measure` action backed by the current `editor-topology-authoring-v4 -> EditorSessionV4` path rather than a parallel structural editor. Admission is deliberately bounded:
-
-- browser exposure is NEW/synthetic-score only;
-- exactly one measure frame is appended at the document end per action;
-- effective meter must be proven before append;
-- all content-bearing standard/percussion staves receive exactly one new `StaffMeasureV3` aligned to the same global frame;
-- each new measure starts with Voice 1 plus an explicit full-measure rest;
-- Voice 2–5 remain explicit APP-10D materialization;
-- tablature-linked staves retain the existing no-owned-measure contract;
-- imported MusicXML automatic measure growth fails closed;
-- custom/non-lossless frame identity fails closed; the admitted synthetic path preserves deterministic `frame:1`, `frame:2`, ... identity so existing lossless MusicXML projection/export remains available;
-- append is exactly one canonical V4 history revision; moving selection to the new exact rest after append is presentation-only and creates no additional revision;
-- renderer DOM/SVG/coordinates/geometry have no measure/timing authority.
-
-Core tests cover Guitar/Piano frame alignment, explicit full-measure rests, undo/redo, stale-target and missing-meter rejection, imported-score rejection, deterministic frame identity, and Piano two-measure MusicXML export/re-import. Exact-head WebKit covers Guitar measure growth followed by APP-10F pitch/duration/delete, Piano Add measure → Staff 2 → Voice 5 → note → Staff 1 isolation, APP-10E/F/G, and the APP-09B renderer/orientation chain.
+APP-10H adds one compact browser `Add measure` action backed by the current `editor-topology-authoring-v4 -> EditorSessionV4` path rather than a parallel structural editor. Admission is deliberately bounded: NEW/synthetic-score only, exactly one end frame per action, proven effective meter, all content-bearing staves aligned to the same global frame, Voice 1 explicit full-measure rest, no automatic Voice 2–5, linked TAB no owned measure, imported MusicXML automatic growth fail-closed, deterministic `frame:N` identity and one unified history revision.
 
 ### APP-10I — Presentation-only semantic measure navigation
 Status: **COMPLETE / MERGED**
 
 PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4`.
 
-APP-10I exposes compact previous / active measure / next controls without creating a second score authority. It reuses exact current-revision semantic selection:
-
-- only the immediately previous or next global `measureFrame` is targeted;
-- part and Staff identity are preserved exactly;
-- active Voice 1–5 remains presentation context and is preserved;
-- when that Voice exists in the target measure, the current onset is carried to the containing canonical event when one exists;
-- when that Voice is absent, selection falls back to the exact target measure; navigation itself never materializes the missing Voice;
-- explicit Voice materialization remains the existing APP-10D path and requires a separate user action;
-- semantic measure navigation creates no canonical history revision;
-- imported MusicXML navigation is admitted after exact frame-bearing semantic selection even though imported automatic measure growth remains fail-closed;
-- missing frame context and unavailable adjacent frames fail closed;
-- renderer DOM/SVG/coordinates/nearest geometry have no target authority.
+APP-10I exposes compact previous / active measure / next controls without creating a second score authority. Navigation is adjacent-frame, same-part/same-staff semantic only, preserves active Voice context, carries the onset to a containing event where possible, falls back to the exact measure if that Voice is absent, never materializes a Voice and creates no canonical history revision. Imported MusicXML navigation is admitted after exact frame-bearing semantic selection.
 
 ### APP-10J — Bounded exact chord-tone authoring
 Status: **COMPLETE / MERGED**
 
 PR #117 / `578203792d43548c5b174ab7bd29da4819b22275`.
 
-APP-10J exposes the existing `ADD_CHORD_TONE` V4 semantic primitive through one compact browser `+Tone` action; it does not add a second mutation path.
-
-- exact selected pitched event or note is required;
-- each action adds exactly one fresh palette-pitch tone;
-- a single-note event becomes a chord or an existing chord gains one tone;
-- the newly created exact tone becomes selection;
-- accepted mutations use `commitBasic -> EditorSessionV4` as one history revision;
-- APP-10F exact chord-tone Delete remains the removal path;
-- imported MusicXML chord-tone add + lossless export/re-import is covered;
-- renderer geometry never determines the target.
+APP-10J exposes the existing `ADD_CHORD_TONE` V4 semantic primitive through one compact browser `+Tone` action. Exact selected pitched event/note is required, each action adds exactly one fresh palette-pitch tone, the new tone becomes exact selection, accepted mutations use `commitBasic -> EditorSessionV4`, APP-10F exact chord-tone Delete remains the removal path, imported MusicXML chord-tone add + lossless export/re-import is covered, and renderer geometry never determines the target.
 
 ### APP-10K — Bounded exact articulation toggles
 Status: **COMPLETE / MERGED**
@@ -173,18 +139,36 @@ PR #119 / `9fb9acc93d8121edff2ed97dee26d1213d035966`.
 APP-10K exposes the existing V4 articulation authoring primitive through three compact browser toggles without adding any new notation mutation authority.
 
 - admitted kinds are exactly `staccato`, `accent` and `tenuto`;
+- exact selected pitched normal event or exact note-parent event is required;
+- new specs use `placement:'auto'` and `direction:null`;
+- a single existing same-kind articulation is removed exactly, preserving imported placement/direction semantics;
+- multiple same-kind specs are ambiguous and fail closed;
+- accepted operations use existing `commitArticulation -> EditorSessionV4`;
+- imported MusicXML articulation add + lossless export/re-import is covered;
+- renderer DOM/SVG/coordinates/nearest geometry never determine target or placement.
+
+### APP-10L — Bounded exact local ornament toggles
+Status: **COMPLETE / MERGED**
+
+PR #121 / `aeb08ecd71cad9a0b09b3ab44493d9fde5f19178`.
+
+APP-10L exposes a deliberately bounded single-event subset of the existing V4 ornament authoring primitive through three compact browser toggles; it does not introduce a second ornament mutation model.
+
+- admitted kinds are exactly `trill-mark`, `turn` and `mordent`;
 - the current selection must resolve to an exact pitched normal event or an exact note whose parent event resolves semantically;
 - rest/non-event targets fail closed;
-- new browser-authored specs use `placement:'auto'` and `direction:null`;
-- when exactly one same-kind articulation already exists, the browser removes that exact spec, preserving imported placement/direction semantics instead of rewriting them;
-- when multiple same-kind specs exist, the browser marks the kind ambiguous and refuses to guess which spec to remove;
-- unsupported articulation kinds fail closed at the browser boundary;
-- accepted add/remove operations use existing `commitArticulation -> EditorSessionV4` and therefore create one canonical history revision per toggle;
-- control pressed/disabled state is derived from current semantic notation but remains presentation-only;
-- imported MusicXML articulation add is admitted and covered by lossless export/re-import;
-- renderer DOM/SVG/coordinates/nearest geometry never determine target or articulation placement.
+- new browser-authored local ornaments use `placement:'auto'` and `accidentalMarks:[]`;
+- when exactly one same-kind local ornament already exists, the browser removes that exact `OrnamentSpec`, preserving imported placement and accidental-mark semantics rather than normalizing them;
+- when multiple same-kind local ornaments exist, the browser marks the kind ambiguous and refuses to guess;
+- unsupported local ornament kinds fail closed at the browser boundary;
+- accepted operations use existing `commitOrnament -> EditorSessionV4` and create one canonical history revision per toggle;
+- spanning tremolo/wavy-line relation authority is explicitly excluded from APP-10L;
+- grace-event ornament target authority is explicitly excluded from APP-10L;
+- imported MusicXML local ornament authoring is admitted and covered by lossless export/re-import;
+- exact imported-style removal coverage preserves explicit placement and accidental-mark semantics;
+- renderer DOM/SVG/coordinates/nearest geometry never determine target or ornament placement.
 
-Core regression covers all three bounded kinds, undo/redo, imported MusicXML round-trip, exact removal of a placed imported-style articulation, ambiguous same-kind rejection, unsupported-kind rejection and non-pitched selection rejection. Exact-head WebKit covers Guitar chord-event articulation, APP-10H/10I multi-measure articulation isolation and Piano Staff 2 / Voice 5 articulation isolation. APP-10E/F/G/H/I/J plus APP-09B renderer/orientation regressions remain green in the same gate.
+Core regression covers Trill/Turn/Mordent add/remove, unified undo/redo, imported MusicXML round-trip, exact imported placed/accidental-mark ornament removal, ambiguous same-kind rejection, unsupported-kind rejection and non-pitched selection rejection. Exact-head WebKit covers Guitar chord-event ornament authoring, APP-10H/10I multi-measure ornament isolation and Piano Staff 2 / Voice 5 ornament isolation. APP-10E/F/G/H/I/J/K plus APP-09B renderer/orientation regressions remain green in the same gate.
 
 ## Stage 07 — Exact semantic-to-render presentation locators
 Status: **COMPLETE / MERGED**
@@ -217,7 +201,7 @@ seslitabCutoverAuthorized = false
 
 ## Current development action
 
-APP-10K closes the first bounded browser articulation gap while preserving existing V4 notation authority. Do not declare APP-10L yet. Perform a fresh repository audit to identify the highest-value remaining bounded browser authoring gap. Reuse existing semantic primitives; multi-target ornament/tie/slur/grace workflows require explicit target-selection contracts and must not be inferred from presentation geometry.
+APP-10L closes the first bounded local ornament browser gap while preserving existing V4 notation authority. Do not declare APP-10M yet. Perform a fresh repository audit to identify the highest-value remaining bounded browser authoring gap. Multi-target tremolo/wavy-line, tie/slur and grace workflows require explicit endpoint/target-selection contracts and must not be inferred from presentation geometry.
 
 The device/browser matrix must be resumed before any standalone release closeout. A separate evidence-backed closeout is required before `standaloneReleaseGatePassed` can become true, and SesliTab product integration/cutover remains a later separate program.
 
