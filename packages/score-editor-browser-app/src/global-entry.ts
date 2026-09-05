@@ -1,9 +1,9 @@
-import { createExtendedArticulationTogglesStandaloneBrowserAppRuntime } from './extended-articulation-toggles.js';
+import { createExtendedLocalOrnamentTogglesStandaloneBrowserAppRuntime } from './extended-local-ornament-toggles.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createExtendedArticulationTogglesStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createExtendedLocalOrnamentTogglesStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createExtendedArticulationTogglesStandaloneBrowserAppRuntime(),
+  value: createExtendedLocalOrnamentTogglesStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
