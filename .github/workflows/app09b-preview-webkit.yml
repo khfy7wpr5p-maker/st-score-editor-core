@@ -48,6 +48,8 @@ jobs:
         run: node scripts/app10m-webkit-explicit-accidentals-regression.mjs
       - name: Run APP-10N WebKit bounded extended articulation toggles regression
         run: node scripts/app10n-webkit-extended-articulation-toggles-regression.mjs
+      - name: Run APP-10O WebKit bounded extended local ornament toggles regression
+        run: node scripts/app10o-webkit-extended-local-ornament-toggles-regression.mjs
       - name: Checkout exact ST Score Rendering Layer revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
