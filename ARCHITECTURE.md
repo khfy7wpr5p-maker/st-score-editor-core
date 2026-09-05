@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10N are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
+Status: **SEC-NE and SSE-00–10 are merged. ST-SCORE-EDITOR-APP APP-00–10O are COMPLETE / MERGED. Stage 07 exact semantic-to-render presentation locators are COMPLETE / MERGED. The remaining standalone device/browser release matrix is DEFERRED FOR CURRENT DEVELOPMENT but REQUIRED before release or SesliTab cutover.**
 
 ## Product architecture
 
@@ -19,6 +19,7 @@ Standalone HTML / Browser Shell
         |      +--> bounded Staccato / Accent / Tenuto toggles
         |      +--> bounded Strong Accent / Staccatissimo / Spiccato toggles
         |      +--> bounded Trill / Turn / Mordent local ornament toggles
+        |      +--> bounded Inverted Turn / Inverted Mordent / Shake local ornament toggles
         |      +--> exact selected-note explicit Flat / Natural / Sharp
         |      +--> bounded Add measure for admitted synthetic scores
         +--> browser-local file workflow (noncanonical)
@@ -109,18 +110,39 @@ The admitted browser profile is:
 - new browser-authored specs use `placement:'auto'` and `direction:null`;
 - if exactly one same-kind articulation exists, the browser removes that exact `ArticulationSpec` rather than normalizing placement or Strong Accent direction;
 - if multiple same-kind specs exist, the state is ambiguous and the toggle fails closed;
-- Strong Accent imported `direction:'up'|'down'` semantics remain representable by the existing MusicXML importer/serializer; APP-10N does not invent a direction for new specs;
+- Strong Accent imported direction semantics remain representable by the existing MusicXML importer/serializer;
 - every accepted operation uses existing `commitArticulation -> EditorSessionV4` and creates one canonical history revision;
-- grace-event articulation target authority is explicitly excluded from this browser layer even though lower-level V4 authoring has a grace target type;
-- APP-10K's Staccato/Accent/Tenuto bounded contract is unchanged;
-- renderer DOM/SVG IDs, coordinates, nearest geometry and visual mark positions have no authoring authority;
+- grace-event articulation target authority is explicitly excluded from this browser layer;
+- APP-10K's bounded contract is unchanged;
+- renderer geometry has no authoring authority.
+
+### APP-10O — bounded extended local ornament toggles
+
+PR #127 / `75822e2a75db165692fa1fdba4c6c9a774682577` adds a second deliberately bounded simple-ornament browser surface without changing APP-10L or introducing a new ornament mutation model.
+
+The admitted browser profile is:
+
+- kinds are exactly `inverted-turn`, `inverted-mordent` and `shake`;
+- current selection must resolve exactly to a pitched normal event or a note whose exact parent event resolves semantically;
+- rests, measure/document selections and other non-event targets fail closed;
+- new browser-authored specs use `placement:'auto'` and `accidentalMarks:[]`;
+- if exactly one same-kind ornament exists, the browser removes that exact `OrnamentSpec`, preserving imported placement and accidental-mark semantics instead of normalizing them;
+- if multiple same-kind specs exist, the state is ambiguous and the toggle fails closed;
+- unsupported extended local ornament kinds cannot pass through this bounded browser method;
+- every accepted operation uses existing `commitOrnament -> EditorSessionV4` and creates one canonical history revision;
+- spanning tremolo and wavy-line relation authority is explicitly excluded;
+- grace-event ornament target authority is explicitly excluded;
+- APP-10L's original Trill/Turn/Mordent bounded contract is unchanged;
+- imported MusicXML Inverted Turn authoring remains in the admitted lossless projection and is covered by export/re-import;
+- exact removal coverage includes an imported-style Inverted Turn with placement and accidental-mark semantics;
+- renderer DOM/SVG IDs, coordinates, nearest geometry and visual ornament positions have no authoring authority;
 - control pressed/disabled state is noncanonical presentation derived from current notation semantics.
 
-Core regression proves all three kinds, undo/redo, imported MusicXML Strong Accent export/re-import, exact removal of imported-style Strong Accent placement/direction, same-kind ambiguity rejection, unsupported-kind rejection and non-pitched fail-closed behavior. Exact-head WebKit proves Guitar chord-event authoring, multi-measure isolation and Piano Staff 2 / Voice 5 isolation while APP-10E–M and APP-09B remain green.
+Core regression proves all three APP-10O kinds, undo/redo, imported MusicXML Inverted Turn export/re-import, exact imported-style removal, ambiguity rejection, unsupported-kind rejection and non-pitched fail-closed behavior. Exact-head WebKit proves Guitar chord-event authoring, multi-measure isolation and Piano Staff 2 / Voice 5 isolation while APP-10E–N and APP-09B remain green.
 
 ## Next bounded authoring candidate
 
-APP-10N closes a second compact single-event articulation exposure gap. No APP-10O scope is declared yet. Augmentation dots still need timing-space admission because their current primitive changes selected-event duration without retiming neighboring events. Tuplet/tie/slur and spanning ornaments require explicit multi-target endpoints; grace workflows remain separately bounded. Fresh repository reality must be audited before the next package is selected.
+APP-10O closes a second compact single-event local-ornament exposure gap. No APP-10P scope is declared yet. Augmentation dots still need timing-space admission because their current primitive changes selected-event duration without retiming neighboring events. Tuplet/tie/slur and spanning ornaments require explicit multi-target endpoints; grace workflows remain separately bounded. Fresh repository reality must be audited before the next package is selected.
 
 ## Stage 07 semantic ↔ renderer presentation identity
 
