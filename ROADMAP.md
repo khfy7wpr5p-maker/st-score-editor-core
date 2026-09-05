@@ -28,7 +28,8 @@ Repository reality only; planned capability is not production capability.
 - **APP-10H — COMPLETE / MERGED:** PR #113 / `8eccb176ec9b21e50b0a98ce207deb160a16f220`; bounded append-only measure-frame growth for NEW synthetic scores under proven effective meter, aligned across content-bearing staves, with deterministic `frame:N` identity and imported MusicXML automatic growth fail-closed.
 - **APP-10I — COMPLETE / MERGED:** PR #115 / `65e58c5a13760121c24a603e071aa72ec13f31d4`; presentation-only previous/next semantic measure navigation with exact Staff preservation, active Voice context preservation, no implicit Voice materialization and no history mutation.
 - **APP-10J — COMPLETE / MERGED:** PR #117 / `578203792d43548c5b174ab7bd29da4819b22275`; exact `+Tone` chord construction through existing `ADD_CHORD_TONE`, unified history, APP-10F exact tone deletion and imported MusicXML chord round-trip.
-- **APP-10K — COMPLETE / MERGED:** PR #119 / `9fb9acc93d8121edff2ed97dee26d1213d035966`; bounded exact Staccato/Accent/Tenuto toggles through existing V4 articulation authoring. Exact selected pitched event/note-parent event is required. New specs use auto placement/null direction; a single existing same-kind spec is removed exactly, while multiple same-kind specs fail closed as ambiguous. Imported MusicXML articulation add + lossless export/re-import, undo/redo, Guitar chord-event/multi-measure and Piano Staff-2 Voice-5 isolation are covered.
+- **APP-10K — COMPLETE / MERGED:** PR #119 / `9fb9acc93d8121edff2ed97dee26d1213d035966`; bounded exact Staccato/Accent/Tenuto toggles through existing V4 articulation authoring with exact semantic targeting, imported placement preservation, ambiguous same-kind fail-closed behavior and MusicXML round-trip coverage.
+- **APP-10L — COMPLETE / MERGED:** PR #121 / `aeb08ecd71cad9a0b09b3ab44493d9fde5f19178`; bounded exact Trill/Turn/Mordent local ornament toggles through existing V4 ornament authoring. Exact selected pitched event/note-parent event is required. New specs use auto placement with empty accidental-mark list; a single existing same-kind ornament is removed exactly, while multiple same-kind ornaments fail closed as ambiguous. Imported MusicXML ornament add + lossless export/re-import, exact removal of placed/accidental-mark ornament semantics, undo/redo, Guitar chord-event/multi-measure and Piano Staff-2 Voice-5 isolation are covered. Spanning tremolo/wavy-line and grace-event ornament authority are explicitly excluded.
 - **Stage 07 semantic → renderer presentation locator — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`; exact current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup is read-only and complements the existing renderer-hit path.
 - **Manual standalone release matrix — DEFERRED FOR CURRENT DEVELOPMENT / REQUIRED BEFORE RELEASE.**
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the standalone release matrix passes.
@@ -43,6 +44,7 @@ Guitar/Piano New score
         -> previous/next semantic measure navigation
         -> bounded note entry / selected-note edit / +Tone chord construction
         -> exact Staccato / Accent / Tenuto articulation toggles
+        -> exact Trill / Turn / Mordent local ornament toggles
         -> bounded synthetic end-of-score measure append
         -> EditorSessionV4 canonical commit for actual edits
         -> unified undo/redo
@@ -50,7 +52,7 @@ Guitar/Piano New score
         -> renderer presentation
 ```
 
-All canonical score/notation edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. Staff/measure navigation, palette/articulation-control state, file/recovery, renderer presentation, viewport, playback, export/print and release-hardening state remain noncanonical.
+All canonical score/notation edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. Staff/measure navigation, palette/articulation/ornament-control state, file/recovery, renderer presentation, viewport, playback, export/print and release-hardening state remain noncanonical.
 
 Renderer interaction remains identity/presentation-only:
 
@@ -73,7 +75,7 @@ Current practical release targets remain real iPhone Safari, Android Chrome, Win
 
 ## Next development action
 
-APP-10K closes the first compact notation-mark exposure gap. Do a fresh repository audit before naming APP-10L. Prioritize already-admitted semantic primitives with exact target contracts. Ornament/grace/keypad/tie-slur capabilities may be candidates, but multi-target relation workflows should not be collapsed into a browser shortcut without an explicit semantic selection contract.
+APP-10L closes the first bounded local ornament exposure gap. Do a fresh repository audit before naming APP-10M. Prioritize already-admitted semantic primitives with exact target contracts. Multi-target tremolo/wavy-line, tie/slur and grace workflows must remain separate until endpoint/target selection contracts are explicit.
 
 Do not open release or SesliTab gates as part of feature development.
 
