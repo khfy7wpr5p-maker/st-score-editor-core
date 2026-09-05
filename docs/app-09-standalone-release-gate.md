@@ -6,7 +6,7 @@ Runtime hardening source: PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`
 
 Permanent iPhone renderer interaction policy: PR #102 / `c6615a314b41bcdded1e968df353070179453d16`
 
-Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10M, including APP-10E note entry, APP-10F selected-note editing, APP-10G Staff switching, APP-10H measure growth, APP-10I measure navigation, APP-10J chord tones, APP-10K articulations, APP-10L local ornaments, APP-10M exact explicit accidentals and the APP-09B renderer/orientation chain. APP-10M exact-head WebKit additionally exercises Guitar exact chord-tone accidental isolation, multi-measure accidental isolation and Piano Staff 2 / Voice 5 accidental isolation.
+Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10N, including APP-10E note entry, APP-10F selected-note editing, APP-10G Staff switching, APP-10H measure growth, APP-10I measure navigation, APP-10J chord tones, APP-10K articulations, APP-10L local ornaments, APP-10M exact explicit accidentals, APP-10N extended articulations and the APP-09B renderer/orientation chain. APP-10N exact-head WebKit additionally exercises Guitar chord-event extended articulation authoring, multi-measure isolation and Piano Staff 2 / Voice 5 isolation.
 
 This checklist is intentionally separate from automated CI. A green build is not evidence that real mobile viewport, audio gesture, browser print, touch/pointer behavior or lifecycle recovery works correctly on every required platform.
 
@@ -20,14 +20,13 @@ Every manual run must preserve these invariants:
 - presentation/UI state must not create unintended V4 history revisions;
 - Staff switching and semantic measure navigation remain presentation-only and may not materialize missing Voices;
 - admitted measure append remains one explicit `EditorSessionV4` canonical mutation;
-- admitted `+Tone` actions target exact semantic pitched content and add exactly one tone;
-- exact chord-tone Delete removes only the selected tone;
-- Staccato/Accent/Tenuto and Trill/Turn/Mordent use their existing V4 notation-authoring paths with exact semantic targets; ambiguous same-kind cases fail closed;
-- APP-10L exposes no spanning tremolo/wavy-line or grace-event ornament authority;
-- APP-10M Flat/Natural/Sharp actions require exact `note` selection and may not infer a note target from event/rest/measure/renderer geometry;
-- each accepted APP-10M action atomically updates canonical `pitch.alter` and `NoteNotation.accidental` in one `EditorSessionV4` history revision while preserving note step/octave;
-- on chords, APP-10M may change only the exact selected chord tone;
-- APP-10M exposes no advanced keypad `EVENT_RANGE`/`NOTE_PAIR` authority and no dot/rest/tuplet/tie/slur browser surface;
+- admitted `+Tone` actions target exact semantic pitched content and add exactly one tone; exact chord-tone Delete removes only the selected tone;
+- APP-10K Staccato/Accent/Tenuto and APP-10N Strong Accent/Staccatissimo/Spiccato use the existing V4 articulation path with exact pitched event/note-parent targets;
+- new APP-10N specs use auto placement/null direction; one same-kind spec is removed exactly, while multiple same-kind specs fail closed;
+- APP-10N must not expose grace-event articulation target authority and must not alter APP-10K's bounded contract;
+- Trill/Turn/Mordent use the existing V4 ornament path and APP-10L exposes no spanning tremolo/wavy-line or grace-event ornament authority;
+- APP-10M Flat/Natural/Sharp requires exact `note` selection and atomically updates canonical `pitch.alter` plus `NoteNotation.accidental` while preserving step/octave and sibling chord tones;
+- APP-10M exposes no advanced keypad target or dot/rest/tuplet/tie/slur browser surface;
 - imported MusicXML automatic measure growth remains fail-closed while admitted exact semantic note/notation authoring remains allowed where prerequisites are met;
 - renderer DOM/SVG/coordinates/geometry never become edit, chord, accidental, articulation, ornament, measure or timing authority;
 - MusicXML remains exchange/projection only;
@@ -66,7 +65,7 @@ Physical iPhone Safari testing isolated and fixed the renderer selection/orienta
 - returning to portrait preserves working selection;
 - G4 portrait → landscape → portrait interaction is PASS.
 
-This is partial evidence. The iPhone row remains incomplete until all applicable release scenarios required for the final closeout are recorded.
+This is partial evidence. The iPhone row remains incomplete until all applicable release scenarios required for final closeout are recorded.
 
 ## Required scenarios per required target
 
@@ -76,9 +75,9 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 
 - standalone HTML opens without bootstrap error;
 - toolbar, score viewport, inspector/status and authoring controls are usable;
-- Staff, Voice, previous/next measure, `+Tone`, articulation, local-ornament, explicit Flat/Natural/Sharp and admitted Add measure controls remain usable and do not duplicate after rerender;
+- Staff, Voice, previous/next measure, `+Tone`, APP-10K/10N articulation, local-ornament, explicit Flat/Natural/Sharp and admitted Add measure controls remain usable and do not duplicate after rerender;
 - exact-target controls are disabled or fail-closed when semantic prerequisites are absent;
-- explicit accidental pressed state follows `NoteNotation.accidental` for exact selected notes;
+- articulation/ornament/explicit-accidental pressed state follows current semantic notation;
 - active measure indication remains coherent after semantic navigation and rerender;
 - safe-area, mobile viewport and desktop resizing behavior remain usable.
 
@@ -87,15 +86,13 @@ Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
 - open a valid `.musicxml` or `.xml` file and render successfully;
 - select a note through the semantic hit bridge and perform admitted edits;
 - exercise exact selected-note pitch/duration/delete and chord-tone add/delete where applicable;
-- exercise Staccato/Accent/Tenuto and Trill/Turn/Mordent on exact semantic targets; ambiguity must fail closed;
-- on one exact selected note, set explicit Sharp and verify canonical `alter=+1` plus notation `accidental=sharp` in one history revision;
-- set explicit Natural and verify canonical `alter=0` plus notation `accidental=natural`; set Flat and verify `alter=-1` plus `accidental=flat`;
-- verify explicit accidental actions preserve note step and octave;
-- on a chord, select one exact tone and verify only that tone changes accidental/pitch alter;
-- switch selection to event/rest/measure and verify APP-10M cannot infer or mutate an accidental target;
-- verify no advanced keypad target, dot, tuplet, tie, slur or rest action is exposed through APP-10M;
-- navigate across measures and confirm navigation alone creates no history; accidental state must remain isolated to the exact authored notes;
-- on imported MusicXML, edit an exact note accidental and verify admitted behavior without topology invention;
+- exercise Staccato/Accent/Tenuto and Strong Accent/Staccatissimo/Spiccato on exact semantic pitched targets; ambiguity must fail closed;
+- verify a new APP-10N articulation uses auto placement/null direction and exactly one history revision;
+- for an imported Strong Accent with placement/direction semantics, toggle it off and verify the exact existing spec is removed rather than normalized; multiple same-kind specs must fail closed;
+- verify APP-10N does not expose grace-event articulation targeting;
+- exercise Trill/Turn/Mordent and explicit Flat/Natural/Sharp on their admitted exact targets;
+- navigate across measures and confirm navigation alone creates no history; notation state must remain isolated to exact authored events/notes;
+- on imported MusicXML, verify admitted articulation/accidental authoring without topology invention;
 - on Piano, verify Staff/Voice/chord/notation isolation including Staff 2 / Voice 5;
 - undo and redo operate through unified V4 history;
 - no renderer coordinate/DOM identifier is exposed as an authoring target.
@@ -115,23 +112,23 @@ On mobile/tablet:
 - change portrait -> landscape -> portrait and show/hide browser chrome where applicable;
 - zoom/scroll presentation remains coherent;
 - selection does not silently switch semantic note/event/tone/measure;
-- notation-control pressed state, including APP-10M explicit accidental, remains aligned with the current semantic selection after rerender;
+- notation-control pressed state, including APP-10N extended articulations, remains aligned with current semantic selection after rerender;
 - orientation/viewport transitions themselves do not change canonical revision/history;
 - renderer presentation remains aligned with current revision.
 
-The existing physical iPhone G4 result remains partial earlier interaction evidence. APP-10I–M authoring behavior still requires final real-device matrix coverage; automated WebKit does not create a new physical-device PASS.
+The existing physical iPhone G4 result remains partial earlier interaction evidence. APP-10I–N authoring behavior still requires final real-device matrix coverage; automated WebKit does not create a new physical-device PASS.
 
 ### G5 — Playback independence
 
 - playback starts after user gesture and play/pause/stop/seek operate;
-- any canonical score/notation revision, including APP-10M accidental authoring, stops stale playback;
+- any canonical score/notation revision, including APP-10N articulation authoring, stops stale playback;
 - semantic navigation alone does not create a revision or corrupt edit/playback admission;
 - playback errors do not prevent further editing;
 - playback state/tempo/cursor creates no V4 history entries.
 
 ### G6 — Recovery lifecycle
 
-- make an admitted dirty edit, including notation/accidental authoring where applicable;
+- make an admitted dirty edit, including notation authoring where applicable;
 - trigger browser lifecycle handling and inspect recovery state;
 - no automatic canonical restore occurs;
 - explicit guarded recovery remains required;
@@ -141,9 +138,9 @@ The existing physical iPhone G4 result remains partial earlier interaction evide
 
 - export current MusicXML successfully;
 - APP-10H grown Guitar/Piano scores preserve measure count and Piano alignment after re-import;
-- chord tones, admitted articulations and admitted local ornaments survive admitted lossless export/re-import;
-- APP-10M explicit Flat/Sharp/Natural survives export/re-import with both canonical alter and explicit notation accidental semantics preserved;
-- explicit Natural is verified, not silently dropped as merely implicit pitch spelling;
+- chord tones, APP-10K articulations, APP-10N Strong Accent/Staccatissimo/Spiccato, admitted local ornaments and APP-10M explicit accidentals survive admitted lossless export/re-import;
+- Strong Accent round-trip preserves admitted semantic kind, and imported placement/direction is not silently rewritten by exact removal behavior;
+- explicit Natural remains explicitly preserved rather than dropped as implicit spelling;
 - export does not mark dirty state saved or create canonical history;
 - unsupported projection remains fail-closed.
 
@@ -158,16 +155,16 @@ The existing physical iPhone G4 result remains partial earlier interaction evide
 ### G9 — Accessibility presentation
 
 - toolbar and score viewport expose meaningful accessible labels/roles;
-- Staff/Voice/measure/Add measure/`+Tone`/articulation/local-ornament/explicit accidental controls have usable accessible names;
-- explicit accidental controls communicate disabled and pressed state correctly;
+- Staff/Voice/measure/Add measure/`+Tone`/APP-10K/10N articulation/local-ornament/explicit accidental controls have usable accessible names;
+- exact-target controls communicate disabled and pressed state correctly;
 - active measure/status/focus/reduced-motion presentation remains usable;
 - accessibility presentation changes do not alter canonical state.
 
 ### G10 — Performance / stability
 
 - standalone app bundle remains within automated 512 KiB budget;
-- repeated edit -> navigation -> chord -> notation toggles -> explicit accidental -> Add measure -> render -> playback -> orientation cycles do not accumulate duplicate listeners/UI;
-- repeated Flat/Natural/Sharp changes affect only exact selected note and keep pressed state coherent;
+- repeated edit -> navigation -> chord -> APP-10K/10N articulation -> ornament -> explicit accidental -> Add measure -> render -> playback -> orientation cycles do not accumulate duplicate listeners/UI;
+- repeated Strong Accent/Staccatissimo/Spiccato cycles affect only intended event notation and keep pressed state coherent;
 - repeated Staff/Voice/measure switching creates no unintended history;
 - repeated admitted measure append retains exact alignment and no implicit Voices;
 - no recurring crash, frozen viewport or unexpected network dependency appears.
