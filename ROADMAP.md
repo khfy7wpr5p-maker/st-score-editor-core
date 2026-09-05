@@ -30,7 +30,8 @@ Repository reality only; planned capability is not production capability.
 - **APP-10J — COMPLETE / MERGED:** PR #117 / `578203792d43548c5b174ab7bd29da4819b22275`; exact `+Tone` chord construction through existing `ADD_CHORD_TONE`, unified history, APP-10F exact tone deletion and imported MusicXML chord round-trip.
 - **APP-10K — COMPLETE / MERGED:** PR #119 / `9fb9acc93d8121edff2ed97dee26d1213d035966`; bounded exact Staccato/Accent/Tenuto toggles through existing V4 articulation authoring with exact semantic targeting, imported placement preservation, ambiguous same-kind fail-closed behavior and MusicXML round-trip coverage.
 - **APP-10L — COMPLETE / MERGED:** PR #121 / `aeb08ecd71cad9a0b09b3ab44493d9fde5f19178`; bounded exact Trill/Turn/Mordent local ornament toggles through existing V4 ornament authoring with imported placement/accidental-mark preservation, same-kind ambiguity fail-closed, and spanning/grace ornament authority excluded.
-- **APP-10M — COMPLETE / MERGED:** PR #123 / `25940b118b37edec874f7df3865bdd3cecf9c720`; exact selected-note Flat/Natural/Sharp authoring through existing V4 keypad execution. Each accepted action atomically changes canonical `pitch.alter` and `NoteNotation.accidental` in one `EditorSessionV4` revision, preserves step/octave, isolates exact chord tones, rejects non-note targets, exposes no advanced keypad target authority, and is covered by imported MusicXML lossless round-trip plus Guitar/Piano WebKit isolation.
+- **APP-10M — COMPLETE / MERGED:** PR #123 / `25940b118b37edec874f7df3865bdd3cecf9c720`; exact selected-note Flat/Natural/Sharp authoring through existing V4 keypad execution with atomic canonical alter + notation accidental semantics, exact chord-tone isolation and imported MusicXML round-trip.
+- **APP-10N — COMPLETE / MERGED:** PR #125 / `f3feae65ebb38a70ae09796c6d51f7cc6197a4fa`; bounded exact Strong Accent/Staccatissimo/Spiccato toggles through the existing V4 articulation authoring path. Exact pitched event/note-parent semantics are required, new specs use auto placement/null direction, a single existing same-kind spec is removed exactly, multiple same-kind specs fail closed, grace-event target authority remains excluded, and imported Strong Accent plus Guitar/Piano WebKit isolation are covered.
 - **Stage 07 semantic → renderer presentation locator — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`; exact current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup is read-only and complements the existing renderer-hit path.
 - **Manual standalone release matrix — DEFERRED FOR CURRENT DEVELOPMENT / REQUIRED BEFORE RELEASE.**
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the standalone release matrix passes.
@@ -45,6 +46,7 @@ Guitar/Piano New score
         -> previous/next semantic measure navigation
         -> bounded note entry / selected-note edit / +Tone chord construction
         -> exact Staccato / Accent / Tenuto articulation toggles
+        -> exact Strong Accent / Staccatissimo / Spiccato articulation toggles
         -> exact Trill / Turn / Mordent local ornament toggles
         -> exact selected-note explicit Flat / Natural / Sharp
         -> bounded synthetic end-of-score measure append
@@ -56,14 +58,7 @@ Guitar/Piano New score
 
 All canonical score/notation edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. Staff/measure navigation, palette/notation-control state, file/recovery, renderer presentation, viewport, playback, export/print and release-hardening state remain noncanonical.
 
-Renderer interaction remains identity/presentation-only:
-
-```text
-renderer ScoreNoteRef -> opaque current-revision token -> SemanticAddressV3 selection
-SemanticAddressV3 -> exact current-revision ScoreNoteRef / ScoreMeasureRef -> presentation locator
-```
-
-Neither direction grants DOM/SVG/coordinate/geometry authority.
+Renderer interaction remains identity/presentation-only and neither direction grants DOM/SVG/coordinate/geometry authority.
 
 ## Release matrix status
 
@@ -77,7 +72,7 @@ Current practical release targets remain real iPhone Safari, Android Chrome, Win
 
 ## Next development action
 
-APP-10M closes the explicit selected-note accidental gap. Do a fresh repository audit before naming APP-10N. Augmentation dots are not automatically safe to expose because the existing atomic primitive changes selected-event duration but does not retime neighboring canonical events; any future dot surface needs explicit timing-space admission. Multi-target tremolo/wavy-line, tuplet, tie/slur and grace workflows remain separate until their endpoint/target contracts are product-ready.
+APP-10N closes a second bounded single-event articulation exposure gap. Do a fresh repository audit before naming APP-10O. Augmentation dots are still not automatically safe to expose because the existing atomic primitive changes selected-event duration but does not retime neighboring canonical events. Multi-target tremolo/wavy-line, tuplet, tie/slur and grace workflows remain separate until their endpoint/target contracts are product-ready.
 
 Do not open release or SesliTab gates as part of feature development.
 
