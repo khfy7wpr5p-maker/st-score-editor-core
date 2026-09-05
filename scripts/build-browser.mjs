@@ -71,7 +71,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-10K standalone app',
+  label: 'APP-10L standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   maxBytes: STANDALONE_APP_BUNDLE_MAX_BYTES,
   manifest: Object.freeze({
@@ -131,6 +131,13 @@ await buildBrowserArtifact({
     articulationNewSpec: 'auto-placement-null-direction',
     articulationExistingKindRemoval: 'single-exact-existing-spec-only', articulationAmbiguousKindFailClosed: true,
     articulationToggleHistory: 'EditorSessionV4', articulationRendererCoordinateAuthority: false, articulationNetworkAuthority: false,
+    localOrnamentTogglesBundled: true, localOrnamentTogglesCanonicalAuthority: false,
+    localOrnamentToggleKinds: ['trill-mark', 'turn', 'mordent'],
+    localOrnamentToggleTarget: 'exact-selected-pitched-event-or-note-parent-event',
+    localOrnamentNewSpec: 'auto-placement-empty-accidental-marks',
+    localOrnamentExistingKindRemoval: 'single-exact-existing-spec-only', localOrnamentAmbiguousKindFailClosed: true,
+    localOrnamentSpanningRelationAuthority: false, localOrnamentGraceTargetAuthority: false,
+    localOrnamentToggleHistory: 'EditorSessionV4', localOrnamentRendererCoordinateAuthority: false, localOrnamentNetworkAuthority: false,
     browserContractTargets: ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'],
     manualDeviceValidationRequired: true, standaloneReleaseGatePassed: false, seslitabCutoverAuthorized: false,
     serverRevisionAuthority: false, publicationAuthority: false,
@@ -162,4 +169,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-10K standalone HTML: PASS');
+console.log('APP-10L standalone HTML: PASS');
