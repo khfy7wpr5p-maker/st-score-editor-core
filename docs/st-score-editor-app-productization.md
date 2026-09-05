@@ -1,12 +1,12 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10I COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
+Status: **ACTIVE / APP-00–10J COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
 
 Date: 2026-09-04
 
 ## Product decision
 
-ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice/measure-navigation state is noncanonical. Local product operation requires no backend.
+ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice/measure-navigation/chord-tone UI state is noncanonical. Local product operation requires no backend.
 
 Device/browser validation is intentionally deferred during the current authoring-workspace development phase. Deferral is not release approval: `standaloneReleaseGatePassed` and `seslitabCutoverAuthorized` remain false.
 
@@ -151,6 +151,25 @@ APP-10I exposes compact previous / active measure / next controls without creati
 
 Core tests cover Guitar previous/next history invariance, Piano exact Staff preservation without implicit Voice creation, imported MusicXML semantic navigation and missing-context fail-closed behavior. Exact-head WebKit covers Guitar M3 → M2 → note edit → M3 with history changing only for actual edits, plus Piano Staff 2 + Voice 5 navigation to a target measure missing Voice 5, exact measure fallback, and later explicit Voice materialization. APP-10E/F/G/H and the APP-09B renderer/orientation chain remain green in the same gate.
 
+### APP-10J — Bounded exact chord-tone authoring
+Status: **COMPLETE / MERGED**
+
+PR #117 / `578203792d43548c5b174ab7bd29da4819b22275`.
+
+APP-10J exposes the existing `ADD_CHORD_TONE` V4 semantic primitive through one compact browser `+Tone` action; it does not add a second mutation path.
+
+- the action is admitted only when the current revision has an exact selected pitched event or note;
+- rest, measure-only and other non-pitched/non-event selections fail closed;
+- each action adds exactly one fresh note identity using the current palette pitch;
+- a single-note event becomes a chord while an existing chord gains exactly one additional tone;
+- the newly created exact tone becomes the semantic selection;
+- accepted mutations commit through existing `commitBasic -> EditorSessionV4` history as one revision per action;
+- existing APP-10F exact chord-tone Delete remains the bounded removal path;
+- imported MusicXML chord-tone authoring is admitted when exact semantic selection exists and the resulting admitted chord preserves lossless export/re-import;
+- renderer DOM/SVG/coordinates/geometry never determine the chord target.
+
+Core regression covers note→two/three-tone chord creation, exact chord-tone Delete, undo/redo, fail-closed rest/non-event selection and imported MusicXML chord add + export/re-import. Exact-head WebKit covers Guitar chord creation/deletion, APP-10I multi-measure navigation followed by chord authoring, and Piano Staff 2 / Voice 5 chord isolation. APP-10E/F/G/H/I plus the APP-09B renderer/orientation chain remain green in the same exact-head gate.
+
 ## Stage 07 — Exact semantic-to-render presentation locators
 Status: **COMPLETE / MERGED**
 
@@ -182,7 +201,7 @@ seslitabCutoverAuthorized = false
 
 ## Current development action
 
-APP-10I closes the basic multi-measure semantic navigation gap. Do not declare APP-10J yet. Perform a fresh repository audit to identify the highest-value remaining browser authoring gap, prioritizing reuse of already-admitted semantic primitives over new mutation paths. Candidate areas are hypotheses only until the audit proves them.
+APP-10J closes the basic exact chord-tone add/remove browser gap while preserving the existing semantic mutation authority. Do not declare APP-10K yet. Perform a fresh repository audit to identify the highest-value remaining bounded browser authoring gap, prioritizing already-admitted semantic primitives and avoiding any second mutation path.
 
 The device/browser matrix must be resumed before any standalone release closeout. A separate evidence-backed closeout is required before `standaloneReleaseGatePassed` can become true, and SesliTab product integration/cutover remains a later separate program.
 
