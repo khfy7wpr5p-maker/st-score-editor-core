@@ -8,7 +8,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** standalone editor app is the primary product target.
 - **APP-00–08 — COMPLETE / MERGED:** document/runtime, unified V4 authoring, browser shell, local files/recovery, guarded renderer interaction, viewport, local playback and bounded export/print.
 - **APP-09 / APP-09B — AUTOMATED HARDENING COMPLETE / PHYSICAL IPHONE BLOCKER RESOLVED:** responsive/accessibility/recovery guards are merged; host-controlled renderer rerender fixes the physical iPhone Safari selection/orientation failure without renderer authority expansion.
-- **APP-10A–M — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, bounded append-only synthetic measure-frame growth, presentation-only semantic previous/next measure navigation, exact palette-driven chord-tone authoring, bounded exact articulation/local-ornament toggles, and exact explicit Flat/Natural/Sharp authoring.
+- **APP-10A–N — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, bounded append-only synthetic measure-frame growth, presentation-only semantic previous/next measure navigation, exact palette-driven chord-tone authoring, bounded exact articulation/local-ornament toggles, exact explicit Flat/Natural/Sharp authoring, and a second bounded Strong Accent/Staccatissimo/Spiccato articulation group.
 - **Stage 07 semantic → renderer presentation locators — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391` adds exact read-only current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup.
 - **Standalone release gate — DEFERRED FOR CURRENT DEVELOPMENT / STILL REQUIRED:** remaining physical Windows/Android/iOS browser evidence must be completed before release.
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED:** no cutover until the standalone release matrix passes.
@@ -19,7 +19,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 ST Score Editor App
         |
         +--> Guitar / Piano New-score selector (presentation state)
-        +--> authoring palette: Staff / Voice 1–5 / pitch / entry accidental / octave / duration / Add measure / previous-next measure / +Tone / Stac-Acc-Ten / Trill-Turn-Mordent / explicit ♭-♮-♯
+        +--> authoring palette: Staff / Voice 1–5 / pitch / entry accidental / octave / duration / Add measure / previous-next measure / +Tone / Stac-Acc-Ten / SAcc-Staccis-Spic / Trill-Turn-Mordent / explicit ♭-♮-♯
         +--> exact selected-note Pitch / Duration / Delete actions
         +--> local file workflow (noncanonical)
         +--> IndexedDB recovery cache (noncanonical)
@@ -76,14 +76,15 @@ The current standalone browser can create admitted Guitar or Piano scores and pe
 - APP-10K PR #119 / `9fb9acc93d8121edff2ed97dee26d1213d035966` exposes bounded Staccato/Accent/Tenuto toggles through existing V4 articulation authoring; same-kind ambiguity fails closed and imported placement is preserved on exact removal;
 - APP-10L PR #121 / `aeb08ecd71cad9a0b09b3ab44493d9fde5f19178` exposes bounded Trill/Turn/Mordent local ornament toggles through existing V4 ornament authoring; same-kind ambiguity fails closed, imported placement/accidental-mark semantics are preserved, and spanning/grace ornament authority remains excluded;
 - APP-10M PR #123 / `25940b118b37edec874f7df3865bdd3cecf9c720` exposes exact explicit Flat, Natural and Sharp authoring through the existing V4 keypad execution path;
-- APP-10M requires exact `note` selection only; event, rest, measure and other selections are not silently converted into accidental targets;
-- each admitted accidental action atomically updates the selected note's canonical `pitch.alter` and `NoteNotation.accidental` in one `EditorSessionV4` revision while preserving note step and octave;
-- chord accidental authoring affects only the exact selected chord tone;
-- APP-10M exposes no advanced keypad target authority and does not expose dot, tuplet, tie, slur or rest actions as part of this package;
-- imported MusicXML explicit accidental authoring is admitted after exact note selection and covered by lossless export/re-import, including explicit Natural;
-- renderer DOM/SVG/coordinates/geometry never infer note, accidental, notation-mark or timing targets;
+- APP-10M requires exact `note` selection only; each admitted accidental action atomically updates canonical `pitch.alter` and `NoteNotation.accidental` while preserving note step/octave and exact chord-tone isolation;
+- APP-10N PR #125 / `f3feae65ebb38a70ae09796c6d51f7cc6197a4fa` exposes Strong Accent, Staccatissimo and Spiccato through the same existing V4 articulation authoring authority used by APP-10K;
+- APP-10N requires an exact selected pitched event or exact note-parent event; new specs use `placement:'auto'` and `direction:null`;
+- if exactly one same-kind APP-10N articulation already exists, that exact `ArticulationSpec` is removed so imported placement/direction semantics are not guessed or normalized; multiple same-kind specs fail closed as ambiguous;
+- APP-10N intentionally exposes no grace-event articulation target authority and does not alter APP-10K's original Staccato/Accent/Tenuto contract;
+- imported MusicXML Strong Accent authoring is covered by lossless export/re-import; exact imported-style Strong Accent removal preserves placement/direction semantics by removing the exact spec rather than rewriting it;
+- renderer DOM/SVG/coordinates/geometry never infer note, accidental, articulation, ornament or timing targets;
 - Voice creation, measure append, note entry, selected-note/chord-tone, articulation, local ornament and explicit accidental mutations participate in unified `EditorSessionV4` undo/redo; Staff/measure navigation remains presentation-only;
-- exact-head WebKit retains APP-10E–L and APP-09B regressions and adds APP-10M Guitar exact chord-tone accidental, multi-measure accidental isolation and Piano Staff-2 Voice-5 accidental isolation.
+- exact-head WebKit retains APP-10E–M and APP-09B regressions and adds APP-10N Guitar chord-event extended articulation, multi-measure isolation and Piano Staff-2 Voice-5 isolation.
 
 ## Renderer identity boundary
 
@@ -109,7 +110,7 @@ ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 
 ## Next bounded authoring candidate
 
-APP-10M closes the explicit selected-note accidental gap. The next package is intentionally **not preselected**. Fresh repository reality must be audited before naming APP-10N. Augmentation dots require timing-space admission because the existing primitive does not retime neighboring events; tuplets/ties/slurs and spanning ornaments require explicit multi-target contracts; grace workflows remain separately bounded.
+APP-10N closes the second compact single-event articulation exposure gap. The next package is intentionally **not preselected**. Fresh repository reality must be audited before naming APP-10O. Augmentation dots still require timing-space admission because the existing primitive does not retime neighboring events; tuplets/ties/slurs and spanning ornaments require explicit multi-target contracts; grace workflows remain separately bounded.
 
 ## Remaining release gate
 
