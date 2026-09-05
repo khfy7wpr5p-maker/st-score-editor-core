@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10N COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
+Status: **ACTIVE / APP-00–10O COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
 
 Date: 2026-09-05
 
@@ -73,6 +73,29 @@ APP-10N exposes a second bounded single-event articulation group without changin
 
 Core regression covers all three admitted kinds, unified undo/redo, imported MusicXML Strong Accent round-trip, exact imported-style removal, ambiguity/unsupported/non-pitched fail-closed behavior. Exact-head WebKit covers Guitar chord-event authoring, APP-10H/10I multi-measure isolation and Piano Staff 2 / Voice 5 isolation while APP-10E–M and APP-09B remain green.
 
+### APP-10O — Bounded extended local ornament toggles
+Status: **COMPLETE / MERGED**
+
+PR #127 / `75822e2a75db165692fa1fdba4c6c9a774682577`.
+
+APP-10O exposes a second bounded single-event simple-ornament group without changing APP-10L or introducing a parallel ornament mutation engine.
+
+- admitted browser kinds are exactly `inverted-turn`, `inverted-mordent` and `shake`;
+- the current selection must resolve exactly to a pitched normal event or exact note-parent event;
+- rest/non-event targets fail closed;
+- new specs use `placement:'auto'` and `accidentalMarks:[]`;
+- one existing same-kind ornament is removed using the exact existing `OrnamentSpec`, preserving imported placement and accidental-mark semantics rather than rewriting them;
+- multiple same-kind specs are ambiguous and fail closed;
+- unsupported extended local ornament kinds fail closed at the browser boundary;
+- accepted operations reuse `commitOrnament -> EditorSessionV4`, one canonical history revision per toggle;
+- spanning tremolo/wavy-line relation authority is explicitly excluded;
+- grace-event ornament target authority is explicitly excluded from APP-10O;
+- APP-10L Trill/Turn/Mordent remains unchanged;
+- imported MusicXML Inverted Turn add survives lossless export/re-import; exact imported-style removal covers placement/accidental-mark semantics;
+- renderer DOM/SVG/coordinates/nearest geometry never determine target or placement.
+
+Core regression covers all three admitted kinds, unified undo/redo, imported MusicXML Inverted Turn round-trip, exact imported-style removal, ambiguity/unsupported/non-pitched fail-closed behavior. Exact-head WebKit covers Guitar chord-event authoring, APP-10H/10I multi-measure isolation and Piano Staff 2 / Voice 5 isolation while APP-10E–N and APP-09B remain green.
+
 ## Stage 07 — Exact semantic-to-render presentation locators
 Status: **COMPLETE / MERGED**
 
@@ -102,7 +125,7 @@ seslitabCutoverAuthorized = false
 
 ## Current development action
 
-APP-10N closes a second bounded single-event articulation browser gap. Do not declare APP-10O yet. Perform a fresh repository audit for the next highest-value bounded user-facing authoring gap. Augmentation dots still require timing-space admission because the current primitive changes event duration without retiming neighbors. Tuplet/tie/slur, spanning ornaments and grace workflows remain separate structured/multi-target programs.
+APP-10O closes a second bounded single-event local-ornament browser gap. Do not declare APP-10P yet. Perform a fresh repository audit for the next highest-value bounded user-facing authoring gap. Augmentation dots still require timing-space admission because the current primitive changes event duration without retiming neighbors. Tuplet/tie/slur, spanning ornaments and grace workflows remain separate structured/multi-target programs.
 
 The device/browser matrix must be resumed before any standalone release closeout. A separate evidence-backed closeout is required before `standaloneReleaseGatePassed` can become true; SesliTab product integration/cutover remains later and separate.
 
