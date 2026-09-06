@@ -1,10 +1,10 @@
 {
   "document_type": "autonomous_developer_handoff_living_state",
   "schema_version": "1.1.0",
-  "prompt_revision": 3,
+  "prompt_revision": 4,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-06T19:24:00+03:00",
+  "updated_at": "2026-09-06T19:31:02+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
@@ -12,7 +12,7 @@
     "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
     "verified_main_subject": "APP-11I: productize atomic straight-three triplet retiming",
     "work_branch": "app11j-triplet-unretiming-admission-v4",
-    "work_branch_head_before_this_state_commit": "f148c568b17760ccfa96ad79d039781b1cdd294f"
+    "work_branch_head_before_this_state_commit": "f5aa51bac4fed32bf561f35f482d4589832b155a"
   },
   "source_handoff": {
     "origin": "user_supplied_st_score_editor_autonomous_developer_prompt_revision_1",
@@ -64,7 +64,6 @@
     ],
     "human_or_separate_authority_required": [
       "production deploy veya herkese açık yayın",
-      "SesliTab canlı cutover",
       "ücretli servis/API/GPU bütçesi veya ödeme aktivasyonu",
       "repository visibility/access/license değişikliği",
       "kullanıcı belgelerini dış modele/eğitim verisine gönderme",
@@ -74,13 +73,21 @@
     "merge_policy_for_this_handoff": "Bu handoff tek başına merge yetkisi sayılmaz. PR hazırlanır ve exact-head CI/review kanıtı korunur; ayrı açık merge yetkisi olmadan #141/#142 merge edilmez.",
     "physical_validation": "Gerçek cihaz kanıtı olmayan satır PASS yazılmaz; release gate kapalı kalır fakat bağımsız geliştirme sürebilir."
   },
+  "external_product_freeze": {
+    "product": "SesliTab",
+    "status": "USER_FROZEN_NO_WORK",
+    "resume_only_on_explicit_user_instruction": true,
+    "architecture_membership": false,
+    "work_package_membership": false,
+    "integration_target": false,
+    "context_note": "Kullanıcı, SesliTab'ın Smoosic ile entegre olduğunu ve bu çalışmanın tamamlandığını bildirdi. Kullanıcı açıkça yeniden başlatana kadar st-score-editor-core kapsamında SesliTab için analiz, kod, SDK adaptörü, entegrasyon hazırlığı, test, cutover veya dokümantasyon görevi üretilmez."
+  },
   "verified_reality": {
     "main": {
       "head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
       "app_11a_to_11i": "COMPLETE_MERGED",
       "standalone_release_gate_passed": false,
-      "manual_device_validation_required": true,
-      "seslitab_cutover_authorized": false
+      "manual_device_validation_required": true
     },
     "documentation_closeout": {
       "pr": 141,
@@ -96,9 +103,9 @@
       "verified_head_before_closeout_docs": "745a8718af8cbbc2b83620b6301f7b9bc0fd4344",
       "closeout_doc_parent_head": "f148c568b17760ccfa96ad79d039781b1cdd294f",
       "code_head": "674187b920434d6d7d72330baba44c2692a64596",
-      "ci_run_exact_verified_head": 34043756679,
+      "ci_run_exact_verified_head": 34045380996,
       "node_matrix": [18, 20, 22],
-      "result": "repository validation + build + full test chain PASS on Node 18/20/22 at 745a8718af8cbbc2b83620b6301f7b9bc0fd4344",
+      "result": "repository validation + build + full test chain PASS on Node 18/20/22 at 8c5d46a49d6a6ce67e52095df6078d0184ebd750",
       "physical_device_test": "NOT_RUN",
       "release_claim": false
     },
@@ -172,7 +179,7 @@
           ],
           "evidence": [
             {
-              "tested_code_sha": "745a8718af8cbbc2b83620b6301f7b9bc0fd4344",
+              "tested_code_sha": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
               "commands": ["GitHub Actions CI / repository validation / build / full test chain"],
               "results": ["Node 18 PASS", "Node 20 PASS", "Node 22 PASS"],
               "artifact_paths_or_urls": [
@@ -180,7 +187,7 @@
                 "test/app11j-tuplet-unretiming-admission-v4.test.mjs",
                 "docs/app-11j-triplet-unretiming-admission.md",
                 "PR #142",
-                "CI run 34043756679"
+                "CI run 34045380996"
               ],
               "limitations": [
                 "analysis only; canonical unretiming mutation not exposed",
@@ -191,7 +198,6 @@
             }
           ],
           "remaining_work": [
-            "Final state-document head CI must remain green before the closeout commit is treated as verified.",
             "Canonical Triplet Removal / Unretiming mutation remains a later bounded package after admission closeout/review.",
             "Merge requires separate authority under this handoff."
           ]
@@ -208,7 +214,7 @@
           ],
           "evidence": [
             {
-              "tested_code_sha": "745a8718af8cbbc2b83620b6301f7b9bc0fd4344",
+              "tested_code_sha": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
               "results": [
                 "Basic duration and keypad Duration/Rest/Dot product paths mapped to shared V4 rhythm authority.",
                 "Immediate-parent revision identity reuse gap found and centrally blocked in EditorSessionV4.",
@@ -224,7 +230,7 @@
                 "test/p01-session-revision-reuse-hardening.test.mjs",
                 "test/app11b-safe-duration-rest-balancing-v4.test.mjs",
                 "test/app11h-atomic-triplet-retiming-authoring-v4.test.mjs",
-                "CI run 34043756679"
+                "CI run 34045380996"
               ],
               "limitations": [
                 "physical-device validation NOT_RUN",
@@ -238,7 +244,7 @@
       ],
       "evidence": [
         {
-          "tested_code_sha": "745a8718af8cbbc2b83620b6301f7b9bc0fd4344",
+          "tested_code_sha": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
           "results": [
             "Shared timing authority audit completed.",
             "Concrete session revision-identity reliability gap patched and regression-tested.",
@@ -250,7 +256,7 @@
             "docs/p01-timing-authority-audit.md",
             "docs/p01-core-reliability-closeout.md",
             "PR #142",
-            "CI run 34043756679"
+            "CI run 34045380996"
           ],
           "limitations": [
             "not merged",
@@ -300,11 +306,11 @@
     },
     {
       "id": "P06",
-      "title": "Sürümlenmiş SDK ve entegrasyon örneği",
+      "title": "Sürümlenmiş SDK ve genel entegrasyon örneği",
       "status": "pending",
       "depends_on": ["P02", "P04"],
       "evidence": [],
-      "remaining_work": ["public API inventory", "version/error/migration contracts", "isolated host lifecycle", "SesliTab integration candidate without live cutover"],
+      "remaining_work": ["public API inventory", "version/error/migration contracts", "isolated host lifecycle", "generic third-party integration example without product-specific coupling"],
       "release_status": "not_released"
     },
     {
@@ -376,11 +382,11 @@
     ]
   },
   "execution_state": {
-    "status": "P01_CODE_CLOSEOUT_RECORDED_AWAITING_EXACT_HEAD_CI",
-    "verified_head": "745a8718af8cbbc2b83620b6301f7b9bc0fd4344",
+    "status": "P01_CODE_COMPLETE_VERIFIED_P02_READY",
+    "verified_head": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
     "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "current_task_id": "P01-CLOSEOUT-CI",
-    "next_action": "Bu revision-3 state commit'inin exact PR head CI sonucunu doğrula. Yeşilse P01 code-complete durumunu koru ve sonraki bağımsız güvenli çalışma olarak P02 öğretmen düzenleme akışı için salt-okunur gap audit ile başla; #141/#142 merge, release veya SesliTab cutover yapma.",
+    "current_task_id": "P02",
+    "next_action": "P02 öğretmen düzenleme akışı için salt-okunur gap audit ile başla; selection/range endpoints, measure/copy/paste/transpose/bulk operations ve insert-vs-overwrite semantiğini mevcut kod/test gerçekliğiyle eşleştir. #141/#142 merge veya release yapma. External product freeze kapsamındaki ürünler için görev üretme.",
     "required_reads": [
       "DEVELOPMENT_GOVERNANCE.md",
       "ROADMAP.md",
@@ -392,9 +398,9 @@
     ],
     "resume_commands": [
       "verify main HEAD and open PR heads before writing",
-      "verify PR #142 exact-head CI",
-      "if green, treat P01 as code-complete on work branch but not merged/released",
-      "begin P02 read-only gap audit before any new mutation surface"
+      "treat P01 as code-complete on work branch but not merged/released",
+      "begin P02 read-only gap audit before any new mutation surface",
+      "honor external_product_freeze before generating integration work"
     ],
     "completed_task_ids": ["P00", "P01-AUDIT-01", "P01"],
     "blockers": [
@@ -430,6 +436,11 @@
         "date": "2026-09-06",
         "decision": "P01 timing/product audit is closed as code-complete on the work branch without exposing a second timing authority or inventing imported pickup semantics.",
         "reason": "Supported product timing paths converge on shared V4 authority; one concrete revision-identity gap was patched; remaining unsupported semantics are explicitly fail-closed."
+      },
+      {
+        "date": "2026-09-06",
+        "decision": "SesliTab is removed from the ST Score Editor Core architecture/roadmap and frozen as an external product until the user explicitly reopens work.",
+        "reason": "User states SesliTab is already integrated with Smoosic and considers that work complete; no analysis, code, adapter, integration preparation, test or cutover work is wanted before a new explicit instruction."
       }
     ],
     "change_log": [
@@ -447,6 +458,11 @@
         "revision": 3,
         "date": "2026-09-06",
         "description": "P01 timing-authority audit completed. Immediate-parent revision reuse was hardened at EditorSessionV4 and regression-tested. Atomic failure, Undo and relation/orphan fail-closed evidence was reviewed. P01 core reliability is recorded code-complete on the isolated work branch; merge/release/device authority remains separate."
+      },
+      {
+        "revision": 4,
+        "date": "2026-09-06",
+        "description": "User architecture decision applied: SesliTab removed from ST Score Editor Core architecture, roadmap and productization targets. P06 changed to generic third-party SDK integration. A strict external-product freeze records that no SesliTab work may be generated until the user explicitly reopens it; user reports SesliTab Smoosic integration complete."
       }
     ]
   },
