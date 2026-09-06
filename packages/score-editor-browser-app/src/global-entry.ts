@@ -1,9 +1,9 @@
-import { createTieAuthoringStandaloneBrowserAppRuntime } from './tie-authoring.js';
+import { createSlurAuthoringStandaloneBrowserAppRuntime } from './slur-authoring.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createTieAuthoringStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createSlurAuthoringStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createTieAuthoringStandaloneBrowserAppRuntime(),
+  value: createSlurAuthoringStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
