@@ -13,7 +13,8 @@ import { executeBasicAuthoringV4, type BasicAuthoringV4Options } from '../../edi
 import { executeGraceAuthoringV4, type GraceAuthoringV4Options } from '../../editor-grace-authoring-v4/src/index.js';
 import { executeArticulationAuthoringV4, type ArticulationAuthoringV4Options } from '../../editor-articulation-authoring-v4/src/index.js';
 import { executeOrnamentAuthoringV4, type OrnamentAuthoringV4Options } from '../../editor-ornament-authoring-v4/src/index.js';
-import { executeEditorKeypadActionV4, type EditorKeypadV4Options } from '../../editor-keypad-execution-v4/src/index.js';
+import type { EditorKeypadV4Options } from '../../editor-keypad-execution-v4/src/index.js';
+import { executeSafeEditorKeypadActionV4 } from '../../editor-keypad-rhythm-safe-v4/src/index.js';
 
 export const EDITOR_SESSION_V4_VERSION = '4.0.0' as const;
 export interface EditorSessionStateV4 {
@@ -100,7 +101,7 @@ export const commitSessionOrnamentAuthoringIntentV4 = (session: EditorSessionSta
 
 export const commitSessionKeypadActionV4 = (session: EditorSessionStateV4, action: unknown, advancedTarget: unknown, options: EditorKeypadV4Options): Readonly<EditorSessionStateV4> => {
   const current = session.history.present;
-  const result = executeEditorKeypadActionV4(current.score, current.notation, session.selection, action, advancedTarget, options);
+  const result = executeSafeEditorKeypadActionV4(current.score, current.notation, session.selection, action, advancedTarget, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
   return state(history, result.selection, 'KEYPAD_EDIT_COMMITTED', 'Semantic keypad action committed atomically in the unified V4 history.', session.renderRequest.renderer);
 };
