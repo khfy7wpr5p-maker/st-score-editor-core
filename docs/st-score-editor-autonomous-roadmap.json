@@ -4,7 +4,7 @@
   "prompt_revision": 13,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-06T23:10:00+03:00",
+  "updated_at": "2026-09-06T23:12:00+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
@@ -82,8 +82,7 @@
     "p01": {
       "state": "CODE_COMPLETE_ON_WORK_BRANCH",
       "pr": 142,
-      "verified_head": "8c5d46a49d6d0b8582b669a299d",
-      "evidence_head": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
+      "verified_head": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
       "ci_run": 34045380996,
       "node_matrix": [18, 20, 22],
       "merge_claim": false,
