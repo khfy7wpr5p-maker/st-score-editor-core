@@ -33,32 +33,35 @@ Repository reality only; planned capability is not production capability.
 - **APP-10M — COMPLETE / MERGED:** PR #123 / `25940b118b37edec874f7df3865bdd3cecf9c720`; exact selected-note Flat/Natural/Sharp authoring through existing V4 keypad execution with atomic canonical alter + notation accidental semantics, exact chord-tone isolation and imported MusicXML round-trip.
 - **APP-10N — COMPLETE / MERGED:** PR #125 / `f3feae65ebb38a70ae09796c6d51f7cc6197a4fa`; bounded exact Strong Accent/Staccatissimo/Spiccato toggles through the existing V4 articulation authoring path. Exact pitched event/note-parent semantics are required, new specs use auto placement/null direction, a single existing same-kind spec is removed exactly, multiple same-kind specs fail closed, grace-event target authority remains excluded, and imported Strong Accent plus Guitar/Piano WebKit isolation are covered.
 - **APP-10O — COMPLETE / MERGED:** PR #127 / `75822e2a75db165692fa1fdba4c6c9a774682577`; bounded exact Inverted Turn/Inverted Mordent/Shake toggles through the existing V4 ornament authoring path. Exact pitched event/note-parent semantics are required, new specs use auto placement with empty accidental marks, a single existing same-kind spec is removed exactly, multiple same-kind specs fail closed, spanning/grace authority remains excluded, and imported Inverted Turn plus Guitar/Piano WebKit isolation are covered.
+- **APP-11A — COMPLETE / MERGED:** PR #129 / `402783e3b61f80ed651d6df641c497ad8dd226f1`; introduces the read-only V3/V4 rhythm-timing admission foundation for exact event-duration proposals. It classifies shrink/grow/no-op, exact next-event space, synthetic meter bounds, overlap, dots/beams/tuplets/ties coupling, existing invalid timing and unproven imported trailing growth without yet changing current browser mutation behavior.
 - **Stage 07 semantic → renderer presentation locator — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`; exact current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup is read-only and complements the existing renderer-hit path.
 - **Manual standalone release matrix — DEFERRED FOR CURRENT DEVELOPMENT / REQUIRED BEFORE RELEASE.**
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the standalone release matrix passes.
 
 ## Current product architecture phase
 
-The project is in **standalone authoring-workspace expansion**:
+The project has moved from compact single-target workspace expansion into **strong-editor Rhythm & Timing Authoring**:
 
 ```text
 Guitar/Piano New score
         -> exact semantic Staff + Voice 1–5 context
         -> previous/next semantic measure navigation
         -> bounded note entry / selected-note edit / +Tone chord construction
-        -> exact Staccato / Accent / Tenuto articulation toggles
-        -> exact Strong Accent / Staccatissimo / Spiccato articulation toggles
-        -> exact Trill / Turn / Mordent local ornament toggles
-        -> exact Inverted Turn / Inverted Mordent / Shake local ornament toggles
-        -> exact selected-note explicit Flat / Natural / Sharp
+        -> exact articulation / local ornament / explicit accidental authoring
         -> bounded synthetic end-of-score measure append
+        -> APP-11A exact EventAddressV3 duration admission analysis
+             -> contraction/growth/no-op classification
+             -> next-event boundary / synthetic meter checks
+             -> dots/beams/tuplets/ties coupling veto
+             -> imported trailing-growth fail-closed
+             -> gap evidence for future explicit-rest balancing
         -> EditorSessionV4 canonical commit for actual edits
         -> unified undo/redo
         -> MusicXML projection/export
         -> renderer presentation
 ```
 
-All canonical score/notation edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. Staff/measure navigation, palette/notation-control state, file/recovery, renderer presentation, viewport, playback, export/print and release-hardening state remain noncanonical.
+All canonical score/notation edits still converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. APP-11A itself is analysis-only and creates no score/notation/history mutation. Staff/measure navigation, palette/notation-control state, file/recovery, renderer presentation, viewport, playback, export/print and release-hardening state remain noncanonical.
 
 Renderer interaction remains identity/presentation-only and neither direction grants DOM/SVG/coordinate/geometry authority.
 
@@ -74,12 +77,30 @@ Current practical release targets remain real iPhone Safari, Android Chrome, Win
 
 ## Next development action
 
-APP-10O closes a second bounded single-event local-ornament exposure gap. Do a fresh repository audit before naming APP-10P. Augmentation dots are still not automatically safe to expose because the existing atomic primitive changes selected-event duration but does not retime neighboring canonical events. Multi-target tremolo/wavy-line, tuplet, tie/slur and grace workflows remain separate until their endpoint/target contracts are product-ready.
+**APP-11B — shared safe duration mutation authority / explicit-rest balancing.**
+
+Repository reality shows two existing V4 mutation paths can change event duration directly: BasicAuthoringV4 `SET_EVENT_DURATION` and keypad Duration/Dot actions. APP-11A deliberately did not reroute them. APP-11B must eliminate unchecked parallel timing authority by making admitted duration-changing operations pass one shared timing contract and by deterministically materializing/resizing explicit rest space when a safe edit creates or consumes rhythmic room.
+
+APP-11B must preserve these boundaries:
+
+- no renderer-coordinate timing inference;
+- no imported trailing growth without proven measure semantics;
+- no independent retiming of beam/tuplet/tie-coupled events;
+- dot rewrite only through an atomic dot+duration operation that owns both semantics;
+- one accepted edit -> one `EditorSessionV4` history revision;
+- no implicit Voice or measure invention.
+
+After this duration authority is proven, augmentation dots can be surfaced safely. The next strong-editor selection layer can then expose the already-existing tie/slur/tuplet primitives through explicit semantic endpoints/ranges rather than inventing a second relation engine.
 
 Do not open release or SesliTab gates as part of feature development.
 
 ## Still fail-closed / gated
 
+- existing browser duration/dot paths are not yet declared APP-11 timing-safe until APP-11B reroutes them;
+- trailing imported MusicXML duration growth without pickup/non-controlling evidence;
+- arbitrary rest synthesis/redistribution outside a future admitted APP-11 balancing contract;
+- multi-target tie/slur/tuplet UI until explicit semantic range/endpoint selection is product-ready;
+- spanning tremolo/wavy-line and grace workflows until separately admitted;
 - remaining real-device/browser release matrix;
 - standalone release until that matrix passes;
 - SesliTab V4 cutover until standalone release gate passes;
