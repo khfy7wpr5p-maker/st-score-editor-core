@@ -1,17 +1,17 @@
 {
   "document_type": "autonomous_developer_handoff_living_state",
   "schema_version": "1.1.0",
-  "prompt_revision": 10,
+  "prompt_revision": 11,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-06T20:38:00+03:00",
+  "updated_at": "2026-09-06T20:52:00+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
     "default_branch": "main",
     "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
     "work_branch": "p02-teacher-event-span-selection-v4",
-    "last_verified_feature_head": "3caaa7fdae9d930c1da101f036d1236e7fba58cc"
+    "last_verified_feature_head": "79363e3e61e35544298439dd305d596983469653"
   },
   "source_handoff": {
     "origin": "user_supplied_st_score_editor_autonomous_developer_prompt_revision_1",
@@ -63,8 +63,12 @@
       "P02-PASTE01": {"head": "e189a9fcb0f91e6072c5d0b1791b4ca6d3f89b72", "ci": 34047751886},
       "P02-ID01": {"head": "120a219e22737ae274fd37f94933e333ce4363c7", "ci": 34047910169},
       "P02-PASTE02": {"head": "3c005014e688c25703e98260bed63e336abf7e95", "ci": 34048203830, "canonical_candidate_authoring": "VERIFIED", "historyMutationAuthority": false},
-      "P02-PASTE03": {"head": "2c2533c23bd4d47519e27fc7e244bda8d1044840", "ci": 34048830113, "node_matrix": [18,20,22], "session_history_commit": "VERIFIED", "undo_redo_exact_pair_restore": "VERIFIED", "failed_paste_history_immutability": "VERIFIED"},
-      "P02-APP01": {"head": "3caaa7fdae9d930c1da101f036d1236e7fba58cc", "ci": 34049060092, "node_matrix": [18,20,22], "app_document_wrapper": "VERIFIED", "dirty_saved_revision_semantics": "VERIFIED", "app_undo_redo": "VERIFIED"},
+      "P02-PASTE03": {"head": "2c2533c23bd4d47519e27fc7e244bda8d1044840", "ci": 34048830113, "session_history_commit": "VERIFIED", "undo_redo_exact_pair_restore": "VERIFIED"},
+      "P02-APP01": {"head": "3caaa7fdae9d930c1da101f036d1236e7fba58cc", "ci": 34049060092, "app_document_wrapper": "VERIFIED", "dirty_saved_revision_semantics": "VERIFIED"},
+      "P02-TRANSPOSE01": {"head": "8c962bd7ba63a246ef1c3fc916941f33d23fd038", "ci": 34049362326, "profile": "OCTAVE_ONLY_READ_ONLY_ADMISSION", "result": "VERIFIED"},
+      "P02-TRANSPOSE02": {"head": "de682e154e59a4a57259742bf38c6c10a9d20cfd", "ci": 34049513929, "atomic_canonical_authoring": "VERIFIED", "historyMutationAuthority": false},
+      "P02-TRANSPOSE03": {"head": "5af95eb930815e12efa2c8ce109f89422019dd2f", "ci": 34049652893, "session_history_commit": "VERIFIED", "undo_redo_exact_pair_restore": "VERIFIED"},
+      "P02-TRANSPOSE04": {"head": "79363e3e61e35544298439dd305d596983469653", "ci": 34049811854, "app_document_wrapper": "VERIFIED", "dirty_saved_revision_semantics": "VERIFIED"},
       "physical_device_test": "NOT_RUN",
       "merge_claim": false,
       "release_claim": false
@@ -78,8 +82,13 @@
       "title": "Baştan sona öğretmen düzenleme akışı",
       "status": "in_progress",
       "depends_on": ["P01"],
-      "completed_or_verified_subtasks": ["P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01"],
-      "remaining_work": ["browser-safe teacher command wiring over proven app-document authority", "cross-measure paste and relation remapping policy", "transpose/bulk operations", "insert-mode semantics distinct from overwrite"]
+      "completed_or_verified_subtasks": ["P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01", "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04"],
+      "remaining_work": [
+        "insert-mode semantics distinct from overwrite",
+        "cross-measure paste and relation remapping policy",
+        "browser-safe teacher command wiring over proven app-document authority",
+        "general chromatic/diatonic transpose only after spelling/key/relation policy"
+      ]
     },
     {"id": "P03", "title": "Mobil çalışma alanı ve performans", "status": "pending", "depends_on": ["P01"], "remaining_work": ["touch/context toolbar", "semantic zoom/selection", "measured performance"]},
     {"id": "P04", "title": "Dosya, kurtarma ve kısmi destek davranışı", "status": "pending", "depends_on": ["P01"], "remaining_work": ["MusicXML preservation", ".mxl/cross-staff/output", "capability split", "OMR partial-work"]},
@@ -96,12 +105,12 @@
     "rules": ["PASS/FAIL/BLOCKED/NOT_RUN ayrı tutulur.", "Exact SHA ve CI/run kaydedilir.", "Eski yeşil CI yeni HEAD'e taşınmaz.", "WebKit fiziksel cihaz PASS değildir."]
   },
   "execution_state": {
-    "status": "P02_APP01_VERIFIED_PR_OPEN",
-    "verified_head": "3caaa7fdae9d930c1da101f036d1236e7fba58cc",
+    "status": "P02_TRANSPOSE04_VERIFIED_PR_OPEN",
+    "verified_head": "79363e3e61e35544298439dd305d596983469653",
     "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "current_task_id": "P02-TRANSPOSE01",
-    "next_action": "Önce read-only bounded bulk transpose admission tasarla. İlk güvenli profil enharmonic spelling problemi yaratmamak için yalnız octave transposition (±1/±2 octave) ile başlayabilir; exact teacher event-span selection tüketmeli, restleri korumalı, pitched note/chord tone hedeflerini planlamalı, tie/grace relation riskini fail-closed yapmalı, pitch-range taşmasını reddetmeli ve canonical/history mutate etmemeli. Genel chromatic/diatonic transpose ancak spelling/key/tie policy açıklandıktan sonra açılmalı. Browser UI wiring bağımsız ve sonradan yapılabilir. SesliTab/Smoosic scope kapalı.",
-    "completed_task_ids": ["P00", "P01-AUDIT-01", "P01", "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01"],
+    "current_task_id": "P02-INSERT01",
+    "next_action": "Insert ve overwrite semantiklerini birbirinden ayır. İlk güvenli insert paketi read-only admission olmalı: mevcut bir Voice içinde destination anchor'dan sonraki suffix'i ileri kaydırmanın exact zaman etkisini planlamalı, ölçü sonundaki exact neutral trailing rest'in inserted extent'i absorbe ettiğini kanıtlamalı, gizli zaman boşluğu/overlap/relation/grace/topology risklerini fail-closed yapmalı ve canonical/history mutate etmemeli. Insert mutation ancak bu admission kanıtlandıktan sonra ayrı paket olarak açılmalı. SesliTab/Smoosic scope kapalı.",
+    "completed_task_ids": ["P00", "P01-AUDIT-01", "P01", "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01", "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04"],
     "blockers": [
       {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143 açık; merge yetkisi yok."},
       {"kind": "PHYSICAL_DEVICE_RELEASE_GATE", "reason": "Gerçek cihaz matrisi tamamlanmadı."}
@@ -109,8 +118,10 @@
     "decision_log": [
       {"date": "2026-09-06", "decision": "P02 paste akışı selection -> copy snapshot -> paste admission -> identity plan -> canonical paste authoring -> session history -> app document katmanlarına ayrıldı.", "reason": "Her authority sınırı bağımsız doğrulanabilir ve dual-write önlenir."},
       {"date": "2026-09-06", "decision": "İlk paste profili exact neutral-rest overwrite ile sınırlı.", "reason": "Topology invention, sessiz relation kaybı ve belirsiz insert semantiğini önlemek."},
-      {"date": "2026-09-06", "decision": "P02-APP01 existing appState dirty/savedRevision semantics'i yeniden kullanır.", "reason": "Paste için ikinci dirty/save authority oluşturulmaz."},
-      {"date": "2026-09-06", "decision": "İlk transpose paketi octave-only read-only admission olarak ele alınacak.", "reason": "Genel semitone/diatonic transpose enharmonic spelling, key-signature ve tie relation policy gerektirir; octave transposition step/alter spelling'i koruyarak daha güvenli bir ilk bulk profile sağlar."}
+      {"date": "2026-09-06", "decision": "İlk bulk transpose profili octave-only tutuldu.", "reason": "Step/alter spelling korunur; enharmonic/key policy uydurulmaz."},
+      {"date": "2026-09-06", "decision": "Octave transpose tie-coupled ve selected grace-anchor içerikte fail-closed.", "reason": "Relation closure ve grace transposition policy henüz explicit değil."},
+      {"date": "2026-09-06", "decision": "Insert mode overwrite'dan ayrı admission/mutation hattı olarak modellenir.", "reason": "Insert suffix timing shift ve trailing-capacity kanıtı gerektirir; overwrite ise mevcut neutral rest prefix'i tüketir."
+      }
     ],
     "change_log": [
       {"revision": 1, "date": "2026-09-06", "description": "User handoff created."},
@@ -120,9 +131,10 @@
       {"revision": 5, "date": "2026-09-06", "description": "Pinned dependency freeze clarified."},
       {"revision": 6, "date": "2026-09-06", "description": "P02-SEL01 verified."},
       {"revision": 7, "date": "2026-09-06", "description": "P02-COPY01 verified."},
-      {"revision": 8, "date": "2026-09-06", "description": "P02-PASTE01, ID01 and PASTE02 verified."},
-      {"revision": 9, "date": "2026-09-06", "description": "P02-PASTE03 verified at 2c2533c23bd4d47519e27fc7e244bda8d1044840, CI 34048830113 PASS Node 18/20/22."},
-      {"revision": 10, "date": "2026-09-06", "description": "P02-APP01 verified at 3caaa7fdae9d930c1da101f036d1236e7fba58cc, CI 34049060092 PASS Node 18/20/22. App paste now preserves existing savedRevisionId/dirty semantics and app-level Undo/Redo behavior."}
+      {"revision": 8, "date": "2026-09-06", "description": "P02 bounded paste admission/identity/canonical authoring verified."},
+      {"revision": 9, "date": "2026-09-06", "description": "P02-PASTE03 session history verified."},
+      {"revision": 10, "date": "2026-09-06", "description": "P02-APP01 app paste dirty/save wiring verified."},
+      {"revision": 11, "date": "2026-09-06", "description": "P02 octave-only bulk transpose chain verified end-to-end through admission, atomic canonical authoring, unified session history/Undo-Redo and app-document dirty/save semantics. TRANSPOSE01 head 8c962bd7..., CI 34049362326; TRANSPOSE02 head de682e15..., CI 34049513929; TRANSPOSE03 head 5af95eb9..., CI 34049652893; TRANSPOSE04 head 79363e3e..., CI 34049811854. All Node 18/20/22 PASS."}
     ]
   },
   "living_prompt_protocol": {
