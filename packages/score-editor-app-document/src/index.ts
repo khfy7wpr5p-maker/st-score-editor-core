@@ -11,6 +11,7 @@ import {
   commitSessionArticulationAuthoringIntentV4,
   commitSessionOrnamentAuthoringIntentV4,
   commitSessionKeypadActionV4,
+  commitSessionTeacherPasteOverwriteV4,
   commitSessionCrossStaffIntentV4,
   commitSessionTopologyIntentV4,
   selectSessionSemanticAddressV4,
@@ -25,6 +26,9 @@ import type { OrnamentAuthoringV4Options } from '../../editor-ornament-authoring
 import type { EditorKeypadV4Options } from '../../editor-keypad-execution-v4/src/index.js';
 import type { CrossStaffAuthoringV4Options } from '../../editor-cross-staff-authoring-v4/src/index.js';
 import type { TopologyAuthoringV3Options } from '../../editor-topology-authoring-v3/src/index.js';
+import type { TeacherCopySnapshotV4 } from '../../editor-teacher-copy-snapshot-v4/src/index.js';
+import type { TeacherPasteAdmissionV4 } from '../../editor-teacher-paste-admission-v4/src/index.js';
+import type { TeacherPasteIdentityPlanV4 } from '../../editor-teacher-paste-identity-plan-v4/src/index.js';
 import { importNotationMusicXmlV2 } from '../../musicxml-v2/src/index.js';
 import { renderableMusicXmlV4, RendererContractV4Error } from '../../renderer-contract-v4/src/index.js';
 
@@ -340,6 +344,18 @@ export const commitAppKeypadAction = (
   advancedTarget: unknown,
   options: EditorKeypadV4Options
 ): Readonly<ScoreEditorAppDocument> => appState(document.title, document.origin, commitSessionKeypadActionV4(document.session, action, advancedTarget, options), document.savedRevisionId);
+
+export const commitAppTeacherPasteOverwrite = (
+  document: ScoreEditorAppDocument,
+  snapshot: TeacherCopySnapshotV4,
+  admission: TeacherPasteAdmissionV4,
+  identityPlan: TeacherPasteIdentityPlanV4
+): Readonly<ScoreEditorAppDocument> => appState(
+  document.title,
+  document.origin,
+  commitSessionTeacherPasteOverwriteV4(document.session, snapshot, admission, identityPlan),
+  document.savedRevisionId
+);
 
 export const commitAppCrossStaffIntent = (
   document: ScoreEditorAppDocument,
