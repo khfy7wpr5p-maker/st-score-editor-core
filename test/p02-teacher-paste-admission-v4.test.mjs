@@ -22,9 +22,13 @@ const note=(id,noteId,onset,duration,step='C')=>({id,kind:'note',onset,duration,
 const rest=(id,onset,duration)=>({id,kind:'rest',onset,duration});
 const eventNotation=(overrides={})=>({dots:0,beams:[],tuplet:null,articulations:[],ornaments:[],...overrides});
 
-const scoreWithDestination=(destinationDuration={numerator:3,denominator:4})=>{
+const baseRaw=()=>{
   const app=createNewScoreEditorAppDocument({preset:'GUITAR_TREBLE'});
-  const raw=structuredClone(app.session.history.present.score);
+  return structuredClone(app.session.history.present.score);
+};
+
+const scoreWithDestination=(destinationDuration={numerator:3,denominator:4})=>{
+  const raw=baseRaw();
   const staff=raw.parts[0].staves.find(candidate=>candidate.role==='standard');
   staff.measures[0].voices[0].events=[
     note('paste-src-a','paste-src-na',{numerator:0,denominator:1},{numerator:1,denominator:8},'C'),
@@ -99,12 +103,29 @@ test('P02-PASTE01 rejects insufficient destination rest space fail closed',()=>{
   );
 });
 
-test('P02-PASTE01 rejects a pitched destination target',()=>{
+test('P02-PASTE01 rejects a destination event that belongs to the source snapshot',()=>{
   const score=scoreWithDestination();
   const notation=emptyNotationDocumentV4(score);
   const snapshot=copySnapshot(score);
   assert.throws(
     ()=>analyzeTeacherPasteDestinationV4(score,notation,snapshot,addressEntityV3(score,'paste-src-a')),
+    error=>error instanceof TeacherPasteAdmissionV4Error&&error.code==='DESTINATION_IN_SOURCE_SNAPSHOT'
+  );
+});
+
+test('P02-PASTE01 separately rejects a pitched destination outside the source snapshot',()=>{
+  const raw=baseRaw();
+  const staff=raw.parts[0].staves.find(candidate=>candidate.role==='standard');
+  staff.measures[0].voices[0].events=[
+    note('paste-src-a','paste-src-na',{numerator:0,denominator:1},{numerator:1,denominator:8},'C'),
+    note('paste-src-b','paste-src-nb',{numerator:1,denominator:8},{numerator:1,denominator:8},'D'),
+    note('paste-pitched-destination','paste-pitched-note',{numerator:1,denominator:4},{numerator:3,denominator:4},'E')
+  ];
+  const score=createScoreDocumentV3(raw);
+  const notation=emptyNotationDocumentV4(score);
+  const snapshot=copySnapshot(score);
+  assert.throws(
+    ()=>analyzeTeacherPasteDestinationV4(score,notation,snapshot,addressEntityV3(score,'paste-pitched-destination')),
     error=>error instanceof TeacherPasteAdmissionV4Error&&error.code==='DESTINATION_NOT_REST'
   );
 });
@@ -146,5 +167,31 @@ test('P02-PASTE01 explicitly blocks cross-measure snapshots in its first profile
   assert.throws(
     ()=>analyzeTeacherPasteDestinationV4(score,notation,snapshot,addressEntityV3(score,'paste-destination')),
     error=>error instanceof TeacherPasteAdmissionV4Error&&error.code==='CROSS_MEASURE_SNAPSHOT_UNSUPPORTED'
+  );
+});
+
+test('P02-PASTE01 rejects hidden source timing gaps instead of creating implicit destination gaps',()=>{
+  const score=scoreWithDestination();
+  const notation=emptyNotationDocumentV4(score);
+  const snapshot=structuredClone(copySnapshot(score));
+  snapshot.segments[0].events[1].onsetFromSegmentOrigin={numerator:3,denominator:16};
+  assert.throws(
+    ()=>analyzeTeacherPasteDestinationV4(score,notation,snapshot,addressEntityV3(score,'paste-destination')),
+    error=>error instanceof TeacherPasteAdmissionV4Error&&error.code==='SOURCE_GAPS_UNSUPPORTED'
+  );
+});
+
+test('P02-PASTE01 rejects overwriting a source rest with the snapshot that contains it',()=>{
+  const score=scoreWithDestination();
+  const notation=emptyNotationDocumentV4(score);
+  const selection=createTeacherEventSpanSelectionV4(
+    score,
+    addressEntityV3(score,'paste-src-a'),
+    addressEntityV3(score,'paste-destination')
+  );
+  const snapshot=createTeacherCopySnapshotV4(score,notation,selection);
+  assert.throws(
+    ()=>analyzeTeacherPasteDestinationV4(score,notation,snapshot,addressEntityV3(score,'paste-destination')),
+    error=>error instanceof TeacherPasteAdmissionV4Error&&error.code==='DESTINATION_IN_SOURCE_SNAPSHOT'
   );
 });
