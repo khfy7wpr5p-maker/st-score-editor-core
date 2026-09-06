@@ -203,7 +203,7 @@ const parseIntent = (raw: unknown): Readonly<RhythmAuthoringIntentV4> => {
       dots: parseDots(raw.dots)
     });
   }
-  throw new RhythmAuthoringV4Error('Unsupported rhythm authoring intent.', 'INVALID_INTENT', { type: raw.type });
+  throw new RhythmAuthoringV4Error('Unsupported rhythm authoring intent.', 'INVALID_INTENT');
 };
 
 const assertRevision = (score: ScoreDocumentV3, nextRevisionId: string): void => {
