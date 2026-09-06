@@ -64,8 +64,8 @@ const history = (input: EditorHistoryStateV4): Readonly<EditorHistoryStateV4> =>
   const timeline = [...past, present, ...future];
   const documentId = present.score.id;
   const revisionIds = new Set<string>();
-  for (let index = 0; index < timeline.length; index += 1) {
-    const current = timeline[index];
+  let previous: Readonly<EditorSnapshotV4> | null = null;
+  for (const current of timeline) {
     if (current.score.id !== documentId) {
       throw new ScoreEditorAppSnapshotAdoptionError('Snapshot history crosses canonical document identity.', 'SNAPSHOT_DOCUMENT_INVALID');
     }
@@ -74,9 +74,10 @@ const history = (input: EditorHistoryStateV4): Readonly<EditorHistoryStateV4> =>
       throw new ScoreEditorAppSnapshotAdoptionError('Snapshot history reuses a canonical revision identity.', 'SNAPSHOT_DOCUMENT_INVALID');
     }
     revisionIds.add(revisionId);
-    if (index > 0 && current.score.revision.parentId !== timeline[index - 1].score.revision.id) {
+    if (previous !== null && current.score.revision.parentId !== previous.score.revision.id) {
       throw new ScoreEditorAppSnapshotAdoptionError('Snapshot history is not a direct-child revision chain.', 'SNAPSHOT_DOCUMENT_INVALID');
     }
+    previous = current;
   }
   return Object.freeze({
     version: EDITOR_HISTORY_V4_VERSION,
