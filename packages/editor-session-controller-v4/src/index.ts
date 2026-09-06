@@ -19,6 +19,8 @@ import type { TeacherCopySnapshotV4 } from '../../editor-teacher-copy-snapshot-v
 import type { TeacherPasteAdmissionV4 } from '../../editor-teacher-paste-admission-v4/src/index.js';
 import type { TeacherPasteIdentityPlanV4 } from '../../editor-teacher-paste-identity-plan-v4/src/index.js';
 import { executeTeacherPasteOverwriteV4 } from '../../editor-teacher-paste-authoring-v4/src/index.js';
+import type { TeacherInsertAdmissionV4 } from '../../editor-teacher-insert-admission-v4/src/index.js';
+import { executeTeacherInsertAfterEventV4 } from '../../editor-teacher-insert-authoring-v4/src/index.js';
 import type { TeacherEventSpanSelectionV4 } from '../../editor-teacher-event-span-v4/src/index.js';
 import type { TeacherOctaveTransposeAdmissionV4 } from '../../editor-teacher-octave-transpose-admission-v4/src/index.js';
 import {
@@ -164,6 +166,31 @@ export const commitSessionTeacherPasteOverwriteV4 = (
     result.selection,
     'TEACHER_PASTE_EDIT_COMMITTED',
     'Teacher paste overwrite committed atomically in the unified V4 history.',
+    session.renderRequest.renderer
+  );
+};
+
+export const commitSessionTeacherInsertAfterEventV4 = (
+  session: EditorSessionStateV4,
+  snapshot: TeacherCopySnapshotV4,
+  admission: TeacherInsertAdmissionV4,
+  nextRevisionId: string
+): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, nextRevisionId);
+  const current = session.history.present;
+  const result = executeTeacherInsertAfterEventV4(
+    current.score,
+    current.notation,
+    snapshot,
+    admission,
+    nextRevisionId
+  );
+  const history = commitEditorHistoryV4(session.history, result.score, result.notation);
+  return state(
+    history,
+    result.selection,
+    'TEACHER_INSERT_EDIT_COMMITTED',
+    'Teacher insert committed atomically in the unified V4 history.',
     session.renderRequest.renderer
   );
 };
