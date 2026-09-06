@@ -9,6 +9,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **APP-00–08 — COMPLETE / MERGED:** document/runtime, unified V4 authoring, browser shell, local files/recovery, guarded renderer interaction, viewport, local playback and bounded export/print.
 - **APP-09 / APP-09B — AUTOMATED HARDENING COMPLETE / PHYSICAL IPHONE BLOCKER RESOLVED:** responsive/accessibility/recovery guards are merged; host-controlled renderer rerender fixes the physical iPhone Safari selection/orientation failure without renderer authority expansion.
 - **APP-10A–O — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, bounded append-only synthetic measure-frame growth, presentation-only semantic previous/next measure navigation, exact palette-driven chord-tone authoring, bounded exact articulation/local-ornament toggles, exact explicit Flat/Natural/Sharp authoring, a second bounded Strong Accent/Staccatissimo/Spiccato articulation group, and a second bounded Inverted Turn/Inverted Mordent/Shake local-ornament group.
+- **APP-11A — COMPLETE / MERGED:** PR #129 / `402783e3b61f80ed651d6df641c497ad8dd226f1` starts the strong-editor Rhythm & Timing Authoring program with a non-mutating V3/V4 duration-admission analyzer. It classifies contraction/growth, exact next-event boundaries, synthetic measure bounds, pre-existing overlap, timing-coupled dots/beams/tuplets/ties and fail-closed trailing growth for unproven imported-source measure semantics.
 - **Stage 07 semantic → renderer presentation locators — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391` adds exact read-only current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup.
 - **Standalone release gate — DEFERRED FOR CURRENT DEVELOPMENT / STILL REQUIRED:** remaining physical Windows/Android/iOS browser evidence must be completed before release.
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED:** no cutover until the standalone release matrix passes.
@@ -42,6 +43,7 @@ EditorSessionV4
         +--> exact bounded articulation mutations through existing V4 articulation authoring
         +--> exact bounded local ornament mutations through existing V4 ornament authoring
         +--> exact explicit accidental mutation through existing V4 keypad execution
+        +--> APP-11A RhythmTimingAdmissionV4 analysis (read-only admission evidence; no mutation/history authority)
         +--> unified undo / redo
         +--> revision-bound playback plan --> local Web Audio output
         +--> admitted lossless MusicXML --> explicit export handoff
@@ -91,6 +93,28 @@ The current standalone browser can create admitted Guitar or Piano scores and pe
 - Voice creation, measure append, note entry, selected-note/chord-tone, articulation, local ornament and explicit accidental mutations participate in unified `EditorSessionV4` undo/redo; Staff/measure navigation remains presentation-only;
 - exact-head WebKit retains APP-10E–N and APP-09B regressions and adds APP-10O Guitar chord-event extended local ornament, multi-measure isolation and Piano Staff-2 Voice-5 isolation.
 
+## APP-11 Rhythm & Timing Authoring
+
+APP-11 moves the editor from compact single-target feature exposure into stronger professional rhythm editing.
+
+### APP-11A — timing admission foundation
+
+PR #129 / `402783e3b61f80ed651d6df641c497ad8dd226f1` adds `editor-rhythm-timing-v4` as a read-only admission layer for exact `EventAddressV3` duration proposals.
+
+It:
+
+- validates exact current-revision event targets and reduced positive rational durations;
+- classifies contraction, growth and no-op proposals;
+- proves growth only against an exact next-event onset or, for synthetic/new scores, a proven inherited meter and nominal measure end;
+- rejects growth that would overlap the next event or exceed a synthetic measure;
+- refuses to authorize edits when the current voice already overlaps;
+- treats beams, tuplets and ties as timing coupling and treats dots as coupling unless the caller explicitly owns the atomic dot rewrite;
+- fails closed for trailing growth on imported/non-synthetic sources because pickup/non-controlling semantics are not yet supplied to this V4 admission contract;
+- reports whether an admitted mutation would create a gap so a later rest-balancing layer can materialize or resize explicit rests deterministically;
+- creates no score mutation, no notation mutation and no `EditorSessionV4` history revision.
+
+**Important current boundary:** existing `SET_EVENT_DURATION` and keypad Duration/Dot mutation paths have not yet been rerouted through APP-11A. APP-11A is the shared safety foundation, not a claim that browser duration editing is already timing-safe.
+
 ## Renderer identity boundary
 
 Renderer presentation has exact identity paths in both directions without becoming score authority:
@@ -113,9 +137,11 @@ ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 
 `SemanticAddressV3` remains canonical source identity. MusicXML remains exchange/projection data. Renderer, palette and explicit-control state never move canonical events outside admitted `EditorSessionV4` authoring paths.
 
-## Next bounded authoring candidate
+## Next development action
 
-APP-10O closes the second compact single-event local-ornament exposure gap. The next package is intentionally **not preselected**. Fresh repository reality must be audited before naming APP-10P. Augmentation dots still require timing-space admission because the existing primitive does not retime neighboring events; tuplets/ties/slurs and spanning ornaments require explicit multi-target contracts; grace workflows remain separately bounded.
+APP-11B should route duration/dot-changing authoring through one shared timing authority and add deterministic explicit-rest balancing where a safe edit creates or consumes rhythmic space. Existing direct V4 duration mutation must not remain a parallel unchecked timing authority.
+
+Only after the shared duration path is safe should the browser expose augmentation dots broadly. The next strong-editor selection phase can then surface already-existing tie/slur/tuplet primitives through explicit semantic endpoint/range contracts; grace and spanning relation workflows remain separately bounded.
 
 ## Remaining release gate
 
