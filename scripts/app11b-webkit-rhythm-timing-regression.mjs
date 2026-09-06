@@ -132,7 +132,7 @@ try {
     throw new Error(`APP-11B adjacent-rest consumption mismatch: ${JSON.stringify(grown)}`);
   }
 
-  await page.getByRole('button', { name: 'Duration 1/1', exact: true }).click();
+  await page.getByRole('button', { name: 'Duration 1', exact: true }).click();
   await page.getByRole('button', { name: 'Apply palette duration to selected pitched event', exact: true }).click();
   const consumed = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
