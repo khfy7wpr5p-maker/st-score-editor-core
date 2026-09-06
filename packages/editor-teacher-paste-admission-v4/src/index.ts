@@ -58,7 +58,9 @@ export type TeacherPasteAdmissionV4ErrorCode =
   | 'INVALID_SNAPSHOT'
   | 'SNAPSHOT_STALE_FOR_DESTINATION'
   | 'CROSS_MEASURE_SNAPSHOT_UNSUPPORTED'
+  | 'SOURCE_GAPS_UNSUPPORTED'
   | 'STALE_DESTINATION'
+  | 'DESTINATION_IN_SOURCE_SNAPSHOT'
   | 'DESTINATION_NOT_REST'
   | 'DESTINATION_NOT_NEUTRAL'
   | 'DESTINATION_SPACE_INSUFFICIENT'
@@ -136,6 +138,8 @@ const validRational = (value: Rational, allowZero: boolean): boolean =>
 const snapshotEventEnd = (event: TeacherCopyEventSnapshotV4): Readonly<Rational> =>
   add(event.onsetFromSegmentOrigin, event.duration);
 
+const ZERO: Readonly<Rational> = Object.freeze({ numerator: 0, denominator: 1 });
+
 const validateSnapshot = (snapshot: TeacherCopySnapshotV4): readonly TeacherCopyEventSnapshotV4[] => {
   if (
     snapshot.version !== EDITOR_TEACHER_COPY_SNAPSHOT_V4_VERSION ||
@@ -170,7 +174,8 @@ const validateSnapshot = (snapshot: TeacherCopySnapshotV4): readonly TeacherCopy
   }
   let previousEnd: Rational | null = null;
   let countedNotes = 0;
-  for (const event of segment.events) {
+  for (let index = 0; index < segment.events.length; index += 1) {
+    const event = segment.events[index]!;
     if (
       !validRational(event.onsetFromSegmentOrigin, true) ||
       !validRational(event.duration, false) ||
@@ -182,11 +187,18 @@ const validateSnapshot = (snapshot: TeacherCopySnapshotV4): readonly TeacherCopy
         { sourceEventId: event.sourceEventId }
       );
     }
-    if (previousEnd !== null && compare(event.onsetFromSegmentOrigin, previousEnd) < 0) {
+    if (index === 0 && compare(event.onsetFromSegmentOrigin, ZERO) !== 0) {
       throw new TeacherPasteAdmissionV4Error(
-        'Teacher paste source events overlap or are out of canonical order.',
-        'INVALID_SNAPSHOT',
-        { sourceEventId: event.sourceEventId }
+        'First teacher paste source event must begin at exact relative onset zero.',
+        'SOURCE_GAPS_UNSUPPORTED',
+        { sourceEventId: event.sourceEventId, onset: event.onsetFromSegmentOrigin }
+      );
+    }
+    if (previousEnd !== null && compare(event.onsetFromSegmentOrigin, previousEnd) !== 0) {
+      throw new TeacherPasteAdmissionV4Error(
+        'First teacher paste profile requires a contiguous source event sequence with no implicit gaps or overlaps.',
+        'SOURCE_GAPS_UNSUPPORTED',
+        { sourceEventId: event.sourceEventId, expectedOnset: previousEnd, observedOnset: event.onsetFromSegmentOrigin }
       );
     }
     previousEnd = snapshotEventEnd(event);
@@ -273,6 +285,13 @@ export const analyzeTeacherPasteDestinationV4 = (
     );
   }
   const target = resolveDestination(score, destination);
+  if (events.some(event => event.sourceEventId === target.id)) {
+    throw new TeacherPasteAdmissionV4Error(
+      'Teacher paste destination cannot be one of the source snapshot events in the first overwrite profile.',
+      'DESTINATION_IN_SOURCE_SNAPSHOT',
+      { eventId: target.id }
+    );
+  }
   if (target.kind !== 'rest') {
     throw new TeacherPasteAdmissionV4Error(
       'First teacher paste admission overwrites only an explicit destination rest.',
@@ -290,7 +309,7 @@ export const analyzeTeacherPasteDestinationV4 = (
 
   const extent = events.reduce<Readonly<Rational>>(
     (largest, event) => compare(snapshotEventEnd(event), largest) > 0 ? snapshotEventEnd(event) : largest,
-    Object.freeze({ numerator: 0, denominator: 1 })
+    ZERO
   );
   if (extent.numerator === 0) {
     throw new TeacherPasteAdmissionV4Error(
