@@ -10,6 +10,7 @@ import type { CrossStaffAuthoringV4Options } from '../../editor-cross-staff-auth
 import type { TopologyAuthoringV3Options } from '../../editor-topology-authoring-v3/src/index.js';
 import type { PositionNoteEntryV4Options } from '../../editor-position-note-entry-v4/src/index.js';
 import type { VoiceMaterializationV4Options } from '../../editor-voice-materialization-v4/src/index.js';
+import type { TupletRetimingAuthoringV4Options } from '../../editor-tuplet-retiming-authoring-v4/src/index.js';
 import {
   createNewScoreEditorAppDocument,
   openMusicXmlScoreEditorAppDocument,
@@ -31,6 +32,7 @@ import {
 } from '../../score-editor-app-document/src/index.js';
 import { commitScoreEditorAppPositionNoteEntryV4 } from '../../score-editor-app-position-note-entry/src/index.js';
 import { commitScoreEditorAppVoiceMaterializationV4 } from '../../score-editor-app-voice-materialization/src/index.js';
+import { commitScoreEditorAppStraightThreeToTripletV4 } from '../../score-editor-app-tuplet-retiming/src/index.js';
 import { adoptScoreEditorAppDocumentSnapshot } from '../../score-editor-app-snapshot-adoption/src/index.js';
 
 export const SCORE_EDITOR_BROWSER_APP_VERSION = '1.0.0' as const;
@@ -164,6 +166,7 @@ export interface StandaloneScoreEditorController {
   readonly commitArticulation: (intent: unknown, options: ArticulationAuthoringV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly commitOrnament: (intent: unknown, options: OrnamentAuthoringV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly commitKeypad: (action: unknown, advancedTarget?: unknown, options?: EditorKeypadV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly commitTupletRetiming: (intent: unknown, options?: TupletRetimingAuthoringV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly commitCrossStaff: (intent: unknown, options: CrossStaffAuthoringV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly commitTopology: (intent: unknown, options: TopologyAuthoringV3Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly commitPositionNoteEntry: (position: unknown, intent: unknown, options: PositionNoteEntryV4Options) => Readonly<ScoreEditorBrowserAppSnapshot>;
@@ -339,6 +342,10 @@ export const createStandaloneScoreEditorController = (
       const parsed = parseEditorKeypadAction(action);
       const resolvedOptions = options ?? Object.freeze({ nextRevisionId: nextRevisionId() });
       return mutate(() => commitAppKeypadAction(requireDocument(), parsed, advancedTarget, resolvedOptions));
+    },
+    commitTupletRetiming: (intent, options) => {
+      const resolvedOptions = options ?? Object.freeze({ nextRevisionId: nextRevisionId() });
+      return mutate(() => commitScoreEditorAppStraightThreeToTripletV4(requireDocument(), intent, resolvedOptions));
     },
     commitCrossStaff: (intent, options) => mutate(() => commitAppCrossStaffIntent(requireDocument(), intent, options)),
     commitTopology: (intent, options) => mutate(() => commitAppTopologyIntent(requireDocument(), intent, options)),
