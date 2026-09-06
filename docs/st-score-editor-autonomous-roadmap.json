@@ -1,0 +1,404 @@
+{
+  "document_type": "autonomous_developer_handoff_living_state",
+  "schema_version": "1.1.0",
+  "prompt_revision": 2,
+  "language": "tr-TR",
+  "created_on": "2026-09-06",
+  "updated_at": "2026-09-06T18:45:50+03:00",
+  "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
+  "repository": {
+    "full_name": "khfy7wpr5p-maker/st-score-editor-core",
+    "default_branch": "main",
+    "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
+    "verified_main_subject": "APP-11I: productize atomic straight-three triplet retiming",
+    "work_branch": "app11j-triplet-unretiming-admission-v4",
+    "work_branch_head_before_this_state_commit": "32ec28dbb144a4437208986c77a5c953c79e83b0"
+  },
+  "source_handoff": {
+    "origin": "user_supplied_st_score_editor_autonomous_developer_prompt_revision_1",
+    "source_date": "2026-09-06",
+    "policy": "Bu yaşayan kayıt ilk handoff'taki ürün amacı, güvenlik sınırları, otonomi politikası, mimari invariantlar, P00-P11 çalışma paketleri ve doğrulama kurallarını daraltmaz. Çelişkide daha güvenli/fail-closed kural uygulanır ve politika değişikliği ayrıca kaydedilir."
+  },
+  "product_mission": {
+    "purpose": "Gitar ve piyano öğretmenlerinin nota oluşturma, düzeltme, dinleme ve paylaşma işlerini güvenilir biçimde tamamladığı; bağımsız kullanılabilen ve başka uygulamalara lisanslanabilen profesyonel bir nota editörü oluştur.",
+    "quality_definition": [
+      "müzikal doğruluk",
+      "sessiz veri kaybının önlenmesi",
+      "hızlı ve anlaşılır düzenleme",
+      "gerçek cihazlarda güvenilir çalışma",
+      "kararlı entegrasyon sözleşmesi",
+      "geri alınabilir ve açıklanabilir öneriler"
+    ],
+    "product_forms": ["standalone", "embedded_sdk", "institutional_service"],
+    "non_goals_now": [
+      "çalışan çekirdeği gerekçesiz baştan yazmak",
+      "ilk adım olarak büyük CNN/Transformer eğitimi",
+      "AI'yı temel düzenlemenin zorunlu bağımlılığı yapmak",
+      "test başarısından otomatik production aktivasyonu çıkarmak"
+    ]
+  },
+  "architecture_invariants": [
+    "ScoreDocumentV3 + NotationDocumentV4 aynı canonical revision çiftidir.",
+    "EditorSessionV4 unified history authority'dir.",
+    "SemanticAddressV3 exact current-revision semantic identity'dir.",
+    "UI, renderer, SDK, OMR ve AI canonical belgeyi dual-write edemez.",
+    "Renderer koordinatı/DOM/SVG kimliği tek başına authoring authority değildir.",
+    "Süreler exact rational olarak işlenir.",
+    "Başarısız işlem canonical çifti değiştirmez.",
+    "İlgisiz voice, event, chord tone, measure ve notation korunur.",
+    "Undo/redo canonical belge ve ilişkileri tutarlı geri getirir.",
+    "Temel yerel düzenleme AI veya ağ gerektirmez.",
+    "Desteklenmeyen yetenek sessizce düşürülmez; fail-closed veya açık partial capability olarak raporlanır.",
+    "OMR sorunu bütün çalışma alanını otomatik kilitlemez; güvenli bölgelerde çalışma sürebilir."
+  ],
+  "autonomy_policy": {
+    "safe_without_repeated_confirmation": [
+      "salt okunur repo/PR/CI/mimari incelemesi",
+      "izole branch üzerinde non-breaking ve geri alınabilir kod/test/belge geliştirmesi",
+      "kapsam içi regresyon teşhis ve düzeltmesi",
+      "test, benchmark ve ölçüm hazırlığı",
+      "onaylanmış mimari sınırlar içinde rutin teknik seçimler",
+      "incelenebilir commit ve PR hazırlığı",
+      "yaşayan roadmap ve ilgili gerçeklik belgelerini güncelleme",
+      "bir paket engelliyse bağımsız hazır işi sürdürme"
+    ],
+    "human_or_separate_authority_required": [
+      "production deploy veya herkese açık yayın",
+      "SesliTab canlı cutover",
+      "ücretli servis/API/GPU bütçesi veya ödeme aktivasyonu",
+      "repository visibility/access/license değişikliği",
+      "kullanıcı belgelerini dış modele/eğitim verisine gönderme",
+      "force push, history rewrite veya yedeksiz silici veri taşıma",
+      "kurum/kullanıcı adına dış iletişim veya ticari taahhüt"
+    ],
+    "merge_policy_for_this_handoff": "Bu handoff tek başına merge yetkisi sayılmaz. PR hazırlanır ve exact-head CI/review kanıtı korunur; ayrı açık merge yetkisi olmadan #141/#142 merge edilmez.",
+    "physical_validation": "Gerçek cihaz kanıtı olmayan satır PASS yazılmaz; release gate kapalı kalır fakat bağımsız geliştirme sürebilir."
+  },
+  "verified_reality": {
+    "main": {
+      "head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
+      "app_11a_to_11i": "COMPLETE_MERGED",
+      "standalone_release_gate_passed": false,
+      "manual_device_validation_required": true,
+      "seslitab_cutover_authorized": false
+    },
+    "documentation_closeout": {
+      "pr": 141,
+      "state": "OPEN_GREEN",
+      "head": "06606cd4fa9e4354061c2288d0b8582b669a299d",
+      "ci": ["CI PASS", "APP-09B preview WebKit regression PASS"],
+      "scope": "APP-11I repository reality synchronization; documentation only"
+    },
+    "app_11j": {
+      "pr": 142,
+      "state": "VERIFIED_PR_OPEN",
+      "base_pr": 141,
+      "verified_head_before_productization_state_updates": "b21ffd21b35075267022ba1e6645af6ac7bd136c",
+      "code_head": "674187b920434d6d7d72330baba44c2692a64596",
+      "ci_run_exact_verified_head": 34043178547,
+      "node_matrix": [18, 20, 22],
+      "result": "repository validation + build + full test chain PASS on Node 18/20/22",
+      "physical_device_test": "NOT_RUN",
+      "release_claim": false
+    }
+  },
+  "work_packages": [
+    {
+      "id": "P00",
+      "title": "Güncel gerçeklik ve yarım işlerin güvenli devri",
+      "status": "completed",
+      "depends_on": [],
+      "acceptance": [
+        "Aktif işin kalan kapsamı kanıtlıdır.",
+        "Kod/belge durumu doğru ayrılmıştır.",
+        "Sonraki iş tek ve açık biçimde seçilmiştir."
+      ],
+      "evidence": [
+        {
+          "tested_code_sha": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
+          "results": [
+            "main APP-11I olarak doğrulandı",
+            "PR #141 APP-11I docs closeout olarak açık ve yeşil doğrulandı",
+            "APP-11A-I merged gerçekliği PR #141 productization docs ile doğrulandı",
+            "canonical living roadmap repository'de yoktu; bu revision ile oluşturuldu",
+            "sonraki bounded iş APP-11J analysis-first olarak doğrulandı"
+          ],
+          "artifact_paths_or_urls": [
+            "docs/st-score-editor-app-productization.json",
+            "ROADMAP.md",
+            "PR #141",
+            "docs/st-score-editor-autonomous-roadmap.json"
+          ],
+          "limitations": ["physical device release matrix incomplete"]
+        }
+      ],
+      "remaining_work": [],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P01",
+      "title": "Çekirdek düzenleme güvenilirliği",
+      "status": "in_progress",
+      "depends_on": ["P00"],
+      "acceptance": [
+        "İlgisiz ses/notalar değişmez.",
+        "Başarısız işlem belgeyi değiştirmez.",
+        "Temsil edilen kapsam için bağımsız ritmik beklenti ve round-trip testleri geçer."
+      ],
+      "subtasks": [
+        {
+          "id": "P01-APP11J",
+          "title": "Triplet Removal / Unretiming Admission Foundation",
+          "status": "pr_open",
+          "depends_on": ["P00"],
+          "acceptance": [
+            "Exact 3-event current 3:2 Triplet range only.",
+            "Straight written base exact rational olarak hesaplanır.",
+            "Gerekli growth yalnız exact adjacent neutral rest ile karşılanır.",
+            "Analyzer canonical score/notation/history mutate etmez.",
+            "dots/beams/ties/cross-staff/invalid tuplets/insufficient rest fail closed.",
+            "Node 18/20/22 validation+build+full tests geçer."
+          ],
+          "evidence": [
+            {
+              "tested_code_sha": "b21ffd21b35075267022ba1e6645af6ac7bd136c",
+              "commands": ["GitHub Actions CI / repository validation / build / full test chain"],
+              "results": ["Node 18 PASS", "Node 20 PASS", "Node 22 PASS"],
+              "artifact_paths_or_urls": [
+                "packages/editor-tuplet-unretiming-admission-v4/src/index.ts",
+                "test/app11j-tuplet-unretiming-admission-v4.test.mjs",
+                "docs/app-11j-triplet-unretiming-admission.md",
+                "PR #142",
+                "CI run 34043178547"
+              ],
+              "limitations": [
+                "analysis only; canonical mutation not exposed",
+                "session/browser productization not implemented",
+                "physical-device validation NOT_RUN",
+                "PR #142 not merged"
+              ]
+            }
+          ],
+          "remaining_work": [
+            "PR #142 exact latest head CI after status-document commits must remain green.",
+            "Do not expose unretiming mutation until admission boundary remains stable/reviewable.",
+            "Merge requires separate authority under this handoff."
+          ]
+        },
+        {
+          "id": "P01-AUDIT-01",
+          "title": "Shared timing mutation authority coverage audit",
+          "status": "pending",
+          "depends_on": ["P00"],
+          "acceptance": [
+            "Basic duration, keypad Duration/Rest/Dot and other timing-changing paths are inventoried.",
+            "All supported paths converge on shared V4 timing admission/mutation authority or are explicitly fail-closed.",
+            "Stale revision, rest balance, atomic failure and undo/redo regressions are identified with evidence."
+          ],
+          "evidence": [],
+          "remaining_work": ["Read current timing mutation call graph and tests; patch only proven gaps."]
+        }
+      ],
+      "remaining_work": [
+        "Complete timing-authority coverage audit.",
+        "Close any proven stale revision/rest balance/atomicity/undo-redo gaps.",
+        "Prove imported pickup/measure semantics or leave unsupported scope explicitly fail-closed."
+      ],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P02",
+      "title": "Baştan sona öğretmen düzenleme akışı",
+      "status": "pending",
+      "depends_on": ["P01"],
+      "evidence": [],
+      "remaining_work": ["selection/range endpoints", "measure/copy/paste/transpose/bulk operations", "insert vs overwrite semantics"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P03",
+      "title": "Mobil çalışma alanı ve performans",
+      "status": "pending",
+      "depends_on": ["P01"],
+      "evidence": [],
+      "remaining_work": ["context toolbar/touch targets", "semantic-address preserving zoom/selection", "measured performance work"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P04",
+      "title": "Dosya, kurtarma ve kısmi destek davranışı",
+      "status": "pending",
+      "depends_on": ["P01"],
+      "evidence": [],
+      "remaining_work": ["MusicXML support/preservation", ".mxl/cross-staff/output bounded packages", "separate view/edit/playback/export capabilities", "OMR partial-work behavior"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P05",
+      "title": "Öğretmen corpus'u ve ürün pilotuna hazırlık",
+      "status": "pending",
+      "depends_on": ["P02", "P03", "P04"],
+      "evidence": [],
+      "remaining_work": ["licensed provenance corpus", "teacher vs synthetic evidence", "task/error/preservation/roundtrip metrics", "device matrix"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P06",
+      "title": "Sürümlenmiş SDK ve entegrasyon örneği",
+      "status": "pending",
+      "depends_on": ["P02", "P04"],
+      "evidence": [],
+      "remaining_work": ["public API inventory", "version/error/migration contracts", "isolated host lifecycle", "SesliTab integration candidate without live cutover"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P07",
+      "title": "Kaynak görüntü ve düzeltme kökeni",
+      "status": "pending",
+      "depends_on": ["P04"],
+      "evidence": [],
+      "remaining_work": ["immutable source provenance", "semantic/source-region mapping", "before-after teacher correction trace"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P08",
+      "title": "AI öneri sözleşmesi ve kurallara karşı deney",
+      "status": "pending",
+      "depends_on": ["P01", "P07"],
+      "evidence": [],
+      "remaining_work": ["mock proposal provider/schema/dry-run/stale revision", "rules-only baseline", "optional narrow model experiment only with data/budget authority"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P09",
+      "title": "Gitar ve pedagojik farklılaşma",
+      "status": "pending",
+      "depends_on": ["P02", "P06"],
+      "evidence": [],
+      "remaining_work": ["TAB/harmony API maturity audit", "playable position/fret/string/finger constraints", "teacher-intent practice variants"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P10",
+      "title": "Ticari hizmetlere teknik hazırlık",
+      "status": "pending",
+      "depends_on": ["P05", "P06"],
+      "evidence": [],
+      "remaining_work": ["license inventory", "account/institution/entitlement boundaries", "tenant/revision threat model", "payment/production decisions remain separate"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P11",
+      "title": "Yayın adayı ve güvenli devam",
+      "status": "pending",
+      "depends_on": ["P05", "P06"],
+      "evidence": [],
+      "remaining_work": ["support matrix", "release notes/migration/rollback/runbook", "release blockers", "separate activation authority"],
+      "release_status": "not_released"
+    }
+  ],
+  "verification_policy": {
+    "levels": ["unit", "integration", "browser", "physical_device", "corpus"],
+    "required_scenarios": [
+      "note/rest/chord editing",
+      "multi-voice isolation",
+      "duration/dot and adjacent-rest balance",
+      "tie/slur/tuplet and measure boundary",
+      "valid repeats and first/second endings",
+      "pickup/imported measure semantics",
+      "undo/redo",
+      "MusicXML open-edit-save-reopen",
+      "unexpected refresh/recovery",
+      "mobile selection/orientation/playback"
+    ],
+    "rules": [
+      "PASS/FAIL/BLOCKED/NOT_RUN ayrı tutulur.",
+      "Test edilen exact SHA ve CI/run kaydedilir.",
+      "Eski yeşil CI yeni HEAD'e taşınmaz.",
+      "Fiziksel cihaz yerine WebKit PASS yazılmaz.",
+      "Bağımsız müzikal beklenti kullanılır; sadece fonksiyon çıktısı kendi kendine doğrulanmaz."
+    ]
+  },
+  "execution_state": {
+    "status": "ACTIVE_AUTONOMOUS_DEVELOPMENT",
+    "verified_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
+    "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
+    "current_task_id": "P01-AUDIT-01",
+    "next_action": "PR #142 latest status-document head CI'ını doğrula. Ardından P01-AUDIT-01 kapsamında bütün timing-changing V4 yollarının shared admission/mutation authority'ye yönlenmesini salt-okunur call-graph/test audit ile kanıtla; yalnız somut gap varsa izole patch + regression ekle. APP-11J mutation/browser surface'i bu admission PR merge/closeout sınırını aşmadan ayrı tut.",
+    "required_reads": [
+      "DEVELOPMENT_GOVERNANCE.md",
+      "ROADMAP.md",
+      "ARCHITECTURE.md",
+      "docs/st-score-editor-app-productization.json",
+      "docs/app-11j-triplet-unretiming-admission.md",
+      "packages/editor-rhythm-timing-v4/src/index.ts",
+      "packages/editor-rhythm-authoring-v4/src/index.ts",
+      "packages/editor-tuplet-retiming-admission-v4/src/index.ts",
+      "packages/editor-tuplet-unretiming-admission-v4/src/index.ts",
+      "relevant session/keypad/basic-authoring timing tests"
+    ],
+    "resume_commands": [
+      "verify main HEAD and open PR heads before writing",
+      "verify PR #142 exact-head CI",
+      "search timing-changing execute/commit paths and map to shared V4 authority",
+      "run repository validation + affected/full tests on any patch"
+    ],
+    "completed_task_ids": ["P00"],
+    "blockers": [
+      {
+        "kind": "MERGE_AUTHORITY",
+        "reason": "PR #141 and #142 are reviewable/open; this handoff alone is not being treated as merge authorization.",
+        "affected_tasks": ["P01-APP11J closeout to main"],
+        "safe_work_completed": "APP-11J code/tests/docs and exact-head CI evidence prepared; independent P01 audit may continue.",
+        "unblock_action": "separate explicit merge authority or later user/repository instruction",
+        "approval_reference_if_any": null
+      },
+      {
+        "kind": "PHYSICAL_DEVICE_RELEASE_GATE",
+        "reason": "Required real-device matrix is incomplete.",
+        "affected_tasks": ["P05", "P11"],
+        "safe_work_completed": "Automated WebKit/Node evidence retained without physical PASS inference.",
+        "unblock_action": "run and record required real iPhone/Android/Windows browser matrix before release",
+        "approval_reference_if_any": null
+      }
+    ],
+    "decision_log": [
+      {
+        "date": "2026-09-06",
+        "decision": "APP-11J is analysis-only first; exact adjacent neutral rest is required for reverse timing growth; no topology invention.",
+        "reason": "Safe inverse of APP-11G/H/I must prove expansion occupancy before any canonical mutation."
+      },
+      {
+        "date": "2026-09-06",
+        "decision": "PR #142 is stacked on #141 documentation branch.",
+        "reason": "Avoid coding against stale APP-11A-only documents while preserving main and keeping the feature reviewable."
+      }
+    ],
+    "change_log": [
+      {
+        "revision": 1,
+        "date": "2026-09-06",
+        "description": "User handoff created; not executed."
+      },
+      {
+        "revision": 2,
+        "date": "2026-09-06",
+        "description": "P00 fresh-read completed. Main APP-11I verified. PR #141 docs reality verified green. APP-11J read-only unretiming admission implemented/tested/documented in PR #142 with Node 18/20/22 green CI. Canonical living roadmap established; P01 timing-authority audit selected next."
+      }
+    ]
+  },
+  "living_prompt_protocol": {
+    "canonical_repository_path": "docs/st-score-editor-autonomous-roadmap.json",
+    "update_after": ["meaningful development package", "test/blocker change", "PR/merge state change", "session handoff"],
+    "rules": [
+      "increment prompt_revision and set actual updated_at",
+      "change status only with evidence",
+      "preserve completed work and stable task ids",
+      "record exact tested SHA/CI/artifact/limitations",
+      "keep docs aligned with actual behavior",
+      "do not write file's own commit SHA into itself",
+      "validate JSON/task graph and continue next ready safe work"
+    ],
+    "not_a_scheduler": true
+  }
+}
