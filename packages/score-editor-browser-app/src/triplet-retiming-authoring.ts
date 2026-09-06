@@ -161,6 +161,21 @@ export const createTripletRetimingStandaloneScoreEditorController = (
     ...base,
     profile: tripletRetimingBrowserAppProfile,
     getTripletRetimingState: state,
+    captureTripletEvent: () => {
+      const result = base.captureTripletEvent();
+      decorate();
+      return result;
+    },
+    clearTripletAuthoring: () => {
+      const result = base.clearTripletAuthoring();
+      decorate();
+      return result;
+    },
+    applyTripletToCapturedEvents: () => {
+      const result = base.applyTripletToCapturedEvents();
+      decorate();
+      return result;
+    },
     applyRetimedTripletToCapturedEvents: () => {
       const documentValue = base.getDocument();
       if (documentValue === null) {
