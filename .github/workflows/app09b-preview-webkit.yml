@@ -54,6 +54,8 @@ jobs:
         run: node scripts/app11b-webkit-rhythm-timing-regression.mjs
       - name: Run APP-11D WebKit bounded tie authoring regression
         run: node scripts/app11d-webkit-tie-authoring-regression.mjs
+      - name: Run APP-11E WebKit bounded slur authoring regression
+        run: node scripts/app11e-webkit-slur-authoring-regression.mjs
       - name: Checkout exact ST Score Rendering Layer revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
