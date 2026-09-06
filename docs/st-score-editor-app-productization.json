@@ -185,12 +185,6 @@
     ],
     "secondary_target": "iPad Safari"
   },
-  "seslitab": {
-    "architectural_dependency": false,
-    "product_cutover_deferred": true,
-    "cutover_authorized": false,
-    "current_core_development_scope": false
-  },
   "next_development_action": {
     "id": "APP-11J-CLOSEOUT",
     "title": "Keep APP-11J analysis boundary reviewable while continuing independent P01 reliability work",
