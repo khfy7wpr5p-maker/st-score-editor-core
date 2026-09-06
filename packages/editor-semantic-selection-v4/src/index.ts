@@ -65,7 +65,7 @@ export class SemanticSelectionV4Error extends Error {
 }
 
 const frozenAddress = <T extends SemanticAddressV3>(address: T): T =>
-  Object.freeze({ ...address }) as T;
+  Object.freeze({ ...address }) as unknown as T;
 
 const validatedAddress = <T extends SemanticAddressV3>(
   score: ScoreDocumentV3,
