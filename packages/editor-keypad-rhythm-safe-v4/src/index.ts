@@ -5,6 +5,7 @@ import { createNotationDocumentV4, type NotationDocumentV4 } from '../../notatio
 import { parseEditorKeypadAction, type EditorKeypadActionId } from '../../editor-keypad/src/index.js';
 import {
   executeEditorKeypadActionV4,
+  EditorKeypadExecutionV4Error,
   type EditorKeypadExecutionV4Result,
   type EditorKeypadV4Options
 } from '../../editor-keypad-execution-v4/src/index.js';
@@ -12,12 +13,7 @@ import { executeRhythmAuthoringV4, RhythmAuthoringV4Error } from '../../editor-r
 
 export const EDITOR_KEYPAD_RHYTHM_SAFE_V4_VERSION = '1.0.0' as const;
 
-export type SafeEditorKeypadExecutionV4ErrorCode =
-  | 'NO_SELECTION'
-  | 'STALE_SELECTION'
-  | 'SELECTION_KIND'
-  | 'DURATION_DOT_INCONSISTENCY'
-  | 'RHYTHM_TIMING_REJECTED';
+export type SafeEditorKeypadExecutionV4ErrorCode = 'RHYTHM_TIMING_REJECTED';
 
 export class SafeEditorKeypadExecutionV4Error extends Error {
   readonly code: SafeEditorKeypadExecutionV4ErrorCode;
@@ -54,14 +50,14 @@ const gcd = (left: bigint, right: bigint): bigint => {
 };
 const rational = (numerator: bigint, denominator: bigint): Readonly<Rational> => {
   if (numerator <= 0n || denominator <= 0n) {
-    throw new SafeEditorKeypadExecutionV4Error('Computed keypad duration is invalid.', 'DURATION_DOT_INCONSISTENCY');
+    throw new EditorKeypadExecutionV4Error('Computed keypad duration is invalid.', 'DURATION_DOT_INCONSISTENCY');
   }
   const divisor = gcd(numerator, denominator);
   const n = numerator / divisor;
   const d = denominator / divisor;
   const max = BigInt(Number.MAX_SAFE_INTEGER);
   if (n > max || d > max) {
-    throw new SafeEditorKeypadExecutionV4Error('Computed keypad duration exceeds safe integer bounds.', 'DURATION_DOT_INCONSISTENCY');
+    throw new EditorKeypadExecutionV4Error('Computed keypad duration exceeds safe integer bounds.', 'DURATION_DOT_INCONSISTENCY');
   }
   return Object.freeze({ numerator: Number(n), denominator: Number(d) });
 };
@@ -82,12 +78,12 @@ const dotFor = (actionId: EditorKeypadActionId): 0 | 1 | 2 | 3 | null => {
 };
 
 const currentSelection = (score: ScoreDocumentV3, selection: SemanticAddressV3 | null): SemanticAddressV3 => {
-  if (selection === null) throw new SafeEditorKeypadExecutionV4Error('Timing keypad action requires semantic selection.', 'NO_SELECTION');
+  if (selection === null) throw new EditorKeypadExecutionV4Error('Keypad action requires semantic selection.', 'NO_SELECTION');
   try {
     resolveSemanticAddressV3(score, selection);
     return selection;
   } catch (error) {
-    throw new SafeEditorKeypadExecutionV4Error('Timing keypad selection is stale or invalid.', 'STALE_SELECTION', {
+    throw new EditorKeypadExecutionV4Error('Keypad selection is stale or invalid.', 'STALE_SELECTION', {
       cause: error instanceof Error ? error.message : String(error)
     });
   }
@@ -98,13 +94,13 @@ const eventTarget = (score: ScoreDocumentV3, selection: SemanticAddressV3): Even
     const parent = addressEntityV3(score, selection.eventId);
     if (parent.kind === 'event') return parent;
   }
-  throw new SafeEditorKeypadExecutionV4Error('Timing keypad action requires event or note selection.', 'SELECTION_KIND', {
+  throw new EditorKeypadExecutionV4Error('Keypad action requires event or note selection.', 'SELECTION_KIND', {
     kind: selection.kind
   });
 };
 const eventValue = (score: ScoreDocumentV3, target: EventAddressV3): ScoreEvent => {
   const resolved = resolveSemanticAddressV3(score, target);
-  if (resolved.kind !== 'event') throw new SafeEditorKeypadExecutionV4Error('Timing target changed kind.', 'SELECTION_KIND');
+  if (resolved.kind !== 'event') throw new EditorKeypadExecutionV4Error('Event target changed kind.', 'SELECTION_KIND');
   return resolved.value;
 };
 const targetId = (address: SemanticAddressV3): string => {
@@ -137,20 +133,39 @@ const dottedDuration = (
   requestedDots: 0 | 1 | 2 | 3
 ): Readonly<Rational> => {
   if (!Number.isSafeInteger(currentDots) || currentDots < 0 || currentDots > 3) {
-    throw new SafeEditorKeypadExecutionV4Error('Current dot state is invalid.', 'DURATION_DOT_INCONSISTENCY', { currentDots });
+    throw new EditorKeypadExecutionV4Error('Current dot state is invalid.', 'DURATION_DOT_INCONSISTENCY', { currentDots });
   }
   const currentFactor = DOT_FACTORS[currentDots]!;
   const requestedFactor = DOT_FACTORS[requestedDots]!;
   const base = multiply(event.duration, currentFactor.denominator, currentFactor.numerator);
   const admittedBase = Object.values(SIMPLE).find(value => sameRational(value, base));
   if (admittedBase === undefined) {
-    throw new SafeEditorKeypadExecutionV4Error(
+    throw new EditorKeypadExecutionV4Error(
       'Current duration/dot state is not an admitted simple keypad value.',
       'DURATION_DOT_INCONSISTENCY',
       { duration: event.duration, currentDots }
     );
   }
   return multiply(admittedBase, requestedFactor.numerator, requestedFactor.denominator);
+};
+
+const legacyErrorForRhythm = (error: RhythmAuthoringV4Error): EditorKeypadExecutionV4Error | null => {
+  if (error.code === 'INVALID_REVISION_ID') {
+    return new EditorKeypadExecutionV4Error(error.message, 'INVALID_REVISION_ID', error.details);
+  }
+  if (error.code === 'STALE_TARGET' || error.code === 'TARGET_PATH_INVALID') {
+    return new EditorKeypadExecutionV4Error(error.message, 'STALE_SELECTION', error.details);
+  }
+  if (error.code === 'NOTATION_ORPHAN_RISK') {
+    return new EditorKeypadExecutionV4Error(error.message, 'NOTATION_ORPHAN_RISK', error.details);
+  }
+  if (error.code === 'CROSS_STAFF_CONFLICT') {
+    return new EditorKeypadExecutionV4Error(error.message, 'CROSS_STAFF_CONFLICT', error.details);
+  }
+  if (error.code === 'RESULT_INVALID' || error.code === 'REST_ID_COLLISION' || error.code === 'INVALID_INTENT') {
+    return new EditorKeypadExecutionV4Error(error.message, 'RESULT_INVALID', error.details);
+  }
+  return null;
 };
 
 export const executeSafeEditorKeypadActionV4 = (
@@ -205,6 +220,8 @@ export const executeSafeEditorKeypadActionV4 = (
     });
   } catch (error) {
     if (error instanceof RhythmAuthoringV4Error) {
+      const legacy = legacyErrorForRhythm(error);
+      if (legacy !== null) throw legacy;
       throw new SafeEditorKeypadExecutionV4Error(
         'Timing keypad action was rejected by the shared rhythm authority.',
         'RHYTHM_TIMING_REJECTED',
