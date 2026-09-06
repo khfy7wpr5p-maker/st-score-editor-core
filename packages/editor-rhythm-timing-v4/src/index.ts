@@ -18,16 +18,19 @@ export type RhythmTimingAdmissionReasonV4 =
   | 'NO_OP'
   | 'ADMITTED_CONTRACTION'
   | 'ADMITTED_WITH_NEXT_EVENT_BOUNDARY'
+  | 'ADMITTED_WITH_ADJACENT_REST_CONSUMPTION'
   | 'ADMITTED_SYNTHETIC_TRAILING_EXPANSION'
   | 'BLOCKED_EXISTING_TIMING_INVALID'
   | 'BLOCKED_TIMING_COUPLED_NOTATION'
   | 'BLOCKED_NEXT_EVENT_OVERLAP'
+  | 'BLOCKED_ADJACENT_REST_EXHAUSTED'
   | 'BLOCKED_SYNTHETIC_MEASURE_END'
   | 'BLOCKED_TRAILING_EXPANSION_SOURCE_UNPROVEN'
   | 'BLOCKED_TRAILING_EXPANSION_METER_UNKNOWN';
 
 export interface RhythmTimingAdmissionV4Options {
   readonly allowDotRewrite?: boolean;
+  readonly allowAdjacentRestConsumption?: boolean;
 }
 
 export interface RhythmTimingAdmissionV4 {
@@ -41,10 +44,13 @@ export interface RhythmTimingAdmissionV4 {
   readonly requestedEnd: Rational;
   readonly direction: RhythmTimingDirectionV4;
   readonly nextEventId: string | null;
+  readonly nextEventKind: 'pitched' | 'rest' | null;
   readonly nextEventOnset: Rational | null;
+  readonly nextEventEnd: Rational | null;
   readonly effectiveTimeSignature: TimeSignature | null;
   readonly nominalMeasureDuration: Rational | null;
   readonly couplingReasons: readonly string[];
+  readonly adjacentRestConsumptionAllowed: boolean;
   readonly wouldCreateGap: boolean | null;
   readonly admitted: boolean;
   readonly reason: RhythmTimingAdmissionReasonV4;
@@ -213,8 +219,10 @@ const admission = (
   timeSignature: TimeSignature | null,
   measureDuration: Rational | null,
   couplingReasons: readonly string[],
-  existingTimingInvalid: boolean
+  existingTimingInvalid: boolean,
+  allowAdjacentRestConsumption: boolean
 ): Readonly<RhythmTimingAdmissionV4> => {
+  const nextEnd = nextEvent === null ? null : eventEnd(nextEvent);
   const common = {
     version: RHYTHM_TIMING_ADMISSION_V4_VERSION,
     documentId: score.id,
@@ -226,10 +234,13 @@ const admission = (
     requestedEnd: Object.freeze({ ...requestedEnd }),
     direction,
     nextEventId: nextEvent?.id ?? null,
+    nextEventKind: nextEvent === null ? null : nextEvent.kind === 'rest' ? 'rest' : 'pitched',
     nextEventOnset: nextEvent === null ? null : Object.freeze({ ...nextEvent.onset }),
+    nextEventEnd: nextEnd === null ? null : Object.freeze({ ...nextEnd }),
     effectiveTimeSignature: timeSignature === null ? null : Object.freeze({ ...timeSignature }),
     nominalMeasureDuration: measureDuration === null ? null : Object.freeze({ ...measureDuration }),
-    couplingReasons: Object.freeze([...couplingReasons])
+    couplingReasons: Object.freeze([...couplingReasons]),
+    adjacentRestConsumptionAllowed: allowAdjacentRestConsumption
   } as const;
 
   if (existingTimingInvalid) {
@@ -251,6 +262,29 @@ const admission = (
       wouldCreateGap: null,
       admitted: false,
       reason: 'BLOCKED_TIMING_COUPLED_NOTATION'
+    });
+  }
+
+  if (
+    direction === 'GROW' &&
+    allowAdjacentRestConsumption &&
+    nextEvent?.kind === 'rest' &&
+    compare(nextEvent.onset, currentEnd) === 0 &&
+    nextEnd !== null
+  ) {
+    if (compare(requestedEnd, nextEnd) > 0) {
+      return Object.freeze({
+        ...common,
+        wouldCreateGap: false,
+        admitted: false,
+        reason: 'BLOCKED_ADJACENT_REST_EXHAUSTED'
+      });
+    }
+    return Object.freeze({
+      ...common,
+      wouldCreateGap: false,
+      admitted: true,
+      reason: 'ADMITTED_WITH_ADJACENT_REST_CONSUMPTION'
     });
   }
 
@@ -407,6 +441,7 @@ export const analyzeEventDurationMutationV4 = (
     timeSignature,
     measureDuration,
     couplingReasons,
-    existingTimingInvalid
+    existingTimingInvalid,
+    options.allowAdjacentRestConsumption === true
   );
 };
