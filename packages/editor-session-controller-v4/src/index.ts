@@ -24,6 +24,20 @@ export interface EditorSessionStateV4 {
   readonly renderRequest: Readonly<RendererRequestV4>;
   readonly status: { readonly code: string; readonly message: string };
 }
+
+export type EditorSessionV4ErrorCode = 'REVISION_ID_REUSE';
+export class EditorSessionV4Error extends Error {
+  readonly code: EditorSessionV4ErrorCode;
+  readonly details: Readonly<Record<string, unknown>>;
+  constructor(message: string, code: EditorSessionV4ErrorCode, details: Record<string, unknown> = {}) {
+    super(message);
+    this.name = 'EditorSessionV4Error';
+    this.code = code;
+    this.details = Object.freeze({ ...details });
+    Object.freeze(this);
+  }
+}
+
 const state = (
   history: Readonly<EditorHistoryStateV4>,
   selection: SemanticAddressV3 | null,
@@ -38,6 +52,20 @@ const state = (
   status: Object.freeze({ code, message })
 });
 const legacyOsmdProfile = (): RendererProfile => rendererProfile('osmd');
+
+const assertSessionRevisionDoesNotReuseParent = (
+  session: EditorSessionStateV4,
+  nextRevisionId: string
+): void => {
+  const present = session.history.present.score.revision;
+  if (present.parentId !== null && nextRevisionId === present.parentId) {
+    throw new EditorSessionV4Error(
+      'EditorSessionV4 does not allow a new edit to reuse the immediate parent revision identity.',
+      'REVISION_ID_REUSE',
+      { nextRevisionId, currentRevisionId: present.id, parentRevisionId: present.parentId }
+    );
+  }
+};
 
 export const createEditorSessionV4WithRendererProfile = (
   scoreInput: ScoreDocumentV3,
@@ -72,6 +100,7 @@ export const createEditorSessionV4FromV3 = (scoreInput: ScoreDocumentV3, notatio
   createEditorSessionV4FromV3WithRendererProfile(scoreInput, notationInput, legacyOsmdProfile());
 
 export const commitSessionBasicAuthoringIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: BasicAuthoringV4Options): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, options.nextRevisionId);
   const current = session.history.present;
   const result = executeBasicAuthoringV4(current.score, current.notation, intent, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
@@ -79,6 +108,7 @@ export const commitSessionBasicAuthoringIntentV4 = (session: EditorSessionStateV
 };
 
 export const commitSessionGraceAuthoringIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: GraceAuthoringV4Options): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, options.nextRevisionId);
   const current = session.history.present;
   const result = executeGraceAuthoringV4(current.score, current.notation, intent, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
@@ -86,6 +116,7 @@ export const commitSessionGraceAuthoringIntentV4 = (session: EditorSessionStateV
 };
 
 export const commitSessionArticulationAuthoringIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: ArticulationAuthoringV4Options): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, options.nextRevisionId);
   const current = session.history.present;
   const result = executeArticulationAuthoringV4(current.score, current.notation, intent, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
@@ -93,6 +124,7 @@ export const commitSessionArticulationAuthoringIntentV4 = (session: EditorSessio
 };
 
 export const commitSessionOrnamentAuthoringIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: OrnamentAuthoringV4Options): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, options.nextRevisionId);
   const current = session.history.present;
   const result = executeOrnamentAuthoringV4(current.score, current.notation, intent, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
@@ -100,6 +132,7 @@ export const commitSessionOrnamentAuthoringIntentV4 = (session: EditorSessionSta
 };
 
 export const commitSessionKeypadActionV4 = (session: EditorSessionStateV4, action: unknown, advancedTarget: unknown, options: EditorKeypadV4Options): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, options.nextRevisionId);
   const current = session.history.present;
   const result = executeSafeEditorKeypadActionV4(current.score, current.notation, session.selection, action, advancedTarget, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
@@ -107,6 +140,7 @@ export const commitSessionKeypadActionV4 = (session: EditorSessionStateV4, actio
 };
 
 export const commitSessionCrossStaffIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: CrossStaffAuthoringV4Options): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, options.nextRevisionId);
   const current = session.history.present;
   const result = executeCrossStaffAuthoringV4(current.score, current.notation, intent, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
@@ -115,6 +149,7 @@ export const commitSessionCrossStaffIntentV4 = (session: EditorSessionStateV4, i
 };
 
 export const commitSessionTopologyIntentV4 = (session: EditorSessionStateV4, intent: unknown, options: TopologyAuthoringV3Options): Readonly<EditorSessionStateV4> => {
+  assertSessionRevisionDoesNotReuseParent(session, options.nextRevisionId);
   const current = session.history.present;
   const result = executeTopologyAuthoringV4(current.score, current.notation, intent, options);
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
