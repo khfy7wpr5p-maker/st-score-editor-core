@@ -193,7 +193,7 @@ const parseIntent = (raw: unknown): Readonly<RhythmAuthoringIntentV4> => {
   }
   if (raw.type === 'SET_WRITTEN_DURATION' || raw.type === 'REPLACE_EVENT_WITH_REST_DURATION') {
     if (!exact(raw, ['version', 'type', 'target', 'duration', 'dots'])) {
-      throw new RhythmAuthoringV4Error(`${raw.type} field set is invalid.`, 'INVALID_INTENT');
+      throw new RhythmAuthoringV4Error('Written-duration field set is invalid.', 'INVALID_INTENT');
     }
     return Object.freeze({
       version: RHYTHM_AUTHORING_V4_VERSION,
