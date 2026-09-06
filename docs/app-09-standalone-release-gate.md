@@ -2,195 +2,176 @@
 
 Status: **DEFERRED FOR CURRENT DEVELOPMENT / MANUAL DEVICE-BROWSER MATRIX REQUIRED BEFORE RELEASE**
 
-Runtime hardening source: PR #89 / `2731490575550e38e65e9f4af576b25255b0d9d9`
+APP-09/09B automated hardening is merged. The physical iPhone renderer-selection/orientation blocker was resolved earlier, but the full practical device/browser matrix is still incomplete.
 
-Permanent iPhone renderer interaction policy: PR #102 / `c6615a314b41bcdded1e968df353070179453d16`
+Automated repository validation is currently **PASS** through APP-11I on Node 18 / 20 / 22 and the retained WebKit/renderer chain. This includes APP-10E–O, APP-11B safe rhythm timing, APP-11D Tie, APP-11E Slur, APP-11F metadata-only Triplet, APP-11I straight-note Triplet Retiming, exact ST Score Rendering Layer build, APP-09B renderer regression and controlled-layout rerender regression.
 
-Automated repository validation: **PASS** on Node 18 / 20 / 22, with WebKit authoring/renderer regressions retained through APP-10O, including APP-10E note entry, APP-10F selected-note editing, APP-10G Staff switching, APP-10H measure growth, APP-10I measure navigation, APP-10J chord tones, APP-10K articulations, APP-10L local ornaments, APP-10M exact explicit accidentals, APP-10N extended articulations, APP-10O extended local ornaments and the APP-09B renderer/orientation chain. APP-11A PR #129 / `402783e3b61f80ed651d6df641c497ad8dd226f1` additionally passed exact-head Node 18/20/22 CI while the retained APP-10E–O + APP-09B WebKit chain remained green. APP-11A is analysis-only and therefore adds no new browser/device PASS claim.
-
-This checklist is intentionally separate from automated CI. A green build is not evidence that real mobile viewport, audio gesture, browser print, touch/pointer behavior or lifecycle recovery works correctly on every required platform.
-
-The matrix is currently deferred while standalone authoring development continues. Deferral does not relax this gate and does not authorize standalone release or SesliTab cutover.
+Automated WebKit is regression evidence only. It is **not** evidence that real iPhone/Android/Windows browser behavior has passed the release matrix.
 
 ## Release invariants
 
 Every manual run must preserve these invariants:
 
-- `ScoreDocumentV3 + NotationDocumentV4` remains the only canonical score pair;
-- presentation/UI state must not create unintended V4 history revisions;
-- Staff switching and semantic measure navigation remain presentation-only and may not materialize missing Voices;
-- admitted measure append remains one explicit `EditorSessionV4` canonical mutation;
-- admitted `+Tone` actions target exact semantic pitched content and add exactly one tone; exact chord-tone Delete removes only the selected tone;
-- APP-10K Staccato/Accent/Tenuto and APP-10N Strong Accent/Staccatissimo/Spiccato use the existing V4 articulation path with exact pitched event/note-parent targets;
-- new APP-10N specs use `placement:'auto'` and `direction:null`; every admitted APP-10N toggle creates exactly one `EditorSessionV4` history revision;
-- one same-kind APP-10N spec is removed exactly, while multiple same-kind specs fail closed;
-- APP-10N must not expose grace-event articulation target authority and must not alter APP-10K's bounded contract;
-- APP-10L Trill/Turn/Mordent and APP-10O Inverted Turn/Inverted Mordent/Shake use the existing V4 local-ornament path with exact pitched event/note-parent targets;
-- new APP-10O specs use auto placement/empty accidental marks; one same-kind spec is removed exactly, while multiple same-kind specs fail closed;
-- APP-10O must not expose spanning tremolo/wavy-line relation authority or grace-event ornament targeting and must not alter APP-10L's bounded contract;
-- APP-10M Flat/Natural/Sharp requires exact `note` selection and atomically updates canonical `pitch.alter` plus `NoteNotation.accidental` while preserving step/octave and sibling chord tones;
-- APP-10M exposes no advanced keypad target or dot/rest/tuplet/tie/slur browser surface;
-- APP-11A timing analysis requires an exact current-revision event target, is non-mutating, and must not itself create history or silently authorize imported trailing duration growth;
-- APP-11A must fail closed for next-event overlap, pre-existing invalid timing, timing-coupled beams/tuplets/ties and synthetic measure overrun; dot rewrite is only analyzable when the caller explicitly owns atomic dot semantics;
-- current browser duration/dot mutation is not declared APP-11 timing-safe merely because APP-11A exists; APP-11B routing remains required before broader timing exposure;
-- imported MusicXML automatic measure growth remains fail-closed while admitted exact semantic note/notation authoring remains allowed where prerequisites are met;
-- renderer DOM/SVG/coordinates/geometry never become edit, chord, accidental, articulation, ornament, measure or timing authority;
+- `ScoreDocumentV3 + NotationDocumentV4` is the canonical score pair;
+- `EditorSessionV4` is the sole unified history authority;
+- `SemanticAddressV3` is exact current-revision identity;
+- renderer DOM/SVG identifiers, coordinates and geometry are never authoring authority;
 - MusicXML remains exchange/projection only;
-- unsupported cross-staff MusicXML remains fail-closed;
-- playback failure must not disable editing or OMR admission;
-- export must not mark a dirty document saved;
-- print/PDF must use the exact current rendered revision;
-- recovery remains browser-local/noncanonical;
-- no network/server/publication authority is introduced.
+- Staff switching, measure navigation and semantic multi-target capture are presentation-only and create no history;
+- one accepted canonical user edit creates one history revision unless a separately documented operation explicitly defines otherwise;
+- APP-11B duration contraction creates/extends explicit rest space and admitted growth consumes only exact adjacent neutral rest;
+- APP-11C semantic `NOTE_PAIR` / `EVENT_RANGE` capture never invents targets from renderer layout;
+- APP-11D Tie and APP-11E Slur use explicit semantic endpoints and unified history;
+- APP-11F `Triplet Apply` is metadata-only and requires already-canonical exact 3:2 timing;
+- APP-11I `Triplet Retiming` is a separate path and must first pass APP-11G admission;
+- admitted straight-three Triplet retiming preserves event/note identities, changes all three onsets/durations atomically, writes Triplet metadata in the same canonical result and keeps released time represented by explicit rest balancing;
+- admitted APP-11I retiming creates exactly one `EditorSessionV4` history revision;
+- one Undo after APP-11I retiming restores the exact prior score+notation pair;
+- dots, beams, existing tuplets, ties, selected cross-staff events, stale/invalid ranges and unsupported written bases remain fail-closed for straight-three retiming;
+- imported MusicXML automatic Voice/measure growth remains fail-closed; bounded local contraction may be admitted where APP-11G/H prove it without topology invention;
+- playback, file/recovery, viewport, palette/range capture and export/print state remain noncanonical;
+- export does not mark a document saved unless the external save handoff succeeds;
+- print/PDF uses the exact current rendered revision;
+- no cloud/server/publication authority is introduced.
 
 ## Required browser/device matrix
 
 | Target | Status | Evidence required |
 | --- | --- | --- |
-| Real iPhone Safari | PARTIAL — G4 PASS | remaining applicable scenario results + device/iOS/Safari version |
-| Android Chrome | PENDING | real device + Android/Chrome version + scenario results |
-| Windows 10/11 Edge | PENDING | Windows/Edge version + scenario results |
-| Windows Chrome | PENDING | Windows/Chrome version + scenario results |
-| Windows Firefox | PENDING | Windows/Firefox version + scenario results |
+| Real iPhone Safari | PARTIAL | complete applicable G1–G10 + iOS/Safari version |
+| Android Chrome | PENDING | real device + Android/Chrome version + G1–G10 |
+| Windows 10/11 Edge | PENDING | Windows/Edge version + G1–G10 |
+| Windows Chrome | PENDING | Windows/Chrome version + G1–G10 |
+| Windows Firefox | PENDING | Windows/Firefox version + G1–G10 |
 
 ### Secondary validation
 
 | Target | Status | Role |
 | --- | --- | --- |
-| Real iPad Safari | DEFERRED / PENDING | secondary tablet/Safari validation; useful but not a substitute for required Windows/Android evidence |
+| Real iPad Safari | DEFERRED / PENDING | secondary tablet/Safari evidence only |
 
-Mac desktop Safari is not a primary required target for the current product matrix. Safari mobile-engine evidence is carried by iPhone, with iPad retained as secondary validation.
+Existing physical iPhone evidence confirms semantic selection and portrait -> landscape -> portrait interaction after the permanent APP-09B renderer policy. That evidence is partial and predates the full APP-10/11 product surface.
 
-## Existing physical iPhone evidence
+## Required scenarios per target
 
-Physical iPhone Safari testing isolated and fixed the renderer selection/orientation blocker. After the permanent APP-09B policy:
-
-- semantic note selection works;
-- portrait selection works;
-- landscape selection works;
-- returning to portrait preserves working selection;
-- G4 portrait → landscape → portrait interaction is PASS.
-
-This is partial evidence. The iPhone row remains incomplete until all applicable release scenarios required for final closeout are recorded.
-
-## Required scenarios per required target
-
-Record PASS / FAIL / NOT APPLICABLE plus a short note for each item.
+Record PASS / FAIL / NOT APPLICABLE plus device/browser version and a short note.
 
 ### G1 — Bootstrap and layout
 
 - standalone HTML opens without bootstrap error;
-- toolbar, score viewport, inspector/status and authoring controls are usable;
-- Staff, Voice, previous/next measure, `+Tone`, APP-10K/10N articulation, APP-10L/10O local-ornament, explicit Flat/Natural/Sharp and admitted Add measure controls remain usable and do not duplicate after rerender;
-- exact-target controls are disabled or fail-closed when semantic prerequisites are absent;
-- articulation/ornament/explicit-accidental pressed state follows current semantic notation;
-- active measure indication remains coherent after semantic navigation and rerender;
-- safe-area, mobile viewport and desktop resizing behavior remain usable.
+- score viewport, toolbar, inspector/status and authoring controls are usable at device scale;
+- Staff, Voice, measure navigation, note/chord controls, articulations, ornaments, explicit accidentals, Tie, Slur, Triplet capture/apply and Triplet Retiming controls do not duplicate after rerender;
+- Triplet Retiming control survives/reappears correctly when the nested APP-11F Triplet group rerenders;
+- controls are disabled or fail closed when exact semantic prerequisites are absent;
+- safe-area and dynamic viewport behavior remain usable.
 
 ### G2 — Open and canonical editing
 
-- open a valid `.musicxml` or `.xml` file and render successfully;
-- select a note through the semantic hit bridge and perform admitted edits;
-- exercise exact selected-note pitch/duration/delete and chord-tone add/delete where applicable;
-- exercise Staccato/Accent/Tenuto and Strong Accent/Staccatissimo/Spiccato on exact semantic pitched targets; ambiguity must fail closed;
-- verify a newly authored APP-10N Strong Accent/Staccatissimo/Spiccato spec uses `placement:'auto'` and `direction:null`, and verify the accepted toggle creates exactly one history revision;
-- verify APP-10N exact imported-spec removal preserves the exact existing placement/direction semantics and verify lack of grace-event target authority;
-- exercise Trill/Turn/Mordent and Inverted Turn/Inverted Mordent/Shake on exact semantic pitched targets;
-- verify a new APP-10O ornament uses auto placement/empty accidental marks and exactly one history revision;
-- for an imported Inverted Turn with placement/accidental-mark semantics, toggle it off and verify the exact existing spec is removed rather than normalized; multiple same-kind specs must fail closed;
-- verify APP-10O exposes neither spanning tremolo/wavy-line nor grace-event target authority;
-- exercise explicit Flat/Natural/Sharp on exact note targets;
-- navigate across measures and confirm navigation alone creates no history; notation state must remain isolated to exact authored events/notes;
-- on imported MusicXML, verify admitted articulation/ornament/accidental authoring without topology invention;
-- on Piano, verify Staff/Voice/chord/notation isolation including Staff 2 / Voice 5;
-- undo and redo operate through unified V4 history;
+- open valid `.musicxml` / `.xml` and render current revision;
+- perform admitted note/chord/articulation/ornament/accidental edits;
+- exercise safe duration contraction/growth and verify explicit-rest balance;
+- verify Tie with exact semantic note-pair endpoints;
+- verify Slur with exact semantic note-pair endpoints;
+- verify APP-11F metadata-only Triplet on an already-canonical 3:2 range;
+- verify ordinary supported straight events are not silently accepted by APP-11F metadata-only apply;
+- capture three supported straight eighths and invoke APP-11I Triplet Retiming;
+- verify the same event/note identities remain, durations become `1/12` each and onsets become `0`, `1/12`, `1/6` for a group beginning at zero;
+- verify released timing is represented by the admitted explicit-rest balance rather than a hidden gap;
+- verify exactly one history revision is added by the retiming user action;
+- Undo once and verify exact straight timing/rest/notation restoration;
+- redo where applicable and verify exact canonical retiming returns;
+- on imported MusicXML, verify no Voice or measure topology is invented;
 - no renderer coordinate/DOM identifier is exposed as an authoring target.
-
-APP-11A itself has no visible user action to exercise in G2. When APP-11B starts routing duration changes, the matrix must be extended to cover exact timing-admission outcomes and explicit-rest balancing before release.
 
 ### G3 — Touch / pointer / keyboard
 
-- touch/pointer targets are practically usable at device scale;
-- coarse-pointer controls satisfy APP-09 minimum target contract where applicable;
-- measure, chord, articulation, ornament and explicit accidental controls avoid accidental duplicate activation;
-- keyboard focus is visibly indicated on desktop;
-- presentation-only keyboard/touch viewport actions do not create canonical revisions.
+- touch/pointer targets are practically usable;
+- capture/apply controls do not double-fire;
+- Tie/Slur/Triplet capture order remains explicit under touch;
+- Triplet Retiming cannot activate until exactly admitted semantic prerequisites are present;
+- desktop focus indication remains visible;
+- presentation-only interaction creates no unintended canonical revision.
 
 ### G4 — Orientation and dynamic viewport
 
 On mobile/tablet:
 
-- change portrait -> landscape -> portrait and show/hide browser chrome where applicable;
-- zoom/scroll presentation remains coherent;
-- selection does not silently switch semantic note/event/tone/measure;
-- notation-control pressed state, including APP-10N extended articulations and APP-10O extended local ornaments, remains aligned with current semantic selection after rerender;
-- orientation/viewport transitions themselves do not change canonical revision/history;
-- renderer presentation remains aligned with current revision.
-
-The existing physical iPhone G4 result remains partial earlier interaction evidence. APP-10I–O authoring behavior still requires final real-device matrix coverage; automated WebKit does not create a new physical-device PASS.
+- portrait -> landscape -> portrait and browser-chrome changes preserve usable layout;
+- exact semantic selection does not silently switch;
+- partially captured Tie/Slur/Triplet semantic state does not acquire different canonical targets because of rerender;
+- Triplet Retiming control remains presentation-only and its enabled/disabled state reflects current semantic admission after rerender;
+- viewport/orientation transitions create no history;
+- renderer presentation remains aligned with current canonical revision.
 
 ### G5 — Playback independence
 
-- playback starts after user gesture and play/pause/stop/seek operate;
-- any canonical score/notation revision, including APP-10N/10O notation authoring, stops stale playback;
-- semantic navigation alone does not create a revision or corrupt edit/playback admission;
-- playback errors do not prevent further editing;
-- playback state/tempo/cursor creates no V4 history entries.
+- playback controls operate after user gesture;
+- canonical edits including relation/Triplet retiming stop stale playback where required;
+- playback errors do not prevent editing;
+- playback state creates no V4 history entries.
 
 ### G6 — Recovery lifecycle
 
-- make an admitted dirty edit, including notation authoring where applicable;
-- trigger browser lifecycle handling and inspect recovery state;
-- no automatic canonical restore occurs;
-- explicit guarded recovery remains required;
-- storage/recovery failure does not replace current canonical state.
+- create a dirty canonical edit, including relation/Triplet retiming where applicable;
+- lifecycle recovery stores guarded browser-local state without becoming canonical authority;
+- no automatic silent restore replaces current score;
+- recovery failure does not corrupt current canonical pair.
 
 ### G7 — MusicXML export
 
-- export current MusicXML successfully;
-- APP-10H grown Guitar/Piano scores preserve measure count and Piano alignment after re-import;
-- chord tones, APP-10K/10N articulations, APP-10L/10O local ornaments and APP-10M explicit accidentals survive admitted lossless export/re-import;
-- Strong Accent round-trip preserves admitted semantic kind and exact removal does not rewrite imported placement/direction;
-- Inverted Turn round-trip preserves admitted semantic kind and exact removal does not rewrite imported placement/accidental marks;
-- explicit Natural remains explicitly preserved rather than dropped as implicit spelling;
-- export does not mark dirty state saved or create canonical history;
-- unsupported projection remains fail-closed.
+- export the exact current score when projection is admitted;
+- supported chord/articulation/ornament/accidental semantics survive re-import;
+- admitted 3:2 Triplet timing/metadata survives the supported MusicXML path;
+- exported result does not invent Voices/measures;
+- export creates no history and does not automatically mark dirty state saved;
+- unsupported projection remains fail closed.
 
 ### G8 — Print / Save as PDF
 
-- with current renderer presentation, open browser print flow;
-- editor-only controls are hidden in paper presentation;
-- Save as PDF is available where browser/OS provides it;
-- canceling print leaves canonical state unchanged;
-- stale/missing/rejected renderer presentation does not proceed.
+- browser print uses exact current renderer presentation;
+- editor-only controls are hidden for paper presentation;
+- canceling print changes no canonical state;
+- missing/stale/rejected renderer presentation cannot proceed as a valid print source.
 
 ### G9 — Accessibility presentation
 
-- toolbar and score viewport expose meaningful accessible labels/roles;
-- Staff/Voice/measure/Add measure/`+Tone`/APP-10K/10N articulation/APP-10L/10O local-ornament/explicit accidental controls have usable accessible names;
-- exact-target controls communicate disabled and pressed state correctly;
-- active measure/status/focus/reduced-motion presentation remains usable;
-- accessibility presentation changes do not alter canonical state.
+- controls have meaningful names/roles and visible focus where applicable;
+- disabled/pressed/admission state is communicated correctly;
+- Tie/Slur/Triplet capture/apply and Triplet Retiming controls are operable with accessible navigation;
+- accessibility presentation changes no canonical state.
 
 ### G10 — Performance / stability
 
-- standalone app bundle remains within automated 512 KiB budget;
-- repeated edit -> navigation -> chord -> APP-10K/10N articulation -> APP-10L/10O ornament -> explicit accidental -> Add measure -> render -> playback -> orientation cycles do not accumulate duplicate listeners/UI;
-- repeated Strong Accent/Staccatissimo/Spiccato cycles affect only intended event notation and keep pressed state coherent;
-- repeated Inverted Turn/Inverted Mordent/Shake cycles affect only intended event notation and keep pressed state coherent;
-- repeated Staff/Voice/measure switching creates no unintended history;
-- repeated admitted measure append retains exact alignment and no implicit Voices;
+- standalone bundle remains within automated budget;
+- repeated edit -> relation capture -> Triplet capture/retiming -> Undo/Redo -> render -> playback -> orientation cycles do not accumulate duplicate listeners/controls;
+- repeated Triplet group rerenders do not create duplicate Triplet Retiming buttons;
+- repeated admitted retiming preserves exact identities and explicit-rest occupancy;
+- repeated semantic navigation/capture creates no unintended history;
 - no recurring crash, frozen viewport or unexpected network dependency appears.
+
+## Current automated APP-11I evidence
+
+The exact APP-11I feature head passed:
+
+- Node 18 / 20 / 22 repository contract + build/test;
+- retained APP-10E–O WebKit authoring regressions;
+- APP-11B, APP-11D, APP-11E and APP-11F WebKit regressions;
+- dedicated mobile WebKit straight eighths -> canonical `1/12 + 1/12 + 1/12` Triplet -> exact Undo;
+- exact ST Score Rendering Layer checkout/build;
+- APP-09B WebKit renderer regression;
+- APP-09B controlled-layout rerender regression.
+
+This proves automated regression compatibility only.
 
 ## Pass rule
 
-APP-09 standalone release gate may be marked PASS only when:
+The standalone release gate may be marked PASS only when:
 
-1. all five required targets have recorded applicable evidence;
-2. G1–G10 have no unresolved release-blocking failure on applicable targets;
-3. any discovered regression has a linked fix + exact-head green CI + rerun evidence on affected targets;
+1. all five required physical targets have recorded applicable evidence;
+2. G1–G10 have no unresolved release-blocking failure;
+3. discovered regressions have linked fixes + exact-head green CI + affected-target rerun evidence;
 4. canonical/noncanonical authority invariants remain unchanged;
-5. `standaloneReleaseGatePassed` is changed to `true` only in a separate evidence-backed closeout PR.
+5. `standaloneReleaseGatePassed` changes to `true` only in a separate evidence-backed closeout.
 
 Until then:
 
@@ -200,4 +181,4 @@ standaloneReleaseGatePassed = false
 seslitabCutoverAuthorized = false
 ```
 
-No SesliTab V4 cutover should begin before this gate is explicitly closed with evidence.
+SesliTab is not an architectural dependency of ST Score Editor Core and remains outside this development track.
