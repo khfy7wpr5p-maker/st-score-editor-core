@@ -1,10 +1,10 @@
 {
   "document_type": "autonomous_developer_handoff_living_state",
   "schema_version": "1.1.0",
-  "prompt_revision": 6,
+  "prompt_revision": 7,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-06T20:00:31+03:00",
+  "updated_at": "2026-09-06T20:06:55+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
@@ -12,7 +12,7 @@
     "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
     "verified_main_subject": "APP-11I: productize atomic straight-three triplet retiming",
     "work_branch": "p02-teacher-event-span-selection-v4",
-    "work_branch_head_before_this_state_commit": "624274ec178fd20b5519b8d299d311e4bf6b9498"
+    "work_branch_head_before_this_state_commit": "768ad60cfb7cce6a2b462a39e50f40bfdfc52b13"
   },
   "source_handoff": {
     "origin": "user_supplied_st_score_editor_autonomous_developer_prompt_revision_1",
@@ -134,13 +134,15 @@
       "state": "IN_PROGRESS_ON_ISOLATED_WORK_BRANCH",
       "pr": 143,
       "base_branch": "app11j-triplet-unretiming-admission-v4",
-      "verified_head": "624274ec178fd20b5519b8d299d311e4bf6b9498",
-      "ci_run": 34047137432,
+      "selection_verified_head": "624274ec178fd20b5519b8d299d311e4bf6b9498",
+      "selection_ci_run": 34047137432,
+      "copy_snapshot_verified_head": "5da0b8915f7c19797e08903a049dfeef9ab73256",
+      "copy_snapshot_ci_run": 34047473400,
       "node_matrix": [18, 20, 22],
-      "result": "repository validation + build + full test chain PASS on Node 18/20/22",
-      "teacher_event_span_selection": "VERIFIED",
+      "result": "P02-SEL01 and P02-COPY01 repository validation + build + full test chain PASS on Node 18/20/22 at their exact verified heads",
       "canonical_mutation_authority": false,
       "history_mutation_authority": false,
+      "paste_mutation_authority": false,
       "physical_device_test": "NOT_RUN",
       "merge_claim": false,
       "release_claim": false
@@ -206,18 +208,45 @@
             "PR #143",
             "CI run 34047137432"
           ],
+          "limitations": ["physical-device validation NOT_RUN", "PR #143 not merged"]
+        },
+        {
+          "id": "P02-COPY01",
+          "title": "Read-only Teacher Copy Snapshot",
+          "status": "verified_pr_open",
+          "pr": 143,
+          "tested_code_sha": "5da0b8915f7c19797e08903a049dfeef9ab73256",
+          "ci_run": 34047473400,
+          "acceptance": [
+            "consumes exact verified teacher event span endpoints",
+            "source event/note/chord content is captured without destination identity allocation",
+            "first selected segment starts at exact rational relative onset zero and later measure-local timing is preserved",
+            "admitted local event/note notation is preserved",
+            "beam/tuplet/tie/slur/spanning ornament/cross-staff/grace coupling is never silently dropped and fails closed",
+            "snapshot creates no canonical/history mutation and exposes no paste authority",
+            "Node 18/20/22 repository validation + build + full tests pass"
+          ],
+          "artifacts": [
+            "packages/editor-teacher-copy-snapshot-v4/src/index.ts",
+            "test/p02-teacher-copy-snapshot-v4.test.mjs",
+            "docs/p02-teacher-copy-snapshot.md",
+            "PR #143",
+            "CI run 34047473400"
+          ],
           "limitations": [
-            "copy snapshot not implemented",
-            "paste/transpose/bulk mutation not implemented",
-            "insert-vs-overwrite contract not implemented",
+            "destination paste admission not implemented",
+            "destination identity allocation not implemented",
+            "relation remapping not implemented",
+            "paste/transpose/bulk/insert/overwrite mutation not implemented",
             "physical-device validation NOT_RUN",
             "PR #143 not merged"
           ]
         }
       ],
       "remaining_work": [
-        "read-only teacher copy snapshot contract over P02-SEL01",
-        "destination paste admission and identity/relation remapping",
+        "read-only destination paste admission over P02-COPY01",
+        "destination identity and relation-remap contract before mutation",
+        "paste mutation with one EditorSessionV4 history revision only after admission is proven",
         "transpose/bulk operations",
         "insert vs overwrite semantics"
       ],
@@ -302,11 +331,11 @@
     "rules": ["PASS/FAIL/BLOCKED/NOT_RUN ayrı tutulur.", "Test edilen exact SHA ve CI/run kaydedilir.", "Eski yeşil CI yeni HEAD'e taşınmaz.", "Fiziksel cihaz yerine WebKit PASS yazılmaz.", "Bağımsız müzikal beklenti kullanılır; sadece fonksiyon çıktısı kendi kendine doğrulanmaz."]
   },
   "execution_state": {
-    "status": "P02_SEL01_VERIFIED_PR_OPEN",
-    "verified_head": "624274ec178fd20b5519b8d299d311e4bf6b9498",
+    "status": "P02_COPY01_VERIFIED_PR_OPEN",
+    "verified_head": "5da0b8915f7c19797e08903a049dfeef9ab73256",
     "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "current_task_id": "P02-COPY01",
-    "next_action": "P02-SEL01 öğretmen event-span seçimini salt-okunur kaynak kanıtı olarak kullanacak teacher copy snapshot sözleşmesini tasarla ve uygula. Copy aşamasında canonical/history mutasyonu yapma; event/note/chord/rest içeriğini normalize edilmiş zaman kökeniyle temsil et; notation/relation sahipliğini sessizce düşürme ve desteklenmeyen ilişki durumlarını fail-closed veya açık capability olarak ayır. Paste/transpose/insert/overwrite mutation authority verme. SesliTab repository'sine, Smoosic entegrasyonuna veya çalışan production koduna dokunma ve pinned runtime/build bağımlılığını aynen koru.",
+    "current_task_id": "P02-PASTE01-ADMISSION",
+    "next_action": "P02-COPY01 snapshot'ını tüketen salt-okunur destination paste admission sözleşmesini tasarla. İlk profil mevcut bir content staff + mevcut Voice üzerinde exact semantic destination anchor kullanmalı; destination occupancy, ölçü sınırı, snapshot segment sayısı ve unsupported relation/topology ihtiyaçlarını analiz etmeli fakat event/note ID üretmemeli ve canonical/history mutate etmemeli. Insert-vs-overwrite semantiği açıkça seçilmeden paste mutation açma. SesliTab repository'sine, Smoosic entegrasyonuna veya çalışan production koduna dokunma ve pinned runtime/build bağımlılığını aynen koru.",
     "required_reads": [
       "DEVELOPMENT_GOVERNANCE.md",
       "ROADMAP.md",
@@ -317,21 +346,22 @@
       "docs/app-11j-triplet-unretiming-admission.md",
       "docs/external-runtime-dependency-freeze.md",
       "docs/p02-teacher-workflow-gap-audit.md",
-      "docs/p02-teacher-event-span-selection.md"
+      "docs/p02-teacher-event-span-selection.md",
+      "docs/p02-teacher-copy-snapshot.md"
     ],
     "resume_commands": [
       "verify main and stacked PR heads before writing",
       "treat P01 as code-complete on work branch but not merged/released",
-      "treat P02-SEL01 as verified in PR #143 but not merged/released",
-      "implement P02-COPY01 read-only before any paste or bulk mutation authority",
+      "treat P02-SEL01 and P02-COPY01 as verified in PR #143 but not merged/released",
+      "implement P02-PASTE01 admission read-only before any paste mutation",
       "honor external runtime dependency freeze before any integration/dependency work"
     ],
-    "completed_task_ids": ["P00", "P01-AUDIT-01", "P01", "P02-SEL01"],
+    "completed_task_ids": ["P00", "P01-AUDIT-01", "P01", "P02-SEL01", "P02-COPY01"],
     "blockers": [
       {
         "kind": "MERGE_AUTHORITY",
         "reason": "PR #141, #142 and #143 are reviewable/open; this handoff alone is not being treated as merge authorization.",
-        "affected_tasks": ["P01-APP11J closeout to main", "P02-SEL01 closeout to parent/main"],
+        "affected_tasks": ["P01-APP11J closeout to main", "P02 closeout to parent/main"],
         "unblock_action": "separate explicit merge authority or later user/repository instruction"
       },
       {
@@ -371,6 +401,11 @@
         "date": "2026-09-06",
         "decision": "P02 starts with a read-only teacher start/stop event-span model rather than copy/paste mutation.",
         "reason": "Existing EVENT_RANGE is intentionally same-measure and Triplet-oriented; safe teacher copy/paste/transpose requires an exact cross-measure source target list before mutation semantics are introduced."
+      },
+      {
+        "date": "2026-09-06",
+        "decision": "Teacher copy is separated into a read-only snapshot stage before destination paste admission or mutation.",
+        "reason": "Source content, timing provenance and local notation can be preserved without prematurely allocating destination identities; relation-coupled semantics fail closed instead of being silently lost."
       }
     ],
     "change_log": [
@@ -379,7 +414,8 @@
       {"revision": 3, "date": "2026-09-06", "description": "P01 timing-authority audit and revision-identity hardening completed and verified."},
       {"revision": 4, "date": "2026-09-06", "description": "SesliTab removed from ST Score Editor Core architecture/roadmap work targets and frozen as an external product."},
       {"revision": 5, "date": "2026-09-06", "description": "External freeze clarified: ST Score Editor continues independently; no SesliTab repository, Smoosic integration or production-code changes are allowed, while the existing pinned ST Score Editor runtime/build dependency must be preserved until a separate dependency inventory and explicit user approval authorize any change."},
-      {"revision": 6, "date": "2026-09-06", "description": "P02 teacher workflow gap audit completed and P02-SEL01 implemented in PR #143. Exact current-revision start/stop event spans now expand read-only across measures within one source staff and canonical Voice ordinal; exact head passed Node 18/20/22 validation, build and full tests. Copy/paste/transpose/insert/overwrite mutation authority remains unimplemented."}
+      {"revision": 6, "date": "2026-09-06", "description": "P02 teacher workflow gap audit completed and P02-SEL01 implemented in PR #143. Exact current-revision start/stop event spans now expand read-only across measures within one source staff and canonical Voice ordinal; exact head passed Node 18/20/22 validation, build and full tests. Copy/paste/transpose/insert/overwrite mutation authority remains unimplemented."},
+      {"revision": 7, "date": "2026-09-06", "description": "P02-COPY01 implemented and verified in PR #143. Verified teacher spans can now produce immutable read-only source snapshots with exact normalized segment timing and admitted local notation. Relation-coupled beam/tuplet/tie/slur/spanning-ornament/cross-staff/grace content fails closed; no destination identity, paste, transpose, insert or overwrite mutation authority is exposed."}
     ]
   },
   "living_prompt_protocol": {
