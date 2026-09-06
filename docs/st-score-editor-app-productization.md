@@ -1,14 +1,14 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10O COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
+Status: **ACTIVE / APP-00–10O + APP-11A COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX DEFERRED BUT REQUIRED**
 
-Date: 2026-09-05
+Date: 2026-09-06
 
 ## Product decision
 
 ST Score Editor must pass its standalone release gate before any SesliTab V4 product cutover. Canonical editing remains `ScoreDocumentV3 + NotationDocumentV4` owned by `EditorSessionV4`. UI/file/recovery/renderer/viewport/playback/export/print/release-hardening/authoring-palette/Staff/Voice/measure-navigation/chord-tone/articulation/ornament/explicit-accidental control state is noncanonical. Local product operation requires no backend.
 
-Device/browser validation is intentionally deferred during the current authoring-workspace development phase. Deferral is not release approval: `standaloneReleaseGatePassed` and `seslitabCutoverAuthorized` remain false.
+Device/browser validation is intentionally deferred during the current strong-editor development phase. Deferral is not release approval: `standaloneReleaseGatePassed` and `seslitabCutoverAuthorized` remain false.
 
 ## Completed stages
 
@@ -96,6 +96,32 @@ APP-10O exposes a second bounded single-event simple-ornament group without chan
 
 Core regression covers all three admitted kinds, unified undo/redo, imported MusicXML Inverted Turn round-trip, exact imported-style removal, ambiguity/unsupported/non-pitched fail-closed behavior. Exact-head WebKit covers Guitar chord-event authoring, APP-10H/10I multi-measure isolation and Piano Staff 2 / Voice 5 isolation while APP-10E–N and APP-09B remain green.
 
+## APP-11 — Strong-editor Rhythm & Timing Authoring
+
+### APP-11A — V4 rhythm timing admission foundation
+Status: **COMPLETE / MERGED**
+
+PR #129 / `402783e3b61f80ed651d6df641c497ad8dd226f1`.
+
+APP-11A introduces a shared read-only admission analyzer before broadening duration/dot editing.
+
+- exact current-revision `EventAddressV3` is required;
+- requested duration must be a reduced positive rational;
+- contraction, growth and no-op are classified explicitly;
+- a following canonical event supplies the exact occupancy boundary; growth beyond it is rejected;
+- synthetic/new-score trailing growth requires an inherited effective meter and may not pass the nominal measure end;
+- imported/non-synthetic trailing growth fails closed because pickup/non-controlling evidence is not yet part of this V4 contract;
+- existing voice overlap blocks authorization;
+- beams, tuplets and ties are timing coupling and block independent duration mutation;
+- dots block independent duration mutation unless the caller explicitly owns the atomic dot rewrite;
+- slurs do not block this duration analysis because they do not define duration occupancy;
+- admitted contractions/growth expose whether a gap would remain so a later rest-balancing layer can update explicit rhythm space deterministically;
+- APP-11A creates no score mutation, notation mutation or `EditorSessionV4` history revision.
+
+Exact-head Node 18/20/22 CI and the retained APP-10E–O + APP-09B WebKit chain passed before merge.
+
+**Current boundary:** APP-11A does not yet reroute existing BasicAuthoringV4 `SET_EVENT_DURATION` or keypad Duration/Dot actions. Their existence must not be interpreted as proof that all browser duration edits now use the new timing admission contract.
+
 ## Stage 07 — Exact semantic-to-render presentation locators
 Status: **COMPLETE / MERGED**
 
@@ -125,12 +151,26 @@ seslitabCutoverAuthorized = false
 
 ## Current development action
 
-APP-10O closes a second bounded single-event local-ornament browser gap. Do not declare APP-10P yet. Perform a fresh repository audit for the next highest-value bounded user-facing authoring gap. Augmentation dots still require timing-space admission because the current primitive changes event duration without retiming neighbors. Tuplet/tie/slur, spanning ornaments and grace workflows remain separate structured/multi-target programs.
+**APP-11B — shared safe duration mutation authority and explicit-rest balancing.**
+
+The next package must route duration-changing V4 authoring through APP-11A admission rather than leaving BasicAuthoringV4 and keypad duration changes as independent unchecked timing writers. When an admitted mutation creates or consumes rhythmic space, APP-11B should produce an explicit deterministic rest plan rather than relying on renderer layout or guessed silence.
+
+The intended order after APP-11B is:
+
+1. safely expose augmentation dots through atomic dot+duration ownership;
+2. add strong semantic endpoint/range selection;
+3. expose existing tie/slur/tuplet primitives through that explicit selection contract;
+4. expand grace, beam and broader topology authoring as separate bounded programs.
 
 The device/browser matrix must be resumed before any standalone release closeout. A separate evidence-backed closeout is required before `standaloneReleaseGatePassed` can become true; SesliTab product integration/cutover remains later and separate.
 
 ## Explicitly deferred / gated
 
+- existing direct duration/dot browser paths are not declared APP-11 timing-safe until APP-11B reroutes them;
+- imported trailing duration growth without proven pickup/non-controlling measure semantics;
+- arbitrary rest redistribution outside an admitted APP-11 balancing contract;
+- multi-target tie/slur/tuplet UI until explicit semantic range/endpoint selection is product-ready;
+- spanning tremolo/wavy-line and broader grace authoring until separately admitted;
 - standalone release until the manual release matrix passes;
 - SesliTab V4 product cutover until standalone release gate passes;
 - server revision authority and cloud collaboration;
