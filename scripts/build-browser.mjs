@@ -71,7 +71,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-11D standalone app',
+  label: 'APP-11E standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   maxBytes: STANDALONE_APP_BUNDLE_MAX_BYTES,
   manifest: Object.freeze({
@@ -162,6 +162,11 @@ await buildBrowserArtifact({
     tieAuthoringSelection: 'explicit-revision-bound-exact-note-pair', tieAuthoringSelectionModel: 'editor-semantic-selection-v4',
     tieAuthoringCaptureHistoryMutationAuthority: false, tieAuthoringMutation: 'existing-editor-keypad-tie.edit',
     tieAuthoringHistory: 'EditorSessionV4', tieAuthoringRendererCoordinateAuthority: false, tieAuthoringNetworkAuthority: false,
+    slurAuthoringBundled: true, slurAuthoringCanonicalAuthority: false,
+    slurAuthoringSelection: 'explicit-revision-bound-forward-exact-note-pair', slurAuthoringSelectionModel: 'editor-semantic-selection-v4',
+    slurAuthoringCaptureHistoryMutationAuthority: false, slurAuthoringMutation: 'existing-editor-keypad-slur.edit',
+    slurAuthoringSamePitchRequired: false, slurAuthoringConsecutiveEventsRequired: false,
+    slurAuthoringHistory: 'EditorSessionV4', slurAuthoringRendererCoordinateAuthority: false, slurAuthoringNetworkAuthority: false,
     browserContractTargets: ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'],
     manualDeviceValidationRequired: true, standaloneReleaseGatePassed: false, seslitabCutoverAuthorized: false,
     serverRevisionAuthority: false, publicationAuthority: false,
@@ -193,4 +198,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-11D standalone HTML: PASS');
+console.log('APP-11E standalone HTML: PASS');
