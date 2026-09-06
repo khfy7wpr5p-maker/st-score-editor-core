@@ -35,13 +35,17 @@ Repository reality only; planned capability is not production capability.
 - **APP-10O — COMPLETE / MERGED:** PR #127 / `75822e2a75db165692fa1fdba4c6c9a774682577`; bounded exact Inverted Turn/Inverted Mordent/Shake toggles through the existing V4 ornament authoring path. Exact pitched event/note-parent semantics are required, new specs use auto placement with empty accidental marks, a single existing same-kind spec is removed exactly, multiple same-kind specs fail closed, spanning/grace authority remains excluded, and imported Inverted Turn plus Guitar/Piano WebKit isolation are covered.
 - **APP-11A — COMPLETE / MERGED:** PR #129 / `402783e3b61f80ed651d6df641c497ad8dd226f1`; introduces the read-only V3/V4 rhythm-timing admission foundation for exact event-duration proposals. It classifies shrink/grow/no-op, exact next-event space, synthetic meter bounds, overlap, dots/beams/tuplets/ties coupling, existing invalid timing and unproven imported trailing growth.
 - **APP-11B — COMPLETE / MERGED:** PR #131 / `0d8c5263e2dea591352e88d163474b5452f8b1b7`; routes BasicAuthoringV4 duration mutation and keypad Duration/Rest/Dot timing changes through shared safe rhythm authority. Contraction deterministically creates or extends explicit residual rest space; growth consumes only adjacent admitted rest space; pitched occupancy, insufficient rest space, coupled beam/tuplet/tie timing and unproven imported trailing growth remain fail-closed. One accepted edit creates one `EditorSessionV4` history revision. Dedicated APP-11B WebKit plus retained APP-10E–O and APP-09B renderer regressions passed before merge.
+- **APP-11C — COMPLETE / MERGED:** PR #133 / `9cce12b82457fed345ff98c06e54e4e15f99adda`; adds revision-bound semantic `SINGLE`, `NOTE_PAIR` and contiguous same-measure `EVENT_RANGE` construction. Duplicate, stale, mixed-scope, reversed and non-contiguous selections fail closed. Selection itself remains noncanonical/history-free and only adapts proven semantic targets into the existing advanced keypad contracts.
+- **APP-11D — COMPLETE / MERGED:** PR #134 / `d53edd07f286b7a5a78b3d3404d8c17a340b9cfa`; exposes bounded exact Tie authoring as `Tie Start -> exact second note/chord tone -> Tie Apply`. Capture is presentation-only; Apply reuses `tie.edit`, preserving same-pitch/consecutive-event authority in the existing primitive, commits exactly one `EditorSessionV4` revision and is covered by dedicated mobile WebKit regression.
+- **APP-11E — COMPLETE / MERGED:** PR #135 / `36896d24cf48968a6aca4b5603e11db85304a863`; exposes bounded Slur authoring over the same semantic note-pair model. Different pitch and non-consecutive forward endpoints are admitted by the existing `slur.edit` primitive; capture is history-free, exact pair creation/removal and Undo are covered, and Tie remains bundled beneath the Slur runtime layer.
+- **APP-11F — COMPLETE / MERGED:** PR #136 / `af1a4b49707a300697c1021892116739e20dccb1`; exposes bounded three-explicit-event Triplet authoring over APP-11C `EVENT_RANGE` and the existing `tuplet.triplet` primitive. Capture is explicit, ordered, contiguous and history-free. V1 does not retime onsets/durations and does not remove existing tuplet metadata: it only adds 3:2 metadata when the three events already have exact equal contiguous canonical triplet timing. Production MusicXML import and dedicated mobile WebKit regression cover the canonical `1/12 + 1/12 + 1/12` case; ordinary straight eighths fail closed rather than being silently retimed.
 - **Stage 07 semantic → renderer presentation locator — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391`; exact current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup is read-only and complements the existing renderer-hit path.
 - **Manual standalone release matrix — DEFERRED FOR CURRENT DEVELOPMENT / REQUIRED BEFORE RELEASE.**
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED** until the standalone release matrix passes.
 
 ## Current product architecture phase
 
-The project is now in **strong-editor semantic selection and relation authoring**, built on the completed APP-11A/B timing authority:
+The project is now in **strong-editor semantic selection, relation authoring and timing-space expansion**, built on the completed APP-11A/B timing authority:
 
 ```text
 Guitar/Piano New score
@@ -57,13 +61,21 @@ Guitar/Piano New score
              -> beam/tuplet/tie timing-coupling veto
              -> explicit residual-rest creation/resize
              -> adjacent explicit-rest consumption on safe growth
+        -> APP-11C semantic Selection V2
+             -> exact SINGLE
+             -> exact NOTE_PAIR
+             -> exact contiguous EVENT_RANGE
+        -> professional relation UI
+             -> APP-11D Tie
+             -> APP-11E Slur
+             -> APP-11F bounded create-only Triplet metadata
         -> EditorSessionV4 canonical commit
         -> unified undo/redo
         -> MusicXML projection/export
         -> renderer presentation
 ```
 
-All canonical score/notation edits converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. Staff/measure navigation, palette/notation-control state, file/recovery, renderer presentation, viewport, playback, export/print and release-hardening state remain noncanonical.
+All canonical score/notation edits converge on `ScoreDocumentV3 + NotationDocumentV4` through `EditorSessionV4`. Staff/measure navigation, semantic range capture, palette/notation-control state, file/recovery, renderer presentation, viewport, playback, export/print and release-hardening state remain noncanonical.
 
 Renderer interaction remains identity/presentation-only and neither direction grants DOM/SVG/coordinate/geometry authority.
 
@@ -79,36 +91,36 @@ Current practical release targets remain real iPhone Safari, Android Chrome, Win
 
 ## Next development action
 
-**APP-11C — Selection Model V2 / explicit semantic range and endpoint construction.**
+**APP-11G — Tuplet Retiming Admission Foundation.**
 
-Repository reality already contains relation-capable keypad primitives with explicit advanced targets:
+APP-11F proves the complete semantic/UI path for an explicit three-event range, but repository reality still deliberately refuses to retime ordinary events. The current advanced primitive calculates a written base from already-existing canonical triplet timing and throws `TUPLET_TIMING_INCONSISTENT` when straight timing would require onset mutation. There is no admitted browser/editor authority to silently move later events or reflow a Voice.
 
-- `NOTE_PAIR` for tie/slur endpoints;
-- exact three-event `EVENT_RANGE` for triplet/tuplet operations.
+APP-11G should therefore be an enabling timing-space program, not another palette shortcut. Its first responsibility is to define when an exact three-event straight range can be transformed into 3-in-the-time-of-2 timing without violating canonical occupancy.
 
-The next layer must therefore avoid inventing a second relation engine. APP-11C should build a reusable, revision-bound semantic selection model that can safely derive those existing target contracts from explicit user selection.
+Minimum APP-11G boundaries to prove before mutation:
 
-Minimum APP-11C boundaries:
+- input remains exactly three explicit, current-revision, contiguous events in one exact measure/Voice;
+- determine the intended written base and candidate compressed durations deterministically;
+- analyze every affected onset boundary, not only the three selected durations;
+- preserve event identities and Voice ordering;
+- reject dotted/beam/tuplet/tie-coupled or otherwise timing-dependent ranges until their transformations are separately admitted;
+- never move unrelated following events implicitly unless an explicit reflow contract is designed and proven;
+- prefer transformations inside an exact explicit-rest timing window when that permits local occupancy preservation;
+- reject measure overflow, overlap, hidden-gap invention, imported pickup/non-controlling ambiguity and cross-Voice/cross-Staff timing dependencies;
+- keep admission read-only first; mutation must be a later explicit atomic `EditorSessionV4` operation after the contract is proven;
+- MusicXML remains projection/exchange, renderer geometry remains non-authoritative.
 
-- single selection remains exact `SemanticAddressV3` compatible;
-- multi-selection/ranges are non-renderer-authoritative and contain exact revision-bound semantic addresses only;
-- ordered event ranges must be same canonical scope where the downstream primitive requires it;
-- note-pair targets must preserve exact note identity, including chord-tone identity;
-- stale addresses, mixed incompatible scopes, duplicates, non-contiguous ranges where contiguity is required and ambiguous ordering fail closed;
-- selection state itself creates no score/notation/history mutation;
-- converting a proven selection into `NOTE_PAIR` or `EVENT_RANGE` is deterministic and read-only;
-- accepted relation authoring later still commits through existing `EditorSessionV4` / keypad authority, not through the selection layer.
-
-After APP-11C is proven, the first professional relation UI should expose **Tie**, then **Slur**, then **Triplet/Tuplet**, reusing the existing relation primitives rather than duplicating notation logic.
+Only after APP-11G can prove a deterministic local timing transformation should Triplet authoring gain automatic retiming/removal behavior. Grace-note, beam and broader measure-topology authoring remain subsequent strong-editor programs rather than being mixed into tuplets.
 
 Do not open release or SesliTab gates as part of feature development.
 
 ## Still fail-closed / gated
 
+- automatic straight-note → triplet retiming/onset reflow; APP-11F is metadata-only on already-proven canonical 3:2 timing;
+- removal of existing tuplet metadata when timing restoration/onset mutation would be required;
 - arbitrary imported trailing MusicXML duration growth without pickup/non-controlling evidence;
 - independent retiming of beam/tuplet/tie-coupled events;
 - arbitrary rest redistribution beyond the admitted APP-11B adjacent residual-rest contract;
-- multi-target tie/slur/tuplet browser UI until APP-11C explicit semantic selection/range construction is proven;
 - spanning tremolo/wavy-line and broader grace relation workflows until separately admitted;
 - remaining real-device/browser release matrix;
 - standalone release until that matrix passes;
