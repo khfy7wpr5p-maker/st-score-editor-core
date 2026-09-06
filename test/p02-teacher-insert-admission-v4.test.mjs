@@ -146,6 +146,7 @@ test('P02-INSERT01 rejects hidden destination suffix gaps or overlaps',()=>{
   const raw=structuredClone(scoreRemoveCapacity());
   const voice=raw.parts[0].staves.find(candidate=>candidate.role==='standard').measures[0].voices[0];
   voice.events[3].onset={numerator:9,denominator:16};
+  voice.events[3].duration={numerator:3,denominator:16};
   const score=createScoreDocumentV3(raw);
   assert.throws(
     ()=>admissionFor(score),
