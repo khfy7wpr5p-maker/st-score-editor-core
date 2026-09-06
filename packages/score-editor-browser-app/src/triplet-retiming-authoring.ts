@@ -99,6 +99,7 @@ export const createTripletRetimingStandaloneScoreEditorController = (
 ): Readonly<TripletRetimingStandaloneScoreEditorController> => {
   const base = createTripletAuthoringStandaloneScoreEditorController(options);
   let root: HTMLElement | null = null;
+  let tripletGroupObserver: MutationObserver | null = null;
 
   const state = (): Readonly<TripletRetimingBrowserState> => {
     const documentValue = base.getDocument();
@@ -137,22 +138,34 @@ export const createTripletRetimingStandaloneScoreEditorController = (
     if (root === null) return;
     const group = root.querySelector<HTMLElement>('[data-st-triplet-authoring]');
     if (group === null) return;
-    group.querySelector('[data-st-triplet-retiming]')?.remove();
-    const owner = group.ownerDocument;
     const current = state();
-    const button = owner.createElement('button');
-    button.type = 'button';
-    button.textContent = 'Triplet Retiming';
-    button.setAttribute('data-st-triplet-retiming', TRIPLET_RETIMING_BROWSER_VERSION);
-    button.setAttribute('aria-label', 'Convert three captured straight events to triplet timing');
+    let button = group.querySelector<HTMLButtonElement>('[data-st-triplet-retiming]');
+    if (button === null) {
+      button = group.ownerDocument.createElement('button');
+      button.type = 'button';
+      button.textContent = 'Triplet Retiming';
+      button.setAttribute('data-st-triplet-retiming', TRIPLET_RETIMING_BROWSER_VERSION);
+      button.setAttribute('aria-label', 'Convert three captured straight events to triplet timing');
+      button.addEventListener('click', () => { controller.applyRetimedTripletToCapturedEvents(); });
+      group.append(button);
+    }
     button.disabled = !current.canApplyRetimedTriplet;
     button.title = current.canApplyRetimedTriplet
       ? 'Atomically retime the three explicit straight events to canonical 3:2 timing.'
       : current.admissionReason === null
         ? 'Capture exactly three contiguous straight events first.'
         : `Retiming not admitted: ${current.admissionReason}`;
-    button.addEventListener('click', () => { controller.applyRetimedTripletToCapturedEvents(); });
-    group.append(button);
+  };
+
+  const observeTripletGroupLifecycle = (nextRoot: HTMLElement): void => {
+    tripletGroupObserver?.disconnect();
+    const Observer = nextRoot.ownerDocument.defaultView?.MutationObserver;
+    if (Observer === undefined) return;
+    tripletGroupObserver = new Observer(() => {
+      const group = nextRoot.querySelector<HTMLElement>('[data-st-triplet-authoring]');
+      if (group !== null && group.querySelector('[data-st-triplet-retiming]') === null) decorate();
+    });
+    tripletGroupObserver.observe(nextRoot, { childList: true, subtree: true });
   };
 
   base.subscribe(() => { decorate(); });
@@ -202,9 +215,12 @@ export const createTripletRetimingStandaloneScoreEditorController = (
     mount: (nextRoot) => {
       root = nextRoot;
       base.mount(nextRoot);
+      observeTripletGroupLifecycle(nextRoot);
       decorate();
     },
     unmount: () => {
+      tripletGroupObserver?.disconnect();
+      tripletGroupObserver = null;
       root = null;
       base.unmount();
     }
