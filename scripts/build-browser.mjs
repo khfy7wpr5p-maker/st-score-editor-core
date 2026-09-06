@@ -71,7 +71,7 @@ await buildBrowserArtifact({
   artifact: 'st-score-editor-app.js',
   manifestFile: 'st-score-editor-app.manifest.json',
   globalName: 'STScoreEditorApp',
-  label: 'APP-10O standalone app',
+  label: 'APP-11D standalone app',
   forbiddenTokens: APP_FORBIDDEN_TOKENS,
   maxBytes: STANDALONE_APP_BUNDLE_MAX_BYTES,
   manifest: Object.freeze({
@@ -158,6 +158,10 @@ await buildBrowserArtifact({
     extendedLocalOrnamentExistingKindRemoval: 'single-exact-existing-spec-only', extendedLocalOrnamentAmbiguousKindFailClosed: true,
     extendedLocalOrnamentSpanningRelationAuthority: false, extendedLocalOrnamentGraceTargetAuthority: false,
     extendedLocalOrnamentToggleHistory: 'EditorSessionV4', extendedLocalOrnamentRendererCoordinateAuthority: false, extendedLocalOrnamentNetworkAuthority: false,
+    tieAuthoringBundled: true, tieAuthoringCanonicalAuthority: false,
+    tieAuthoringSelection: 'explicit-revision-bound-exact-note-pair', tieAuthoringSelectionModel: 'editor-semantic-selection-v4',
+    tieAuthoringCaptureHistoryMutationAuthority: false, tieAuthoringMutation: 'existing-editor-keypad-tie.edit',
+    tieAuthoringHistory: 'EditorSessionV4', tieAuthoringRendererCoordinateAuthority: false, tieAuthoringNetworkAuthority: false,
     browserContractTargets: ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'],
     manualDeviceValidationRequired: true, standaloneReleaseGatePassed: false, seslitabCutoverAuthorized: false,
     serverRevisionAuthority: false, publicationAuthority: false,
@@ -189,4 +193,4 @@ const standaloneHtml = `<!doctype html>
 </html>
 `;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-10O standalone HTML: PASS');
+console.log('APP-11D standalone HTML: PASS');
