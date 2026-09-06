@@ -99,7 +99,7 @@ test('APP-10D materialized Voice 5 accepts APP-10C note entry and remains Voice 
   );
 });
 
-test('APP-10D refuses Voice materialization when exact full-measure coverage is no longer proven', () => {
+test('APP-10D remains full-measure proven after APP-11B duration contraction balances residual time explicitly', () => {
   let document = createNewScoreEditorAppDocument({
     preset: 'GUITAR_TREBLE',
     idFactory: deterministicIdFactory()
@@ -115,8 +115,21 @@ test('APP-10D refuses Voice materialization when exact full-measure coverage is 
     duration: { numerator: 1, denominator: 4 }
   }, { nextRevisionId: 'rev:app10d:short-rest' });
 
-  assert.throws(
-    () => materialize(document, 2, 'coverage-block'),
-    error => error instanceof VoiceMaterializationV4Error && error.code === 'MEASURE_COVERAGE_UNPROVEN'
-  );
+  const balanced = measureContext(document).measure.voices[0].events;
+  assert.equal(balanced.length, 2);
+  assert.equal(balanced[0].kind, 'rest');
+  assert.deepEqual(balanced[0].onset, { numerator: 0, denominator: 1 });
+  assert.deepEqual(balanced[0].duration, { numerator: 1, denominator: 4 });
+  assert.equal(balanced[1].kind, 'rest');
+  assert.deepEqual(balanced[1].onset, { numerator: 1, denominator: 4 });
+  assert.deepEqual(balanced[1].duration, { numerator: 3, denominator: 4 });
+
+  const materialized = materialize(document, 2, 'coverage-preserved');
+  const after = measureContext(materialized);
+  assert.deepEqual(activeVoiceAvailabilityV4(after.score, after.target), [1, 2]);
+  const voice2 = after.measure.voices.find(voice => voice.ordinal === 2);
+  assert.ok(voice2);
+  assert.equal(voice2.events.length, 1);
+  assert.equal(voice2.events[0].kind, 'rest');
+  assert.deepEqual(voice2.events[0].duration, { numerator: 1, denominator: 1 });
 });
