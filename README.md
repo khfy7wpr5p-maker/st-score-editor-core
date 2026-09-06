@@ -8,7 +8,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **ST-SCORE-EDITOR-APP / PRODUCTIZATION — ACTIVE:** standalone editor app is the primary product target.
 - **APP-00–08 — COMPLETE / MERGED:** document/runtime, unified V4 authoring, browser shell, local files/recovery, guarded renderer interaction, viewport, local playback and bounded export/print.
 - **APP-09 / APP-09B — AUTOMATED HARDENING COMPLETE / PHYSICAL IPHONE BLOCKER RESOLVED:** responsive/accessibility/recovery guards are merged; host-controlled renderer rerender fixes the physical iPhone Safari selection/orientation failure without renderer authority expansion.
-- **APP-10A–N — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, bounded append-only synthetic measure-frame growth, presentation-only semantic previous/next measure navigation, exact palette-driven chord-tone authoring, bounded exact articulation/local-ornament toggles, exact explicit Flat/Natural/Sharp authoring, and a second bounded Strong Accent/Staccatissimo/Spiccato articulation group.
+- **APP-10A–O — COMPLETE / MERGED:** Guitar/Piano score starts, Voice 1–5 targeting/materialization, browser note-entry palette, exact selected-note edit/delete, explicit semantic Staff switching, bounded append-only synthetic measure-frame growth, presentation-only semantic previous/next measure navigation, exact palette-driven chord-tone authoring, bounded exact articulation/local-ornament toggles, exact explicit Flat/Natural/Sharp authoring, a second bounded Strong Accent/Staccatissimo/Spiccato articulation group, and a second bounded Inverted Turn/Inverted Mordent/Shake local-ornament group.
 - **Stage 07 semantic → renderer presentation locators — COMPLETE / MERGED:** PR #108 / `9429116bd5c92d4db4c4edbb21b307c6c74c2391` adds exact read-only current-revision `SemanticAddressV3 -> ScoreNoteRef/ScoreMeasureRef` lookup.
 - **Standalone release gate — DEFERRED FOR CURRENT DEVELOPMENT / STILL REQUIRED:** remaining physical Windows/Android/iOS browser evidence must be completed before release.
 - **SesliTab V4 product cutover — DEFERRED / NOT AUTHORIZED:** no cutover until the standalone release matrix passes.
@@ -19,7 +19,7 @@ Security-first, renderer-independent semantic score-editing core for the standal
 ST Score Editor App
         |
         +--> Guitar / Piano New-score selector (presentation state)
-        +--> authoring palette: Staff / Voice 1–5 / pitch / entry accidental / octave / duration / Add measure / previous-next measure / +Tone / Stac-Acc-Ten / SAcc-Staccis-Spic / Trill-Turn-Mordent / explicit ♭-♮-♯
+        +--> authoring palette: Staff / Voice 1–5 / pitch / entry accidental / octave / duration / Add measure / previous-next measure / +Tone / Stac-Acc-Ten / SAcc-Staccis-Spic / Trill-Turn-Mordent / InvTurn-InvMord-Shake / explicit ♭-♮-♯
         +--> exact selected-note Pitch / Duration / Delete actions
         +--> local file workflow (noncanonical)
         +--> IndexedDB recovery cache (noncanonical)
@@ -82,9 +82,14 @@ The current standalone browser can create admitted Guitar or Piano scores and pe
 - if exactly one same-kind APP-10N articulation already exists, that exact `ArticulationSpec` is removed so imported placement/direction semantics are not guessed or normalized; multiple same-kind specs fail closed as ambiguous;
 - APP-10N intentionally exposes no grace-event articulation target authority and does not alter APP-10K's original Staccato/Accent/Tenuto contract;
 - imported MusicXML Strong Accent authoring is covered by lossless export/re-import; exact imported-style Strong Accent removal preserves placement/direction semantics by removing the exact spec rather than rewriting it;
+- APP-10O PR #127 / `75822e2a75db165692fa1fdba4c6c9a774682577` exposes Inverted Turn, Inverted Mordent and Shake through the same existing V4 ornament authoring authority used by APP-10L;
+- APP-10O requires an exact selected pitched event or exact note-parent event; new specs use `placement:'auto'` and `accidentalMarks:[]`;
+- if exactly one same-kind APP-10O ornament already exists, that exact `OrnamentSpec` is removed so imported placement/accidental-mark semantics are not guessed or normalized; multiple same-kind specs fail closed as ambiguous;
+- APP-10O intentionally exposes no spanning tremolo/wavy-line relation authority and no grace-event ornament target authority; APP-10L's original Trill/Turn/Mordent contract remains unchanged;
+- imported MusicXML Inverted Turn authoring is covered by lossless export/re-import; exact imported-style removal preserves placement/accidental-mark semantics by removing the exact spec;
 - renderer DOM/SVG/coordinates/geometry never infer note, accidental, articulation, ornament or timing targets;
 - Voice creation, measure append, note entry, selected-note/chord-tone, articulation, local ornament and explicit accidental mutations participate in unified `EditorSessionV4` undo/redo; Staff/measure navigation remains presentation-only;
-- exact-head WebKit retains APP-10E–M and APP-09B regressions and adds APP-10N Guitar chord-event extended articulation, multi-measure isolation and Piano Staff-2 Voice-5 isolation.
+- exact-head WebKit retains APP-10E–N and APP-09B regressions and adds APP-10O Guitar chord-event extended local ornament, multi-measure isolation and Piano Staff-2 Voice-5 isolation.
 
 ## Renderer identity boundary
 
@@ -110,7 +115,7 @@ ScoreDocumentV3/3.0.0 + NotationDocumentV4/4.0.0
 
 ## Next bounded authoring candidate
 
-APP-10N closes the second compact single-event articulation exposure gap. The next package is intentionally **not preselected**. Fresh repository reality must be audited before naming APP-10O. Augmentation dots still require timing-space admission because the existing primitive does not retime neighboring events; tuplets/ties/slurs and spanning ornaments require explicit multi-target contracts; grace workflows remain separately bounded.
+APP-10O closes the second compact single-event local-ornament exposure gap. The next package is intentionally **not preselected**. Fresh repository reality must be audited before naming APP-10P. Augmentation dots still require timing-space admission because the existing primitive does not retime neighboring events; tuplets/ties/slurs and spanning ornaments require explicit multi-target contracts; grace workflows remain separately bounded.
 
 ## Remaining release gate
 
