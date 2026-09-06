@@ -90,8 +90,8 @@ try {
       JSON.stringify(entered.events[1].duration) !== JSON.stringify({ numerator: 3, denominator: 4 })) {
     throw new Error(`APP-11B entry baseline mismatch: ${JSON.stringify(entered)}`);
   }
+  const authoredEventId = entered.events[0].id;
   const originalRestId = entered.events[1].id;
-  const selectedNoteId = entered.selectionNoteId;
 
   await page.getByRole('button', { name: 'Duration 1/8', exact: true }).click();
   await page.getByRole('button', { name: 'Apply palette duration to selected pitched event', exact: true }).click();
@@ -100,12 +100,12 @@ try {
     const events = d.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events;
     return {
       selectionKind: d.session.selection?.kind ?? null,
-      selectionNoteId: d.session.selection?.kind === 'note' ? d.session.selection.noteId : null,
+      selectionEventId: d.session.selection?.kind === 'event' ? d.session.selection.eventId : null,
       past: d.session.history.past.length,
       events: events.map(event => ({ id: event.id, kind: event.kind, onset: event.onset, duration: event.duration }))
     };
   });
-  if (contracted.selectionKind !== 'note' || contracted.selectionNoteId !== selectedNoteId || contracted.past !== 2 || contracted.events.length !== 2 ||
+  if (contracted.selectionKind !== 'event' || contracted.selectionEventId !== authoredEventId || contracted.past !== 2 || contracted.events.length !== 2 ||
       contracted.events[1].id !== originalRestId ||
       JSON.stringify(contracted.events[0].duration) !== JSON.stringify({ numerator: 1, denominator: 8 }) ||
       JSON.stringify(contracted.events[1].onset) !== JSON.stringify({ numerator: 1, denominator: 8 }) ||
@@ -120,12 +120,12 @@ try {
     const events = d.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events;
     return {
       selectionKind: d.session.selection?.kind ?? null,
-      selectionNoteId: d.session.selection?.kind === 'note' ? d.session.selection.noteId : null,
+      selectionEventId: d.session.selection?.kind === 'event' ? d.session.selection.eventId : null,
       past: d.session.history.past.length,
       events: events.map(event => ({ id: event.id, kind: event.kind, onset: event.onset, duration: event.duration }))
     };
   });
-  if (grown.selectionKind !== 'note' || grown.selectionNoteId !== selectedNoteId || grown.past !== 3 || grown.events.length !== 2 || grown.events[1].id !== originalRestId ||
+  if (grown.selectionKind !== 'event' || grown.selectionEventId !== authoredEventId || grown.past !== 3 || grown.events.length !== 2 || grown.events[1].id !== originalRestId ||
       JSON.stringify(grown.events[0].duration) !== JSON.stringify({ numerator: 1, denominator: 2 }) ||
       JSON.stringify(grown.events[1].onset) !== JSON.stringify({ numerator: 1, denominator: 2 }) ||
       JSON.stringify(grown.events[1].duration) !== JSON.stringify({ numerator: 1, denominator: 2 })) {
@@ -139,12 +139,12 @@ try {
     const events = d.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events;
     return {
       selectionKind: d.session.selection?.kind ?? null,
-      selectionNoteId: d.session.selection?.kind === 'note' ? d.session.selection.noteId : null,
+      selectionEventId: d.session.selection?.kind === 'event' ? d.session.selection.eventId : null,
       past: d.session.history.past.length,
       events: events.map(event => ({ id: event.id, kind: event.kind, onset: event.onset, duration: event.duration }))
     };
   });
-  if (consumed.selectionKind !== 'note' || consumed.selectionNoteId !== selectedNoteId || consumed.past !== 4 || consumed.events.length !== 1 ||
+  if (consumed.selectionKind !== 'event' || consumed.selectionEventId !== authoredEventId || consumed.past !== 4 || consumed.events.length !== 1 ||
       JSON.stringify(consumed.events[0].duration) !== JSON.stringify({ numerator: 1, denominator: 1 })) {
     throw new Error(`APP-11B full-rest consumption mismatch: ${JSON.stringify(consumed)}`);
   }
