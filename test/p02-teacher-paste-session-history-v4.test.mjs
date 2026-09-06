@@ -91,7 +91,7 @@ test('P02-PASTE03 commits one atomic paste revision into EditorSessionV4 history
   assert.equal(committed.selection.kind,'event');
   assert.equal(committed.selection.eventId,identityPlan.events[0].destinationEventId);
   assert.equal(committed.selection.revisionId,'rev:session-paste-next');
-  assert.equal(committed.renderRequest.scoreRevisionId,'rev:session-paste-next');
+  assert.equal(committed.renderRequest.revisionId,'rev:session-paste-next');
 
   assert.deepEqual(initial.history.present,beforePair);
   assert.equal(initial.history.past.length,0);
@@ -113,7 +113,7 @@ test('P02-PASTE03 undo and redo restore exact canonical score+notation pairs',()
   assert.equal(undone.history.future.length,1);
   assert.deepEqual(undone.history.future[0],afterPair);
   assert.equal(undone.selection,null);
-  assert.equal(undone.renderRequest.scoreRevisionId,beforePair.score.revision.id);
+  assert.equal(undone.renderRequest.revisionId,beforePair.score.revision.id);
 
   const redone=navigateSessionHistoryV4(undone,'REDO');
   assert.equal(redone.status.code,'REDO_COMMITTED');
@@ -122,7 +122,7 @@ test('P02-PASTE03 undo and redo restore exact canonical score+notation pairs',()
   assert.deepEqual(redone.history.past[0],beforePair);
   assert.equal(redone.history.future.length,0);
   assert.equal(redone.selection,null);
-  assert.equal(redone.renderRequest.scoreRevisionId,afterPair.score.revision.id);
+  assert.equal(redone.renderRequest.revisionId,afterPair.score.revision.id);
 });
 
 test('P02-PASTE03 failed stale/tampered paste does not mutate session history',()=>{
