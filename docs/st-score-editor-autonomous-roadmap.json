@@ -1,27 +1,27 @@
 {
   "document_type": "autonomous_developer_handoff_living_state",
   "schema_version": "1.1.0",
-  "prompt_revision": 14,
+  "prompt_revision": 15,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-06T23:29:00+03:00",
+  "updated_at": "2026-09-07T08:51:00+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
     "default_branch": "main",
     "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
-    "work_branch": "p02-teacher-event-span-selection-v4",
-    "last_verified_feature_head": "79c62a303939380d3ab6e46b595970845b3e962b"
+    "work_branch": "p03-mobile-context-toolbar-v1",
+    "last_verified_feature_head": "a62c289566186709268e8fd62831e1f09ca23357"
   },
   "product_mission": {
     "purpose": "Gitar ve piyano öğretmenleri için güvenilir, profesyonel, bağımsız ve lisanslanabilir nota editörü/SDK.",
     "quality_definition": [
       "müzikal doğruluk",
       "sessiz veri kaybı yok",
-      "hızlı/anlaşılır düzenleme",
+      "hızlı ve anlaşılır düzenleme",
       "gerçek cihaz güvenilirliği",
-      "kararlı entegrasyon",
-      "geri alınabilir/açıklanabilir öneriler"
+      "kararlı entegrasyon sözleşmeleri",
+      "geri alınabilir ve açıklanabilir AI önerileri"
     ],
     "product_forms": ["standalone", "embedded_sdk", "institutional_service"]
   },
@@ -34,8 +34,8 @@
     "Süreler exact rational'dır.",
     "Başarısız işlem canonical çifti veya unified history'yi değiştirmez.",
     "İlgisiz voice/event/chord tone/measure/notation korunur.",
-    "Undo/redo canonical belge ve ilişkileri exact/tutarlı geri getirir.",
-    "Temel yerel düzenleme AI/ağ gerektirmez.",
+    "Undo/Redo canonical score+notation çiftini exact geri getirir.",
+    "Temel yerel düzenleme AI veya ağ gerektirmez.",
     "Desteklenmeyen yetenek fail-closed veya açık partial capability olur."
   ],
   "autonomy_policy": {
@@ -43,8 +43,8 @@
       "read-only repo/PR/CI/mimari inceleme",
       "izole branch non-breaking reversible kod/test/docs",
       "regresyon teşhis/düzeltme",
-      "test/benchmark",
-      "reviewable commit/PR",
+      "test ve benchmark",
+      "reviewable commit/PR hazırlığı",
       "living roadmap güncelleme"
     ],
     "human_or_separate_authority_required": [
@@ -54,10 +54,11 @@
       "external training upload",
       "force-push/history rewrite/destructive migration",
       "external commercial commitment",
+      "açık PR merge",
       "SesliTab pinned ST Score Editor runtime/build dependency change"
     ],
-    "merge_policy_for_this_handoff": "Ayrı açık merge yetkisi olmadan #141/#142/#143 merge edilmez.",
-    "physical_validation": "Gerçek cihaz kanıtı olmayan satır PASS yazılmaz."
+    "merge_policy_for_this_handoff": "Ayrı açık merge yetkisi olmadan #141/#142/#143/#144 merge edilmez.",
+    "physical_validation": "Gerçek fiziksel cihaz kanıtı olmayan satır PASS yazılmaz. Browser/WebKit otomasyonu fiziksel cihaz PASS değildir."
   },
   "external_product_freeze": {
     "product": "SesliTab",
@@ -71,7 +72,7 @@
     "seslitab_production_code_mutation_allowed": false,
     "existing_pinned_st_score_editor_runtime_build_dependency": "PRESERVE_AS_IS",
     "dependency_inventory_status": "NOT_RUN_BY_POLICY",
-    "dependency_change_gate": "separate dependency inventory + explicit user approval after inventory review"
+    "dependency_change_gate": "separate exact dependency inventory + explicit user approval after inventory review"
   },
   "verified_reality": {
     "main": {
@@ -92,32 +93,49 @@
       "state": "BOUNDED_BASELINE_CODE_COMPLETE_ON_WORK_BRANCH",
       "pr": 143,
       "base_branch": "app11j-triplet-unretiming-admission-v4",
-      "P02-SEL01": {"head": "624274ec178fd20b5519b8d299d311e4bf6b9498", "ci": 34047137432},
-      "P02-COPY01": {"head": "5da0b8915f7c19797e08903a049dfeef9ab73256", "ci": 34047473400},
-      "P02-PASTE01": {"head": "e189a9fcb0f91e6072c5d0b1791b4ca6d3f89b72", "ci": 34047751886},
-      "P02-ID01": {"head": "120a219e22737ae274fd37f94933e333ce4363c7", "ci": 34047910169},
-      "P02-PASTE02": {"head": "3c005014e688c25703e98260bed63e336abf7e95", "ci": 34048203830, "canonical_candidate_authoring": "VERIFIED", "historyMutationAuthority": false},
-      "P02-PASTE03": {"head": "2c2533c23bd4d47519e27fc7e244bda8d1044840", "ci": 34048830113, "session_history_commit": "VERIFIED", "undo_redo_exact_pair_restore": "VERIFIED"},
-      "P02-APP01": {"head": "3caaa7fdae9d930c1da101f036d1236e7fba58cc", "ci": 34049060092, "app_document_wrapper": "VERIFIED", "dirty_saved_revision_semantics": "VERIFIED"},
-      "P02-TRANSPOSE01": {"head": "8c962bd7ba63a246ef1c3fc916941f33d23fd038", "ci": 34049362326, "profile": "OCTAVE_ONLY_READ_ONLY_ADMISSION", "result": "VERIFIED"},
-      "P02-TRANSPOSE02": {"head": "de682e154e59a4a57259742bf38c6c10a9d20cfd", "ci": 34049513929, "atomic_canonical_authoring": "VERIFIED", "historyMutationAuthority": false},
-      "P02-TRANSPOSE03": {"head": "5af95eb930815e12efa2c8ce109f89422019dd2f", "ci": 34049652893, "session_history_commit": "VERIFIED", "undo_redo_exact_pair_restore": "VERIFIED"},
-      "P02-TRANSPOSE04": {"head": "79363e3e61e35544298439dd305d596983469653", "ci": 34049811854, "app_document_wrapper": "VERIFIED", "dirty_saved_revision_semantics": "VERIFIED"},
-      "P02-INSERT01": {"head": "e94672fefd07c7e4a3008e1544e0505724ac830f", "ci": 34051005856, "profile": "READ_ONLY_INSERT_AFTER_EVENT_WITH_TRAILING_NEUTRAL_REST_CAPACITY", "result": "VERIFIED", "canonicalMutationAuthority": false, "historyMutationAuthority": false},
-      "P02-INSERT02": {"head": "3270ead9c8779e5e18a2f102a195261bfe8c0d44", "ci": 34056278695, "atomic_canonical_authoring": "VERIFIED", "deterministic_destination_identity": "VERIFIED", "notation_preservation": "VERIFIED", "historyMutationAuthority": false},
-      "P02-INSERT03": {"head": "a3a90bff0c9cdeb3bc739360c36314851def6ded", "ci": 34056444499, "session_history_commit": "VERIFIED", "undo_redo_exact_pair_restore": "VERIFIED", "rejected_insert_history_immutability": "VERIFIED"},
-      "P02-INSERT04": {"head": "16f4dbb44028ef3d2e01318e4e97d8f6fe7141f7", "ci": 34056970177, "app_document_wrapper": "VERIFIED", "dirty_saved_revision_semantics": "VERIFIED", "app_undo_redo": "VERIFIED"},
-      "P02-BROWSER01": {
-        "head": "79c62a303939380d3ab6e46b595970845b3e962b",
-        "ci": 34057984547,
-        "teacher_command_facade": "VERIFIED",
-        "commands": ["selection", "copy", "bounded_paste_overwrite", "bounded_insert_after_event", "octave_transpose"],
-        "unified_history_preserved": "VERIFIED",
-        "snapshot_adoption_full_history_validation": "VERIFIED",
-        "rendererCoordinateAuthority": false,
-        "domAuthoringAuthority": false,
-        "networkAuthority": false
+      "verified_feature_head": "79c62a303939380d3ab6e46b595970845b3e962b",
+      "feature_ci": 34057984547,
+      "final_roadmap_head": "bbc33ccf3261f7707dfab711ec2ce0ec4686263e",
+      "final_ci": 34058147502,
+      "verified_subtasks": [
+        "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01",
+        "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04",
+        "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01"
+      ],
+      "bounded_teacher_commands": ["selection", "copy", "paste_overwrite", "insert_after_event", "octave_transpose", "undo", "redo"],
+      "unified_history_preserved": "VERIFIED",
+      "app_dirty_saved_semantics": "VERIFIED",
+      "renderer_coordinate_authority": false,
+      "dom_authoring_authority": false,
+      "deferred_enhancements": [
+        "cross-measure paste mutation and relation remapping policy",
+        "general chromatic/diatonic transpose after spelling/key/relation policy"
+      ],
+      "physical_device_test": "NOT_RUN",
+      "merge_claim": false,
+      "release_claim": false
+    },
+    "p03": {
+      "state": "IN_PROGRESS_VERIFIED_PACKAGES_OPEN_PR",
+      "pr": 144,
+      "base_branch": "p02-teacher-event-span-selection-v4",
+      "P03-MOBILE01": {
+        "head": "a62c289566186709268e8fd62831e1f09ca23357",
+        "ci": 34088228405,
+        "node_matrix": [18, 20, 22],
+        "result": "VERIFIED",
+        "mobile_teacher_context_toolbar": "VERIFIED",
+        "semantic_selection_authority": "SemanticAddressV3-current-revision",
+        "semantic_range_capture": "two-distinct-current-revision-events",
+        "minimum_touch_target_px": 44,
+        "safe_area_aware": true,
+        "touch_action_manipulation": true,
+        "canonical_authority": false,
+        "renderer_coordinate_authority": false,
+        "dom_authoring_authority": false,
+        "network_authority": false
       },
+      "existing_viewport_gesture_engine": "PRESENT_SEPARATE_WRAPPER_CHAIN",
       "physical_device_test": "NOT_RUN",
       "merge_claim": false,
       "release_claim": false
@@ -131,23 +149,27 @@
       "title": "Baştan sona öğretmen düzenleme akışı",
       "status": "bounded_baseline_code_complete_on_work_branch",
       "depends_on": ["P01"],
-      "completed_or_verified_subtasks": [
-        "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01",
-        "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04",
-        "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01"
-      ],
       "remaining_work": [],
-      "deferred_enhancements": [
-        "cross-measure paste mutation and relation remapping policy",
-        "general chromatic/diatonic transpose only after spelling/key/relation policy"
+      "deferred_enhancements": ["cross-measure paste/relation remapping", "general chromatic/diatonic transpose"]
+    },
+    {
+      "id": "P03",
+      "title": "Mobil çalışma alanı ve performans",
+      "status": "in_progress",
+      "depends_on": ["P01"],
+      "completed_or_verified_subtasks": ["P03-MOBILE01"],
+      "remaining_work": [
+        "presentation-only viewport + teacher-workflow composition without a second canonical controller",
+        "semantic zoom/selection continuity",
+        "measured rerender/interaction performance evidence",
+        "physical device matrix at release/pilot gate"
       ]
     },
-    {"id": "P03", "title": "Mobil çalışma alanı ve performans", "status": "pending", "depends_on": ["P01"], "remaining_work": ["touch/context toolbar", "semantic zoom/selection", "measured performance"]},
     {"id": "P04", "title": "Dosya, kurtarma ve kısmi destek davranışı", "status": "pending", "depends_on": ["P01"], "remaining_work": ["MusicXML preservation", ".mxl/cross-staff/output", "capability split", "OMR partial-work"]},
     {"id": "P05", "title": "Öğretmen corpus'u ve ürün pilotuna hazırlık", "status": "pending", "depends_on": ["P02", "P03", "P04"], "remaining_work": ["provenance corpus", "teacher evidence", "metrics", "device matrix"]},
     {"id": "P06", "title": "Sürümlenmiş SDK ve genel entegrasyon örneği", "status": "pending", "depends_on": ["P02", "P04"], "remaining_work": ["public API", "version/error/migration", "host lifecycle", "generic third-party integration without product-specific coupling"]},
     {"id": "P07", "title": "Kaynak görüntü ve düzeltme kökeni", "status": "pending", "depends_on": ["P04"], "remaining_work": ["immutable provenance", "source-region mapping", "before-after trace"]},
-    {"id": "P08", "title": "AI öneri sözleşmesi ve kurallara karşı deney", "status": "pending", "depends_on": ["P01", "P07"], "remaining_work": ["proposal schema/dry-run/stale revision", "rules baseline", "optional narrow model with authority"]},
+    {"id": "P08", "title": "AI öneri sözleşmesi ve kurallara karşı deney", "status": "pending", "depends_on": ["P01", "P07"], "remaining_work": ["proposal schema/dry-run/stale revision", "rules baseline", "optional narrow model"]},
     {"id": "P09", "title": "Gitar ve pedagojik farklılaşma", "status": "pending", "depends_on": ["P02", "P06"], "remaining_work": ["TAB/harmony audit", "playability constraints", "teacher variants"]},
     {"id": "P10", "title": "Ticari hizmetlere teknik hazırlık", "status": "pending", "depends_on": ["P05", "P06"], "remaining_work": ["license inventory", "account/institution/entitlement", "tenant/revision threat model"]},
     {"id": "P11", "title": "Yayın adayı ve güvenli devam", "status": "pending", "depends_on": ["P05", "P06"], "remaining_work": ["support matrix", "release/migration/rollback/runbook", "release blockers", "separate activation authority"]}
@@ -158,50 +180,31 @@
       "PASS/FAIL/BLOCKED/NOT_RUN ayrı tutulur.",
       "Exact SHA ve CI/run kaydedilir.",
       "Eski yeşil CI yeni HEAD'e taşınmaz.",
-      "WebKit fiziksel cihaz PASS değildir."
+      "WebKit/browser otomasyonu fiziksel cihaz PASS değildir."
     ]
   },
   "execution_state": {
-    "status": "P02_BOUNDED_BASELINE_VERIFIED_PR_OPEN",
-    "verified_head": "79c62a303939380d3ab6e46b595970845b3e962b",
+    "status": "P03_MOBILE01_VERIFIED_PR_OPEN",
+    "verified_head": "a62c289566186709268e8fd62831e1f09ca23357",
     "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "current_task_id": "P02-CLOSEOUT",
-    "next_action": "Bu otonom P02 bounded baseline turu sonuçlandırıldı. Yeni kullanıcı yönlendirmesi gelmeden ileri paket başlatma. Sonraki bağımsız ürün işleri P03 mobil/performance veya P04 file/recovery olabilir; cross-measure paste ve chromatic/diatonic transpose yalnız ayrı explicit policy paketleri olarak ele alınır. SesliTab/Smoosic scope kapalı.",
+    "current_task_id": "P03-VIEWPORT01-AUDIT",
+    "next_action": "Mevcut viewport-enabled gesture/zoom/pan state'ini teacher workflow ile ikinci canonical controller oluşturmadan birleştir. Önce presentation-only viewport davranışını canonical controller'dan ayrıştırılabilir bir helper/decorator olarak fresh-read et ve bounded composition tasarla. Renderer hit yalnız semantic token üzerinden selection üretmeye devam etmeli. Sonra ölçülmüş rerender/interaction performance kanıtı ekle. Fiziksel cihaz PASS ayrı kalır. SesliTab/Smoosic scope kapalı.",
     "completed_task_ids": [
-      "P00", "P01-AUDIT-01", "P01",
-      "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01",
-      "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04",
-      "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01", "P02-CLOSEOUT"
+      "P00", "P01-AUDIT-01", "P01", "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01", "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04", "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01", "P02-CLOSEOUT", "P03-MOBILE01"
     ],
     "blockers": [
-      {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143 açık; merge yetkisi yok."},
+      {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143/#144 açık; merge yetkisi yok."},
       {"kind": "PHYSICAL_DEVICE_RELEASE_GATE", "reason": "Gerçek cihaz matrisi tamamlanmadı."}
     ],
     "decision_log": [
-      {"date": "2026-09-06", "decision": "P02 paste akışı selection -> copy snapshot -> paste admission -> identity plan -> canonical paste authoring -> session history -> app document katmanlarına ayrıldı.", "reason": "Her authority sınırı bağımsız doğrulanabilir ve dual-write önlenir."},
-      {"date": "2026-09-06", "decision": "İlk paste profili exact neutral-rest overwrite ile sınırlı.", "reason": "Topology invention, sessiz relation kaybı ve belirsiz insert semantiğini önlemek."},
-      {"date": "2026-09-06", "decision": "İlk bulk transpose profili octave-only tutuldu.", "reason": "Step/alter spelling korunur; enharmonic/key policy uydurulmaz."},
-      {"date": "2026-09-06", "decision": "Insert mode overwrite'dan ayrı admission/mutation hattıdır ve trailing neutral-rest capacity kanıtı gerektirir.", "reason": "Insert suffix timing shift yapar; overwrite mevcut neutral-rest prefix'ini tüketir."},
-      {"date": "2026-09-06", "decision": "P02 INSERT01-04 authority katmanları admission -> canonical authoring -> unified history -> app document olarak ayrıldı.", "reason": "Insert işlemi de paste/transpose ile aynı tek-source-of-truth history ve dirty/save modelini kullanır."},
-      {"date": "2026-09-06", "decision": "P02-INSERT04 ilk CI hatası ürün kodundan değil test MusicXML fixture divisions/duration uyumsuzluğundan kaynaklandı ve yalnız fixture düzeltildi.", "reason": "Importer duration units'i doğru uyguluyordu; testte divisions=8 iken eighth=1 ve quarter=2 yazılmıştı."},
-      {"date": "2026-09-06", "decision": "P02-BROWSER01 teacher facade canonical mutation üretmez; proven app-document/session authority'yi semantik adreslerle yönlendirir.", "reason": "Browser/DOM/renderer ikinci canonical/history authority olamaz."},
-      {"date": "2026-09-06", "decision": "Validated snapshot adoption full EditorHistoryV4 zincirini direct-child/document/revision identity kurallarıyla yeniden doğrular ve geçerliyse history'yi korur.", "reason": "Teacher browser facade history kaybını düzeltirken recovery fail-closed kalır."}
+      {"date": "2026-09-06", "decision": "P02 bounded teacher workflow tek EditorSessionV4 history authority üzerinden kapatıldı.", "reason": "Dual-write ve history divergence önlenir."},
+      {"date": "2026-09-07", "decision": "P03 mevcut viewport gesture motorunu yeniden yazmayacak.", "reason": "Touch/pointer/keyboard pan+zoom zaten presentation-only viewport-enabled katmanında mevcut."},
+      {"date": "2026-09-07", "decision": "P03-MOBILE01 Copy ve octave transpose iki distinct semantic event range capture kullanır.", "reason": "P02 TeacherEventSpanSelectionV4 duplicate endpoint'i bilinçli olarak fail-closed reddeder; mobil katman çekirdek güvenlik sözleşmesini gevşetmez."},
+      {"date": "2026-09-07", "decision": "P03 viewport ve teacher-workflow paralel wrapper zincirleri iki canonical controller instantiate edilerek birleştirilmeyecek.", "reason": "Tek canonical/session authority korunmalıdır."}
     ],
     "change_log": [
-      {"revision": 1, "date": "2026-09-06", "description": "User handoff created."},
-      {"revision": 2, "date": "2026-09-06", "description": "P00 + APP-11J admission verified."},
-      {"revision": 3, "date": "2026-09-06", "description": "P01 timing audit/revision hardening verified."},
-      {"revision": 4, "date": "2026-09-06", "description": "SesliTab external freeze recorded."},
-      {"revision": 5, "date": "2026-09-06", "description": "Pinned dependency freeze clarified."},
-      {"revision": 6, "date": "2026-09-06", "description": "P02-SEL01 verified."},
-      {"revision": 7, "date": "2026-09-06", "description": "P02-COPY01 verified."},
-      {"revision": 8, "date": "2026-09-06", "description": "P02 bounded paste admission/identity/canonical authoring verified."},
-      {"revision": 9, "date": "2026-09-06", "description": "P02-PASTE03 session history verified."},
-      {"revision": 10, "date": "2026-09-06", "description": "P02-APP01 app paste dirty/save wiring verified."},
-      {"revision": 11, "date": "2026-09-06", "description": "P02 octave-only bulk transpose chain verified end-to-end."},
-      {"revision": 12, "date": "2026-09-06", "description": "P02-INSERT01 read-only insert admission verified."},
-      {"revision": 13, "date": "2026-09-06", "description": "P02-INSERT02/03/04 verified end-to-end through canonical authoring, unified history and app dirty/save semantics."},
-      {"revision": 14, "date": "2026-09-06", "description": "P02-BROWSER01 bounded teacher command facade and history-preserving validated snapshot adoption verified at 79c62a303939380d3ab6e46b595970845b3e962b / CI 34057984547; Node 18/20/22 PASS. P02 bounded teacher-workflow baseline closed on work branch; advanced cross-measure paste and chromatic/diatonic transpose remain deferred explicit-policy enhancements."}
+      {"revision": 14, "date": "2026-09-06", "description": "P02-BROWSER01 ve bounded teacher-workflow baseline doğrulandı."},
+      {"revision": 15, "date": "2026-09-07", "description": "P03-MOBILE01 semantic mobile teacher toolbar verified at a62c289566186709268e8fd62831e1f09ca23357 / CI 34088228405; Node 18/20/22 PASS. 44px touch targets, safe-area, revision-bound two-event range capture and proven teacher-command routing verified. Physical-device PASS not claimed."}
     ]
   },
   "living_prompt_protocol": {
