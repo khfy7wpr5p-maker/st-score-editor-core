@@ -1,19 +1,21 @@
 # P05 Representative MusicXML Corpus and Teacher Task Plan
 
-Status: **CANDIDATE — exact-head CI required before VERIFIED**
+Status: **VERIFIED ON OPEN PR / P05 REMAINS IN_PROGRESS**
 
 Branch: `p05-representative-musicxml-corpus-v1`  
-PR: #147
+PR: #147  
+Verified feature head: `9825398e7c3b00e91a95ac8ad1a1c93fa7bd9970`  
+Verified feature CI: `34145108992` — Node 18 / 20 / 22 PASS
 
-## Purpose
+## Scope closed in P05-CORPUS02
 
 P05-CORPUS02 converts representative MusicXML examples from inline test strings into explicit repository-owned corpus fixtures and connects them to measurable teacher-pilot tasks.
 
 This package does **not** claim that a real teacher or a physical device has run the tasks.
 
-## Repository-owned fixtures
+### Repository-owned fixtures
 
-The fixture set contains three deliberately synthetic exercises. They are not transcriptions of named compositions and contain no user material.
+The fixture set contains three deliberately synthetic exercises. They are not transcriptions of named compositions and contain no user material:
 
 1. `corpus/fixtures/p05-synthetic-polyphonic-chord.musicxml`
    - two canonical voices;
@@ -36,24 +38,17 @@ The fixture set contains three deliberately synthetic exercises. They are not tr
 
 The authoritative fixture metadata is `corpus/p05-representative-musicxml-v1.json`.
 
-Every fixture is declared:
+Every fixture is declared `REPOSITORY_FIXTURE`, `REPOSITORY_OWNED`, without personal data, and with `externalTrainingAuthorized=false`. The corpus manifest grants neither external-training nor production-release authority.
 
-- `sourceKind = REPOSITORY_FIXTURE`;
-- `rightsStatus = REPOSITORY_OWNED`;
-- `containsPersonalData = false`;
-- `externalTrainingAuthorized = false`.
+### Structural acceptance facts
 
-The corpus manifest itself has no external-training or production-release authority.
+The manifest records expected part, staff, voice, event, note, rest and chord counts. Regression tests import each file using the real MusicXML implementation and compare the canonical document with those expected facts.
 
-## Structural acceptance facts
+For canonical-roundtrip profiles, the accepted document is serialized and re-imported and must remain semantically equivalent.
 
-The manifest records expected part, staff, voice, event, note, rest and chord counts. Regression tests import each file using the real MusicXML implementation and compare the resulting canonical document with those expected facts.
+For the teacher-edit profile, the regression test executes the real bounded teacher path: semantic selection → copy snapshot → paste admission → deterministic identities → one app/session history commit → exact Undo restoration.
 
-For the two canonical-roundtrip profiles, the accepted document is serialized and re-imported and must remain semantically equivalent.
-
-For the teacher-edit profile, the regression test exercises the real bounded teacher flow and asserts one accepted history revision followed by exact Undo restoration.
-
-## Teacher-pilot task plan
+### Teacher-pilot task plan
 
 `corpus/p05-teacher-pilot-task-plan-v1.json` defines three initial human tasks:
 
@@ -61,7 +56,7 @@ For the teacher-edit profile, the regression test exercises the real bounded tea
 - copy the first two notes into the trailing rest and Undo;
 - inspect two-staff separation/rest placement.
 
-Each task has explicit acceptance criteria and requested observable metrics. The initial metric vocabulary includes:
+The initial metric vocabulary is:
 
 - `elapsedMs`;
 - `canonicalCommitCount`;
@@ -71,15 +66,9 @@ Each task has explicit acceptance criteria and requested observable metrics. The
 - `teacherAcceptedFinalResult`;
 - `dataLossObserved`.
 
-These are measurement fields, not fabricated results. Until an actual teacher run exists, every teacher task remains:
+These are measurement fields, not fabricated results. Until an actual teacher session occurs, every teacher task remains `TEACHER_PILOT / NOT_RUN / NONE`, its evidence reference is null, and every result value is null.
 
-- evidence level `TEACHER_PILOT`;
-- outcome `NOT_RUN`;
-- observer `NONE`;
-- evidence reference `null`;
-- all result values `null`.
-
-The regression suite rejects a task plan that references an unknown fixture, asks for a capability not declared by that fixture, contains duplicate acceptance criteria, uses an unknown metric, or pre-populates a human result in the committed baseline.
+The regression suite rejects unknown fixture references, undeclared fixture capabilities, duplicate acceptance criteria, unknown metrics, and pre-populated human results in the committed baseline.
 
 ## Explicitly not claimed
 
@@ -92,9 +81,15 @@ P05-CORPUS02 does not claim:
 - external model-training authorization;
 - release or production authority.
 
-The next evidence step after this deterministic corpus is real teacher execution against the task plan and later physical-device execution through the separate device gate.
+## Remaining P05 evidence work
 
-## Safety boundaries
+- execute the task plan with an actual teacher and record observed evidence;
+- expand repertoire coverage only with explicit provenance/rights;
+- establish pilot acceptance thresholds from observed results rather than invented targets;
+- run physical-device evidence separately;
+- synthesize release gates only after teacher and device evidence exist.
+
+## Safety / authority
 
 - No merge performed.
 - No release/deployment/production activation performed.
