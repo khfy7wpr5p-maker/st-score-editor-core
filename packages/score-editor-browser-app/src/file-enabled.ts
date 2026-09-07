@@ -24,7 +24,10 @@ export const FILE_ENABLED_BROWSER_APP_VERSION = '1.0.0' as const;
 
 export const fileEnabledBrowserAppProfile = Object.freeze({
   ...standaloneBrowserAppProfile,
-  fileWorkflowBundled: true
+  fileWorkflowBundled: true,
+  failedOpenPreservesActiveDocument: true,
+  failedOpenPreservesFileAssociation: true,
+  compressedMusicXmlOpenSupported: false
 });
 
 export interface BrowserFileControllerState {

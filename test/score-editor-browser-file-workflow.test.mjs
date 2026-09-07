@@ -7,7 +7,9 @@ import {
   writeMusicXmlBrowserFile,
   createMusicXmlDownloadArtifact,
   BrowserFileWorkflowError,
-  MAX_LOCAL_MUSICXML_BYTES
+  MAX_LOCAL_MUSICXML_BYTES,
+  SUPPORTED_TEXT_MUSICXML_EXTENSIONS,
+  UNSUPPORTED_COMPRESSED_MUSICXML_EXTENSIONS
 } from '../dist/packages/score-editor-browser-file-workflow/src/index.js';
 
 const xml = '<?xml version="1.0"?><score-partwise version="4.0"></score-partwise>';
@@ -23,8 +25,32 @@ test('APP-04A reads only bounded .musicxml/.xml local files', async () => {
   assert.equal(result.fileName, 'score.musicxml');
   assert.equal(result.musicXml, xml);
   assert.equal(result.handle, null);
-  await assert.rejects(() => readMusicXmlBrowserFile(file('score.mxl')), (error) => error instanceof BrowserFileWorkflowError && error.code === 'UNSUPPORTED_FILE_TYPE');
+  await assert.rejects(() => readMusicXmlBrowserFile(file('score.pdf')), (error) => error instanceof BrowserFileWorkflowError && error.code === 'UNSUPPORTED_FILE_TYPE');
   await assert.rejects(() => readMusicXmlBrowserFile({ ...file(), size: MAX_LOCAL_MUSICXML_BYTES + 1 }), (error) => error instanceof BrowserFileWorkflowError && error.code === 'FILE_TOO_LARGE');
+});
+
+test('P04-CAP01 classifies .mxl as unsupported compressed MusicXML before reading source bytes', async () => {
+  let textReads = 0;
+  const compressed = {
+    name: 'compressed-score.mxl',
+    size: 128,
+    type: 'application/vnd.recordare.musicxml',
+    async text() { textReads += 1; return 'not-a-text-musicxml-payload'; }
+  };
+  await assert.rejects(
+    () => readMusicXmlBrowserFile(compressed),
+    (error) => error instanceof BrowserFileWorkflowError && error.code === 'COMPRESSED_MUSICXML_UNSUPPORTED'
+  );
+  assert.equal(textReads, 0);
+
+  const capabilities = browserFileWorkflowCapabilities({});
+  assert.equal(capabilities.compressedMusicXmlOpenSupported, false);
+  assert.deepEqual(capabilities.supportedTextMusicXmlExtensions, ['.musicxml', '.xml']);
+  assert.deepEqual(capabilities.unsupportedCompressedMusicXmlExtensions, ['.mxl']);
+  assert.strictEqual(capabilities.supportedTextMusicXmlExtensions, SUPPORTED_TEXT_MUSICXML_EXTENSIONS);
+  assert.strictEqual(capabilities.unsupportedCompressedMusicXmlExtensions, UNSUPPORTED_COMPRESSED_MUSICXML_EXTENSIONS);
+  assert.equal(Object.isFrozen(capabilities.supportedTextMusicXmlExtensions), true);
+  assert.equal(Object.isFrozen(capabilities.unsupportedCompressedMusicXmlExtensions), true);
 });
 
 test('APP-04A open picker returns one explicit file handle and never becomes canonical authority', async () => {

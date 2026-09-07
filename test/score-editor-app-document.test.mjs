@@ -150,3 +150,45 @@ test('APP-01 fails closed when current topology has no admitted lossless MusicXM
     error => error instanceof ScoreEditorAppDocumentError && error.code === 'EXPORT_UNAVAILABLE'
   );
 });
+
+test('P04-CAP01 capability-specific export failure does not block later local editing or unified Undo', () => {
+  let document = createNewScoreEditorAppDocument({ idFactory: idFactory() });
+  const initialScore = document.session.history.present.score;
+  const initialPart = initialScore.parts[0];
+  assert.ok(initialPart);
+
+  document = commitAppTopologyIntent(document, {
+    version: '1.0.0',
+    type: 'ADD_STANDARD_OR_PERCUSSION_STAFF',
+    target: addressEntityV3(initialScore, initialPart.id),
+    index: 1,
+    staffId: 'p04-output-staff-2',
+    staffRole: 'standard',
+    frameRestIds: plans(initialScore, 'p04-output-staff-2')
+  }, { nextRevisionId: 'p04-output-rev-1' });
+
+  const beforeFailedExport = document;
+  assert.throws(
+    () => exportMusicXmlScoreEditorAppDocument(document),
+    error => error instanceof ScoreEditorAppDocumentError && error.code === 'EXPORT_UNAVAILABLE'
+  );
+  assert.strictEqual(document, beforeFailedExport);
+
+  const postFailureScore = document.session.history.present.score;
+  const postFailurePart = postFailureScore.parts[0];
+  assert.ok(postFailurePart);
+  document = commitAppTopologyIntent(document, {
+    version: '1.0.0',
+    type: 'RENAME_PART_OR_INSTRUMENT',
+    target: addressEntityV3(postFailureScore, postFailurePart.id),
+    partName: 'Still Editable',
+    instrumentName: 'Still Editable',
+    instrumentShortName: 'Edit.'
+  }, { nextRevisionId: 'p04-output-rev-2' });
+  assert.equal(document.session.history.present.score.revision.id, 'p04-output-rev-2');
+  assert.equal(document.session.history.present.score.parts[0].name, 'Still Editable');
+
+  document = navigateAppDocumentHistory(document, 'UNDO');
+  assert.equal(document.session.history.present.score.revision.id, 'p04-output-rev-1');
+  assert.equal(document.session.history.present.score.parts[0].name, 'Piano');
+});

@@ -1,20 +1,21 @@
 {
   "document_type": "autonomous_developer_handoff_living_state",
   "schema_version": "1.1.0",
-  "prompt_revision": 16,
+  "prompt_revision": 17,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-07T10:25:00+03:00",
+  "updated_at": "2026-09-07T10:50:00+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
     "default_branch": "main",
     "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
-    "work_branch": "p03-mobile-context-toolbar-v1",
-    "open_pr": 144,
-    "verified_p03_code_head": "1298e164fba7c48aa47d617edeba86dfc4abcc11",
-    "verified_p03_code_ci": 34096327856,
-    "closeout_document": "docs/p03-mobile-performance-closeout.md"
+    "work_branch": "p04-file-recovery-partial-support-v1",
+    "open_pr": 145,
+    "stacked_open_prs": [141, 142, 143, 144, 145],
+    "verified_p04_code_head": "ac0d99776edced34ff2ecacddfd7c45096646430",
+    "verified_p04_code_ci": 34099830414,
+    "closeout_document": "docs/p04-files-recovery-partial-support-closeout.md"
   },
   "product_mission": {
     "purpose": "Gitar ve piyano öğretmenleri için güvenilir, profesyonel, bağımsız ve lisanslanabilir nota editörü/SDK.",
@@ -39,7 +40,8 @@
     "İlgisiz voice/event/chord tone/measure/notation korunur.",
     "Undo/Redo canonical score+notation çiftini exact geri getirir.",
     "Temel yerel düzenleme AI veya ağ gerektirmez.",
-    "Desteklenmeyen yetenek fail-closed veya açık partial capability olur."
+    "Desteklenmeyen yetenek fail-closed veya açık partial capability olur.",
+    "Kaynak/open/output capability hatası güvenli yerel düzenleme authority'sini global olarak iptal etmez."
   ],
   "autonomy_policy": {
     "safe_without_repeated_confirmation": [
@@ -60,7 +62,7 @@
       "açık PR merge",
       "SesliTab pinned ST Score Editor runtime/build dependency change"
     ],
-    "merge_policy_for_this_handoff": "Ayrı açık merge yetkisi olmadan #141/#142/#143/#144 merge edilmez.",
+    "merge_policy_for_this_handoff": "Ayrı açık merge yetkisi olmadan #141/#142/#143/#144/#145 merge edilmez.",
     "physical_validation": "Gerçek fiziksel cihaz kanıtı olmayan satır PASS yazılmaz. Browser/WebKit otomasyonu fiziksel cihaz PASS değildir."
   },
   "external_product_freeze": {
@@ -167,6 +169,33 @@
       "physical_device_test": "NOT_RUN",
       "merge_claim": false,
       "release_claim": false
+    },
+    "p04": {
+      "state": "CODE_COMPLETE_VERIFIED_OPEN_PR",
+      "branch": "p04-file-recovery-partial-support-v1",
+      "pr": 145,
+      "base_branch": "p03-mobile-context-toolbar-v1",
+      "P04-CAP01": {
+        "head": "ac0d99776edced34ff2ecacddfd7c45096646430",
+        "ci": 34099830414,
+        "node_matrix": [18, 20, 22],
+        "result": "PASS",
+        "max_local_musicxml_bytes": 33554432,
+        "supported_text_extensions": [".musicxml", ".xml"],
+        "compressed_mxl_open": "EXPLICIT_UNSUPPORTED",
+        "compressed_payload_read_on_reject": false,
+        "failed_open_preserves_active_document": "VERIFIED",
+        "failed_open_preserves_file_association": "VERIFIED",
+        "export_failure_is_capability_specific": "VERIFIED",
+        "local_edit_and_undo_after_export_failure": "VERIFIED",
+        "new_zip_dependency_added": false
+      },
+      "recovery_chain": "INHERITED_VERIFIED_NO_PARALLEL_PATH",
+      "physical_device_test": "NOT_RUN",
+      "manualDeviceValidationRequired": true,
+      "merge_claim": false,
+      "release_claim": false,
+      "production_activation_claim": false
     }
   },
   "work_packages": [
@@ -182,7 +211,21 @@
       "remaining_work": [],
       "release_gate_work": ["physical iPhone/iPad/desktop device matrix in P11"]
     },
-    {"id": "P04", "title": "Dosya, kurtarma ve kısmi destek davranışı", "status": "pending", "depends_on": ["P01"], "remaining_work": ["MusicXML preservation", ".mxl/cross-staff/output", "capability split", "OMR partial-work"]},
+    {
+      "id": "P04",
+      "title": "Dosya, kurtarma ve kısmi destek davranışı",
+      "status": "code_complete_verified_open_pr",
+      "depends_on": ["P01"],
+      "completed_or_verified_subtasks": ["P04-CAP01"],
+      "closeout_document": "docs/p04-files-recovery-partial-support-closeout.md",
+      "remaining_work": [],
+      "deferred_enhancements": [
+        "true .mxl ZIP-container support only after dependency/archive-security review",
+        "broader cross-staff/output projection semantics",
+        "OMR source-specific UX/provenance in later packages"
+      ],
+      "safety_rule": "safe local edit/history remains independent from source/open/renderer/export capability failure"
+    },
     {"id": "P05", "title": "Öğretmen corpus'u ve ürün pilotuna hazırlık", "status": "pending", "depends_on": ["P02", "P03", "P04"], "remaining_work": ["provenance corpus", "teacher evidence", "metrics", "device matrix"]},
     {"id": "P06", "title": "Sürümlenmiş SDK ve genel entegrasyon örneği", "status": "pending", "depends_on": ["P02", "P04"], "remaining_work": ["public API", "version/error/migration", "host lifecycle", "generic third-party integration without product-specific coupling"]},
     {"id": "P07", "title": "Kaynak görüntü ve düzeltme kökeni", "status": "pending", "depends_on": ["P04"], "remaining_work": ["immutable provenance", "source-region mapping", "before-after trace"]},
@@ -201,34 +244,38 @@
     ]
   },
   "execution_state": {
-    "status": "P03_CODE_COMPLETE_VERIFIED_PR_OPEN",
-    "verified_code_head": "1298e164fba7c48aa47d617edeba86dfc4abcc11",
-    "verified_code_ci": 34096327856,
+    "status": "P04_CODE_COMPLETE_VERIFIED_PR_OPEN",
+    "verified_code_head": "ac0d99776edced34ff2ecacddfd7c45096646430",
+    "verified_code_ci": 34099830414,
     "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "current_task_id": "P04-NEXT",
-    "next_action": "Fresh-read P04 file/recovery/MusicXML/partial-support paths. Preserve local recovery, current-revision guards and fail-closed semantics; establish MusicXML preservation and partial/degraded capability matrix before expanding authoring. Keep SesliTab/Smoosic scope closed. Physical-device validation remains P11 release/pilot work.",
+    "current_task_id": "P05-BOUNDARY",
+    "next_action": "Fresh-read P05 corpus/pilot paths and establish a representative deterministic MusicXML/teacher evidence corpus with provenance and measurable acceptance criteria. Do not turn physical-device evidence into CI fiction; device matrix remains explicit release/pilot work. Keep SesliTab/Smoosic scope closed.",
     "completed_task_ids": [
       "P00", "P01-AUDIT-01", "P01",
       "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01",
       "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04",
       "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01", "P02-CLOSEOUT",
-      "P03-MOBILE01", "P03-VIEWPORT01", "P03-PERF01", "P03-BUNDLE01", "P03-CLOSEOUT"
+      "P03-MOBILE01", "P03-VIEWPORT01", "P03-PERF01", "P03-BUNDLE01", "P03-CLOSEOUT",
+      "P04-CAP01", "P04-CLOSEOUT"
     ],
     "blockers": [
-      {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143/#144 açık; merge yetkisi yok."},
-      {"kind": "PHYSICAL_DEVICE_RELEASE_GATE", "reason": "Gerçek cihaz matrisi tamamlanmadı; P03 browser/CI kanıtı fiziksel cihaz PASS sayılmaz."}
+      {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143/#144/#145 açık; merge yetkisi yok."},
+      {"kind": "PHYSICAL_DEVICE_RELEASE_GATE", "reason": "Gerçek cihaz matrisi tamamlanmadı; browser/CI kanıtı fiziksel cihaz PASS sayılmaz."}
     ],
     "decision_log": [
       {"date": "2026-09-06", "decision": "P02 bounded teacher workflow tek EditorSessionV4 history authority üzerinden kapatıldı.", "reason": "Dual-write ve history divergence önlenir."},
       {"date": "2026-09-07", "decision": "P03 mevcut viewport gesture motorunu yeniden yazmayacak.", "reason": "Touch/pointer/keyboard pan+zoom presentation-only viewport katmanında zaten mevcut."},
       {"date": "2026-09-07", "decision": "P03-MOBILE01 Copy ve octave transpose iki distinct semantic event range capture kullanır.", "reason": "P02 TeacherEventSpanSelectionV4 duplicate endpoint'i fail-closed reddeder; mobil katman çekirdek güvenlik sözleşmesini gevşetmez."},
       {"date": "2026-09-07", "decision": "P03 mobile teacher composition mevcut viewport-enabled state'ini reuse eder; ikinci presentation viewport state'i oluşturmaz.", "reason": "Tek controller/presentation state sadeleşir ve gereksiz bundle tekrarı önlenir."},
-      {"date": "2026-09-07", "decision": "Standalone bundle bütçesi 512 KiB'den 528 KiB'ye bounded rebaseline edildi.", "reason": "Tamamlanmış P02 teacher workflow'u global üründe taşımak yaklaşık 65 KiB gerçek yetenek ekledi; fail-closed doğrulamayı veya tamamlanmış özelliği budamak yerine yalnız +16 KiB kontrollü headroom verildi. Release authority değişmedi."}
+      {"date": "2026-09-07", "decision": "Standalone bundle bütçesi 512 KiB'den 528 KiB'ye bounded rebaseline edildi.", "reason": "Tamamlanmış P02 teacher workflow'u global üründe taşımak yaklaşık 65 KiB gerçek yetenek ekledi; fail-closed doğrulamayı veya tamamlanmış özelliği budamak yerine yalnız +16 KiB kontrollü headroom verildi. Release authority değişmedi."},
+      {"date": "2026-09-07", "decision": ".mxl current standalone build'de açık unsupported capability olarak sınıflandırıldı; ZIP gibi text MusicXML okunmuyor.", "reason": "Sessiz yanlış parse yerine typed capability sınırı korunur; yeni decompression dependency ve archive-security yüzeyi ayrı inceleme olmadan eklenmez."},
+      {"date": "2026-09-07", "decision": "Kaynak/open/output capability hatası güvenli yerel canonical edit/history authority'sini global olarak bloklamaz.", "reason": "Başarısız open canlı belge/file association'ı değiştirmez; EXPORT_UNAVAILABLE sonrası yerel edit ve unified Undo devam eder."}
     ],
     "change_log": [
       {"revision": 14, "date": "2026-09-06", "description": "P02-BROWSER01 ve bounded teacher-workflow baseline doğrulandı."},
       {"revision": 15, "date": "2026-09-07", "description": "P03-MOBILE01 semantic mobile teacher toolbar doğrulandı."},
-      {"revision": 16, "date": "2026-09-07", "description": "P03-VIEWPORT01, P03-PERF01 ve P03-BUNDLE01 doğrulandı; duplicate viewport state kaldırıldı, mevcut viewport reuse edildi, teacher/mobile global superset bundle bounded 528 KiB bütçe altında PASS oldu; P03 code-complete, physical-device gate açık kaldı."}
+      {"revision": 16, "date": "2026-09-07", "description": "P03-VIEWPORT01, P03-PERF01 ve P03-BUNDLE01 doğrulandı; duplicate viewport state kaldırıldı, mevcut viewport reuse edildi, teacher/mobile global superset bundle bounded 528 KiB bütçe altında PASS oldu; P03 code-complete, physical-device gate açık kaldı."},
+      {"revision": 17, "date": "2026-09-07", "description": "P04-CAP01 doğrulandı: 32 MiB text MusicXML sınırı ve APP-05 recovery zinciri korundu; .mxl explicit unsupported capability oldu; failed open canlı belge/file association'ı koruyor; export capability failure local edit/Undo'yu bloklamıyor; P04 code-complete, gerçek .mxl ZIP ve geniş output projeksiyonu deferred kaldı."}
     ]
   },
   "continuation_rules": {

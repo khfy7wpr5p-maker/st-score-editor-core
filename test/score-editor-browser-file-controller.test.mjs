@@ -1,11 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createFileEnabledStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/file-enabled.js';
+import {
+  createFileEnabledStandaloneScoreEditorController,
+  FileEnabledControllerError
+} from '../dist/packages/score-editor-browser-app/src/file-enabled.js';
 
 const deterministicIdFactory = (prefix) => {
   let index = 0;
   return () => `${prefix}${++index}`;
 };
+
+const localFile = (name, text) => ({
+  name,
+  size: new TextEncoder().encode(text).byteLength,
+  type: 'application/xml',
+  async text() { return text; }
+});
 
 const writableHandle = (name, calls, options = {}) => ({
   kind: 'file',
@@ -119,4 +129,64 @@ test('APP-04B never reuses a file handle associated with a different canonical d
     'first.musicxml:write',
     'first.musicxml:close'
   ]);
+});
+
+test('P04-CAP01 unsupported .mxl open preserves the exact active document and file association', async () => {
+  const controller = createFileEnabledStandaloneScoreEditorController();
+  controller.newDocument({ title: 'Protected Work', idFactory: deterministicIdFactory('p04mxl') });
+  const calls = [];
+  const handle = writableHandle('protected.musicxml', calls);
+  await controller.saveToFile({ async showSaveFilePicker() { return handle; } });
+
+  const beforeDocument = controller.getDocument();
+  const beforeSnapshot = controller.getSnapshot();
+  const beforeFileState = controller.getFileWorkflowState();
+  let compressedTextReads = 0;
+
+  await assert.rejects(
+    () => controller.openLocalFile({
+      name: 'incoming.mxl',
+      size: 128,
+      type: 'application/vnd.recordare.musicxml',
+      async text() { compressedTextReads += 1; return 'compressed'; }
+    }),
+    (error) => error instanceof FileEnabledControllerError
+      && error.code === 'OPEN_FAILED'
+      && error.details.causeCode === 'COMPRESSED_MUSICXML_UNSUPPORTED'
+  );
+
+  assert.equal(compressedTextReads, 0);
+  assert.strictEqual(controller.getDocument(), beforeDocument);
+  assert.equal(controller.getSnapshot().revisionId, beforeSnapshot.revisionId);
+  assert.equal(controller.getSnapshot().dirty, beforeSnapshot.dirty);
+  assert.equal(controller.getFileWorkflowState().associatedFileName, beforeFileState.associatedFileName);
+  assert.equal(controller.getFileWorkflowState().associatedDocumentId, beforeFileState.associatedDocumentId);
+  assert.match(controller.exportMusicXml(), /score-partwise/);
+  assert.equal(controller.profile.failedOpenPreservesActiveDocument, true);
+  assert.equal(controller.profile.failedOpenPreservesFileAssociation, true);
+  assert.equal(controller.profile.compressedMusicXmlOpenSupported, false);
+});
+
+test('P04-CAP01 malformed or unsupported text MusicXML cannot replace live canonical work', async () => {
+  const controller = createFileEnabledStandaloneScoreEditorController();
+  controller.newDocument({ title: 'Keep Current', idFactory: deterministicIdFactory('p04bad') });
+  const calls = [];
+  const handle = writableHandle('keep-current.musicxml', calls);
+  await controller.saveToFile({ async showSaveFilePicker() { return handle; } });
+
+  const beforeDocument = controller.getDocument();
+  const beforeSnapshot = controller.getSnapshot();
+  const beforeFileState = controller.getFileWorkflowState();
+
+  await assert.rejects(
+    () => controller.openLocalFile(localFile('unsupported.musicxml', '<not-a-score/>')),
+    (error) => error instanceof FileEnabledControllerError && error.code === 'OPEN_FAILED'
+  );
+
+  assert.strictEqual(controller.getDocument(), beforeDocument);
+  assert.equal(controller.getSnapshot().revisionId, beforeSnapshot.revisionId);
+  assert.equal(controller.getSnapshot().dirty, beforeSnapshot.dirty);
+  assert.equal(controller.getFileWorkflowState().associatedFileName, beforeFileState.associatedFileName);
+  assert.equal(controller.getFileWorkflowState().associatedDocumentId, beforeFileState.associatedDocumentId);
+  assert.match(controller.exportMusicXml(), /score-partwise/);
 });
