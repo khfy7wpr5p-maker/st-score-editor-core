@@ -52,6 +52,7 @@ test('P03-MOBILE01 profile is presentation-only and mobile-safe by contract',()=
   assert.equal(mobileTeacherToolbarBrowserAppProfile.mobileTeacherToolbarBundled,true);
   assert.equal(mobileTeacherToolbarBrowserAppProfile.mobileTeacherToolbarCanonicalAuthority,false);
   assert.equal(mobileTeacherToolbarBrowserAppProfile.mobileTeacherToolbarSelectionAuthority,'SemanticAddressV3-current-revision');
+  assert.equal(mobileTeacherToolbarBrowserAppProfile.mobileTeacherToolbarRangeCapture,'two-distinct-current-revision-events');
   assert.equal(mobileTeacherToolbarBrowserAppProfile.mobileTeacherToolbarMinimumTouchTargetPx,44);
   assert.equal(mobileTeacherToolbarBrowserAppProfile.mobileTeacherToolbarSafeAreaAware,true);
   assert.equal(mobileTeacherToolbarBrowserAppProfile.mobileTeacherToolbarRendererCoordinateAuthority,false);
@@ -65,34 +66,45 @@ test('P03-MOBILE01 profile is presentation-only and mobile-safe by contract',()=
   assert.equal(runtime.mobileTeacherToolbar.bundled,true);
   assert.equal(runtime.mobileTeacherToolbar.canonicalAuthority,false);
   assert.equal(runtime.mobileTeacherToolbar.semanticSelectionOnly,true);
+  assert.equal(runtime.mobileTeacherToolbar.rangeCapture,'two-distinct-current-revision-events');
   assert.equal(runtime.mobileTeacherToolbar.minimumTouchTargetPx,44);
 });
 
-test('P03-MOBILE01 semantic event and note selection drive the context state without history mutation',async()=>{
+test('P03-MOBILE01 semantic event/note selection and explicit range capture do not mutate history',async()=>{
   const controller=await createController();
-  const before=structuredClone(controller.getDocument());
-  assert.equal(controller.getMobileTeacherToolbarState().canCopySelectedEvent,false);
+  const initialRevision=controller.getDocument().session.history.present.score.revision.id;
+  assert.equal(controller.getMobileTeacherToolbarState().canCaptureRangeStart,false);
 
   controller.select(eventAddress(controller,0));
   let state=controller.getMobileTeacherToolbarState();
   assert.equal(state.selectionKind,'event');
   assert.equal(state.selectedEventId,eventsOf(controller)[0].id);
-  assert.equal(state.canCopySelectedEvent,true);
-  assert.equal(state.canTransposeSelectedEvent,true);
-  assert.equal(controller.getDocument().session.history.past.length,0);
+  assert.equal(state.canCaptureRangeStart,true);
+  assert.equal(state.canCompleteRange,false);
+
+  state=controller.captureTeacherRangeStartAtSelection();
+  assert.equal(state.rangeStartEventId,eventsOf(controller)[0].id);
+  assert.equal(state.rangeStartCurrent,true);
+  assert.equal(state.canCompleteRange,false);
 
   controller.select(noteAddress(controller,1));
   state=controller.getMobileTeacherToolbarState();
   assert.equal(state.selectionKind,'note');
   assert.equal(state.selectedEventId,eventsOf(controller)[1].id);
+  assert.equal(state.canCompleteRange,true);
+  assert.equal(state.canCopyRange,true);
+  assert.equal(state.canTransposeRange,true);
   assert.equal(controller.getDocument().session.history.past.length,0);
-  assert.equal(controller.getDocument().session.history.present.score.revision.id,before.session.history.present.score.revision.id);
+  assert.equal(controller.getDocument().session.history.present.score.revision.id,initialRevision);
 });
 
-test('P03-MOBILE01 copy selected event then paste over selected rest preserves unified history and invalidates clipboard',async()=>{
+test('P03-MOBILE01 copy captured range then paste over selected rest preserves unified history and invalidates transient state',async()=>{
   const controller=await createController();
   controller.select(eventAddress(controller,0));
-  let state=controller.copySelectedTeacherEvent();
+  controller.captureTeacherRangeStartAtSelection();
+  controller.select(eventAddress(controller,1));
+  let state=controller.copyTeacherRangeToSelection();
+  assert.equal(state.rangeStartEventId,null);
   assert.equal(state.clipboardAvailable,true);
   assert.equal(state.clipboardCurrent,true);
 
@@ -105,6 +117,7 @@ test('P03-MOBILE01 copy selected event then paste over selected rest preserves u
   assert.equal(controller.getDocument().session.history.past.length,1);
   assert.equal(controller.getDocument().dirty,true);
   assert.equal(controller.getMobileTeacherToolbarState().clipboardAvailable,false);
+  assert.equal(controller.getMobileTeacherToolbarState().rangeStartEventId,null);
   assert.equal(controller.getMobileTeacherToolbarState().canUndo,true);
 
   controller.undo();
@@ -113,10 +126,12 @@ test('P03-MOBILE01 copy selected event then paste over selected rest preserves u
   assert.equal(controller.getMobileTeacherToolbarState().canRedo,true);
 });
 
-test('P03-MOBILE01 insert and octave transpose route only through proven teacher workflow authority',async()=>{
+test('P03-MOBILE01 captured range insert and octave transpose route only through proven teacher workflow authority',async()=>{
   const insertController=await createController();
   insertController.select(eventAddress(insertController,0));
-  insertController.copySelectedTeacherEvent();
+  insertController.captureTeacherRangeStartAtSelection();
+  insertController.select(eventAddress(insertController,1));
+  insertController.copyTeacherRangeToSelection();
   insertController.select(eventAddress(insertController,2));
   const inserted=insertController.insertTeacherClipboardAfterSelection();
   assert.equal(inserted.error,null);
@@ -124,23 +139,51 @@ test('P03-MOBILE01 insert and octave transpose route only through proven teacher
   assert.equal(insertController.getDocument().session.history.past.length,1);
 
   const transposeController=await createController();
+  transposeController.select(eventAddress(transposeController,0));
+  transposeController.captureTeacherRangeStartAtSelection();
   transposeController.select(eventAddress(transposeController,1));
-  const transposed=transposeController.transposeSelectedTeacherEventByOctaves(1);
+  const transposed=transposeController.transposeTeacherRangeToSelectionByOctaves(1);
   assert.equal(transposed.error,null);
   assert.equal(transposed.revisionId,'rev:p03-mobile-1');
+  assert.equal(eventsOf(transposeController)[0].note.pitch.octave,5);
   assert.equal(eventsOf(transposeController)[1].note.pitch.octave,5);
-  assert.equal(eventsOf(transposeController)[0].note.pitch.octave,4);
+  assert.equal(eventsOf(transposeController)[2].note.pitch.octave,4);
   assert.equal(transposeController.getDocument().session.history.past.length,1);
+  assert.equal(transposeController.getMobileTeacherToolbarState().rangeStartEventId,null);
 });
 
-test('P03-MOBILE01 non-event selection rejects mobile edit commands before canonical mutation',async()=>{
+test('P03-MOBILE01 incomplete or non-event ranges fail before canonical mutation',async()=>{
   const controller=await createController();
+  let before=structuredClone(controller.getDocument());
+  assert.throws(()=>controller.copyTeacherRangeToSelection(),error=>error?.code==='RANGE_START_REQUIRED');
+  assert.throws(()=>controller.transposeTeacherRangeToSelectionByOctaves(1),error=>error?.code==='RANGE_START_REQUIRED');
+  assert.deepEqual(controller.getDocument(),before);
+
+  controller.select(eventAddress(controller,0));
+  controller.captureTeacherRangeStartAtSelection();
+  before=structuredClone(controller.getDocument());
+  assert.throws(()=>controller.copyTeacherRangeToSelection(),error=>error?.code==='RANGE_STOP_REQUIRED');
+  assert.throws(()=>controller.transposeTeacherRangeToSelectionByOctaves(1),error=>error?.code==='RANGE_STOP_REQUIRED');
+  assert.deepEqual(controller.getDocument(),before);
+
+  controller.clearTeacherRangeStart();
   const score=controller.getDocument().session.history.present.score;
   const measure=score.parts[0].staves.find(staff=>staff.role==='standard').measures[0];
   controller.select(addressEntityV3(score,measure.id));
-  const before=structuredClone(controller.getDocument());
-  assert.equal(controller.getMobileTeacherToolbarState().canCopySelectedEvent,false);
-  assert.throws(()=>controller.copySelectedTeacherEvent(),error=>error?.code==='EVENT_SELECTION_REQUIRED');
-  assert.throws(()=>controller.transposeSelectedTeacherEventByOctaves(1),error=>error?.code==='EVENT_SELECTION_REQUIRED');
+  before=structuredClone(controller.getDocument());
+  assert.equal(controller.getMobileTeacherToolbarState().canCaptureRangeStart,false);
+  assert.throws(()=>controller.captureTeacherRangeStartAtSelection(),error=>error?.code==='EVENT_SELECTION_REQUIRED');
   assert.deepEqual(controller.getDocument(),before);
+});
+
+test('P03-MOBILE01 captured range is revision-bound and clears after a canonical edit',async()=>{
+  const controller=await createController();
+  controller.select(eventAddress(controller,0));
+  controller.captureTeacherRangeStartAtSelection();
+  controller.select(eventAddress(controller,1));
+  assert.equal(controller.getMobileTeacherToolbarState().rangeStartCurrent,true);
+  const result=controller.transposeTeacherRangeToSelectionByOctaves(1);
+  assert.equal(result.error,null);
+  assert.equal(controller.getMobileTeacherToolbarState().rangeStartEventId,null);
+  assert.equal(controller.getMobileTeacherToolbarState().rangeStartCurrent,false);
 });
