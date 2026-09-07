@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "kind": "TEACHER_PILOT_TASK_PLAN",
+  "tasks": [
+    {
+      "id": "p05-task-polyphony-inspection",
+      "fixtureId": "p05-polyphonic-chord",
+      "title": "Open the polyphonic exercise and identify the two voices and chord",
+      "requiredCapabilities": ["musicxml-open", "polyphony", "chord"],
+      "acceptanceCriteria": [
+        "document-opens-without-canonical-data-loss",
+        "two-voices-remain-distinct",
+        "chord-remains-one-canonical-event-with-two-notes"
+      ],
+      "requestedMetrics": ["elapsedMs", "taskCompleted", "teacherAcceptedFinalResult", "dataLossObserved"],
+      "verification": {"level": "TEACHER_PILOT", "outcome": "NOT_RUN", "observer": "NONE", "evidenceRef": null},
+      "results": {"elapsedMs": null, "canonicalCommitCount": null, "undoCount": null, "redoCount": null, "taskCompleted": null, "teacherAcceptedFinalResult": null, "dataLossObserved": null}
+    },
+    {
+      "id": "p05-task-copy-paste-undo",
+      "fixtureId": "p05-teacher-edit",
+      "title": "Copy the first two notes into the trailing rest and undo the edit",
+      "requiredCapabilities": ["semantic-selection", "copy", "paste-overwrite", "undo", "history"],
+      "acceptanceCriteria": [
+        "paste-creates-one-canonical-history-revision",
+        "unrelated-score-and-notation-remain-preserved",
+        "undo-restores-exact-pre-task-score-and-notation-pair",
+        "no-silent-data-loss"
+      ],
+      "requestedMetrics": ["elapsedMs", "canonicalCommitCount", "undoCount", "taskCompleted", "teacherAcceptedFinalResult", "dataLossObserved"],
+      "verification": {"level": "TEACHER_PILOT", "outcome": "NOT_RUN", "observer": "NONE", "evidenceRef": null},
+      "results": {"elapsedMs": null, "canonicalCommitCount": null, "undoCount": null, "redoCount": null, "taskCompleted": null, "teacherAcceptedFinalResult": null, "dataLossObserved": null}
+    },
+    {
+      "id": "p05-task-two-staff-inspection",
+      "fixtureId": "p05-two-staff",
+      "title": "Open the two-staff exercise and verify staff separation and rest placement",
+      "requiredCapabilities": ["musicxml-open", "multi-staff", "rest"],
+      "acceptanceCriteria": [
+        "two-staff-hierarchy-remains-distinct",
+        "upper-staff-note-remains-on-upper-staff",
+        "lower-staff-rest-remains-on-lower-staff"
+      ],
+      "requestedMetrics": ["elapsedMs", "taskCompleted", "teacherAcceptedFinalResult", "dataLossObserved"],
+      "verification": {"level": "TEACHER_PILOT", "outcome": "NOT_RUN", "observer": "NONE", "evidenceRef": null},
+      "results": {"elapsedMs": null, "canonicalCommitCount": null, "undoCount": null, "redoCount": null, "taskCompleted": null, "teacherAcceptedFinalResult": null, "dataLossObserved": null}
+    }
+  ],
+  "teacherPilotPassClaim": false,
+  "physicalDevicePassClaim": false,
+  "productionReleaseAuthority": false
+}
