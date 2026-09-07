@@ -116,6 +116,12 @@ export class TeacherPilotCorpusV1Error extends Error {
 
 type MutableRecord = Record<string, unknown>;
 
+const OUTCOMES = new Set<string>(['PASS', 'FAIL', 'BLOCKED', 'NOT_RUN']);
+const EVIDENCE_LEVELS = new Set<string>(['AUTOMATED', 'TEACHER_PILOT', 'PHYSICAL_DEVICE']);
+const OBSERVERS = new Set<string>(['AUTOMATION', 'TEACHER', 'DEVICE_TESTER', 'NONE']);
+const SOURCE_KINDS = new Set<string>(['SYNTHETIC_FIXTURE', 'REPOSITORY_FIXTURE', 'USER_PROVIDED_LOCAL']);
+const RIGHTS_STATUSES = new Set<string>(['REPOSITORY_OWNED', 'PUBLIC_DOMAIN', 'USER_AUTHORIZED_PRIVATE', 'UNKNOWN']);
+
 const deepFreeze = <T>(value: T): Readonly<T> => {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -128,103 +134,177 @@ const deepFreeze = <T>(value: T): Readonly<T> => {
   return value as Readonly<T>;
 };
 
-const requireNonEmpty = (value: string, field: string, caseId: string): string => {
-  const normalized = value.trim();
-  if (normalized.length === 0) {
+const isRecord = (value: unknown): value is MutableRecord =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const requireNonEmpty = (value: unknown, field: string, caseId: string): string => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
     throw new TeacherPilotCorpusV1Error(
-      `Teacher pilot corpus ${field} must be non-empty.`,
+      `Teacher pilot corpus ${field} must be a non-empty string.`,
       'INVALID_CASE',
       { caseId, field }
     );
   }
-  return normalized;
+  return value.trim();
 };
 
-const cloneDevice = (
-  device: TeacherPilotDeviceEvidenceV1,
-  caseId: string
-): TeacherPilotDeviceEvidenceV1 => deepFreeze({
-  hardware: requireNonEmpty(device.hardware, 'device.hardware', caseId),
-  platform: requireNonEmpty(device.platform, 'device.platform', caseId),
-  osVersion: requireNonEmpty(device.osVersion, 'device.osVersion', caseId),
-  browser: requireNonEmpty(device.browser, 'device.browser', caseId),
-  browserVersion: requireNonEmpty(device.browserVersion, 'device.browserVersion', caseId)
-}) as TeacherPilotDeviceEvidenceV1;
+const requireEnum = <T extends string>(
+  value: unknown,
+  allowed: ReadonlySet<string>,
+  field: string,
+  caseId: string,
+  code: TeacherPilotCorpusV1ErrorCode
+): T => {
+  if (typeof value !== 'string' || !allowed.has(value)) {
+    throw new TeacherPilotCorpusV1Error(
+      `Teacher pilot corpus ${field} is unsupported.`,
+      code,
+      { caseId, field, value }
+    );
+  }
+  return value as T;
+};
 
-const assertEvidence = (
-  verification: TeacherPilotVerificationEvidenceV1,
-  caseId: string
-): TeacherPilotVerificationEvidenceV1 => {
-  const isNotRun = verification.outcome === 'NOT_RUN';
-  if (isNotRun) {
-    if (verification.observer !== 'NONE' || verification.evidenceRef !== null || verification.device !== null) {
+const requireBoolean = (
+  value: unknown,
+  field: string,
+  caseId: string,
+  code: TeacherPilotCorpusV1ErrorCode
+): boolean => {
+  if (typeof value !== 'boolean') {
+    throw new TeacherPilotCorpusV1Error(
+      `Teacher pilot corpus ${field} must be boolean.`,
+      code,
+      { caseId, field }
+    );
+  }
+  return value;
+};
+
+const cloneDevice = (deviceInput: unknown, caseId: string): TeacherPilotDeviceEvidenceV1 => {
+  if (!isRecord(deviceInput)) {
+    throw new TeacherPilotCorpusV1Error(
+      'Physical-device evidence requires a device descriptor object.',
+      'PHYSICAL_DEVICE_EVIDENCE_REQUIRED',
+      { caseId }
+    );
+  }
+  return deepFreeze({
+    hardware: requireNonEmpty(deviceInput.hardware, 'device.hardware', caseId),
+    platform: requireNonEmpty(deviceInput.platform, 'device.platform', caseId),
+    osVersion: requireNonEmpty(deviceInput.osVersion, 'device.osVersion', caseId),
+    browser: requireNonEmpty(deviceInput.browser, 'device.browser', caseId),
+    browserVersion: requireNonEmpty(deviceInput.browserVersion, 'device.browserVersion', caseId)
+  }) as TeacherPilotDeviceEvidenceV1;
+};
+
+const cloneEvidence = (verificationInput: unknown, caseId: string): TeacherPilotVerificationEvidenceV1 => {
+  if (!isRecord(verificationInput)) {
+    throw new TeacherPilotCorpusV1Error('Corpus verification evidence must be an object.', 'INVALID_EVIDENCE', { caseId });
+  }
+  const level = requireEnum<TeacherPilotEvidenceLevelV1>(
+    verificationInput.level, EVIDENCE_LEVELS, 'verification.level', caseId, 'INVALID_EVIDENCE'
+  );
+  const outcome = requireEnum<TeacherPilotCorpusOutcomeV1>(
+    verificationInput.outcome, OUTCOMES, 'verification.outcome', caseId, 'INVALID_EVIDENCE'
+  );
+  const observer = requireEnum<TeacherPilotObserverV1>(
+    verificationInput.observer, OBSERVERS, 'verification.observer', caseId, 'INVALID_EVIDENCE'
+  );
+  const evidenceRef = verificationInput.evidenceRef;
+  const device = verificationInput.device;
+
+  if (outcome === 'NOT_RUN') {
+    if (observer !== 'NONE' || evidenceRef !== null || device !== null) {
       throw new TeacherPilotCorpusV1Error(
         'NOT_RUN evidence may not carry an observer, evidence reference, or device result.',
         'INVALID_EVIDENCE',
-        { caseId, level: verification.level }
+        { caseId, level }
       );
     }
-    return deepFreeze({
-      level: verification.level,
-      outcome: verification.outcome,
-      observer: verification.observer,
-      evidenceRef: null,
-      device: null
-    }) as TeacherPilotVerificationEvidenceV1;
+    return deepFreeze({ level, outcome, observer, evidenceRef: null, device: null }) as TeacherPilotVerificationEvidenceV1;
   }
 
-  if (verification.evidenceRef === null || verification.evidenceRef.trim().length === 0) {
-    throw new TeacherPilotCorpusV1Error(
-      'Executed or blocked corpus evidence requires a non-empty evidence reference.',
-      'INVALID_EVIDENCE',
-      { caseId, level: verification.level, outcome: verification.outcome }
-    );
-  }
-
-  if (verification.level === 'AUTOMATED') {
-    if (verification.observer !== 'AUTOMATION' || verification.device !== null) {
+  const normalizedEvidenceRef = requireNonEmpty(evidenceRef, 'verification.evidenceRef', caseId);
+  if (level === 'AUTOMATED') {
+    if (observer !== 'AUTOMATION' || device !== null) {
       throw new TeacherPilotCorpusV1Error(
         'Automated evidence must be observed by AUTOMATION and cannot claim a physical device.',
         'INVALID_EVIDENCE',
         { caseId }
       );
     }
-  } else if (verification.level === 'TEACHER_PILOT') {
-    if (verification.observer !== 'TEACHER' || verification.device !== null) {
+    return deepFreeze({ level, outcome, observer, evidenceRef: normalizedEvidenceRef, device: null }) as TeacherPilotVerificationEvidenceV1;
+  }
+  if (level === 'TEACHER_PILOT') {
+    if (observer !== 'TEACHER' || device !== null) {
       throw new TeacherPilotCorpusV1Error(
         'Teacher-pilot evidence requires a TEACHER observer and cannot claim a physical-device result.',
         'TEACHER_EVIDENCE_REQUIRED',
         { caseId }
       );
     }
-  } else if (verification.level === 'PHYSICAL_DEVICE') {
-    if (verification.observer !== 'DEVICE_TESTER' || verification.device === null) {
-      throw new TeacherPilotCorpusV1Error(
-        'Physical-device evidence requires DEVICE_TESTER observation and an explicit device descriptor.',
-        'PHYSICAL_DEVICE_EVIDENCE_REQUIRED',
-        { caseId }
-      );
-    }
+    return deepFreeze({ level, outcome, observer, evidenceRef: normalizedEvidenceRef, device: null }) as TeacherPilotVerificationEvidenceV1;
   }
-
+  if (observer !== 'DEVICE_TESTER' || device === null) {
+    throw new TeacherPilotCorpusV1Error(
+      'Physical-device evidence requires DEVICE_TESTER observation and an explicit device descriptor.',
+      'PHYSICAL_DEVICE_EVIDENCE_REQUIRED',
+      { caseId }
+    );
+  }
   return deepFreeze({
-    level: verification.level,
-    outcome: verification.outcome,
-    observer: verification.observer,
-    evidenceRef: verification.evidenceRef.trim(),
-    device: verification.device === null ? null : cloneDevice(verification.device, caseId)
+    level,
+    outcome,
+    observer,
+    evidenceRef: normalizedEvidenceRef,
+    device: cloneDevice(device, caseId)
   }) as TeacherPilotVerificationEvidenceV1;
 };
 
+const cloneProvenance = (provenanceInput: unknown, caseId: string): TeacherPilotCorpusProvenanceV1 => {
+  if (!isRecord(provenanceInput)) {
+    throw new TeacherPilotCorpusV1Error('Corpus provenance must be an object.', 'INVALID_PROVENANCE', { caseId });
+  }
+  const sourceKind = requireEnum<TeacherPilotSourceKindV1>(
+    provenanceInput.sourceKind, SOURCE_KINDS, 'provenance.sourceKind', caseId, 'INVALID_PROVENANCE'
+  );
+  const sourceRef = requireNonEmpty(provenanceInput.sourceRef, 'provenance.sourceRef', caseId);
+  const rightsStatus = requireEnum<TeacherPilotRightsStatusV1>(
+    provenanceInput.rightsStatus, RIGHTS_STATUSES, 'provenance.rightsStatus', caseId, 'INVALID_PROVENANCE'
+  );
+  const containsPersonalData = requireBoolean(
+    provenanceInput.containsPersonalData, 'provenance.containsPersonalData', caseId, 'INVALID_PROVENANCE'
+  );
+  if (provenanceInput.externalTrainingAuthorized !== false) {
+    throw new TeacherPilotCorpusV1Error(
+      'Corpus metadata cannot grant external training authority.',
+      'EXTERNAL_TRAINING_AUTHORITY_INVALID',
+      { caseId }
+    );
+  }
+  return deepFreeze({
+    sourceKind,
+    sourceRef,
+    rightsStatus,
+    containsPersonalData,
+    externalTrainingAuthorized: false as const
+  }) as TeacherPilotCorpusProvenanceV1;
+};
+
 const cloneCase = (input: TeacherPilotCorpusCaseV1): TeacherPilotCorpusCaseV1 => {
-  const id = requireNonEmpty(input.id, 'id', input.id);
+  if (!isRecord(input)) {
+    throw new TeacherPilotCorpusV1Error('Teacher corpus case must be an object.', 'INVALID_CASE');
+  }
+  const id = requireNonEmpty(input.id, 'id', 'unknown');
   const title = requireNonEmpty(input.title, 'title', id);
-  if (!Array.isArray(input.capabilities) || input.capabilities.length === 0
+  if (!Array.isArray(input.capabilities)
+    || input.capabilities.length === 0
     || input.capabilities.length > EDITOR_TEACHER_PILOT_CORPUS_V1_MAX_CAPABILITIES_PER_CASE) {
     throw new TeacherPilotCorpusV1Error(
       'Each teacher corpus case requires a bounded non-empty capability list.',
       'INVALID_CASE',
-      { caseId: id, capabilityCount: input.capabilities.length }
+      { caseId: id, capabilityCount: Array.isArray(input.capabilities) ? input.capabilities.length : null }
     );
   }
   const capabilities = input.capabilities.map(capability => requireNonEmpty(capability, 'capability', id));
@@ -235,35 +315,12 @@ const cloneCase = (input: TeacherPilotCorpusCaseV1): TeacherPilotCorpusCaseV1 =>
       { caseId: id }
     );
   }
-
-  const sourceRef = input.provenance.sourceRef.trim();
-  if (sourceRef.length === 0) {
-    throw new TeacherPilotCorpusV1Error(
-      'Teacher corpus provenance requires a stable local source reference.',
-      'INVALID_PROVENANCE',
-      { caseId: id }
-    );
-  }
-  if ((input.provenance as { externalTrainingAuthorized?: boolean }).externalTrainingAuthorized !== false) {
-    throw new TeacherPilotCorpusV1Error(
-      'Corpus metadata cannot grant external training authority.',
-      'EXTERNAL_TRAINING_AUTHORITY_INVALID',
-      { caseId: id }
-    );
-  }
-
   return deepFreeze({
     id,
     title,
     capabilities: [...capabilities],
-    provenance: {
-      sourceKind: input.provenance.sourceKind,
-      sourceRef,
-      rightsStatus: input.provenance.rightsStatus,
-      containsPersonalData: input.provenance.containsPersonalData,
-      externalTrainingAuthorized: false as const
-    },
-    verification: assertEvidence(input.verification, id)
+    provenance: cloneProvenance(input.provenance, id),
+    verification: cloneEvidence(input.verification, id)
   }) as TeacherPilotCorpusCaseV1;
 };
 
@@ -280,7 +337,6 @@ export const createTeacherPilotCorpusV1 = (
       { count: casesInput.length, maximum: EDITOR_TEACHER_PILOT_CORPUS_V1_MAX_CASES }
     );
   }
-
   const cases = casesInput.map(cloneCase);
   const seen = new Set<string>();
   for (const entry of cases) {
@@ -293,7 +349,6 @@ export const createTeacherPilotCorpusV1 = (
     }
     seen.add(entry.id);
   }
-
   return deepFreeze({
     version: EDITOR_TEACHER_PILOT_CORPUS_V1_VERSION,
     kind: 'TEACHER_PILOT_CORPUS' as const,
@@ -309,11 +364,25 @@ const emptyOutcomes = (): TeacherPilotOutcomeCountsV1 => ({ PASS: 0, FAIL: 0, BL
 const incrementOutcome = (
   counts: TeacherPilotOutcomeCountsV1,
   outcome: TeacherPilotCorpusOutcomeV1
-): TeacherPilotOutcomeCountsV1 => ({ ...counts, [outcome]: counts[outcome] + 1 });
+): TeacherPilotOutcomeCountsV1 => {
+  if (outcome === 'PASS') return { ...counts, PASS: counts.PASS + 1 };
+  if (outcome === 'FAIL') return { ...counts, FAIL: counts.FAIL + 1 };
+  if (outcome === 'BLOCKED') return { ...counts, BLOCKED: counts.BLOCKED + 1 };
+  return { ...counts, NOT_RUN: counts.NOT_RUN + 1 };
+};
 
 export const summarizeTeacherPilotCorpusV1 = (
   corpusInput: TeacherPilotCorpusV1
 ): Readonly<TeacherPilotCorpusMetricsV1> => {
+  if (
+    corpusInput.version !== EDITOR_TEACHER_PILOT_CORPUS_V1_VERSION
+    || corpusInput.kind !== 'TEACHER_PILOT_CORPUS'
+    || corpusInput.externalTrainingAuthority !== false
+    || corpusInput.productionReleaseAuthority !== false
+    || corpusInput.caseCount !== corpusInput.cases.length
+  ) {
+    throw new TeacherPilotCorpusV1Error('Teacher pilot corpus envelope is stale or tampered.', 'INVALID_CORPUS');
+  }
   const corpus = createTeacherPilotCorpusV1(corpusInput.cases);
   let outcomes = emptyOutcomes();
   let automatedCases = 0;
