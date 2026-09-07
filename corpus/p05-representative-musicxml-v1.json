@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "kind": "REPRESENTATIVE_MUSICXML_CORPUS",
+  "fixtures": [
+    {
+      "id": "p05-polyphonic-chord",
+      "path": "corpus/fixtures/p05-synthetic-polyphonic-chord.musicxml",
+      "title": "Synthetic polyphonic chord exercise",
+      "provenance": {
+        "sourceKind": "REPOSITORY_FIXTURE",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "validationProfile": "CANONICAL_ROUNDTRIP",
+      "capabilities": ["musicxml-open", "polyphony", "chord", "canonical-roundtrip"],
+      "expected": {
+        "partCount": 1,
+        "staffCount": 1,
+        "voiceCount": 2,
+        "eventCount": 3,
+        "noteCount": 4,
+        "restCount": 0,
+        "chordCount": 1
+      }
+    },
+    {
+      "id": "p05-two-staff",
+      "path": "corpus/fixtures/p05-synthetic-two-staff.musicxml",
+      "title": "Synthetic two-staff exercise",
+      "provenance": {
+        "sourceKind": "REPOSITORY_FIXTURE",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "validationProfile": "CANONICAL_ROUNDTRIP",
+      "capabilities": ["musicxml-open", "multi-staff", "rest", "canonical-roundtrip"],
+      "expected": {
+        "partCount": 1,
+        "staffCount": 2,
+        "voiceCount": 2,
+        "eventCount": 2,
+        "noteCount": 1,
+        "restCount": 1,
+        "chordCount": 0
+      }
+    },
+    {
+      "id": "p05-teacher-edit",
+      "path": "corpus/fixtures/p05-synthetic-teacher-edit.musicxml",
+      "title": "Synthetic bounded teacher-edit exercise",
+      "provenance": {
+        "sourceKind": "REPOSITORY_FIXTURE",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "validationProfile": "TEACHER_COPY_PASTE_UNDO",
+      "capabilities": ["musicxml-open", "semantic-selection", "copy", "paste-overwrite", "undo", "history"],
+      "expected": {
+        "partCount": 1,
+        "staffCount": 1,
+        "voiceCount": 1,
+        "eventCount": 3,
+        "noteCount": 2,
+        "restCount": 1,
+        "chordCount": 0
+      }
+    }
+  ],
+  "externalTrainingAuthority": false,
+  "productionReleaseAuthority": false
+}
