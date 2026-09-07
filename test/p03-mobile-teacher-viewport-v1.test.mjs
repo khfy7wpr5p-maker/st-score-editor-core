@@ -59,15 +59,18 @@ test('P03-VIEWPORT01 reusable viewport layer declares no canonical or coordinate
   assert.equal(layer.unmount().mounted,false);
 });
 
-test('P03-VIEWPORT01 mobile teacher runtime composes one canonical controller with presentation-only viewport state',()=>{
+test('P03-VIEWPORT01 mobile teacher runtime reuses the existing presentation viewport on one canonical controller',()=>{
   assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportBundled,true);
   assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportCanonicalAuthority,false);
   assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportSingleCanonicalController,true);
+  assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportReusesExistingViewport,true);
+  assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportPresentationLayer,'existing-viewport-enabled-v1');
   assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportCoordinateAuthoring,false);
   assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportRendererCoordinateAuthority,false);
   assert.equal(mobileTeacherViewportBrowserAppProfile.mobileTeacherViewportDomAuthoringAuthority,false);
   const runtime=createMobileTeacherViewportStandaloneBrowserAppRuntime();
   assert.equal(runtime.mobileTeacherViewport.singleCanonicalController,true);
+  assert.equal(runtime.mobileTeacherViewport.reusesExistingViewport,true);
   assert.equal(runtime.mobileTeacherViewport.presentationOnly,true);
   assert.equal(runtime.mobileTeacherViewport.semanticTeacherWorkflow,true);
   assert.equal(runtime.mobileTeacherViewport.coordinateAuthoring,false);
@@ -94,7 +97,7 @@ test('P03-VIEWPORT01 zoom and pan preserve current semantic selection and create
   assert.equal(controller.getViewportState().scrollX,120);
 });
 
-test('P03-VIEWPORT01 teacher copy/paste stays in unified history while viewport state survives canonical rerender notifications',async()=>{
+test('P03-VIEWPORT01 teacher copy/paste stays in unified history while the inherited viewport state survives canonical notifications',async()=>{
   const controller=await createController();
   controller.zoomIn();
   controller.panBy(80,32);
