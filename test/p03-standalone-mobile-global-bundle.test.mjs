@@ -32,6 +32,7 @@ test('P03-BUNDLE01 global runtime preserves prior standalone capabilities and ad
   assert.equal(app.mobileTeacherToolbar.safeAreaAware,true);
   assert.ok(app.mobileTeacherViewport);
   assert.equal(app.mobileTeacherViewport.singleCanonicalController,true);
+  assert.equal(app.mobileTeacherViewport.reusesExistingViewport,true);
   assert.equal(app.mobileTeacherViewport.presentationOnly,true);
   assert.equal(app.mobileTeacherViewport.coordinateAuthoring,false);
 
@@ -47,14 +48,23 @@ test('P03-BUNDLE01 global runtime preserves prior standalone capabilities and ad
   assert.equal(controller.profile.releaseHardeningBundled,true);
   assert.equal(controller.profile.mobileTeacherToolbarBundled,true);
   assert.equal(controller.profile.mobileTeacherViewportBundled,true);
+  assert.equal(controller.profile.mobileTeacherViewportReusesExistingViewport,true);
   assert.equal(controller.profile.canonicalAuthority,false);
   assert.equal(controller.profile.mobileTeacherViewportCanonicalAuthority,false);
 });
 
-test('P03-BUNDLE01 keeps existing release manifest safety gates unchanged',async()=>{
+test('P03-BUNDLE01 keeps existing release safety gates and the bounded teacher/mobile budget',async()=>{
+  const bundle=await readFile(bundlePath);
   const manifest=JSON.parse(await readFile(manifestPath,'utf8'));
   assert.equal(manifest.contract,'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE');
   assert.equal(manifest.releaseHardeningBundled,true);
+  assert.equal(manifest.teacherWorkflowCommandsBundled,true);
+  assert.equal(manifest.mobileTeacherToolbarBundled,true);
+  assert.equal(manifest.mobileTeacherViewportBundled,true);
+  assert.equal(manifest.mobileTeacherViewportReusesExistingViewport,true);
+  assert.equal(manifest.bundleBudgetRevision,'P03-TEACHER-MOBILE-1');
+  assert.equal(manifest.maxBytes,540672);
+  assert.ok(bundle.byteLength<=manifest.maxBytes);
   assert.equal(manifest.manualDeviceValidationRequired,true);
   assert.equal(manifest.standaloneReleaseGatePassed,false);
   assert.equal(manifest.seslitabCutoverAuthorized,false);
