@@ -17,6 +17,7 @@ export const mobileTeacherToolbarBrowserAppProfile = Object.freeze({
   mobileTeacherToolbarBundled: true,
   mobileTeacherToolbarCanonicalAuthority: false,
   mobileTeacherToolbarSelectionAuthority: 'SemanticAddressV3-current-revision' as const,
+  mobileTeacherToolbarRangeCapture: 'two-distinct-current-revision-events' as const,
   mobileTeacherToolbarMinimumTouchTargetPx: MOBILE_TEACHER_MIN_TOUCH_TARGET_PX,
   mobileTeacherToolbarSafeAreaAware: true,
   mobileTeacherToolbarRendererCoordinateAuthority: false,
@@ -30,17 +31,21 @@ export interface MobileTeacherToolbarState {
   readonly hasDocument: boolean;
   readonly selectionKind: SemanticAddressV3['kind'] | null;
   readonly selectedEventId: string | null;
+  readonly rangeStartEventId: string | null;
+  readonly rangeStartCurrent: boolean;
   readonly clipboardAvailable: boolean;
   readonly clipboardCurrent: boolean;
-  readonly canCopySelectedEvent: boolean;
+  readonly canCaptureRangeStart: boolean;
+  readonly canCompleteRange: boolean;
+  readonly canCopyRange: boolean;
   readonly canAttemptPasteOverwrite: boolean;
   readonly canAttemptInsertAfter: boolean;
-  readonly canTransposeSelectedEvent: boolean;
+  readonly canTransposeRange: boolean;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
 }
 
-export type MobileTeacherToolbarErrorCode = 'EVENT_SELECTION_REQUIRED';
+export type MobileTeacherToolbarErrorCode = 'EVENT_SELECTION_REQUIRED' | 'RANGE_START_REQUIRED' | 'RANGE_STOP_REQUIRED';
 
 export class MobileTeacherToolbarError extends Error {
   readonly code: MobileTeacherToolbarErrorCode;
@@ -87,10 +92,12 @@ const requireSelectedEvent = (base: TeacherWorkflowStandaloneScoreEditorControll
 export interface MobileTeacherToolbarStandaloneScoreEditorController extends Omit<TeacherWorkflowStandaloneScoreEditorController, 'profile' | 'mount' | 'unmount'> {
   readonly profile: typeof mobileTeacherToolbarBrowserAppProfile;
   readonly getMobileTeacherToolbarState: () => Readonly<MobileTeacherToolbarState>;
-  readonly copySelectedTeacherEvent: () => Readonly<MobileTeacherToolbarState>;
+  readonly captureTeacherRangeStartAtSelection: () => Readonly<MobileTeacherToolbarState>;
+  readonly clearTeacherRangeStart: () => Readonly<MobileTeacherToolbarState>;
+  readonly copyTeacherRangeToSelection: () => Readonly<MobileTeacherToolbarState>;
   readonly pasteTeacherClipboardOverwriteAtSelection: () => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly insertTeacherClipboardAfterSelection: () => Readonly<ScoreEditorBrowserAppSnapshot>;
-  readonly transposeSelectedTeacherEventByOctaves: (octaveDelta: TeacherOctaveDeltaV4) => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly transposeTeacherRangeToSelectionByOctaves: (octaveDelta: TeacherOctaveDeltaV4) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly mount: (root: HTMLElement) => void;
   readonly unmount: () => void;
 }
@@ -100,26 +107,56 @@ export const createMobileTeacherToolbarStandaloneScoreEditorController = (
 ): Readonly<MobileTeacherToolbarStandaloneScoreEditorController> => {
   const base = createTeacherWorkflowStandaloneScoreEditorController(options);
   let root: HTMLElement | null = null;
+  let rangeStart: EventAddressV3 | null = null;
+
+  const currentRevisionId = (): string | null =>
+    base.getDocument()?.session.history.present.score.revision.id ?? null;
+
+  const rangeStartIsCurrent = (): boolean =>
+    rangeStart !== null && rangeStart.revisionId === currentRevisionId();
+
+  const rangeStop = (): EventAddressV3 | null => {
+    const selected = selectedEventAddress(base);
+    if (!rangeStartIsCurrent() || rangeStart === null || selected === null || selected.eventId === rangeStart.eventId) return null;
+    return selected;
+  };
 
   const state = (): Readonly<MobileTeacherToolbarState> => {
     const document = base.getDocument();
     const workflow = base.getTeacherWorkflowState();
     const selectedEvent = selectedEventAddress(base);
+    const currentRangeStart = rangeStartIsCurrent();
+    const stop = rangeStop();
     return Object.freeze({
       version: MOBILE_TEACHER_TOOLBAR_VERSION,
       mounted: root !== null,
       hasDocument: document !== null,
       selectionKind: document?.session.selection?.kind ?? null,
       selectedEventId: selectedEvent?.eventId ?? null,
+      rangeStartEventId: currentRangeStart ? rangeStart?.eventId ?? null : null,
+      rangeStartCurrent: currentRangeStart,
       clipboardAvailable: workflow.clipboardAvailable,
       clipboardCurrent: workflow.clipboardCurrent,
-      canCopySelectedEvent: selectedEvent !== null,
+      canCaptureRangeStart: selectedEvent !== null,
+      canCompleteRange: stop !== null,
+      canCopyRange: stop !== null,
       canAttemptPasteOverwrite: selectedEvent !== null && workflow.clipboardAvailable && workflow.clipboardCurrent,
       canAttemptInsertAfter: selectedEvent !== null && workflow.clipboardAvailable && workflow.clipboardCurrent,
-      canTransposeSelectedEvent: selectedEvent !== null,
+      canTransposeRange: stop !== null,
       canUndo: (document?.session.history.past.length ?? 0) > 0,
       canRedo: (document?.session.history.future.length ?? 0) > 0
     });
+  };
+
+  const requireRange = (): Readonly<{ start: EventAddressV3; stop: EventAddressV3 }> => {
+    if (!rangeStartIsCurrent() || rangeStart === null) {
+      throw new MobileTeacherToolbarError('Capture a current-revision range start first.', 'RANGE_START_REQUIRED');
+    }
+    const stop = rangeStop();
+    if (stop === null) {
+      throw new MobileTeacherToolbarError('Select a different current-revision event to complete the range.', 'RANGE_STOP_REQUIRED');
+    }
+    return Object.freeze({ start: rangeStart, stop });
   };
 
   const addButton = (
@@ -149,7 +186,7 @@ export const createMobileTeacherToolbarStandaloneScoreEditorController = (
       style.textContent = MOBILE_TEACHER_TOOLBAR_STYLE;
       app.append(style);
     }
-    if (app.querySelector('[data-st-mobile-teacher-toolbar]') !== null) return;
+    app.querySelector('[data-st-mobile-teacher-toolbar]')?.remove();
     const current = state();
     const toolbar = app.ownerDocument.createElement('nav');
     toolbar.className = 'stse-mobile-teacher-toolbar';
@@ -158,14 +195,17 @@ export const createMobileTeacherToolbarStandaloneScoreEditorController = (
 
     const context = app.ownerDocument.createElement('span');
     context.className = 'stse-mobile-teacher-context';
-    context.textContent = current.selectedEventId === null ? 'Select note' : `Selected: ${current.selectionKind}`;
+    context.textContent = current.rangeStartCurrent
+      ? current.canCompleteRange ? 'Range ready' : 'Select range end'
+      : current.selectedEventId === null ? 'Select note' : `Selected: ${current.selectionKind}`;
     toolbar.append(context);
 
-    addButton(app.ownerDocument, toolbar, 'Copy', 'Copy selected event', !current.canCopySelectedEvent, () => { controller.copySelectedTeacherEvent(); });
+    addButton(app.ownerDocument, toolbar, 'Start', 'Capture teacher range start', !current.canCaptureRangeStart, () => { controller.captureTeacherRangeStartAtSelection(); });
+    addButton(app.ownerDocument, toolbar, 'Copy', 'Copy captured teacher range', !current.canCopyRange, () => { controller.copyTeacherRangeToSelection(); });
     addButton(app.ownerDocument, toolbar, 'Paste', 'Paste over selected rest', !current.canAttemptPasteOverwrite, () => { controller.pasteTeacherClipboardOverwriteAtSelection(); });
     addButton(app.ownerDocument, toolbar, 'Insert', 'Insert after selected event', !current.canAttemptInsertAfter, () => { controller.insertTeacherClipboardAfterSelection(); });
-    addButton(app.ownerDocument, toolbar, '−8', 'Transpose selected event down one octave', !current.canTransposeSelectedEvent, () => { controller.transposeSelectedTeacherEventByOctaves(-1); });
-    addButton(app.ownerDocument, toolbar, '+8', 'Transpose selected event up one octave', !current.canTransposeSelectedEvent, () => { controller.transposeSelectedTeacherEventByOctaves(1); });
+    addButton(app.ownerDocument, toolbar, '−8', 'Transpose captured range down one octave', !current.canTransposeRange, () => { controller.transposeTeacherRangeToSelectionByOctaves(-1); });
+    addButton(app.ownerDocument, toolbar, '+8', 'Transpose captured range up one octave', !current.canTransposeRange, () => { controller.transposeTeacherRangeToSelectionByOctaves(1); });
     addButton(app.ownerDocument, toolbar, 'Undo', 'Undo last edit', !current.canUndo, () => { controller.undo(); });
     addButton(app.ownerDocument, toolbar, 'Redo', 'Redo last edit', !current.canRedo, () => { controller.redo(); });
 
@@ -174,23 +214,39 @@ export const createMobileTeacherToolbarStandaloneScoreEditorController = (
     else app.insertBefore(toolbar, status);
   };
 
-  base.subscribe(() => { decorate(); });
+  base.subscribe(() => {
+    if (rangeStart !== null && rangeStart.revisionId !== currentRevisionId()) rangeStart = null;
+    decorate();
+  });
 
   const controller: MobileTeacherToolbarStandaloneScoreEditorController = {
     ...base,
     profile: mobileTeacherToolbarBrowserAppProfile,
     getMobileTeacherToolbarState: state,
-    copySelectedTeacherEvent: () => {
-      const event = requireSelectedEvent(base);
-      base.copyTeacherSpan(event, event);
+    captureTeacherRangeStartAtSelection: () => {
+      rangeStart = Object.freeze({ ...requireSelectedEvent(base) });
+      decorate();
+      return state();
+    },
+    clearTeacherRangeStart: () => {
+      rangeStart = null;
+      decorate();
+      return state();
+    },
+    copyTeacherRangeToSelection: () => {
+      const range = requireRange();
+      base.copyTeacherSpan(range.start, range.stop);
+      rangeStart = null;
       decorate();
       return state();
     },
     pasteTeacherClipboardOverwriteAtSelection: () => base.pasteTeacherClipboardOverwrite(requireSelectedEvent(base)),
     insertTeacherClipboardAfterSelection: () => base.insertTeacherClipboardAfter(requireSelectedEvent(base)),
-    transposeSelectedTeacherEventByOctaves: (octaveDelta) => {
-      const event = requireSelectedEvent(base);
-      return base.transposeTeacherSpanByOctaves(event, event, octaveDelta);
+    transposeTeacherRangeToSelectionByOctaves: (octaveDelta) => {
+      const range = requireRange();
+      const result = base.transposeTeacherSpanByOctaves(range.start, range.stop, octaveDelta);
+      rangeStart = null;
+      return result;
     },
     mount: (nextRoot) => {
       base.mount(nextRoot);
@@ -198,6 +254,7 @@ export const createMobileTeacherToolbarStandaloneScoreEditorController = (
       decorate();
     },
     unmount: () => {
+      rangeStart = null;
       root = null;
       base.unmount();
     }
@@ -217,6 +274,7 @@ export const createMobileTeacherToolbarStandaloneBrowserAppRuntime = () => {
       bundled: true,
       canonicalAuthority: false,
       semanticSelectionOnly: true,
+      rangeCapture: 'two-distinct-current-revision-events',
       minimumTouchTargetPx: MOBILE_TEACHER_MIN_TOUCH_TARGET_PX,
       safeAreaAware: true,
       rendererCoordinateAuthority: false,
