@@ -1,17 +1,20 @@
 {
   "document_type": "autonomous_developer_handoff_living_state",
   "schema_version": "1.1.0",
-  "prompt_revision": 15,
+  "prompt_revision": 16,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-07T08:51:00+03:00",
+  "updated_at": "2026-09-07T10:25:00+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
     "default_branch": "main",
     "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
     "work_branch": "p03-mobile-context-toolbar-v1",
-    "last_verified_feature_head": "a62c289566186709268e8fd62831e1f09ca23357"
+    "open_pr": 144,
+    "verified_p03_code_head": "1298e164fba7c48aa47d617edeba86dfc4abcc11",
+    "verified_p03_code_ci": 34096327856,
+    "closeout_document": "docs/p03-mobile-performance-closeout.md"
   },
   "product_mission": {
     "purpose": "Gitar ve piyano öğretmenleri için güvenilir, profesyonel, bağımsız ve lisanslanabilir nota editörü/SDK.",
@@ -92,7 +95,6 @@
     "p02": {
       "state": "BOUNDED_BASELINE_CODE_COMPLETE_ON_WORK_BRANCH",
       "pr": 143,
-      "base_branch": "app11j-triplet-unretiming-admission-v4",
       "verified_feature_head": "79c62a303939380d3ab6e46b595970845b3e962b",
       "feature_ci": 34057984547,
       "final_roadmap_head": "bbc33ccf3261f7707dfab711ec2ce0ec4686263e",
@@ -104,19 +106,12 @@
       ],
       "bounded_teacher_commands": ["selection", "copy", "paste_overwrite", "insert_after_event", "octave_transpose", "undo", "redo"],
       "unified_history_preserved": "VERIFIED",
-      "app_dirty_saved_semantics": "VERIFIED",
-      "renderer_coordinate_authority": false,
-      "dom_authoring_authority": false,
-      "deferred_enhancements": [
-        "cross-measure paste mutation and relation remapping policy",
-        "general chromatic/diatonic transpose after spelling/key/relation policy"
-      ],
       "physical_device_test": "NOT_RUN",
       "merge_claim": false,
       "release_claim": false
     },
     "p03": {
-      "state": "IN_PROGRESS_VERIFIED_PACKAGES_OPEN_PR",
+      "state": "CODE_COMPLETE_VERIFIED_OPEN_PR",
       "pr": 144,
       "base_branch": "p02-teacher-event-span-selection-v4",
       "P03-MOBILE01": {
@@ -124,18 +119,51 @@
         "ci": 34088228405,
         "node_matrix": [18, 20, 22],
         "result": "VERIFIED",
-        "mobile_teacher_context_toolbar": "VERIFIED",
         "semantic_selection_authority": "SemanticAddressV3-current-revision",
         "semantic_range_capture": "two-distinct-current-revision-events",
         "minimum_touch_target_px": 44,
         "safe_area_aware": true,
-        "touch_action_manipulation": true,
         "canonical_authority": false,
         "renderer_coordinate_authority": false,
-        "dom_authoring_authority": false,
-        "network_authority": false
+        "dom_authoring_authority": false
       },
-      "existing_viewport_gesture_engine": "PRESENT_SEPARATE_WRAPPER_CHAIN",
+      "P03-VIEWPORT01": {
+        "initial_verified_head": "ee7a04f444de6936573059c57fb8d03a4bcaf2e4",
+        "initial_ci": 34088598607,
+        "result": "VERIFIED_AND_HARDENED_IN_BUNDLE01",
+        "single_canonical_controller": true,
+        "reuses_existing_viewport": true,
+        "presentation_only": true,
+        "zoom_pan_history_mutation_authority": false,
+        "coordinate_authoring": false
+      },
+      "P03-PERF01": {
+        "head": "3b5d06e1d3b74d804e064f57c9e906d3c5a16c44",
+        "ci": 34088774151,
+        "node_matrix": [18, 20, 22],
+        "result": "VERIFIED",
+        "benchmark_policy": "CI-host timings informational; deterministic history/revision authority invariants are gating",
+        "physical_device_measurement_claim": false
+      },
+      "P03-BUNDLE01": {
+        "verified_code_head": "1298e164fba7c48aa47d617edeba86dfc4abcc11",
+        "ci": 34096327856,
+        "node_matrix": [18, 20, 22],
+        "result": "VERIFIED",
+        "tests_passed": 636,
+        "standalone_bundle_bytes": 533484,
+        "bundle_budget_bytes": 540672,
+        "bundle_budget_revision": "P03-TEACHER-MOBILE-1",
+        "previous_budget_bytes": 524288,
+        "bounded_budget_increase_bytes": 16384,
+        "initial_failed_ci": 34089296829,
+        "initial_failed_bundle_bytes": 533716,
+        "post_viewport_reuse_failed_ci": 34095704897,
+        "post_viewport_reuse_bundle_bytes": 533484,
+        "global_teacher_mobile_superset": "VERIFIED",
+        "prior_global_capabilities_preserved": "VERIFIED",
+        "release_gate_unchanged": true
+      },
       "physical_device_test": "NOT_RUN",
       "merge_claim": false,
       "release_claim": false
@@ -144,26 +172,15 @@
   "work_packages": [
     {"id": "P00", "title": "Güncel gerçeklik ve yarım işlerin güvenli devri", "status": "completed", "depends_on": [], "remaining_work": []},
     {"id": "P01", "title": "Çekirdek düzenleme güvenilirliği", "status": "code_complete_on_work_branch", "depends_on": ["P00"], "remaining_work": []},
-    {
-      "id": "P02",
-      "title": "Baştan sona öğretmen düzenleme akışı",
-      "status": "bounded_baseline_code_complete_on_work_branch",
-      "depends_on": ["P01"],
-      "remaining_work": [],
-      "deferred_enhancements": ["cross-measure paste/relation remapping", "general chromatic/diatonic transpose"]
-    },
+    {"id": "P02", "title": "Baştan sona öğretmen düzenleme akışı", "status": "bounded_baseline_code_complete_on_work_branch", "depends_on": ["P01"], "remaining_work": [], "deferred_enhancements": ["cross-measure paste/relation remapping", "general chromatic/diatonic transpose"]},
     {
       "id": "P03",
       "title": "Mobil çalışma alanı ve performans",
-      "status": "in_progress",
-      "depends_on": ["P01"],
-      "completed_or_verified_subtasks": ["P03-MOBILE01"],
-      "remaining_work": [
-        "presentation-only viewport + teacher-workflow composition without a second canonical controller",
-        "semantic zoom/selection continuity",
-        "measured rerender/interaction performance evidence",
-        "physical device matrix at release/pilot gate"
-      ]
+      "status": "code_complete_verified_open_pr",
+      "depends_on": ["P01", "P02"],
+      "completed_or_verified_subtasks": ["P03-MOBILE01", "P03-VIEWPORT01", "P03-PERF01", "P03-BUNDLE01"],
+      "remaining_work": [],
+      "release_gate_work": ["physical iPhone/iPad/desktop device matrix in P11"]
     },
     {"id": "P04", "title": "Dosya, kurtarma ve kısmi destek davranışı", "status": "pending", "depends_on": ["P01"], "remaining_work": ["MusicXML preservation", ".mxl/cross-staff/output", "capability split", "OMR partial-work"]},
     {"id": "P05", "title": "Öğretmen corpus'u ve ürün pilotuna hazırlık", "status": "pending", "depends_on": ["P02", "P03", "P04"], "remaining_work": ["provenance corpus", "teacher evidence", "metrics", "device matrix"]},
@@ -172,7 +189,7 @@
     {"id": "P08", "title": "AI öneri sözleşmesi ve kurallara karşı deney", "status": "pending", "depends_on": ["P01", "P07"], "remaining_work": ["proposal schema/dry-run/stale revision", "rules baseline", "optional narrow model"]},
     {"id": "P09", "title": "Gitar ve pedagojik farklılaşma", "status": "pending", "depends_on": ["P02", "P06"], "remaining_work": ["TAB/harmony audit", "playability constraints", "teacher variants"]},
     {"id": "P10", "title": "Ticari hizmetlere teknik hazırlık", "status": "pending", "depends_on": ["P05", "P06"], "remaining_work": ["license inventory", "account/institution/entitlement", "tenant/revision threat model"]},
-    {"id": "P11", "title": "Yayın adayı ve güvenli devam", "status": "pending", "depends_on": ["P05", "P06"], "remaining_work": ["support matrix", "release/migration/rollback/runbook", "release blockers", "separate activation authority"]}
+    {"id": "P11", "title": "Yayın adayı ve güvenli devam", "status": "pending", "depends_on": ["P05", "P06"], "remaining_work": ["physical device support matrix", "release/migration/rollback/runbook", "release blockers", "separate activation authority"]}
   ],
   "verification_policy": {
     "levels": ["unit", "integration", "browser", "physical_device", "corpus"],
@@ -184,33 +201,40 @@
     ]
   },
   "execution_state": {
-    "status": "P03_MOBILE01_VERIFIED_PR_OPEN",
-    "verified_head": "a62c289566186709268e8fd62831e1f09ca23357",
+    "status": "P03_CODE_COMPLETE_VERIFIED_PR_OPEN",
+    "verified_code_head": "1298e164fba7c48aa47d617edeba86dfc4abcc11",
+    "verified_code_ci": 34096327856,
     "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "current_task_id": "P03-VIEWPORT01-AUDIT",
-    "next_action": "Mevcut viewport-enabled gesture/zoom/pan state'ini teacher workflow ile ikinci canonical controller oluşturmadan birleştir. Önce presentation-only viewport davranışını canonical controller'dan ayrıştırılabilir bir helper/decorator olarak fresh-read et ve bounded composition tasarla. Renderer hit yalnız semantic token üzerinden selection üretmeye devam etmeli. Sonra ölçülmüş rerender/interaction performance kanıtı ekle. Fiziksel cihaz PASS ayrı kalır. SesliTab/Smoosic scope kapalı.",
+    "current_task_id": "P04-NEXT",
+    "next_action": "Fresh-read P04 file/recovery/MusicXML/partial-support paths. Preserve local recovery, current-revision guards and fail-closed semantics; establish MusicXML preservation and partial/degraded capability matrix before expanding authoring. Keep SesliTab/Smoosic scope closed. Physical-device validation remains P11 release/pilot work.",
     "completed_task_ids": [
-      "P00", "P01-AUDIT-01", "P01", "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01", "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04", "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01", "P02-CLOSEOUT", "P03-MOBILE01"
+      "P00", "P01-AUDIT-01", "P01",
+      "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01",
+      "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04",
+      "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01", "P02-CLOSEOUT",
+      "P03-MOBILE01", "P03-VIEWPORT01", "P03-PERF01", "P03-BUNDLE01", "P03-CLOSEOUT"
     ],
     "blockers": [
       {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143/#144 açık; merge yetkisi yok."},
-      {"kind": "PHYSICAL_DEVICE_RELEASE_GATE", "reason": "Gerçek cihaz matrisi tamamlanmadı."}
+      {"kind": "PHYSICAL_DEVICE_RELEASE_GATE", "reason": "Gerçek cihaz matrisi tamamlanmadı; P03 browser/CI kanıtı fiziksel cihaz PASS sayılmaz."}
     ],
     "decision_log": [
       {"date": "2026-09-06", "decision": "P02 bounded teacher workflow tek EditorSessionV4 history authority üzerinden kapatıldı.", "reason": "Dual-write ve history divergence önlenir."},
-      {"date": "2026-09-07", "decision": "P03 mevcut viewport gesture motorunu yeniden yazmayacak.", "reason": "Touch/pointer/keyboard pan+zoom zaten presentation-only viewport-enabled katmanında mevcut."},
-      {"date": "2026-09-07", "decision": "P03-MOBILE01 Copy ve octave transpose iki distinct semantic event range capture kullanır.", "reason": "P02 TeacherEventSpanSelectionV4 duplicate endpoint'i bilinçli olarak fail-closed reddeder; mobil katman çekirdek güvenlik sözleşmesini gevşetmez."},
-      {"date": "2026-09-07", "decision": "P03 viewport ve teacher-workflow paralel wrapper zincirleri iki canonical controller instantiate edilerek birleştirilmeyecek.", "reason": "Tek canonical/session authority korunmalıdır."}
+      {"date": "2026-09-07", "decision": "P03 mevcut viewport gesture motorunu yeniden yazmayacak.", "reason": "Touch/pointer/keyboard pan+zoom presentation-only viewport katmanında zaten mevcut."},
+      {"date": "2026-09-07", "decision": "P03-MOBILE01 Copy ve octave transpose iki distinct semantic event range capture kullanır.", "reason": "P02 TeacherEventSpanSelectionV4 duplicate endpoint'i fail-closed reddeder; mobil katman çekirdek güvenlik sözleşmesini gevşetmez."},
+      {"date": "2026-09-07", "decision": "P03 mobile teacher composition mevcut viewport-enabled state'ini reuse eder; ikinci presentation viewport state'i oluşturmaz.", "reason": "Tek controller/presentation state sadeleşir ve gereksiz bundle tekrarı önlenir."},
+      {"date": "2026-09-07", "decision": "Standalone bundle bütçesi 512 KiB'den 528 KiB'ye bounded rebaseline edildi.", "reason": "Tamamlanmış P02 teacher workflow'u global üründe taşımak yaklaşık 65 KiB gerçek yetenek ekledi; fail-closed doğrulamayı veya tamamlanmış özelliği budamak yerine yalnız +16 KiB kontrollü headroom verildi. Release authority değişmedi."}
     ],
     "change_log": [
       {"revision": 14, "date": "2026-09-06", "description": "P02-BROWSER01 ve bounded teacher-workflow baseline doğrulandı."},
-      {"revision": 15, "date": "2026-09-07", "description": "P03-MOBILE01 semantic mobile teacher toolbar verified at a62c289566186709268e8fd62831e1f09ca23357 / CI 34088228405; Node 18/20/22 PASS. 44px touch targets, safe-area, revision-bound two-event range capture and proven teacher-command routing verified. Physical-device PASS not claimed."}
+      {"revision": 15, "date": "2026-09-07", "description": "P03-MOBILE01 semantic mobile teacher toolbar doğrulandı."},
+      {"revision": 16, "date": "2026-09-07", "description": "P03-VIEWPORT01, P03-PERF01 ve P03-BUNDLE01 doğrulandı; duplicate viewport state kaldırıldı, mevcut viewport reuse edildi, teacher/mobile global superset bundle bounded 528 KiB bütçe altında PASS oldu; P03 code-complete, physical-device gate açık kaldı."}
     ]
   },
-  "living_prompt_protocol": {
-    "canonical_repository_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "update_after": ["meaningful development package", "test/blocker change", "PR/merge state change", "session handoff", "user policy change"],
-    "rules": ["increment prompt_revision", "change status only with evidence", "preserve stable task ids", "record exact SHA/CI/limitations", "do not write file's own commit SHA into itself"],
+  "continuation_rules": {
+    "start_each_session": ["repo/PR/CI fresh-read", "living roadmap read", "stale docs vs production code ayrımı"],
+    "after_each_verified_change": ["exact SHA/CI kaydet", "roadmapı güncelle", "bir sonraki bounded taska geç"],
+    "if_one_task_blocks": "Bağımsız ready task varsa ona geç; blocked taskı uydurma çözümle zorlamaz.",
     "not_a_scheduler": true
   }
 }
