@@ -7,7 +7,7 @@ const appBundlePath = new URL('../dist/browser/st-score-editor-app.js', import.m
 const appManifestPath = new URL('../dist/browser/st-score-editor-app.manifest.json', import.meta.url);
 const appHtmlPath = new URL('../dist/browser/st-score-editor-app.html', import.meta.url);
 
-test('APP-09 standalone artifact enforces automated hardening and bundle budget without release authorization', async () => {
+test('APP-09 standalone artifact enforces automated hardening and current bounded bundle budget without release authorization', async () => {
   const bundle = await readFile(appBundlePath);
   const manifest = JSON.parse(await readFile(appManifestPath, 'utf8'));
   assert.equal(manifest.releaseHardeningBundled, true);
@@ -23,8 +23,13 @@ test('APP-09 standalone artifact enforces automated hardening and bundle budget 
   assert.equal(manifest.pageHideRecoveryFlush, true);
   assert.equal(manifest.accessibilityStatusLiveRegion, true);
   assert.deepEqual(manifest.browserContractTargets, ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox']);
-  assert.equal(manifest.maxBytes, 524288);
+  assert.equal(manifest.bundleBudgetRevision, 'P03-TEACHER-MOBILE-1');
+  assert.equal(manifest.maxBytes, 540672);
   assert.ok(bundle.byteLength <= manifest.maxBytes);
+  assert.equal(manifest.teacherWorkflowCommandsBundled, true);
+  assert.equal(manifest.mobileTeacherToolbarBundled, true);
+  assert.equal(manifest.mobileTeacherViewportBundled, true);
+  assert.equal(manifest.mobileTeacherViewportReusesExistingViewport, true);
   assert.equal(manifest.manualDeviceValidationRequired, true);
   assert.equal(manifest.standaloneReleaseGatePassed, false);
   assert.equal(manifest.seslitabCutoverAuthorized, false);
