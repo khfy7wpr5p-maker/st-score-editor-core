@@ -71,6 +71,43 @@ const stableBridge = `  const nativeReplaceChildren = root.replaceChildren.bind(
     document.documentElement.dataset.app09bRendererFrameStable = 'armed';
   };`;
 
+const controllerMountBlock = `  const controller = globalThis.STScoreEditorApp.createController({ rendererProfile: integrationProfile });
+  controller.mount(root);
+  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });`;
+
+const rendererReadyBlock = `  waitForRendererHost().then(async (api) => {
+    rendererApi = api;`;
+
+const relocateSampleSeedBeforeMount = (bootstrap) => {
+  const lateSeedPattern = /^    await controller\.openMusicXml\((.+), \{ title: 'APP-09B Touch Test' \}\);$/m;
+  const match = bootstrap.match(lateSeedPattern);
+  if (match === null) throw new Error('APP09B stable sample-seed patch expected one delayed sample seed.');
+  if ((bootstrap.match(lateSeedPattern) ?? []).length === 0) throw new Error('APP09B stable sample-seed patch could not capture delayed sample seed.');
+  const sampleLiteral = match[1];
+
+  const mountOccurrences = bootstrap.split(controllerMountBlock).length - 1;
+  if (mountOccurrences !== 1) {
+    throw new Error(`APP09B stable sample-seed patch expected one controller mount block, observed ${mountOccurrences}.`);
+  }
+  const rendererReadyOccurrences = bootstrap.split(rendererReadyBlock).length - 1;
+  if (rendererReadyOccurrences !== 1) {
+    throw new Error(`APP09B stable sample-seed patch expected one renderer-ready block, observed ${rendererReadyOccurrences}.`);
+  }
+
+  const safeMountBlock = `  const controller = globalThis.STScoreEditorApp.createController({ rendererProfile: integrationProfile });
+  const initialSampleReady = controller.openMusicXml(${sampleLiteral}, { title: 'APP-09B Touch Test' })
+    .then(() => { controller.mount(root); });
+  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });`;
+  const safeRendererReadyBlock = `  waitForRendererHost().then(async (api) => {
+    await initialSampleReady;
+    rendererApi = api;`;
+
+  const withoutLateSeed = bootstrap.replace(lateSeedPattern, '    // The preview sample was seeded before the editor UI became interactive.');
+  return withoutLateSeed
+    .replace(controllerMountBlock, safeMountBlock)
+    .replace(rendererReadyBlock, safeRendererReadyBlock);
+};
+
 export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defaultOutputDir } = {}) {
   const manifest = await assembleApp09BPreview({ runtimeDir, outputDir });
   const bootstrapPath = path.join(outputDir, 'st-score-editor-app09b-bootstrap.js');
@@ -79,7 +116,8 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   if (occurrences !== 1) {
     throw new Error(`APP09B stable iframe patch expected one moving bridge, observed ${occurrences}.`);
   }
-  const patched = bootstrap.replace(movingBridge, stableBridge);
+  const stableBootstrap = bootstrap.replace(movingBridge, stableBridge);
+  const patched = relocateSampleSeedBeforeMount(stableBootstrap);
   await writeFile(bootstrapPath, patched, 'utf8');
   return manifest;
 }
