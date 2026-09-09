@@ -40,7 +40,7 @@ const writeRuntime = async (root) => {
   await writeFile(path.join(root, 'runtime-manifest.json'), `${JSON.stringify(runtimeManifest())}\n`);
 };
 
-test('APP-09B rest touch preserves outer and renderer-owned scroll across semantic rest selection', async () => {
+test('APP-09B rest touch and teacher actions preserve outer and renderer-owned scroll', async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-app09b-rest-scroll-'));
   try {
     const runtimeDir = path.join(temp, 'runtime');
@@ -61,6 +61,13 @@ test('APP-09B rest touch preserves outer and renderer-owned scroll across semant
     assert.match(bootstrap, /requestAnimationFrame\?\.\(\(\) => restorePresentationScroll\(\)\)/);
     assert.match(bootstrap, /frame\.contentWindow\?\.requestAnimationFrame/);
     assert.match(bootstrap, /app09bRestScrollPreserved/);
+
+    assert.match(bootstrap, /captureTeacherActionPresentation/);
+    assert.match(bootstrap, /\[data-st-mobile-teacher-toolbar\] button/);
+    assert.match(bootstrap, /restoreTeacherActionPresentation/);
+    assert.match(bootstrap, /queueMicrotask/);
+    assert.match(bootstrap, /setTimeout\?\.\(\(\) => restoreTeacherActionPresentation\(snapshot\), 50\)/);
+    assert.match(bootstrap, /app09bTeacherActionScrollPreserved/);
   } finally {
     await rm(temp, { recursive: true, force: true });
   }
