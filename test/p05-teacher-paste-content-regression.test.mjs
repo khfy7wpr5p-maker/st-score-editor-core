@@ -21,7 +21,34 @@ const standardVoice = score => {
   return voice;
 };
 
-test('P05-CORPUS02 teacher paste writes copied note semantics before undo', async () => {
+const targetEntityId = target => {
+  switch (target.kind) {
+    case 'document': return target.documentId;
+    case 'measure-frame': return target.frameId;
+    case 'part': return target.partId;
+    case 'staff': return target.staffId;
+    case 'measure': return target.measureId;
+    case 'voice': return target.voiceId;
+    case 'event': return target.eventId;
+    case 'note': return target.noteId;
+    case 'grace-group': return target.graceGroupId;
+    case 'grace-event': return target.graceEventId;
+    case 'grace-note': return target.graceNoteId;
+    default: assert.fail(`unsupported notation target kind: ${String(target.kind)}`);
+  }
+};
+
+const assertNotationEntriesPreserved = (beforeEntries, afterEntries, excludedIds = new Set()) => {
+  for (const beforeEntry of beforeEntries) {
+    const id = targetEntityId(beforeEntry.target);
+    if (excludedIds.has(id)) continue;
+    const afterEntry = afterEntries.find(candidate => targetEntityId(candidate.target) === id);
+    assert.ok(afterEntry, `notation entry for ${id} must be preserved`);
+    assert.deepEqual(afterEntry.notation, beforeEntry.notation, `notation payload for ${id} must be preserved`);
+  }
+};
+
+test('P05-CORPUS02 teacher paste writes copied semantics and preserves unrelated content before undo', async () => {
   const xml = await readFile(fixturePath, 'utf8');
   const document = await openMusicXmlScoreEditorAppDocument(xml, {
     documentId: 'doc:p05-teacher-paste-content-regression',
@@ -64,8 +91,17 @@ test('P05-CORPUS02 teacher paste writes copied note semantics before undo', asyn
   const pasted = commitAppTeacherPasteOverwrite(document, snapshot, admission, identities);
 
   assert.equal(pasted.session.history.past.length, 1, 'paste must remain one history revision');
-  const pastedVoice = standardVoice(pasted.session.history.present.score);
+  const pastedScore = pasted.session.history.present.score;
+  const pastedNotation = pasted.session.history.present.notation;
+  const pastedVoice = standardVoice(pastedScore);
   assert.equal(pastedVoice.events.length, 4, 'the trailing half-rest must be replaced by two copied quarter-note events');
+  assert.equal(pastedVoice.events.some(event => event.id === destinationRest.id), false, 'the overwritten destination rest must be removed');
+
+  assert.deepEqual(
+    pastedVoice.events.slice(0, 2),
+    voice.events.slice(0, 2),
+    'pre-existing source events must remain byte-for-byte semantically unchanged'
+  );
 
   const pastedFirst = pastedVoice.events.find(event => event.id === identities.events[0]?.destinationEventId);
   const pastedSecond = pastedVoice.events.find(event => event.id === identities.events[1]?.destinationEventId);
@@ -80,4 +116,20 @@ test('P05-CORPUS02 teacher paste writes copied note semantics before undo', asyn
   assert.deepEqual(pastedSecond.note.pitch, sourceSecond.note.pitch, 'second pasted pitch must match copied source');
   assert.equal(pastedFirst.note.id, identities.events[0]?.notes[0]?.destinationNoteId, 'first pasted note must use the deterministic planned identity');
   assert.equal(pastedSecond.note.id, identities.events[1]?.notes[0]?.destinationNoteId, 'second pasted note must use the deterministic planned identity');
+
+  const excludedEventNotationIds = new Set([destinationRest.id]);
+  assertNotationEntriesPreserved(notation.frames, pastedNotation.frames);
+  assertNotationEntriesPreserved(notation.measures, pastedNotation.measures);
+  assertNotationEntriesPreserved(notation.events, pastedNotation.events, excludedEventNotationIds);
+  assertNotationEntriesPreserved(notation.notes, pastedNotation.notes);
+  assertNotationEntriesPreserved(notation.graceEvents, pastedNotation.graceEvents);
+  assertNotationEntriesPreserved(notation.graceNotes, pastedNotation.graceNotes);
+
+  for (const placement of notation.crossStaffPlacements) {
+    const sourceId = targetEntityId(placement.source);
+    const preserved = pastedNotation.crossStaffPlacements.find(candidate =>
+      targetEntityId(candidate.source) === sourceId && candidate.displayStaffId === placement.displayStaffId
+    );
+    assert.ok(preserved, `cross-staff placement for ${sourceId} must be preserved`);
+  }
 });
