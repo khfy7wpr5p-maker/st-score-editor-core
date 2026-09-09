@@ -59,8 +59,8 @@ test('APP-09B rest touch preserves outer and renderer-owned scroll across semant
     assert.match(bootstrap, /Math\.max\(0, entry\.node\.scrollHeight - entry\.node\.clientHeight\)/);
     assert.match(bootstrap, /restorePresentationScroll\(\);/);
     assert.match(bootstrap, /requestAnimationFrame\?\.\(\(\) => restorePresentationScroll\(\)\)/);
+    assert.match(bootstrap, /frame\.contentWindow\?\.requestAnimationFrame/);
     assert.match(bootstrap, /app09bRestScrollPreserved/);
-    assert.match(bootstrap, /mobile-scroll-preserved/);
   } finally {
     await rm(temp, { recursive: true, force: true });
   }
