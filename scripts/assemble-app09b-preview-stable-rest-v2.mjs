@@ -31,10 +31,45 @@ const hardenedMissGuard = `      if (hit.kind === 'MISS') {
           mark('app09bLastHit', 'miss-' + String(hit.reason).toLowerCase());
           return;
         }
+
+        const outerViewport = root.querySelector('[data-st-score-editor-viewport]');
+        const childScrollNodes = childDocument === null
+          ? []
+          : [
+              childDocument.scrollingElement,
+              childDocument.documentElement,
+              childDocument.body,
+              childDocument.getElementById('st-score-root')
+            ].filter((node, index, nodes) => node !== null && nodes.indexOf(node) === index);
+        const presentationScroll = Object.freeze({
+          outer: outerViewport instanceof HTMLElement
+            ? Object.freeze({ node: outerViewport, left: outerViewport.scrollLeft, top: outerViewport.scrollTop })
+            : null,
+          child: Object.freeze(childScrollNodes.map((node) => Object.freeze({
+            node,
+            left: node.scrollLeft,
+            top: node.scrollTop
+          })))
+        });
+        const restoreScrollEntry = (entry) => {
+          const maxLeft = Math.max(0, entry.node.scrollWidth - entry.node.clientWidth);
+          const maxTop = Math.max(0, entry.node.scrollHeight - entry.node.clientHeight);
+          entry.node.scrollLeft = Math.max(0, Math.min(maxLeft, entry.left));
+          entry.node.scrollTop = Math.max(0, Math.min(maxTop, entry.top));
+        };
+        const restorePresentationScroll = () => {
+          if (presentationScroll.outer !== null) restoreScrollEntry(presentationScroll.outer);
+          for (const entry of presentationScroll.child) restoreScrollEntry(entry);
+        };
+
         try {`;
 
 const legacySelectedRestMark = `            mark('app09bLastHit', 'selected-rest');`;
-const hardenedSelectedRestMark = `            mark('app09bLastHit', 'selected-rest-' + String(hit.reason).toLowerCase());`;
+const hardenedSelectedRestMark = `            restorePresentationScroll();
+            globalThis.requestAnimationFrame?.(() => restorePresentationScroll());
+            frame.contentWindow?.requestAnimationFrame?.(() => restorePresentationScroll());
+            mark('app09bLastHit', 'selected-rest-' + String(hit.reason).toLowerCase());
+            mark('app09bRestScrollPreserved', 'true');`;
 
 export const hardenStableRestTouchEvidence = (bootstrap) => {
   const guardOccurrences = bootstrap.split(legacyMissGuard).length - 1;
@@ -75,5 +110,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const refreshRendererRuntime = process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1';
   const result = await assembleStableRestV2PreviewCli({ runtimeDir, includeIosDiagnostic, refreshRendererRuntime });
   const source = refreshRendererRuntime ? 'refreshed exact renderer' : 'provided renderer';
-  console.log(`APP-09B stable rest-touch v2 assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, ${source}, unique-rest fail-closed)`);
+  console.log(`APP-09B stable rest-touch v2 assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, ${source}, unique-rest fail-closed, mobile-scroll-preserved)`);
 }
