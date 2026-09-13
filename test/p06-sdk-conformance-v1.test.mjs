@@ -74,11 +74,12 @@ test('P06-E neutral example consumes only the public SDK entry and no private pr
   assert.doesNotMatch(source, /seslitab/i);
 });
 
-test('P06-E public entry is narrow and exports source contract plus negotiation only', async () => {
+test('P06-E public entry stays narrow and exports only admitted public SDK modules', async () => {
   const source = await readFile(new URL('../packages/score-editor-sdk-v1/public.ts', import.meta.url), 'utf8');
   const lines = source.trim().split(/\r?\n/);
   assert.deepEqual(lines, [
     "export * from './src/index.js';",
-    "export * from './version-negotiation.js';"
+    "export * from './version-negotiation.js';",
+    "export * from './rollout.js';"
   ]);
 });
