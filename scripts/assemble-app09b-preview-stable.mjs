@@ -71,6 +71,175 @@ const stableBridge = `  const nativeReplaceChildren = root.replaceChildren.bind(
     document.documentElement.dataset.app09bRendererFrameStable = 'armed';
   };`;
 
+const controllerMountBlock = `  const controller = globalThis.STScoreEditorApp.createController({ rendererProfile: integrationProfile });
+  controller.mount(root);
+  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });`;
+
+const rendererReadyBlock = `  waitForRendererHost().then(async (api) => {
+    rendererApi = api;`;
+
+const legacyOnHitBlock = `    const onHit = async (clientX, clientY) => {
+      const evidence = renderEvidence;
+      if (evidence === null) return;
+      let hit;
+      try {
+        hit = api.hitTestNoteDetailed({ clientX, clientY });
+      } catch {
+        mark('app09bLastHit', 'rejected');
+        return;
+      }
+      if (!hit || hit.kind !== 'HIT' || hit.renderEpoch !== evidence.renderEpoch || (hit.sourceId ?? null) !== evidence.sourceId) {
+        mark('app09bLastHit', hit?.kind === 'MISS' ? 'miss' : 'stale');
+        return;
+      }
+      try {
+        controller.selectRenderedScoreNoteRef(hit.target);
+        await api.clearHighlights();
+        await api.highlight({ target: hit.target, className: 'st-score-highlight' });
+        mark('app09bLastHit', 'selected');
+      } catch {
+        mark('app09bLastHit', 'rejected');
+      }
+    };`;
+
+const restAwareOnHitBlock = `    const uniqueCanonicalRestAddress = () => {
+      const documentState = controller.getDocument?.();
+      const score = documentState?.session?.history?.present?.score;
+      if (!score || !Array.isArray(score.parts)) return null;
+      const rests = [];
+      for (const part of score.parts) {
+        for (const staff of part?.staves ?? []) {
+          if (staff?.role === 'tablature-linked') continue;
+          for (const measure of staff?.measures ?? []) {
+            for (const voice of measure?.voices ?? []) {
+              for (const event of voice?.events ?? []) {
+                if (event?.kind !== 'rest') continue;
+                rests.push(Object.freeze({
+                  contractVersion: '3.0.0',
+                  kind: 'event',
+                  documentId: score.id,
+                  revisionId: score.revision.id,
+                  partId: part.id,
+                  staffId: staff.id,
+                  frameId: measure.frameId,
+                  measureId: measure.id,
+                  voiceId: voice.id,
+                  eventId: event.id
+                }));
+                if (rests.length > 1) return null;
+              }
+            }
+          }
+        }
+      }
+      return rests.length === 1 ? rests[0] : null;
+    };
+
+    const selectUniqueCanonicalRest = async () => {
+      const restAddress = uniqueCanonicalRestAddress();
+      if (restAddress === null) return false;
+      const before = controller.getDocument?.();
+      if (!before) return false;
+      const beforeRevisionId = before.session.history.present.score.revision.id;
+      const beforePastLength = before.session.history.past.length;
+      const beforeFutureLength = before.session.history.future.length;
+      const result = controller.select(restAddress);
+      const after = controller.getDocument?.();
+      if (
+        result?.error !== null || !after ||
+        after.session.history.present.score.revision.id !== beforeRevisionId ||
+        after.session.history.past.length !== beforePastLength ||
+        after.session.history.future.length !== beforeFutureLength
+      ) {
+        throw new Error('APP09B_UNIQUE_REST_SELECTION_MUTATED_HISTORY');
+      }
+      await api.clearHighlights();
+      return true;
+    };
+
+    const onHit = async (clientX, clientY) => {
+      const evidence = renderEvidence;
+      if (evidence === null) return;
+      let hit;
+      try {
+        hit = api.hitTestNoteDetailed({ clientX, clientY });
+      } catch {
+        mark('app09bLastHit', 'rejected');
+        return;
+      }
+      const currentEvidence = hit && hit.renderEpoch === evidence.renderEpoch && (hit.sourceId ?? null) === evidence.sourceId;
+      if (!currentEvidence) {
+        mark('app09bLastHit', 'stale');
+        return;
+      }
+      if (hit.kind === 'MISS') {
+        if (hit.reason !== 'NO_NOTE_OWNER') {
+          mark('app09bLastHit', 'miss');
+          return;
+        }
+        try {
+          if (await selectUniqueCanonicalRest()) {
+            mark('app09bLastHit', 'selected-rest');
+          } else {
+            mark('app09bLastHit', 'rest-unresolved');
+          }
+        } catch {
+          mark('app09bLastHit', 'rejected');
+        }
+        return;
+      }
+      if (hit.kind !== 'HIT') {
+        mark('app09bLastHit', 'rejected');
+        return;
+      }
+      try {
+        controller.selectRenderedScoreNoteRef(hit.target);
+        await api.clearHighlights();
+        await api.highlight({ target: hit.target, className: 'st-score-highlight' });
+        mark('app09bLastHit', 'selected');
+      } catch {
+        mark('app09bLastHit', 'rejected');
+      }
+    };`;
+
+const relocateSampleSeedBeforeMount = (bootstrap) => {
+  const lateSeedPattern = /^    await controller\.openMusicXml\((.+), \{ title: 'APP-09B Touch Test' \}\);$/m;
+  const match = bootstrap.match(lateSeedPattern);
+  if (match === null) throw new Error('APP09B stable sample-seed patch expected one delayed sample seed.');
+  if ((bootstrap.match(lateSeedPattern) ?? []).length === 0) throw new Error('APP09B stable sample-seed patch could not capture delayed sample seed.');
+  const sampleLiteral = match[1];
+
+  const mountOccurrences = bootstrap.split(controllerMountBlock).length - 1;
+  if (mountOccurrences !== 1) {
+    throw new Error(`APP09B stable sample-seed patch expected one controller mount block, observed ${mountOccurrences}.`);
+  }
+  const rendererReadyOccurrences = bootstrap.split(rendererReadyBlock).length - 1;
+  if (rendererReadyOccurrences !== 1) {
+    throw new Error(`APP09B stable sample-seed patch expected one renderer-ready block, observed ${rendererReadyOccurrences}.`);
+  }
+
+  const safeMountBlock = `  const controller = globalThis.STScoreEditorApp.createController({ rendererProfile: integrationProfile });
+  const initialSampleReady = controller.openMusicXml(${sampleLiteral}, { title: 'APP-09B Touch Test' })
+    .then(() => { controller.mount(root); });
+  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });`;
+  const safeRendererReadyBlock = `  waitForRendererHost().then(async (api) => {
+    await initialSampleReady;
+    rendererApi = api;`;
+
+  const withoutLateSeed = bootstrap.replace(lateSeedPattern, '    // The preview sample was seeded before the editor UI became interactive.');
+  return withoutLateSeed
+    .replace(controllerMountBlock, safeMountBlock)
+    .replace(rendererReadyBlock, safeRendererReadyBlock);
+};
+
+const addUniqueRestTouchFallback = (bootstrap) => {
+  const occurrences = bootstrap.split(legacyOnHitBlock).length - 1;
+  if (occurrences !== 1) {
+    throw new Error(`APP09B stable rest-touch patch expected one note hit handler, observed ${occurrences}.`);
+  }
+  return bootstrap.replace(legacyOnHitBlock, restAwareOnHitBlock);
+};
+
 export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defaultOutputDir } = {}) {
   const manifest = await assembleApp09BPreview({ runtimeDir, outputDir });
   const bootstrapPath = path.join(outputDir, 'st-score-editor-app09b-bootstrap.js');
@@ -79,7 +248,9 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   if (occurrences !== 1) {
     throw new Error(`APP09B stable iframe patch expected one moving bridge, observed ${occurrences}.`);
   }
-  const patched = bootstrap.replace(movingBridge, stableBridge);
+  const stableBootstrap = bootstrap.replace(movingBridge, stableBridge);
+  const seededBootstrap = relocateSampleSeedBeforeMount(stableBootstrap);
+  const patched = addUniqueRestTouchFallback(seededBootstrap);
   await writeFile(bootstrapPath, patched, 'utf8');
   return manifest;
 }
