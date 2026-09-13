@@ -229,6 +229,11 @@ const relocateSampleSeedBeforeMount = (bootstrap) => {
   Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });`;
   const safeRendererReadyBlock = `  waitForRendererHost().then(async (api) => {
     await initialSampleReady;
+    const mountedViewport = root.querySelector('[data-st-score-editor-viewport]');
+    if (!(mountedViewport instanceof HTMLElement) || !mountedViewport.contains(frame)) {
+      throw new Error('APP09B_RENDERER_STABLE_MOUNT_MISSING');
+    }
+    document.documentElement.dataset.app09bRendererFrameStable = 'true';
     rendererApi = api;`;
 
   const withoutLateSeed = bootstrap.replace(lateSeedPattern, '    // The preview sample was seeded before the editor UI became interactive.');
