@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - p05-representative-musicxml-corpus-v1
+      - p05-physical-teacher-task2-preview-v1
   workflow_dispatch:
 
 permissions:
@@ -98,19 +99,19 @@ jobs:
         run: npx playwright install --with-deps webkit
       - name: Build Editor Core browser artifacts
         run: npm run build:browser
-      - name: Checkout exact ST Score Rendering Layer revision
+      - name: Checkout exact SRL generic-event revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
           cd "$RUNNER_TEMP/st-score-rendering-layer"
-          git checkout --detach 70c21ad73c0b2e9c71e415cc3272a10673df9d60
-      - name: Build exact renderer runtime
+          git checkout --detach eaca00b6a6971cdd2f24ee72d4617d6739f63306
+      - name: Build exact generic-event renderer runtime
         run: |
           cd "$RUNNER_TEMP/st-score-rendering-layer"
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          ST_SCORE_RENDERER_SOURCE_REVISION=70c21ad73c0b2e9c71e415cc3272a10673df9d60 npm run export:workstation-runtime
-      - name: Assemble stable APP-09B preview
+          ST_SCORE_RENDERER_SOURCE_REVISION=eaca00b6a6971cdd2f24ee72d4617d6739f63306 npm run export:workstation-runtime
+      - name: Assemble P05 generic-event physical preview
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
-        run: node scripts/assemble-app09b-preview-stable.mjs
-      - name: Run P05 WebKit paste/render/undo regression
+        run: node scripts/assemble-p05-physical-teacher-task2-preview.mjs
+      - name: Run P05 physical-like WebKit paste/render/undo regression
         run: node scripts/p05-webkit-paste-render-regression.mjs
