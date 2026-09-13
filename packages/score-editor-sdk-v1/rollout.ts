@@ -176,7 +176,7 @@ export const createScoreEditorSdkRolloutGateV1 = (
     sdkVersion: SCORE_EDITOR_SDK_V1_VERSION,
     flags,
     getState,
-    isEnabled: (feature) => getState(feature).enabled,
+    isEnabled: (feature: ScoreEditorSdkOptionalFeatureIdV1): boolean => getState(feature).enabled,
     snapshot
   });
 };
