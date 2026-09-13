@@ -81,8 +81,8 @@ test('P06-F2 admission pins the official release identity and release tarballs',
   assert.equal(SCORE_AUDIO_ENGINE_V010.releaseCommit, 'd11a2dd9141169ddfec5901f3cadc4cce0d7b345');
   assert.match(admission, /@st\/score-audio-contracts@0\.1\.0/);
   assert.match(admission, /@st\/score-audio-web@0\.1\.0/);
-  assert.match(packageJson.dependencies['@st/score-audio-contracts'], /releases\/download\/v0\.1\.0\/st-score-audio-contracts-0\.1\.0\.tgz$/);
-  assert.match(packageJson.dependencies['@st/score-audio-web'], /releases\/download\/v0\.1\.0\/st-score-audio-web-0\.1\.0\.tgz$/);
+  assert.match(packageJson.optionalDependencies['@st/score-audio-contracts'], /releases\/download\/v0\.1\.0\/st-score-audio-contracts-0\.1\.0\.tgz$/);
+  assert.match(packageJson.optionalDependencies['@st/score-audio-web'], /releases\/download\/v0\.1\.0\/st-score-audio-web-0\.1\.0\.tgz$/);
 });
 
 test('P06-F2 adapter imports the official contract instead of redefining AuditionRequest', () => {
