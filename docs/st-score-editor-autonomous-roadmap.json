@@ -1,0 +1,314 @@
+{
+  "document_type": "autonomous_developer_handoff_living_state",
+  "schema_version": "1.1.0",
+  "prompt_revision": 5,
+  "language": "tr-TR",
+  "created_on": "2026-09-06",
+  "updated_at": "2026-09-06T19:47:00+03:00",
+  "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
+  "repository": {
+    "full_name": "khfy7wpr5p-maker/st-score-editor-core",
+    "default_branch": "main",
+    "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
+    "verified_main_subject": "APP-11I: productize atomic straight-three triplet retiming",
+    "work_branch": "app11j-triplet-unretiming-admission-v4",
+    "work_branch_head_before_this_state_commit": "93bbad4615dfaa6d0b8f4af82ba828205385688e"
+  },
+  "source_handoff": {
+    "origin": "user_supplied_st_score_editor_autonomous_developer_prompt_revision_1",
+    "source_date": "2026-09-06",
+    "policy": "Bu yaşayan kayıt ilk handoff'taki ürün amacı, güvenlik sınırları, otonomi politikası, mimari invariantlar, P00-P11 çalışma paketleri ve doğrulama kurallarını daraltmaz. Çelişkide daha güvenli/fail-closed kural uygulanır ve politika değişikliği ayrıca kaydedilir."
+  },
+  "product_mission": {
+    "purpose": "Gitar ve piyano öğretmenlerinin nota oluşturma, düzeltme, dinleme ve paylaşma işlerini güvenilir biçimde tamamladığı; bağımsız kullanılabilen ve başka uygulamalara lisanslanabilen profesyonel bir nota editörü oluştur.",
+    "quality_definition": [
+      "müzikal doğruluk",
+      "sessiz veri kaybının önlenmesi",
+      "hızlı ve anlaşılır düzenleme",
+      "gerçek cihazlarda güvenilir çalışma",
+      "kararlı entegrasyon sözleşmesi",
+      "geri alınabilir ve açıklanabilir öneriler"
+    ],
+    "product_forms": ["standalone", "embedded_sdk", "institutional_service"],
+    "non_goals_now": [
+      "çalışan çekirdeği gerekçesiz baştan yazmak",
+      "ilk adım olarak büyük CNN/Transformer eğitimi",
+      "AI'yı temel düzenlemenin zorunlu bağımlılığı yapmak",
+      "test başarısından otomatik production aktivasyonu çıkarmak"
+    ]
+  },
+  "architecture_invariants": [
+    "ScoreDocumentV3 + NotationDocumentV4 aynı canonical revision çiftidir.",
+    "EditorSessionV4 unified history authority'dir.",
+    "SemanticAddressV3 exact current-revision semantic identity'dir.",
+    "UI, renderer, SDK, OMR ve AI canonical belgeyi dual-write edemez.",
+    "Renderer koordinatı/DOM/SVG kimliği tek başına authoring authority değildir.",
+    "Süreler exact rational olarak işlenir.",
+    "Başarısız işlem canonical çifti değiştirmez.",
+    "İlgisiz voice, event, chord tone, measure ve notation korunur.",
+    "Undo/redo canonical belge ve ilişkileri tutarlı geri getirir.",
+    "Temel yerel düzenleme AI veya ağ gerektirmez.",
+    "Desteklenmeyen yetenek sessizce düşürülmez; fail-closed veya açık partial capability olarak raporlanır.",
+    "OMR sorunu bütün çalışma alanını otomatik kilitlemez; güvenli bölgelerde çalışma sürebilir."
+  ],
+  "autonomy_policy": {
+    "safe_without_repeated_confirmation": [
+      "salt okunur repo/PR/CI/mimari incelemesi",
+      "izole branch üzerinde non-breaking ve geri alınabilir ST Score Editor kod/test/belge geliştirmesi",
+      "kapsam içi regresyon teşhis ve düzeltmesi",
+      "test, benchmark ve ölçüm hazırlığı",
+      "onaylanmış mimari sınırlar içinde rutin teknik seçimler",
+      "incelenebilir commit ve PR hazırlığı",
+      "yaşayan roadmap ve ilgili gerçeklik belgelerini güncelleme",
+      "bir paket engelliyse bağımsız hazır işi sürdürme"
+    ],
+    "human_or_separate_authority_required": [
+      "production deploy veya herkese açık yayın",
+      "ücretli servis/API/GPU bütçesi veya ödeme aktivasyonu",
+      "repository visibility/access/license değişikliği",
+      "kullanıcı belgelerini dış modele/eğitim verisine gönderme",
+      "force push, history rewrite veya yedeksiz silici veri taşıma",
+      "kurum/kullanıcı adına dış iletişim veya ticari taahhüt",
+      "SesliTab'ın mevcut pinned ST Score Editor runtime/build bağımlılığını kaldırma, değiştirme, repin etme veya yeniden yapılandırma"
+    ],
+    "merge_policy_for_this_handoff": "Bu handoff tek başına merge yetkisi sayılmaz. PR hazırlanır ve exact-head CI/review kanıtı korunur; ayrı açık merge yetkisi olmadan #141/#142 merge edilmez.",
+    "physical_validation": "Gerçek cihaz kanıtı olmayan satır PASS yazılmaz; release gate kapalı kalır fakat bağımsız geliştirme sürebilir."
+  },
+  "external_product_freeze": {
+    "product": "SesliTab",
+    "status": "USER_FROZEN_NO_WORK",
+    "resume_only_on_explicit_user_instruction": true,
+    "architecture_membership": false,
+    "work_package_membership": false,
+    "active_integration_target": false,
+    "seslitab_repository_mutation_allowed": false,
+    "smoosic_integration_mutation_allowed": false,
+    "seslitab_production_code_mutation_allowed": false,
+    "existing_pinned_st_score_editor_runtime_build_dependency": "PRESERVE_AS_IS",
+    "dependency_inventory_status": "NOT_RUN_BY_POLICY",
+    "dependency_change_gate": {
+      "requires_separate_dependency_inventory": true,
+      "requires_explicit_user_approval_after_inventory": true,
+      "inventory_alone_authorizes_change": false
+    },
+    "policy_document": "docs/external-runtime-dependency-freeze.md",
+    "context_note": "Kullanıcı SesliTab'ın Smoosic ile entegre olduğunu ve bu çalışmanın tamamlandığını bildirdi. Kullanıcı açıkça yeniden başlatana kadar SesliTab repository'si, Smoosic entegrasyonu ve çalışan production kodu değiştirilmez. Mevcut pinned ST Score Editor runtime/build bağımlılığı da aynen korunur; kaldırma veya değişiklik yalnız ayrı bağımlılık envanteri ve sonrasında açık kullanıcı onayı ile yapılabilir."
+  },
+  "verified_reality": {
+    "main": {
+      "head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
+      "app_11a_to_11i": "COMPLETE_MERGED",
+      "standalone_release_gate_passed": false,
+      "manual_device_validation_required": true
+    },
+    "documentation_closeout": {
+      "pr": 141,
+      "state": "OPEN_GREEN",
+      "head": "06606cd4fa9e4354061c2288d0b8582b669a299d",
+      "ci": ["CI PASS", "APP-09B preview WebKit regression PASS"],
+      "scope": "APP-11I repository reality synchronization; documentation only"
+    },
+    "app_11j": {
+      "pr": 142,
+      "state": "VERIFIED_PR_OPEN",
+      "base_pr": 141,
+      "code_head": "674187b920434d6d7d72330baba44c2692a64596",
+      "last_verified_state_head": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
+      "ci_run_exact_verified_head": 34045380996,
+      "node_matrix": [18, 20, 22],
+      "result": "repository validation + build + full test chain PASS on Node 18/20/22",
+      "physical_device_test": "NOT_RUN",
+      "release_claim": false
+    },
+    "p01": {
+      "state": "CODE_COMPLETE_ON_WORK_BRANCH",
+      "timing_authority_audit": "VERIFIED",
+      "revision_identity_hardening": "VERIFIED",
+      "undo_atomicity_evidence": "VERIFIED",
+      "relation_orphan_boundary": "FAIL_CLOSED_VERIFIED",
+      "imported_pickup_trailing_growth": "EXPLICITLY_UNSUPPORTED_FAIL_CLOSED",
+      "release_claim": false,
+      "merge_claim": false
+    }
+  },
+  "work_packages": [
+    {
+      "id": "P00",
+      "title": "Güncel gerçeklik ve yarım işlerin güvenli devri",
+      "status": "completed",
+      "depends_on": [],
+      "remaining_work": [],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P01",
+      "title": "Çekirdek düzenleme güvenilirliği",
+      "status": "code_complete_on_work_branch",
+      "depends_on": ["P00"],
+      "subtasks": [
+        {
+          "id": "P01-APP11J",
+          "title": "Triplet Removal / Unretiming Admission Foundation",
+          "status": "verified_pr_open",
+          "limitations": ["analysis only", "canonical mutation not exposed", "physical-device validation NOT_RUN", "PR #142 not merged"]
+        },
+        {
+          "id": "P01-AUDIT-01",
+          "title": "Shared timing mutation authority coverage audit",
+          "status": "completed"
+        }
+      ],
+      "remaining_work": [],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P02",
+      "title": "Baştan sona öğretmen düzenleme akışı",
+      "status": "pending",
+      "depends_on": ["P01"],
+      "remaining_work": ["selection/range endpoints", "measure/copy/paste/transpose/bulk operations", "insert vs overwrite semantics"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P03",
+      "title": "Mobil çalışma alanı ve performans",
+      "status": "pending",
+      "depends_on": ["P01"],
+      "remaining_work": ["context toolbar/touch targets", "semantic-address preserving zoom/selection", "measured performance work"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P04",
+      "title": "Dosya, kurtarma ve kısmi destek davranışı",
+      "status": "pending",
+      "depends_on": ["P01"],
+      "remaining_work": ["MusicXML support/preservation", ".mxl/cross-staff/output bounded packages", "separate view/edit/playback/export capabilities", "OMR partial-work behavior"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P05",
+      "title": "Öğretmen corpus'u ve ürün pilotuna hazırlık",
+      "status": "pending",
+      "depends_on": ["P02", "P03", "P04"],
+      "remaining_work": ["licensed provenance corpus", "teacher vs synthetic evidence", "task/error/preservation/roundtrip metrics", "device matrix"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P06",
+      "title": "Sürümlenmiş SDK ve genel entegrasyon örneği",
+      "status": "pending",
+      "depends_on": ["P02", "P04"],
+      "remaining_work": ["public API inventory", "version/error/migration contracts", "isolated host lifecycle", "generic third-party integration example without product-specific coupling"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P07",
+      "title": "Kaynak görüntü ve düzeltme kökeni",
+      "status": "pending",
+      "depends_on": ["P04"],
+      "remaining_work": ["immutable source provenance", "semantic/source-region mapping", "before-after teacher correction trace"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P08",
+      "title": "AI öneri sözleşmesi ve kurallara karşı deney",
+      "status": "pending",
+      "depends_on": ["P01", "P07"],
+      "remaining_work": ["mock proposal provider/schema/dry-run/stale revision", "rules-only baseline", "optional narrow model experiment only with data/budget authority"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P09",
+      "title": "Gitar ve pedagojik farklılaşma",
+      "status": "pending",
+      "depends_on": ["P02", "P06"],
+      "remaining_work": ["TAB/harmony API maturity audit", "playable position/fret/string/finger constraints", "teacher-intent practice variants"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P10",
+      "title": "Ticari hizmetlere teknik hazırlık",
+      "status": "pending",
+      "depends_on": ["P05", "P06"],
+      "remaining_work": ["license inventory", "account/institution/entitlement boundaries", "tenant/revision threat model", "payment/production decisions remain separate"],
+      "release_status": "not_released"
+    },
+    {
+      "id": "P11",
+      "title": "Yayın adayı ve güvenli devam",
+      "status": "pending",
+      "depends_on": ["P05", "P06"],
+      "remaining_work": ["support matrix", "release notes/migration/rollback/runbook", "release blockers", "separate activation authority"],
+      "release_status": "not_released"
+    }
+  ],
+  "verification_policy": {
+    "levels": ["unit", "integration", "browser", "physical_device", "corpus"],
+    "required_scenarios": ["note/rest/chord editing", "multi-voice isolation", "duration/dot and adjacent-rest balance", "tie/slur/tuplet and measure boundary", "valid repeats and first/second endings", "pickup/imported measure semantics", "undo/redo", "MusicXML open-edit-save-reopen", "unexpected refresh/recovery", "mobile selection/orientation/playback"],
+    "rules": ["PASS/FAIL/BLOCKED/NOT_RUN ayrı tutulur.", "Test edilen exact SHA ve CI/run kaydedilir.", "Eski yeşil CI yeni HEAD'e taşınmaz.", "Fiziksel cihaz yerine WebKit PASS yazılmaz.", "Bağımsız müzikal beklenti kullanılır; sadece fonksiyon çıktısı kendi kendine doğrulanmaz."]
+  },
+  "execution_state": {
+    "status": "P01_CODE_COMPLETE_VERIFIED_P02_READY",
+    "verified_head": "8c5d46a49d6a6ce67e52095df6078d0184ebd750",
+    "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
+    "current_task_id": "P02",
+    "next_action": "ST Score Editor bağımsız geliştirmesine P02 öğretmen düzenleme akışı salt-okunur gap audit ile devam et. SesliTab repository'sine, Smoosic entegrasyonuna veya çalışan production koduna dokunma. Mevcut pinned ST Score Editor runtime/build bağımlılığını aynen koru; bağımlılık değişikliği için ayrı envanter ve sonrasında açık kullanıcı onayı olmadan hiçbir işlem üretme.",
+    "required_reads": ["DEVELOPMENT_GOVERNANCE.md", "ROADMAP.md", "ARCHITECTURE.md", "docs/st-score-editor-app-productization.json", "docs/p01-timing-authority-audit.md", "docs/p01-core-reliability-closeout.md", "docs/app-11j-triplet-unretiming-admission.md", "docs/external-runtime-dependency-freeze.md"],
+    "resume_commands": ["verify main HEAD and open PR heads before writing", "treat P01 as code-complete on work branch but not merged/released", "begin P02 read-only gap audit before any new mutation surface", "honor external runtime dependency freeze before any integration/dependency work"],
+    "completed_task_ids": ["P00", "P01-AUDIT-01", "P01"],
+    "blockers": [
+      {
+        "kind": "MERGE_AUTHORITY",
+        "reason": "PR #141 and #142 are reviewable/open; this handoff alone is not being treated as merge authorization.",
+        "affected_tasks": ["P01-APP11J closeout to main"],
+        "unblock_action": "separate explicit merge authority or later user/repository instruction"
+      },
+      {
+        "kind": "PHYSICAL_DEVICE_RELEASE_GATE",
+        "reason": "Required real-device matrix is incomplete.",
+        "affected_tasks": ["P05", "P11"],
+        "unblock_action": "run and record required real iPhone/Android/Windows browser matrix before release"
+      }
+    ],
+    "decision_log": [
+      {
+        "date": "2026-09-06",
+        "decision": "APP-11J is analysis-only first; exact adjacent neutral rest is required for reverse timing growth; no topology invention.",
+        "reason": "Safe inverse of APP-11G/H/I must prove expansion occupancy before any canonical mutation."
+      },
+      {
+        "date": "2026-09-06",
+        "decision": "PR #142 is stacked on #141 documentation branch.",
+        "reason": "Avoid coding against stale APP-11A-only documents while preserving main and keeping the feature reviewable."
+      },
+      {
+        "date": "2026-09-06",
+        "decision": "P01 timing/product audit is closed as code-complete on the work branch without exposing a second timing authority or inventing imported pickup semantics.",
+        "reason": "Supported product timing paths converge on shared V4 authority; one concrete revision-identity gap was patched; remaining unsupported semantics are explicitly fail-closed."
+      },
+      {
+        "date": "2026-09-06",
+        "decision": "SesliTab is not part of the ST Score Editor Core architecture or active roadmap and no work is generated for it until the user explicitly reopens scope.",
+        "reason": "User reports the Smoosic integration complete and wants ST Score Editor to continue independently."
+      },
+      {
+        "date": "2026-09-06",
+        "decision": "SesliTab's existing pinned ST Score Editor runtime/build dependency is preserved exactly as-is despite the architectural/work freeze.",
+        "reason": "User explicitly requires no SesliTab/Smoosic/production mutation and requires a separate dependency inventory plus explicit approval before any dependency removal, repin or change."
+      }
+    ],
+    "change_log": [
+      {"revision": 1, "date": "2026-09-06", "description": "User handoff created; not executed."},
+      {"revision": 2, "date": "2026-09-06", "description": "P00 fresh-read completed; APP-11J read-only admission implemented and verified in PR #142."},
+      {"revision": 3, "date": "2026-09-06", "description": "P01 timing-authority audit and revision-identity hardening completed and verified."},
+      {"revision": 4, "date": "2026-09-06", "description": "SesliTab removed from ST Score Editor Core architecture/roadmap work targets and frozen as an external product."},
+      {"revision": 5, "date": "2026-09-06", "description": "External freeze clarified: ST Score Editor continues independently; no SesliTab repository, Smoosic integration or production-code changes are allowed, while the existing pinned ST Score Editor runtime/build dependency must be preserved until a separate dependency inventory and explicit user approval authorize any change."}
+    ]
+  },
+  "living_prompt_protocol": {
+    "canonical_repository_path": "docs/st-score-editor-autonomous-roadmap.json",
+    "update_after": ["meaningful development package", "test/blocker change", "PR/merge state change", "session handoff", "user architecture/dependency policy change"],
+    "rules": ["increment prompt_revision and set actual updated_at", "change status only with evidence", "preserve completed work and stable task ids", "record exact tested SHA/CI/artifact/limitations", "keep docs aligned with actual behavior", "do not write file's own commit SHA into itself", "validate JSON/task graph and continue next ready safe work"],
+    "not_a_scheduler": true
+  }
+}

@@ -1,9 +1,9 @@
 {
-  "schema_version": "2.2.0",
+  "schema_version": "2.3.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-06",
-  "status": "APP_11I_AND_APP_10O_AND_STAGE_07_COMPLETE_MERGED_MANUAL_DEVICE_MATRIX_REQUIRED_BEFORE_RELEASE",
+  "status": "APP_11I_COMPLETE_MERGED_APP_11J_ANALYSIS_VERIFIED_PR_OPEN_MANUAL_DEVICE_MATRIX_REQUIRED_BEFORE_RELEASE",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "canonical_pair": {
     "score": "ScoreDocumentV3/3.0.0",
@@ -30,7 +30,7 @@
     "stage_07": "COMPLETE_MERGED"
   },
   "app_11": {
-    "status": "APP_11A_TO_APP_11I_COMPLETE_MERGED",
+    "status": "APP_11A_TO_APP_11I_COMPLETE_MERGED_APP_11J_VERIFIED_PR_OPEN",
     "app_11a": {
       "status": "COMPLETE_MERGED",
       "pr": 129,
@@ -88,6 +88,21 @@
       "one_user_edit_one_history_revision": true,
       "exact_undo_restores_prior_pair": true,
       "dedicated_mobile_webkit_regression": true
+    },
+    "app_11j": {
+      "status": "VERIFIED_PR_OPEN",
+      "pr": 142,
+      "head_sha": "b21ffd21b35075267022ba1e6645af6ac7bd136c",
+      "base_pr": 141,
+      "capability": "analysis_only_exact_3_2_triplet_to_supported_straight_three_unretiming_admission",
+      "mutation_authority": false,
+      "history_authority": false,
+      "renderer_coordinate_authority": false,
+      "adjacent_rest_policy": "consume_exact_adjacent_neutral_rest_only",
+      "topology_invention": false,
+      "ci_run": 34043178547,
+      "node_18_20_22_validation_build_full_tests": "PASS",
+      "physical_device_pass_claimed": false
     }
   },
   "triplet_product_paths": {
@@ -106,6 +121,18 @@
         "create_deterministic_tuplet_rest"
       ],
       "imported_musicxml_contraction_admitted_within_bounded_rules": true
+    },
+    "unretiming_admission": {
+      "label": "Triplet Removal / Unretiming Admission",
+      "source": "APP_11J_WORK_BRANCH",
+      "status": "VERIFIED_PR_OPEN",
+      "requires_exact_current_3_2_triplet": true,
+      "requires_exact_adjacent_neutral_rest": true,
+      "rest_actions": [
+        "remove_adjacent_rest_when_exactly_consumed",
+        "shrink_adjacent_rest_forward_when_larger"
+      ],
+      "canonical_mutation_exposed": false
     }
   },
   "triplet_retiming_fail_closed": [
@@ -120,10 +147,27 @@
     "arbitrary_tuplet_ratios",
     "renderer_derived_range_inference"
   ],
+  "triplet_unretiming_fail_closed": [
+    "stale_duplicate_reordered_or_cross_scope_ranges",
+    "invalid_or_noncontiguous_current_timing",
+    "missing_loose_or_non_3_2_triplet_metadata",
+    "dots",
+    "beams",
+    "ties",
+    "selected_cross_staff_events",
+    "missing_non_neutral_or_cross_staff_adjacent_rest",
+    "insufficient_adjacent_rest",
+    "unsupported_restored_written_base",
+    "voice_or_measure_topology_invention",
+    "renderer_derived_range_inference"
+  ],
   "automated_validation": {
     "node_versions": [18, 20, 22],
     "retained_webkit_authoring_regressions": true,
     "app_11i_straight_notes_to_triplet_to_undo": true,
+    "app_11j_exact_head_ci_run": 34043178547,
+    "app_11j_exact_head": "b21ffd21b35075267022ba1e6645af6ac7bd136c",
+    "app_11j_analysis_validation_build_full_tests": "PASS",
     "exact_renderer_build": true,
     "app_09b_renderer_regression": true,
     "app_09b_controlled_layout_regression": true,
@@ -141,20 +185,16 @@
     ],
     "secondary_target": "iPad Safari"
   },
-  "seslitab": {
-    "architectural_dependency": false,
-    "product_cutover_deferred": true,
-    "cutover_authorized": false,
-    "current_core_development_scope": false
-  },
   "next_development_action": {
-    "id": "APP-11J",
-    "title": "Triplet Removal / Unretiming Admission Foundation",
-    "mode": "analysis_only_first",
-    "mutation_exposed": false
+    "id": "APP-11J-CLOSEOUT",
+    "title": "Keep APP-11J analysis boundary reviewable while continuing independent P01 reliability work",
+    "mode": "verified_pr_open",
+    "mutation_exposed": false,
+    "merge_or_release_authority_inferred": false
   },
   "remaining_gates": [
-    "triplet_removal_unretiming",
+    "triplet_removal_unretiming_canonical_mutation",
+    "triplet_unretiming_session_browser_productization",
     "arbitrary_tuplet_ratios_cardinalities",
     "imported_automatic_voice_or_measure_invention",
     "mxl_container_support",

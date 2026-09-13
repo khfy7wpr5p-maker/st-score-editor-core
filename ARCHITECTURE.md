@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SSE-00–10, APP-00–10O, APP-11A–I and Stage 07 are COMPLETE / MERGED. The standalone physical device/browser release matrix remains open and is required before release. SesliTab cutover remains unauthorized and is outside this core-development track.**
+Status: **SSE-00–10, APP-00–10O, APP-11A–I and Stage 07 are COMPLETE / MERGED. The standalone physical device/browser release matrix remains open and is required before release.**
 
 ## Canonical architecture
 
@@ -223,9 +223,6 @@ Automated WebKit is regression evidence only and does not constitute a physical-
 ```text
 manualDeviceValidationRequired = true
 standaloneReleaseGatePassed = false
-seslitabCutoverAuthorized = false
 ```
 
 Required physical targets remain real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox, with iPad Safari secondary.
-
-SesliTab is not an architectural dependency of ST Score Editor Core and remains outside this development track.
