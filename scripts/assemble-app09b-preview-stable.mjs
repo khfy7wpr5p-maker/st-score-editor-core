@@ -78,6 +78,11 @@ const controllerMountBlock = `  const controller = globalThis.STScoreEditorApp.c
 const rendererReadyBlock = `  waitForRendererHost().then(async (api) => {
     rendererApi = api;`;
 
+const eagerRenderSubscriptionBlock = `  controller.subscribe(() => { scheduleRenderCurrent(); });`;
+const rendererAttachBlock = `    controller.attachOsmdRenderer(host);`;
+const rendererAttachWithDeferredSubscriptionBlock = `    controller.attachOsmdRenderer(host);
+    controller.subscribe(() => { scheduleRenderCurrent(); });`;
+
 const legacyOnHitBlock = `    const onHit = async (clientX, clientY) => {
       const evidence = renderEvidence;
       if (evidence === null) return;
@@ -232,6 +237,20 @@ const relocateSampleSeedBeforeMount = (bootstrap) => {
     .replace(rendererReadyBlock, safeRendererReadyBlock);
 };
 
+const deferRenderSubscriptionUntilRendererAttached = (bootstrap) => {
+  const subscriptionOccurrences = bootstrap.split(eagerRenderSubscriptionBlock).length - 1;
+  if (subscriptionOccurrences !== 1) {
+    throw new Error(`APP09B stable render subscription patch expected one eager subscription, observed ${subscriptionOccurrences}.`);
+  }
+  const attachOccurrences = bootstrap.split(rendererAttachBlock).length - 1;
+  if (attachOccurrences !== 1) {
+    throw new Error(`APP09B stable render subscription patch expected one renderer attach, observed ${attachOccurrences}.`);
+  }
+  return bootstrap
+    .replace(eagerRenderSubscriptionBlock, '  // Subscribe only after the renderer host is attached to avoid an initial stale render race.')
+    .replace(rendererAttachBlock, rendererAttachWithDeferredSubscriptionBlock);
+};
+
 const addUniqueRestTouchFallback = (bootstrap) => {
   const occurrences = bootstrap.split(legacyOnHitBlock).length - 1;
   if (occurrences !== 1) {
@@ -250,7 +269,8 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   }
   const stableBootstrap = bootstrap.replace(movingBridge, stableBridge);
   const seededBootstrap = relocateSampleSeedBeforeMount(stableBootstrap);
-  const patched = addUniqueRestTouchFallback(seededBootstrap);
+  const subscriptionSafeBootstrap = deferRenderSubscriptionUntilRendererAttached(seededBootstrap);
+  const patched = addUniqueRestTouchFallback(subscriptionSafeBootstrap);
   await writeFile(bootstrapPath, patched, 'utf8');
   return manifest;
 }
