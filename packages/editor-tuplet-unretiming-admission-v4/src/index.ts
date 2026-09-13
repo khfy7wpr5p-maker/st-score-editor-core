@@ -20,7 +20,8 @@ export type TupletUnretimingAdmissionReasonV4 =
   | 'BLOCKED_TIMING_COUPLED_NOTATION'
   | 'BLOCKED_CROSS_STAFF_TARGET'
   | 'BLOCKED_ADJACENT_REST_REQUIRED'
-  | 'BLOCKED_ADJACENT_REST_INSUFFICIENT';
+  | 'BLOCKED_ADJACENT_REST_INSUFFICIENT'
+  | 'BLOCKED_MEASURE_SEMANTICS_UNPROVEN';
 
 export interface TupletUnretimingEventPlanV4 {
   readonly eventId: string;
@@ -333,6 +334,13 @@ export const analyzeTripletToStraightThreeUnretimingV4 = (
     );
   }
 
+  if (score.source.format === 'musicxml') {
+    return result(score, targets, {
+      admitted: false,
+      reason: 'BLOCKED_MEASURE_SEMANTICS_UNPROVEN'
+    });
+  }
+
   const indices = targets.map(target => voice.events.findIndex(event => event.id === target.eventId));
   const [firstIndex, secondIndex, thirdIndex] = indices;
   if (
@@ -498,6 +506,18 @@ export const analyzeTripletToStraightThreeUnretimingV4 = (
       ...commonPlan,
       admitted: false,
       reason: 'BLOCKED_ADJACENT_REST_INSUFFICIENT'
+    });
+  }
+
+  const laterGrowthOverlap = voice.events.slice(thirdIndex + 2).some(event =>
+    compare(event.onset, proposedGroupEnd) < 0 &&
+    compare(endOf(event), currentGroupEnd) > 0
+  );
+  if (laterGrowthOverlap) {
+    return result(score, targets, {
+      ...commonPlan,
+      admitted: false,
+      reason: 'BLOCKED_CURRENT_TIMING_INVALID'
     });
   }
 
