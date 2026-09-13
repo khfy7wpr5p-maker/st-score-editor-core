@@ -149,7 +149,7 @@ try {
     throw new Error(`APP-11B full-rest consumption mismatch: ${JSON.stringify(consumed)}`);
   }
 
-  await page.getByRole('button', { name: 'Undo' }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   const undo = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
     const events = d.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events;
