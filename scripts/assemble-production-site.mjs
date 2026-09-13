@@ -18,15 +18,21 @@ const ensureRegularFile = async absolute => {
 };
 
 const patchBootstrap = source => {
-  const controllerNeedle = "  const controller = globalThis.STScoreEditorApp.createController({ rendererProfile: integrationProfile });\n  controller.mount(root);\n";
-  if (!source.includes(controllerNeedle)) throw new Error('PRODUCTION_AUDIO_CONTROLLER_HOOK_MISSING');
-  const controllerPatch = `${controllerNeedle}\n  const audioApi = globalThis.STScoreAudioEngine;\n  if (!audioApi || audioApi.version !== '0.1.0' || typeof audioApi.createAudioEngine !== 'function' || typeof controller.attachAudioPort !== 'function') {\n    throw new Error('PRODUCTION_AUDIO_ENGINE_HOST_UNAVAILABLE');\n  }\n  const audioEngine = audioApi.createAudioEngine({ defaultInstrument: 'GRAND_PIANO' });\n  controller.attachAudioPort(audioEngine);\n  Object.defineProperty(globalThis, 'STScoreEditorAudioEngine', { value: audioEngine, writable: false, configurable: false });\n`;
+  const controllerAnchor = "  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });";
+  const controllerOccurrences = source.split(controllerAnchor).length - 1;
+  if (controllerOccurrences !== 1) {
+    throw new Error(`PRODUCTION_AUDIO_CONTROLLER_HOOK_MISSING:${controllerOccurrences}`);
+  }
+  const controllerPatch = `${controllerAnchor}\n\n  const audioApi = globalThis.STScoreAudioEngine;\n  if (!audioApi || audioApi.version !== '0.1.0' || typeof audioApi.createAudioEngine !== 'function' || typeof controller.attachAudioPort !== 'function') {\n    throw new Error('PRODUCTION_AUDIO_ENGINE_HOST_UNAVAILABLE');\n  }\n  const audioEngine = audioApi.createAudioEngine({ defaultInstrument: 'GRAND_PIANO' });\n  controller.attachAudioPort(audioEngine);\n  Object.defineProperty(globalThis, 'STScoreEditorAudioEngine', { value: audioEngine, writable: false, configurable: false });`;
 
   const selectionNeedle = "        controller.selectRenderedScoreNoteRef(hit.target);\n";
-  if (!source.includes(selectionNeedle)) throw new Error('PRODUCTION_AUDIO_SELECTION_HOOK_MISSING');
+  const selectionOccurrences = source.split(selectionNeedle).length - 1;
+  if (selectionOccurrences !== 1) {
+    throw new Error(`PRODUCTION_AUDIO_SELECTION_HOOK_MISSING:${selectionOccurrences}`);
+  }
   const selectionPatch = "        const auditionResult = await controller.selectRenderedScoreNoteRefWithAudition(hit.target);\n        document.documentElement.dataset.stScoreAudioStatus = auditionResult.audioStatus.toLowerCase();\n        if (auditionResult.audioError) document.documentElement.dataset.stScoreAudioError = auditionResult.audioError.code;\n        else delete document.documentElement.dataset.stScoreAudioError;\n";
 
-  return source.replace(controllerNeedle, controllerPatch).replace(selectionNeedle, selectionPatch);
+  return source.replace(controllerAnchor, controllerPatch).replace(selectionNeedle, selectionPatch);
 };
 
 const patchHtml = source => {
