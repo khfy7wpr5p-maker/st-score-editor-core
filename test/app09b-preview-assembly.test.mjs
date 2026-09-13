@@ -93,6 +93,11 @@ test('APP-09B preview assembly keeps renderer separate and release gates false',
     assert.match(bootstrap, /sourceId/);
     assert.match(bootstrap, /selectRenderedScoreNoteRef/);
     assert.match(bootstrap, /rendererProfile/);
+    assert.match(bootstrap, /frame\.style\.visibility = 'hidden'/);
+    assert.match(bootstrap, /frame\.style\.visibility = 'visible'/);
+    assert.match(bootstrap, /mark\('app09bRenderStatus', 'stale'\)/);
+    assert.doesNotMatch(bootstrap, /api\.dispose\(\)/);
+    assert.doesNotMatch(bootstrap, /pendingClear/);
     assert.equal(copiedManifest.rendererSourceRevision, APP09B_RENDERER_SOURCE_REVISION);
   } finally {
     await rm(temp, { recursive: true, force: true });

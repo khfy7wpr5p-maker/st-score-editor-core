@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - p05-representative-musicxml-corpus-v1
   workflow_dispatch:
 
 permissions:
@@ -64,17 +65,19 @@ jobs:
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
           cd "$RUNNER_TEMP/st-score-rendering-layer"
-          git checkout --detach 13c32eefccd5bf2c227e815aa27aae4a0583801d
+          git checkout --detach 70c21ad73c0b2e9c71e415cc3272a10673df9d60
       - name: Build exact renderer runtime
         run: |
           cd "$RUNNER_TEMP/st-score-rendering-layer"
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          ST_SCORE_RENDERER_SOURCE_REVISION=13c32eefccd5bf2c227e815aa27aae4a0583801d npm run export:workstation-runtime
+          ST_SCORE_RENDERER_SOURCE_REVISION=70c21ad73c0b2e9c71e415cc3272a10673df9d60 npm run export:workstation-runtime
       - name: Assemble stable APP-09B preview
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
         run: node scripts/assemble-app09b-preview-stable.mjs
       - name: Run APP-09B WebKit renderer regression
         run: node scripts/app09b-webkit-preview-regression.mjs
+      - name: Run P05 WebKit paste/render/undo regression
+        run: node scripts/p05-webkit-paste-render-regression.mjs
       - name: Run APP-09B WebKit controlled layout rerender regression
         run: node scripts/app09b-webkit-controlled-layout-regression.mjs
