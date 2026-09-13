@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 import { createAudioHostIntegratedStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/audio-host-integrated.js';
 
+const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+  <part id="P1"><measure number="1">
+    <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>
+    <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type></note>
+    <note><rest/><duration>12</duration><voice>1</voice><type>half</type><dot/></note>
+  </measure></part>
+</score-partwise>`;
+
 const memoryStore = () => {
   const values = new Map();
   return Object.freeze({
@@ -13,7 +23,6 @@ const memoryStore = () => {
   });
 };
 
-const idFactory = () => { let index = 0; return () => `audio-ui-${++index}`; };
 const host = () => ({
   packageName: 'opensheetmusicdisplay', packageVersion: '2.1.1', license: 'BSD-3-Clause',
   instance: { async load() {}, render() {}, clear() {} }
@@ -31,7 +40,8 @@ const readyController = async () => {
   const controller = createAudioHostIntegratedStandaloneScoreEditorController({
     store: memoryStore(), autosaveDelayMs: 60_000, sha256Hex: async () => 'a'.repeat(64)
   });
-  controller.newDocument({ title: 'Audio UI', idFactory: idFactory() });
+  const opened = await controller.openMusicXml(xml, { title: 'Audio UI' });
+  assert.equal(opened.error, null);
   controller.attachOsmdRenderer(host());
   await controller.renderCurrent();
   return controller;
@@ -56,7 +66,7 @@ test('audio host integration selects rendered note, plays canonical pitch, and n
   assert.equal(result.audioError, null);
   assert.equal(requests.length, 1);
   assert.equal(requests[0].instrumentId, 'GRAND_PIANO');
-  assert.equal(requests[0].pitch.midi, 64);
+  assert.equal(requests[0].pitch.midi, 60);
   const after = controller.getDocument(); assert.ok(after);
   assert.equal(after.session.selection?.kind, 'note');
   assert.equal(after.session.history.present.score.revision.id, beforeRevision);
