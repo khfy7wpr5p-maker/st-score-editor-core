@@ -1,21 +1,21 @@
 {
   "document_type": "autonomous_developer_handoff_living_state",
   "schema_version": "1.1.0",
-  "prompt_revision": 17,
+  "prompt_revision": 18,
   "language": "tr-TR",
   "created_on": "2026-09-06",
-  "updated_at": "2026-09-07T10:50:00+03:00",
+  "updated_at": "2026-09-07T12:08:00+03:00",
   "title": "ST Score Editor Core — Güvenilir Profesyonel Editör, SDK ve Denetimli AI Ürünleştirme Programı",
   "repository": {
     "full_name": "khfy7wpr5p-maker/st-score-editor-core",
     "default_branch": "main",
     "verified_main_head": "6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc",
-    "work_branch": "p04-file-recovery-partial-support-v1",
-    "open_pr": 145,
-    "stacked_open_prs": [141, 142, 143, 144, 145],
-    "verified_p04_code_head": "ac0d99776edced34ff2ecacddfd7c45096646430",
-    "verified_p04_code_ci": 34099830414,
-    "closeout_document": "docs/p04-files-recovery-partial-support-closeout.md"
+    "work_branch": "p05-teacher-corpus-metrics-v1",
+    "open_pr": 146,
+    "stacked_open_prs": [141, 142, 143, 144, 145, 146],
+    "verified_p05_code_head": "8ed79315bb13857b527484ec7fff0a044a9c5d81",
+    "verified_p05_code_ci": 34104094125,
+    "closeout_document": "docs/p05-corpus-foundation-closeout.md"
   },
   "product_mission": {
     "purpose": "Gitar ve piyano öğretmenleri için güvenilir, profesyonel, bağımsız ve lisanslanabilir nota editörü/SDK.",
@@ -41,7 +41,8 @@
     "Undo/Redo canonical score+notation çiftini exact geri getirir.",
     "Temel yerel düzenleme AI veya ağ gerektirmez.",
     "Desteklenmeyen yetenek fail-closed veya açık partial capability olur.",
-    "Kaynak/open/output capability hatası güvenli yerel düzenleme authority'sini global olarak iptal etmez."
+    "Kaynak/open/output capability hatası güvenli yerel düzenleme authority'sini global olarak iptal etmez.",
+    "AUTOMATED, TEACHER_PILOT ve PHYSICAL_DEVICE kanıtları birbirinin yerine PASS üretemez."
   ],
   "autonomy_policy": {
     "safe_without_repeated_confirmation": [
@@ -62,7 +63,7 @@
       "açık PR merge",
       "SesliTab pinned ST Score Editor runtime/build dependency change"
     ],
-    "merge_policy_for_this_handoff": "Ayrı açık merge yetkisi olmadan #141/#142/#143/#144/#145 merge edilmez.",
+    "merge_policy_for_this_handoff": "Ayrı açık merge yetkisi olmadan #141/#142/#143/#144/#145/#146 merge edilmez.",
     "physical_validation": "Gerçek fiziksel cihaz kanıtı olmayan satır PASS yazılmaz. Browser/WebKit otomasyonu fiziksel cihaz PASS değildir."
   },
   "external_product_freeze": {
@@ -196,6 +197,38 @@
       "merge_claim": false,
       "release_claim": false,
       "production_activation_claim": false
+    },
+    "p05": {
+      "state": "CORPUS_FOUNDATION_VERIFIED_OPEN_PR",
+      "branch": "p05-teacher-corpus-metrics-v1",
+      "pr": 146,
+      "base_branch": "p04-file-recovery-partial-support-v1",
+      "P05-CORPUS01": {
+        "head": "8ed79315bb13857b527484ec7fff0a044a9c5d81",
+        "ci": 34104094125,
+        "node_matrix": [18, 20, 22],
+        "result": "PASS",
+        "contract_version": "1.0.0",
+        "baseline_manifest": "corpus/p05-teacher-pilot-baseline-v1.json",
+        "baseline_case_count": 6,
+        "baseline_automated_pass": 3,
+        "baseline_teacher_pilot_pass": 0,
+        "baseline_physical_device_pass": 0,
+        "baseline_teacher_not_run": 1,
+        "baseline_physical_device_not_run": 2,
+        "runtime_enum_validation": "VERIFIED",
+        "tampered_envelope_rejection": "VERIFIED",
+        "automated_may_claim_teacher_pass": false,
+        "automated_may_claim_physical_device_pass": false,
+        "external_training_authority": false,
+        "production_release_authority": false
+      },
+      "teacher_pilot_evidence": "NOT_RUN",
+      "physical_device_evidence": "NOT_RUN",
+      "p05_complete": false,
+      "merge_claim": false,
+      "release_claim": false,
+      "production_activation_claim": false
     }
   },
   "work_packages": [
@@ -226,7 +259,22 @@
       ],
       "safety_rule": "safe local edit/history remains independent from source/open/renderer/export capability failure"
     },
-    {"id": "P05", "title": "Öğretmen corpus'u ve ürün pilotuna hazırlık", "status": "pending", "depends_on": ["P02", "P03", "P04"], "remaining_work": ["provenance corpus", "teacher evidence", "metrics", "device matrix"]},
+    {
+      "id": "P05",
+      "title": "Öğretmen corpus'u ve ürün pilotuna hazırlık",
+      "status": "in_progress",
+      "depends_on": ["P02", "P03", "P04"],
+      "completed_or_verified_subtasks": ["P05-CORPUS01"],
+      "closeout_document": "docs/p05-corpus-foundation-closeout.md",
+      "remaining_work": [
+        "representative musical fixture/piece-set expansion with provenance",
+        "task-level teacher acceptance criteria and correction workflow metrics",
+        "real teacher pilot evidence",
+        "physical iPhone/iPad/desktop device evidence",
+        "pilot acceptance thresholds and release-gate synthesis"
+      ],
+      "safety_rule": "CI/browser evidence cannot be promoted into teacher or physical-device PASS"
+    },
     {"id": "P06", "title": "Sürümlenmiş SDK ve genel entegrasyon örneği", "status": "pending", "depends_on": ["P02", "P04"], "remaining_work": ["public API", "version/error/migration", "host lifecycle", "generic third-party integration without product-specific coupling"]},
     {"id": "P07", "title": "Kaynak görüntü ve düzeltme kökeni", "status": "pending", "depends_on": ["P04"], "remaining_work": ["immutable provenance", "source-region mapping", "before-after trace"]},
     {"id": "P08", "title": "AI öneri sözleşmesi ve kurallara karşı deney", "status": "pending", "depends_on": ["P01", "P07"], "remaining_work": ["proposal schema/dry-run/stale revision", "rules baseline", "optional narrow model"]},
@@ -240,26 +288,29 @@
       "PASS/FAIL/BLOCKED/NOT_RUN ayrı tutulur.",
       "Exact SHA ve CI/run kaydedilir.",
       "Eski yeşil CI yeni HEAD'e taşınmaz.",
-      "WebKit/browser otomasyonu fiziksel cihaz PASS değildir."
+      "WebKit/browser otomasyonu fiziksel cihaz PASS değildir.",
+      "CI/automation öğretmen-pilot PASS değildir."
     ]
   },
   "execution_state": {
-    "status": "P04_CODE_COMPLETE_VERIFIED_PR_OPEN",
-    "verified_code_head": "ac0d99776edced34ff2ecacddfd7c45096646430",
-    "verified_code_ci": 34099830414,
+    "status": "P05_CORPUS_FOUNDATION_VERIFIED_PR_OPEN",
+    "verified_code_head": "8ed79315bb13857b527484ec7fff0a044a9c5d81",
+    "verified_code_ci": 34104094125,
     "canonical_plan_path": "docs/st-score-editor-autonomous-roadmap.json",
-    "current_task_id": "P05-BOUNDARY",
-    "next_action": "Fresh-read P05 corpus/pilot paths and establish a representative deterministic MusicXML/teacher evidence corpus with provenance and measurable acceptance criteria. Do not turn physical-device evidence into CI fiction; device matrix remains explicit release/pilot work. Keep SesliTab/Smoosic scope closed.",
+    "current_task_id": "P05-CORPUS02",
+    "next_action": "Expand the representative musical fixture/piece set with explicit provenance and define task-level teacher correction metrics. Keep teacher/device rows NOT_RUN until real observed sessions occur; do not infer physical-device PASS from WebKit or teacher PASS from CI. Keep SesliTab/Smoosic scope closed.",
     "completed_task_ids": [
       "P00", "P01-AUDIT-01", "P01",
       "P02-SEL01", "P02-COPY01", "P02-PASTE01", "P02-ID01", "P02-PASTE02", "P02-PASTE03", "P02-APP01",
       "P02-TRANSPOSE01", "P02-TRANSPOSE02", "P02-TRANSPOSE03", "P02-TRANSPOSE04",
       "P02-INSERT01", "P02-INSERT02", "P02-INSERT03", "P02-INSERT04", "P02-BROWSER01", "P02-CLOSEOUT",
       "P03-MOBILE01", "P03-VIEWPORT01", "P03-PERF01", "P03-BUNDLE01", "P03-CLOSEOUT",
-      "P04-CAP01", "P04-CLOSEOUT"
+      "P04-CAP01", "P04-CLOSEOUT",
+      "P05-CORPUS01"
     ],
     "blockers": [
-      {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143/#144/#145 açık; merge yetkisi yok."},
+      {"kind": "MERGE_AUTHORITY", "reason": "#141/#142/#143/#144/#145/#146 açık; merge yetkisi yok."},
+      {"kind": "TEACHER_PILOT_EVIDENCE_GATE", "reason": "Gerçek öğretmen pilot oturumu henüz çalıştırılmadı; teacher PASS = 0."},
       {"kind": "PHYSICAL_DEVICE_RELEASE_GATE", "reason": "Gerçek cihaz matrisi tamamlanmadı; browser/CI kanıtı fiziksel cihaz PASS sayılmaz."}
     ],
     "decision_log": [
@@ -269,13 +320,16 @@
       {"date": "2026-09-07", "decision": "P03 mobile teacher composition mevcut viewport-enabled state'ini reuse eder; ikinci presentation viewport state'i oluşturmaz.", "reason": "Tek controller/presentation state sadeleşir ve gereksiz bundle tekrarı önlenir."},
       {"date": "2026-09-07", "decision": "Standalone bundle bütçesi 512 KiB'den 528 KiB'ye bounded rebaseline edildi.", "reason": "Tamamlanmış P02 teacher workflow'u global üründe taşımak yaklaşık 65 KiB gerçek yetenek ekledi; fail-closed doğrulamayı veya tamamlanmış özelliği budamak yerine yalnız +16 KiB kontrollü headroom verildi. Release authority değişmedi."},
       {"date": "2026-09-07", "decision": ".mxl current standalone build'de açık unsupported capability olarak sınıflandırıldı; ZIP gibi text MusicXML okunmuyor.", "reason": "Sessiz yanlış parse yerine typed capability sınırı korunur; yeni decompression dependency ve archive-security yüzeyi ayrı inceleme olmadan eklenmez."},
-      {"date": "2026-09-07", "decision": "Kaynak/open/output capability hatası güvenli yerel canonical edit/history authority'sini global olarak bloklamaz.", "reason": "Başarısız open canlı belge/file association'ı değiştirmez; EXPORT_UNAVAILABLE sonrası yerel edit ve unified Undo devam eder."}
+      {"date": "2026-09-07", "decision": "Kaynak/open/output capability hatası güvenli yerel canonical edit/history authority'sini global olarak bloklamaz.", "reason": "Başarısız open canlı belge/file association'ı değiştirmez; EXPORT_UNAVAILABLE sonrası yerel edit ve unified Undo devam eder."},
+      {"date": "2026-09-07", "decision": "P05 kanıt sınıfları AUTOMATED, TEACHER_PILOT ve PHYSICAL_DEVICE olarak runtime'da ayrıldı.", "reason": "CI/WebKit veya sentetik fixture gerçek öğretmen/cihaz PASS olarak raporlanamaz."},
+      {"date": "2026-09-07", "decision": "P05 corpus metadata external training ve production release authority veremez.", "reason": "Kanıt/veri kaydı ayrı insan kapılarını aşan yetki kaynağı olamaz."}
     ],
     "change_log": [
       {"revision": 14, "date": "2026-09-06", "description": "P02-BROWSER01 ve bounded teacher-workflow baseline doğrulandı."},
       {"revision": 15, "date": "2026-09-07", "description": "P03-MOBILE01 semantic mobile teacher toolbar doğrulandı."},
       {"revision": 16, "date": "2026-09-07", "description": "P03-VIEWPORT01, P03-PERF01 ve P03-BUNDLE01 doğrulandı; duplicate viewport state kaldırıldı, mevcut viewport reuse edildi, teacher/mobile global superset bundle bounded 528 KiB bütçe altında PASS oldu; P03 code-complete, physical-device gate açık kaldı."},
-      {"revision": 17, "date": "2026-09-07", "description": "P04-CAP01 doğrulandı: 32 MiB text MusicXML sınırı ve APP-05 recovery zinciri korundu; .mxl explicit unsupported capability oldu; failed open canlı belge/file association'ı koruyor; export capability failure local edit/Undo'yu bloklamıyor; P04 code-complete, gerçek .mxl ZIP ve geniş output projeksiyonu deferred kaldı."}
+      {"revision": 17, "date": "2026-09-07", "description": "P04-CAP01 doğrulandı: 32 MiB text MusicXML sınırı ve APP-05 recovery zinciri korundu; .mxl explicit unsupported capability oldu; failed open canlı belge/file association'ı koruyor; export capability failure local edit/Undo'yu bloklamıyor; P04 code-complete, gerçek .mxl ZIP ve geniş output projeksiyonu deferred kaldı."},
+      {"revision": 18, "date": "2026-09-07", "description": "P05-CORPUS01 doğrulandı: provenance/evidence corpus contract ve deterministik metrikler eklendi; runtime enum/envelope hardening PASS; baseline 3 automated PASS + 1 teacher NOT_RUN + 2 physical-device NOT_RUN olarak truthfully kaydedildi; P05 gerçek öğretmen/cihaz evidence gate nedeniyle in-progress kaldı."}
     ]
   },
   "continuation_rules": {

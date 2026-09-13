@@ -1,0 +1,120 @@
+{
+  "version": "1.0.0",
+  "kind": "TEACHER_PILOT_CORPUS_INPUT",
+  "cases": [
+    {
+      "id": "p05-auto-file-isolation-01",
+      "title": "Failed or unsupported MusicXML open preserves active work",
+      "capabilities": ["musicxml-open", "file-isolation", "recovery-boundary"],
+      "provenance": {
+        "sourceKind": "REPOSITORY_FIXTURE",
+        "sourceRef": "P04-CAP01:test-fixtures",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "verification": {
+        "level": "AUTOMATED",
+        "outcome": "PASS",
+        "observer": "AUTOMATION",
+        "evidenceRef": "ci:34099830414:P04-CAP01",
+        "device": null
+      }
+    },
+    {
+      "id": "p05-auto-teacher-history-01",
+      "title": "Bounded teacher commands preserve unified history authority",
+      "capabilities": ["teacher-copy-paste", "teacher-insert", "octave-transpose", "undo-redo"],
+      "provenance": {
+        "sourceKind": "SYNTHETIC_FIXTURE",
+        "sourceRef": "P02:bounded-teacher-workflow-fixtures",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "verification": {
+        "level": "AUTOMATED",
+        "outcome": "PASS",
+        "observer": "AUTOMATION",
+        "evidenceRef": "ci:34058147502:P02-bounded-baseline",
+        "device": null
+      }
+    },
+    {
+      "id": "p05-auto-mobile-contract-01",
+      "title": "Mobile teacher composition preserves semantic authority",
+      "capabilities": ["mobile-toolbar", "semantic-selection", "viewport"],
+      "provenance": {
+        "sourceKind": "SYNTHETIC_FIXTURE",
+        "sourceRef": "P03:mobile-teacher-browser-fixtures",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "verification": {
+        "level": "AUTOMATED",
+        "outcome": "PASS",
+        "observer": "AUTOMATION",
+        "evidenceRef": "ci:34096327856:P03-BUNDLE01",
+        "device": null
+      }
+    },
+    {
+      "id": "p05-teacher-pilot-workflow-01",
+      "title": "Teacher completes a bounded correction workflow without data loss",
+      "capabilities": ["teacher-copy-paste", "teacher-insert", "octave-transpose", "undo-redo", "musicxml-save"],
+      "provenance": {
+        "sourceKind": "REPOSITORY_FIXTURE",
+        "sourceRef": "P05:pilot-piece-set:teacher-workflow-01",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "verification": {
+        "level": "TEACHER_PILOT",
+        "outcome": "NOT_RUN",
+        "observer": "NONE",
+        "evidenceRef": null,
+        "device": null
+      }
+    },
+    {
+      "id": "p05-device-iphone-safari-01",
+      "title": "Physical iPhone Safari editing and viewport workflow",
+      "capabilities": ["mobile-touch", "mobile-toolbar", "viewport", "undo-redo"],
+      "provenance": {
+        "sourceKind": "REPOSITORY_FIXTURE",
+        "sourceRef": "P05:pilot-piece-set:mobile-01",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "verification": {
+        "level": "PHYSICAL_DEVICE",
+        "outcome": "NOT_RUN",
+        "observer": "NONE",
+        "evidenceRef": null,
+        "device": null
+      }
+    },
+    {
+      "id": "p05-device-ipad-safari-01",
+      "title": "Physical iPad Safari editing and viewport workflow",
+      "capabilities": ["mobile-touch", "mobile-toolbar", "viewport", "musicxml-open", "musicxml-save"],
+      "provenance": {
+        "sourceKind": "REPOSITORY_FIXTURE",
+        "sourceRef": "P05:pilot-piece-set:tablet-01",
+        "rightsStatus": "REPOSITORY_OWNED",
+        "containsPersonalData": false,
+        "externalTrainingAuthorized": false
+      },
+      "verification": {
+        "level": "PHYSICAL_DEVICE",
+        "outcome": "NOT_RUN",
+        "observer": "NONE",
+        "evidenceRef": null,
+        "device": null
+      }
+    }
+  ]
+}
