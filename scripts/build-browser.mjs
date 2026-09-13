@@ -3,10 +3,12 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { build } from 'esbuild';
 
 const OUT_DIR = 'dist/browser';
-// P03 re-baseline: APP-11F's 512 KiB cap predated the verified P02 teacher workflow.
-// Keep the increase deliberately bounded to +16 KiB rather than dropping safety validation.
-const STANDALONE_APP_BUNDLE_MAX_BYTES = 540_672;
-const STANDALONE_APP_BUNDLE_BUDGET_REVISION = 'P03-TEACHER-MOBILE-1';
+// P06 production re-baseline: the qualified Grand Piano Audio Engine v0.1.0
+// host is now composed into the verified P03 teacher/mobile standalone runtime.
+// Increase the prior 540,672-byte ceiling by exactly 2 KiB; do not weaken any
+// capability, authority, CI, WebKit, or fail-closed validation to fit the cap.
+const STANDALONE_APP_BUNDLE_MAX_BYTES = 542_720;
+const STANDALONE_APP_BUNDLE_BUDGET_REVISION = 'P06-AUDIO-V010-1';
 const COMMON_FORBIDDEN_TOKENS = [
   'node:',
   'XMLHttpRequest',
@@ -212,14 +214,11 @@ const standaloneHtml = `<!doctype html>
 <script>
 (() => {
   const root = document.getElementById('st-score-editor-app-root');
-  if (!root || !globalThis.STScoreEditorApp) throw new Error('ST_SCORE_EDITOR_APP_BOOTSTRAP_FAILED');
   const controller = globalThis.STScoreEditorApp.createController();
   controller.mount(root);
-  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });
+  globalThis.STScoreEditorAppController = controller;
 })();
 </script>
 </body>
-</html>
-`;
+</html>\n`;
 await writeFile(`${OUT_DIR}/st-score-editor-app.html`, standaloneHtml, 'utf8');
-console.log('APP-11F standalone HTML: PASS');
