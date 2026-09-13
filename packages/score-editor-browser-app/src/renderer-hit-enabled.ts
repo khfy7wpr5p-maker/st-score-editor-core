@@ -16,12 +16,18 @@ import {
   type RenderedScoreMeasureRefV4,
   type RenderedScoreNoteRefV4
 } from '../../editor-renderer-selection-bridge-v4/src/index.js';
+import {
+  GENERIC_RENDERED_EVENT_TARGET_VERSION,
+  resolveRenderedScoreEventRefAddressV4
+} from '../../editor-renderer-selection-bridge-v4/src/generic-rendered-event.js';
 
-export const RENDERER_HIT_ENABLED_BROWSER_APP_VERSION = '1.0.0' as const;
+export const RENDERER_HIT_ENABLED_BROWSER_APP_VERSION = '1.1.0' as const;
 
 export const rendererHitEnabledBrowserAppProfile = Object.freeze({
   ...rendererEnabledBrowserAppProfile,
   semanticRendererHitBridgeBundled: true,
+  genericRenderedEventTargetingBundled: true,
+  genericRenderedEventTargetVersion: GENERIC_RENDERED_EVENT_TARGET_VERSION,
   rendererHitCanonicalInput: 'opaque-renderer-request-v4-manifest-token' as const,
   rendererDomSvgCoordinateAuthority: false
 });
@@ -30,6 +36,7 @@ export type RendererSemanticHitBridgeControllerErrorCode =
   | 'NO_CURRENT_RENDER_PRESENTATION'
   | 'RENDERER_PRESENTATION_MISMATCH'
   | 'RENDERED_NOTE_UNMAPPED'
+  | 'RENDERED_EVENT_UNMAPPED'
   | 'SELECTION_REJECTED';
 
 export class RendererSemanticHitBridgeControllerError extends Error {
@@ -48,6 +55,7 @@ export interface RendererHitEnabledStandaloneScoreEditorController extends Omit<
   readonly profile: typeof rendererHitEnabledBrowserAppProfile;
   readonly selectRendererHit: (rawHit: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly selectRenderedScoreNoteRef: (rawRef: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly selectRenderedScoreEventRef: (rawRef: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly resolveRenderedScoreNoteRef: (address: SemanticAddressV3) => Readonly<RenderedScoreNoteRefV4> | null;
   readonly resolveRenderedScoreMeasureRef: (address: SemanticAddressV3) => Readonly<RenderedScoreMeasureRefV4> | null;
 }
@@ -90,9 +98,10 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
     return Object.freeze({ document, score, request });
   };
 
-  const selectRendererHit = (rawHit: unknown): Readonly<ScoreEditorBrowserAppSnapshot> => {
-    const current = requireCurrentPresentation();
-    const address = resolveExternalRendererHitV4(current.score, current.request, rawHit);
+  const selectCurrentAddress = (
+    current: ReturnType<typeof requireCurrentPresentation>,
+    address: SemanticAddressV3
+  ): Readonly<ScoreEditorBrowserAppSnapshot> => {
     const beforeRevisionId = current.score.revision.id;
     const beforePastLength = current.document.session.history.past.length;
     const beforeFutureLength = current.document.session.history.future.length;
@@ -114,6 +123,12 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
     return result;
   };
 
+  const selectRendererHit = (rawHit: unknown): Readonly<ScoreEditorBrowserAppSnapshot> => {
+    const current = requireCurrentPresentation();
+    const address = resolveExternalRendererHitV4(current.score, current.request, rawHit);
+    return selectCurrentAddress(current, address);
+  };
+
   const controller: RendererHitEnabledStandaloneScoreEditorController = Object.freeze({
     ...base,
     profile: rendererHitEnabledBrowserAppProfile,
@@ -127,7 +142,19 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
           'RENDERED_NOTE_UNMAPPED'
         );
       }
-      return selectRendererHit(hit);
+      const address = resolveExternalRendererHitV4(current.score, current.request, hit);
+      return selectCurrentAddress(current, address);
+    },
+    selectRenderedScoreEventRef: (rawRef: unknown) => {
+      const current = requireCurrentPresentation();
+      const address = resolveRenderedScoreEventRefAddressV4(current.score, current.request, rawRef);
+      if (address === null) {
+        throw new RendererSemanticHitBridgeControllerError(
+          'Rendered NOTE/REST locator did not resolve exactly to a current SemanticAddressV3 target.',
+          'RENDERED_EVENT_UNMAPPED'
+        );
+      }
+      return selectCurrentAddress(current, address);
     },
     resolveRenderedScoreNoteRef: (address: SemanticAddressV3) => {
       const current = requireCurrentPresentation();
@@ -150,6 +177,7 @@ export const createRendererHitEnabledStandaloneBrowserAppRuntime = () => {
     renderer: Object.freeze({
       ...base.renderer,
       semanticHitBridgeVersion: EDITOR_RENDERER_SELECTION_BRIDGE_V4_VERSION,
+      genericRenderedEventTargetVersion: GENERIC_RENDERED_EVENT_TARGET_VERSION,
       hitCanonicalInput: 'opaque-renderer-request-v4-manifest-token' as const,
       domSvgCoordinateAuthority: false
     })
