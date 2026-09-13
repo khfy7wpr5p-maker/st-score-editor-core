@@ -209,7 +209,7 @@ const resultFromSnapshot = (
   return success(snapshot(controller));
 };
 
-const resultFromThrown = <T>(error: unknown): Readonly<ScoreEditorSdkResultV1<T>> => {
+const resultFromThrown = (error: unknown): Readonly<ScoreEditorSdkResultV1<never>> => {
   const record = error !== null && typeof error === 'object'
     ? error as { readonly code?: unknown; readonly message?: unknown }
     : null;
