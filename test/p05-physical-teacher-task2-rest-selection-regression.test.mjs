@@ -5,8 +5,8 @@ import { readFile } from 'node:fs/promises';
 import {
   openMusicXmlScoreEditorAppDocument,
   selectAppSemanticAddress
-} from '../packages/score-editor-app-document/dist/index.js';
-import { addressEntityV3 } from '../packages/addressing-v3/dist/index.js';
+} from '../dist/packages/score-editor-app-document/src/index.js';
+import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 
 const fixturePath = new URL('../corpus/fixtures/p05-synthetic-teacher-edit.musicxml', import.meta.url);
 
