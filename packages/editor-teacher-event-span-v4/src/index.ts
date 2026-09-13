@@ -1,5 +1,6 @@
 import {
   addressEntityV3,
+  createSemanticAddressIndexV3,
   resolveSemanticAddressV3,
   type EventAddressV3
 } from '../../addressing-v3/src/index.js';
@@ -111,6 +112,7 @@ export const createTeacherEventSpanSelectionV4 = (
   const score = createScoreDocumentV3(scoreInput);
   const start = validateEndpoint(score, startInput, 'start');
   const stop = validateEndpoint(score, stopInput, 'stop');
+  const semanticAddressIndex = createSemanticAddressIndexV3(score);
 
   if (start.eventId === stop.eventId) {
     throw new TeacherEventSpanSelectionV4Error(
@@ -224,8 +226,8 @@ export const createTeacherEventSpanSelectionV4 = (
     measureIds.push(measure.id);
     frameIds.push(measure.frameId);
     for (const event of segment) {
-      const address = addressEntityV3(score, event.id);
-      if (address.kind !== 'event') {
+      const address = semanticAddressIndex.byEntityId.get(event.id);
+      if (address?.kind !== 'event') {
         throw new TeacherEventSpanSelectionV4Error(
           'Teacher event span encountered a non-event semantic target.',
           'STALE_ENDPOINT',
