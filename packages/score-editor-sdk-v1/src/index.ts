@@ -1,4 +1,4 @@
-import type { SemanticAddressV3 } from '../../addressing-v3/src/index.js';
+import { addressEntityV3, type SemanticAddressV3 } from '../../addressing-v3/src/index.js';
 import type { EditorKeypadAction } from '../../editor-keypad/src/index.js';
 import type { EditorKeypadV4Options } from '../../editor-keypad-execution-v4/src/index.js';
 import type {
@@ -66,6 +66,11 @@ export interface ScoreEditorSdkSnapshotV1 {
   readonly historyFutureCount: number;
   readonly statusCode: string;
   readonly statusMessage: string;
+}
+
+export interface ScoreEditorSdkSemanticTargetV1 {
+  readonly entityKind: 'event' | 'note';
+  readonly address: SemanticAddressV3;
 }
 
 export type ScoreEditorSdkErrorCodeV1 =
@@ -152,6 +157,7 @@ export interface ScoreEditorSdkV1 {
     exportMusicXml: (expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => Readonly<ScoreEditorSdkResultV1<string>>;
   }>;
   readonly selection: Readonly<{
+    listTargets: (expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => Readonly<ScoreEditorSdkResultV1<readonly Readonly<ScoreEditorSdkSemanticTargetV1>[]>>;
     select: (
       address: SemanticAddressV3 | null,
       expected: Readonly<ScoreEditorSdkRevisionGuardV1>
@@ -223,6 +229,33 @@ const guard = (controller: StandaloneScoreEditorController): Readonly<ScoreEdito
     documentId: document.session.history.present.score.id,
     revisionId: document.session.history.present.score.revision.id
   });
+};
+
+const semanticTargets = (controller: StandaloneScoreEditorController): readonly Readonly<ScoreEditorSdkSemanticTargetV1>[] => {
+  const document = controller.getDocument();
+  if (document === null) return Object.freeze([]);
+  const score = document.session.history.present.score;
+  const targets: Readonly<ScoreEditorSdkSemanticTargetV1>[] = [];
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      if (staff.role === 'tablature-linked') continue;
+      for (const measure of staff.measures) {
+        for (const voice of measure.voices) {
+          for (const event of voice.events) {
+            targets.push(Object.freeze({ entityKind: 'event', address: addressEntityV3(score, event.id) }));
+            if (event.kind === 'note') {
+              targets.push(Object.freeze({ entityKind: 'note', address: addressEntityV3(score, event.note.id) }));
+            } else if (event.kind === 'chord') {
+              for (const note of event.notes) {
+                targets.push(Object.freeze({ entityKind: 'note', address: addressEntityV3(score, note.id) }));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return Object.freeze(targets);
 };
 
 const guardFailure = (
@@ -488,6 +521,13 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
       }
     }),
     selection: Object.freeze({
+      listTargets: (expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
+        const rejected = guardFailure(controller, expected);
+        if (rejected !== null) return rejected;
+        return success(semanticTargets(controller));
+      },
       select: (address: SemanticAddressV3 | null, expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => {
         const disposed = disposedFailure();
         if (disposed !== null) return disposed;
