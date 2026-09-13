@@ -1,0 +1,164 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "P06_SDK_DEVELOPMENT_HANDOFF",
+  "project": "st-score-editor-core",
+  "date": "2026-09-13",
+  "phase": "P06 reusable SDK / integration contract",
+  "status": "HANDOFF_CANDIDATE_FINAL_EXACT_HEAD_VALIDATION_REQUIRED",
+  "authority": {
+    "canonical_score": "ScoreDocumentV3 + NotationDocumentV4",
+    "history": "EditorSessionV4",
+    "semantic_identity": "SemanticAddressV3",
+    "sdk_is_canonical_authority": false,
+    "renderer_is_canonical_authority": false,
+    "audio_is_canonical_authority": false,
+    "network_authority": false,
+    "server_revision_authority": false,
+    "publication_authority": false
+  },
+  "public_contract": {
+    "sdk_version": "1.0.0",
+    "negotiation_version": "1.0.0",
+    "public_entry": "packages/score-editor-sdk-v1/public.ts",
+    "public_modules": [
+      "./src/index.js",
+      "./version-negotiation.js",
+      "./rollout.js"
+    ],
+    "base_capabilities": {
+      "document": true,
+      "history": true,
+      "selection": true,
+      "authoring": true
+    },
+    "optional_capabilities": [
+      "renderer",
+      "files",
+      "recovery",
+      "playback",
+      "teacherWorkflow",
+      "audioAudition"
+    ],
+    "revision_guard_required_for_existing_document_operations": true,
+    "silent_version_fallback": false,
+    "breaking_1_x_changes_allowed_without_separate_approval": false
+  },
+  "lifecycle": {
+    "mount": "presentation host attachment only",
+    "update": "presentation refresh only",
+    "unmount": "reusable host detachment",
+    "dispose": "terminal idempotent SDK cleanup",
+    "post_dispose_mutation": "fail_closed",
+    "lifecycle_creates_history_revision": false,
+    "host_or_listener_failure_invalidates_successful_canonical_edit": false
+  },
+  "rollout": {
+    "version": "1.0.0",
+    "all_optional_flags_default_off": true,
+    "enable_rule": "feature_flag_true AND sdk_capability_available",
+    "states": [
+      "ENABLED",
+      "FLAG_DISABLED",
+      "CAPABILITY_UNAVAILABLE"
+    ],
+    "flag_can_manufacture_capability": false,
+    "inspection_mutates_canonical_history": false
+  },
+  "stages": [
+    {
+      "id": "P06-A",
+      "status": "PASS",
+      "pull_request": 154,
+      "summary": "Existing integration surfaces and authority boundaries inventoried; standalone V4 controller selected as reuse base."
+    },
+    {
+      "id": "P06-B",
+      "status": "PASS",
+      "pull_request": 155,
+      "verified_head": "25861c66c2762f8226f529b5860f72643b600eaa",
+      "summary": "Versioned capability-driven generic SDK with typed results, revision guards and no second score/history authority."
+    },
+    {
+      "id": "P06-C",
+      "status": "PASS",
+      "pull_request": 156,
+      "verified_head": "9ccf5922a927ee2fd272416d2c6a375b5e38396b",
+      "summary": "Deterministic generic host lifecycle with reusable unmount, terminal idempotent dispose and callback-failure isolation."
+    },
+    {
+      "id": "P06-D",
+      "status": "PASS",
+      "pull_request": 157,
+      "verified_head": "51fe560f3d6d5f1e08354b5b4a1d9c291a05ca1c",
+      "summary": "Neutral third-party example uses only the public SDK entry and demonstrates open/select/edit/undo with capability-local degradation."
+    },
+    {
+      "id": "P06-E",
+      "status": "PASS",
+      "pull_request": 158,
+      "validation_pull_request": 159,
+      "verified_head": "fee469cc0d000bc8f9b791bafc4a11728bc9f939",
+      "summary": "Version negotiation, conformance and additive migration rules; cumulative A-E Node and WebKit/P05 regression gates passed."
+    },
+    {
+      "id": "P06-F",
+      "status": "BLOCKED_EXTERNAL_DISTRIBUTION_GATE",
+      "pull_request": 160,
+      "verified_head": "f53edc8cf7195efc9e183de8d8ae228e4beffdaa",
+      "summary": "Audio integration intentionally not activated because upstream source packages are versioned but no immutable release/tag distribution identity is published."
+    },
+    {
+      "id": "P06-G",
+      "status": "PASS",
+      "pull_request": 161,
+      "verified_head": "13599036f2a9cdf8d17d6313a4d6ee939d061520",
+      "summary": "Optional integration rollout flags default off and cannot enable an unavailable capability."
+    },
+    {
+      "id": "P06-H",
+      "status": "IN_PROGRESS_FINAL_EXACT_HEAD_VALIDATION_REQUIRED",
+      "summary": "Documentation, durable handoff, rollback and remaining-gate record."
+    }
+  ],
+  "audio_gate": {
+    "upstream_repository": "khfy7wpr5p-maker/st-score-audio-engine",
+    "verified_upstream_head": "779a0d9c3c3cb8d91607d3e96c60554d47de1a27",
+    "source_contract_package": "@st/score-audio-contracts@0.1.0",
+    "source_web_package": "@st/score-audio-web@0.1.0",
+    "github_release_observed": false,
+    "git_tag_observed": false,
+    "editor_core_audio_dependency_added_by_p06": false,
+    "local_parallel_audition_contract_added_by_p06": false,
+    "physical_iphone_audio_pass_claimed": false,
+    "unblock_requires_immutable_published_distribution_identity": true
+  },
+  "frozen_boundaries": {
+    "seslitab_or_smoosic_changes_in_p06": false,
+    "renderer_dependency_repin_in_p06": false,
+    "force_push_or_destructive_rebase_in_p06": false,
+    "protected_branch_merge_authorized": false,
+    "production_release_authorized": false,
+    "production_cutover_authorized": false
+  },
+  "remaining_human_or_external_gates": [
+    "Publish and independently verify immutable ST Score Audio Engine distribution identity before P06-F activation.",
+    "Run and record physical iPhone Safari audio evidence separately; automated WebKit is not physical-speaker evidence.",
+    "Complete remaining teacher physical tasks/pilot evidence that were not executed by P06.",
+    "Obtain explicit approval before protected-branch merge, production release, deployment or SesliTab cutover."
+  ],
+  "rollback": {
+    "strategy": "Keep P06 as an unmerged stacked draft-PR chain; optional flags remain default-off.",
+    "audio": "Leave audioAudition capability unavailable until the external gate opens.",
+    "host_integration": "A host can decline the SDK contract or keep optional flags disabled without changing canonical score/history semantics.",
+    "destructive_history_rewrite_required": false
+  },
+  "final_validation": {
+    "required_on_exact_p06_h_head": [
+      "Node 18 core CI",
+      "Node 20 core CI",
+      "Node 22 core CI",
+      "APP-09B/P05 WebKit regression through validation-only PR"
+    ],
+    "physical_device_pass_inferred_from_automated_validation": false
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "stage": "P06-F2",
+  "status": "IN_PROGRESS",
+  "upstream": {
+    "repository": "khfy7wpr5p-maker/st-score-audio-engine",
+    "release": "v0.1.0",
+    "commit": "d11a2dd9141169ddfec5901f3cadc4cce0d7b345",
+    "contracts": "@st/score-audio-contracts@0.1.0",
+    "runtime": "@st/score-audio-web@0.1.0"
+  },
+  "requirements": {
+    "no_contract_duplication": true,
+    "revision_bound": true,
+    "default_off": true,
+    "noncanonical": true,
+    "exact_head_ci_required": true,
+    "webkit_required": true
+  },
+  "merge_authorized": false,
+  "release_authorized": false,
+  "deployment_authorized": false,
+  "seslitab_cutover_authorized": false
+}

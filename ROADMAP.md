@@ -170,9 +170,6 @@ The release manifest deliberately remains:
 ```text
 manualDeviceValidationRequired = true
 standaloneReleaseGatePassed = false
-seslitabCutoverAuthorized = false
 ```
 
 Required physical release targets remain real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox. iPad Safari remains secondary. Automated WebKit regression is not physical-device evidence.
-
-SesliTab is outside this core-development track and is not an architectural dependency.

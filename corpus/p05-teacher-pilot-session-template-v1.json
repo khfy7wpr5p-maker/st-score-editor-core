@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "kind": "TEACHER_PILOT_SESSION",
+  "status": "PREPARED",
+  "sessionId": null,
+  "observerRole": "TEACHER",
+  "startedAt": null,
+  "completedAt": null,
+  "evidenceRef": null,
+  "deviceContext": {
+    "hardware": null,
+    "platform": null,
+    "osVersion": null,
+    "browser": null,
+    "browserVersion": null,
+    "physicalDeviceEvidenceClaim": false
+  },
+  "tasks": [
+    {
+      "taskId": "p05-task-polyphony-inspection",
+      "outcome": "NOT_RUN",
+      "elapsedMs": null,
+      "canonicalCommitCount": null,
+      "undoCount": null,
+      "redoCount": null,
+      "taskCompleted": null,
+      "teacherAcceptedFinalResult": null,
+      "dataLossObserved": null,
+      "notes": null
+    },
+    {
+      "taskId": "p05-task-copy-paste-undo",
+      "outcome": "NOT_RUN",
+      "elapsedMs": null,
+      "canonicalCommitCount": null,
+      "undoCount": null,
+      "redoCount": null,
+      "taskCompleted": null,
+      "teacherAcceptedFinalResult": null,
+      "dataLossObserved": null,
+      "notes": null
+    },
+    {
+      "taskId": "p05-task-two-staff-inspection",
+      "outcome": "NOT_RUN",
+      "elapsedMs": null,
+      "canonicalCommitCount": null,
+      "undoCount": null,
+      "redoCount": null,
+      "taskCompleted": null,
+      "teacherAcceptedFinalResult": null,
+      "dataLossObserved": null,
+      "notes": null
+    }
+  ],
+  "teacherPilotPassClaim": false,
+  "physicalDevicePassClaim": false,
+  "productionReleaseAuthority": false,
+  "externalTrainingAuthority": false
+}

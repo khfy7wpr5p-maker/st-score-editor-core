@@ -100,7 +100,7 @@ try {
   });
   if (deleted.kind !== 'rest' || deleted.past !== 4) throw new Error(`APP-10F delete mismatch: ${JSON.stringify(deleted)}`);
 
-  await page.getByRole('button', { name: 'Undo' }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   const undo = await page.evaluate(() => {
     const d = globalThis.STScoreEditorAppController.getDocument();
     const event = d.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events[0];

@@ -1,6 +1,8 @@
 export const SCORE_EDITOR_BROWSER_FILE_WORKFLOW_VERSION = '1.0.0' as const;
 export const MAX_LOCAL_MUSICXML_BYTES = 32 * 1024 * 1024;
 export const MUSICXML_MIME_TYPE = 'application/vnd.recordare.musicxml+xml' as const;
+export const SUPPORTED_TEXT_MUSICXML_EXTENSIONS = Object.freeze(['.musicxml', '.xml'] as const);
+export const UNSUPPORTED_COMPRESSED_MUSICXML_EXTENSIONS = Object.freeze(['.mxl'] as const);
 
 export interface BrowserMusicXmlFileLike {
   readonly name: string;
@@ -72,6 +74,7 @@ export interface BrowserMusicXmlDownloadArtifact {
 
 export type BrowserFileWorkflowErrorCode =
   | 'UNSUPPORTED_FILE_TYPE'
+  | 'COMPRESSED_MUSICXML_UNSUPPORTED'
   | 'FILE_TOO_LARGE'
   | 'PICKER_UNAVAILABLE'
   | 'PICKER_RESULT_INVALID'
@@ -93,6 +96,7 @@ export class BrowserFileWorkflowError extends Error {
 
 const encoder = new TextEncoder();
 const admittedExtension = (name: string): boolean => /\.(?:musicxml|xml)$/i.test(name);
+const compressedMusicXmlExtension = (name: string): boolean => /\.mxl$/i.test(name);
 const byteLength = (text: string): number => encoder.encode(text).byteLength;
 
 export const normalizeMusicXmlFileName = (value: string): string => {
@@ -111,11 +115,21 @@ export const browserFileWorkflowCapabilities = (host: BrowserFileWorkflowHost = 
   savePickerAvailable: typeof host.showSaveFilePicker === 'function',
   fileInputFallbackAvailable: true,
   downloadFallbackAvailable: true,
+  supportedTextMusicXmlExtensions: SUPPORTED_TEXT_MUSICXML_EXTENSIONS,
+  unsupportedCompressedMusicXmlExtensions: UNSUPPORTED_COMPRESSED_MUSICXML_EXTENSIONS,
+  compressedMusicXmlOpenSupported: false,
   cloudRequired: false,
   canonicalAuthority: false
 });
 
 export const readMusicXmlBrowserFile = async (file: BrowserMusicXmlFileLike): Promise<Readonly<BrowserMusicXmlOpenResult>> => {
+  if (compressedMusicXmlExtension(file.name)) {
+    throw new BrowserFileWorkflowError(
+      'Compressed MusicXML (.mxl) is not supported by this standalone build; use .musicxml or .xml.',
+      'COMPRESSED_MUSICXML_UNSUPPORTED',
+      { fileName: file.name, supportedExtensions: SUPPORTED_TEXT_MUSICXML_EXTENSIONS }
+    );
+  }
   if (!admittedExtension(file.name)) {
     throw new BrowserFileWorkflowError('Only .musicxml and .xml files are admitted by APP-04.', 'UNSUPPORTED_FILE_TYPE', { fileName: file.name });
   }
@@ -137,7 +151,7 @@ export const pickMusicXmlBrowserFile = async (host: BrowserFileWorkflowHost = gl
     excludeAcceptAllOption: false,
     types: Object.freeze([Object.freeze({
       description: 'MusicXML score',
-      accept: Object.freeze({ [MUSICXML_MIME_TYPE]: Object.freeze(['.musicxml', '.xml']) })
+      accept: Object.freeze({ [MUSICXML_MIME_TYPE]: SUPPORTED_TEXT_MUSICXML_EXTENSIONS })
     })])
   }));
   const handle = handles[0];
@@ -163,7 +177,7 @@ export const writeMusicXmlBrowserFile = async (
       excludeAcceptAllOption: false,
       types: Object.freeze([Object.freeze({
         description: 'MusicXML score',
-        accept: Object.freeze({ [MUSICXML_MIME_TYPE]: Object.freeze(['.musicxml', '.xml']) })
+        accept: Object.freeze({ [MUSICXML_MIME_TYPE]: SUPPORTED_TEXT_MUSICXML_EXTENSIONS })
       })])
     }));
   }

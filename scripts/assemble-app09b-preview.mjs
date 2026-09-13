@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const APP09B_RENDERER_SOURCE_REVISION = '13c32eefccd5bf2c227e815aa27aae4a0583801d';
+export const APP09B_RENDERER_SOURCE_REVISION = '70c21ad73c0b2e9c71e415cc3272a10673df9d60';
 export const APP09B_OSMD_VERSION = '2.1.2';
 export const APP09B_RENDERER_CONTRACT_VERSION = '0.2.0';
 export const APP09B_PREVIEW_VERSION = '1.0.0';
@@ -113,6 +113,7 @@ const previewBootstrap = `(() => {
   frame.style.minHeight = '220px';
   frame.style.border = '0';
   frame.style.display = 'block';
+  frame.style.visibility = 'hidden';
   parking.append(frame);
 
   const nativeReplaceChildren = root.replaceChildren.bind(root);
@@ -164,7 +165,6 @@ const previewBootstrap = `(() => {
   let rendererApi = null;
   let renderEvidence = null;
   let renderTicket = 0;
-  let pendingClear = Promise.resolve();
   let lastLoadSucceeded = false;
   let lastRenderedRevision = null;
   let lastAttemptRevision = null;
@@ -204,7 +204,6 @@ const previewBootstrap = `(() => {
       license: EXPECTED.rendererLicense,
       instance: Object.freeze({
         async load(musicxml) {
-          await pendingClear;
           const ticket = String(++renderTicket);
           const result = await api.renderMusicXml({
             contractVersion: EXPECTED.rendererContractVersion,
@@ -223,12 +222,14 @@ const previewBootstrap = `(() => {
         },
         render() {
           if (!lastLoadSucceeded) throw new Error('APP09B_RENDER_WITHOUT_SUCCESSFUL_LOAD');
+          frame.style.visibility = 'visible';
         },
         clear() {
           renderEvidence = null;
           lastLoadSucceeded = false;
           lastRenderedRevision = null;
-          pendingClear = pendingClear.then(() => api.dispose()).catch(() => undefined);
+          frame.style.visibility = 'hidden';
+          mark('app09bRenderStatus', 'stale');
         }
       })
     });
