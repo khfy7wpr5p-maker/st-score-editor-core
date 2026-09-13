@@ -40,7 +40,10 @@ const readyController = async () => {
   const controller = createAudioHostIntegratedStandaloneScoreEditorController({
     store: memoryStore(), autosaveDelayMs: 60_000, sha256Hex: async () => 'a'.repeat(64)
   });
-  const opened = await controller.openMusicXml(xml, { title: 'Audio UI' });
+  const opened = await controller.openMusicXml(xml, {
+    title: 'Audio UI',
+    sha256Hex: async () => 'a'.repeat(64)
+  });
   assert.equal(opened.error, null);
   controller.attachOsmdRenderer(host());
   await controller.renderCurrent();
