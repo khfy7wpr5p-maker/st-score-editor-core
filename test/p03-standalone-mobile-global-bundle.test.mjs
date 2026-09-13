@@ -23,7 +23,7 @@ test('P03-BUNDLE01 global runtime preserves prior standalone capabilities and ad
   assert.ok(app.exportPrint);
   assert.ok(app.tripletRetimingAuthoring);
 
-  // P02/P03 additions are now in the actual standalone global runtime.
+  // P02/P03 additions remain present after the P06 qualified-audio composition.
   assert.ok(app.teacherWorkflow);
   assert.equal(app.teacherWorkflow.canonicalAuthority,false);
   assert.ok(app.mobileTeacherToolbar);
@@ -35,6 +35,8 @@ test('P03-BUNDLE01 global runtime preserves prior standalone capabilities and ad
   assert.equal(app.mobileTeacherViewport.reusesExistingViewport,true);
   assert.equal(app.mobileTeacherViewport.presentationOnly,true);
   assert.equal(app.mobileTeacherViewport.coordinateAuthoring,false);
+  assert.ok(app.audioAudition);
+  assert.deepEqual(Array.from(app.audioAudition.instruments),['GRAND_PIANO']);
 
   const controller=app.createController();
   assert.equal(Object.isFrozen(controller),true);
@@ -45,15 +47,18 @@ test('P03-BUNDLE01 global runtime preserves prior standalone capabilities and ad
   assert.equal(typeof controller.zoomIn,'function');
   assert.equal(typeof controller.panBy,'function');
   assert.equal(typeof controller.applyRetimedTripletToCapturedEvents,'function');
+  assert.equal(typeof controller.attachAudioPort,'function');
+  assert.equal(typeof controller.selectRenderedScoreNoteRefWithAudition,'function');
   assert.equal(controller.profile.releaseHardeningBundled,true);
   assert.equal(controller.profile.mobileTeacherToolbarBundled,true);
   assert.equal(controller.profile.mobileTeacherViewportBundled,true);
   assert.equal(controller.profile.mobileTeacherViewportReusesExistingViewport,true);
+  assert.equal(controller.profile.qualifiedAuditionInstrument,'GRAND_PIANO');
   assert.equal(controller.profile.canonicalAuthority,false);
   assert.equal(controller.profile.mobileTeacherViewportCanonicalAuthority,false);
 });
 
-test('P03-BUNDLE01 keeps existing release safety gates and the bounded teacher/mobile budget',async()=>{
+test('P06 production bundle keeps release safety gates with an exact +2 KiB audio budget rebaseline',async()=>{
   const bundle=await readFile(bundlePath);
   const manifest=JSON.parse(await readFile(manifestPath,'utf8'));
   assert.equal(manifest.contract,'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE');
@@ -62,8 +67,9 @@ test('P03-BUNDLE01 keeps existing release safety gates and the bounded teacher/m
   assert.equal(manifest.mobileTeacherToolbarBundled,true);
   assert.equal(manifest.mobileTeacherViewportBundled,true);
   assert.equal(manifest.mobileTeacherViewportReusesExistingViewport,true);
-  assert.equal(manifest.bundleBudgetRevision,'P03-TEACHER-MOBILE-1');
-  assert.equal(manifest.maxBytes,540672);
+  assert.equal(manifest.bundleBudgetRevision,'P06-AUDIO-V010-1');
+  assert.equal(manifest.maxBytes,542720);
+  assert.equal(manifest.maxBytes-540672,2048);
   assert.ok(bundle.byteLength<=manifest.maxBytes);
   assert.equal(manifest.manualDeviceValidationRequired,true);
   assert.equal(manifest.standaloneReleaseGatePassed,false);
