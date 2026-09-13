@@ -62,6 +62,8 @@ export interface ScoreEditorSdkSnapshotV1 {
   readonly origin: string | null;
   readonly dirty: boolean;
   readonly selectionKind: string | null;
+  readonly historyPastCount: number;
+  readonly historyFutureCount: number;
   readonly statusCode: string;
   readonly statusMessage: string;
 }
@@ -70,6 +72,11 @@ export type ScoreEditorSdkErrorCodeV1 =
   | 'NO_DOCUMENT'
   | 'STALE_REQUEST'
   | 'UNSUPPORTED_CAPABILITY'
+  | 'SDK_DISPOSED'
+  | 'SDK_ALREADY_MOUNTED'
+  | 'SDK_NOT_MOUNTED'
+  | 'SDK_HOST_INVALID'
+  | 'SDK_HOST_FAILURE'
   | 'SDK_OPERATION_FAILED';
 
 export interface ScoreEditorSdkErrorV1 {
@@ -105,6 +112,25 @@ export interface ScoreEditorSdkKeypadCommitV1 {
 
 export type ScoreEditorSdkListenerV1 = (snapshot: Readonly<ScoreEditorSdkSnapshotV1>) => void;
 
+export interface ScoreEditorSdkHostV1 {
+  readonly contractVersion: typeof SCORE_EDITOR_SDK_V1_VERSION;
+  readonly onMount: (snapshot: Readonly<ScoreEditorSdkSnapshotV1>) => void;
+  readonly onUpdate: (snapshot: Readonly<ScoreEditorSdkSnapshotV1>) => void;
+  readonly onUnmount: () => void;
+}
+
+export type ScoreEditorSdkLifecyclePhaseV1 = 'CREATED' | 'MOUNTED' | 'UNMOUNTED' | 'DISPOSED';
+
+export interface ScoreEditorSdkLifecycleStateV1 {
+  readonly version: typeof SCORE_EDITOR_SDK_V1_VERSION;
+  readonly phase: ScoreEditorSdkLifecyclePhaseV1;
+  readonly mounted: boolean;
+  readonly disposed: boolean;
+  readonly listenerErrorCount: number;
+  readonly lastListenerError: Readonly<{ readonly code: string; readonly message: string }> | null;
+  readonly lastHostError: Readonly<{ readonly code: string; readonly message: string }> | null;
+}
+
 export interface ScoreEditorSdkV1 {
   readonly version: typeof SCORE_EDITOR_SDK_V1_VERSION;
   readonly capabilities: typeof scoreEditorSdkCapabilitiesV1;
@@ -113,6 +139,13 @@ export interface ScoreEditorSdkV1 {
   readonly subscribe: (listener: ScoreEditorSdkListenerV1) => () => void;
   readonly supports: (capability: ScoreEditorSdkCapabilityIdV1) => boolean;
   readonly requireCapability: (capability: ScoreEditorSdkCapabilityIdV1) => Readonly<ScoreEditorSdkResultV1<true>>;
+  readonly lifecycle: Readonly<{
+    getState: () => Readonly<ScoreEditorSdkLifecycleStateV1>;
+    mount: (host: ScoreEditorSdkHostV1) => Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>>;
+    update: () => Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>>;
+    unmount: () => Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>>;
+    dispose: () => Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>>;
+  }>;
   readonly document: Readonly<{
     newDocument: (options?: ScoreEditorSdkNewDocumentOptionsV1) => Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkSnapshotV1>>>;
     openMusicXml: (musicXml: string, options?: ScoreEditorSdkOpenMusicXmlOptionsV1) => Promise<Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkSnapshotV1>>>>;
@@ -150,6 +183,20 @@ const failure = (
   })
 });
 
+const errorRecord = (
+  error: unknown,
+  fallbackCode: string,
+  fallbackMessage: string
+): Readonly<{ readonly code: string; readonly message: string }> => {
+  const record = error !== null && typeof error === 'object'
+    ? error as { readonly code?: unknown; readonly message?: unknown }
+    : null;
+  return Object.freeze({
+    code: typeof record?.code === 'string' && record.code.length > 0 ? record.code : fallbackCode,
+    message: typeof record?.message === 'string' && record.message.length > 0 ? record.message : fallbackMessage
+  });
+};
+
 const snapshot = (controller: StandaloneScoreEditorController): Readonly<ScoreEditorSdkSnapshotV1> => {
   const appSnapshot = controller.getSnapshot();
   const document = controller.getDocument();
@@ -162,6 +209,8 @@ const snapshot = (controller: StandaloneScoreEditorController): Readonly<ScoreEd
     origin: appSnapshot.origin,
     dirty: appSnapshot.dirty,
     selectionKind: appSnapshot.selectionKind,
+    historyPastCount: document?.session.history.past.length ?? 0,
+    historyFutureCount: document?.session.history.future.length ?? 0,
     statusCode: appSnapshot.statusCode,
     statusMessage: appSnapshot.statusMessage
   });
@@ -210,13 +259,8 @@ const resultFromSnapshot = (
 };
 
 const resultFromThrown = (error: unknown): Readonly<ScoreEditorSdkResultV1<never>> => {
-  const record = error !== null && typeof error === 'object'
-    ? error as { readonly code?: unknown; readonly message?: unknown }
-    : null;
-  return failure(
-    typeof record?.code === 'string' && record.code.length > 0 ? record.code : 'SDK_OPERATION_FAILED',
-    typeof record?.message === 'string' && record.message.length > 0 ? record.message : 'SDK operation failed.'
-  );
+  const record = errorRecord(error, 'SDK_OPERATION_FAILED', 'SDK operation failed.');
+  return failure(record.code, record.message);
 };
 
 const capabilityAvailable = (capability: ScoreEditorSdkCapabilityIdV1): boolean => {
@@ -234,15 +278,158 @@ const capabilityAvailable = (capability: ScoreEditorSdkCapabilityIdV1): boolean 
   }
 };
 
+const validHost = (host: unknown): host is ScoreEditorSdkHostV1 => {
+  if (host === null || typeof host !== 'object') return false;
+  const value = host as Partial<ScoreEditorSdkHostV1>;
+  return value.contractVersion === SCORE_EDITOR_SDK_V1_VERSION &&
+    typeof value.onMount === 'function' &&
+    typeof value.onUpdate === 'function' &&
+    typeof value.onUnmount === 'function';
+};
+
 export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
   const controller = createStandaloneScoreEditorController();
+  let phase: ScoreEditorSdkLifecyclePhaseV1 = 'CREATED';
+  let mountedHost: ScoreEditorSdkHostV1 | null = null;
+  let mountedHostUnsubscribe: (() => void) | null = null;
+  let listenerErrorCount = 0;
+  let lastListenerError: Readonly<{ readonly code: string; readonly message: string }> | null = null;
+  let lastHostError: Readonly<{ readonly code: string; readonly message: string }> | null = null;
+  const subscriptionCleanups = new Set<() => void>();
+
+  const lifecycleState = (): Readonly<ScoreEditorSdkLifecycleStateV1> => Object.freeze({
+    version: SCORE_EDITOR_SDK_V1_VERSION,
+    phase,
+    mounted: mountedHost !== null,
+    disposed: phase === 'DISPOSED',
+    listenerErrorCount,
+    lastListenerError,
+    lastHostError
+  });
+
+  const disposedFailure = (): Readonly<ScoreEditorSdkResultV1<never>> | null =>
+    phase === 'DISPOSED'
+      ? failure('SDK_DISPOSED', 'The SDK instance has been disposed and cannot perform this operation.')
+      : null;
+
+  const recordListenerError = (error: unknown): void => {
+    listenerErrorCount += 1;
+    lastListenerError = errorRecord(error, 'SDK_LISTENER_FAILURE', 'An SDK subscriber failed.');
+  };
+
+  const recordHostError = (error: unknown): Readonly<{ readonly code: string; readonly message: string }> => {
+    lastHostError = errorRecord(error, 'SDK_HOST_FAILURE', 'The SDK host callback failed.');
+    return lastHostError;
+  };
+
+  const cleanupMountedHost = (): ScoreEditorSdkHostV1 | null => {
+    const host = mountedHost;
+    mountedHostUnsubscribe?.();
+    mountedHostUnsubscribe = null;
+    mountedHost = null;
+    return host;
+  };
+
+  const safeSubscribe = (listener: ScoreEditorSdkListenerV1): (() => void) => {
+    if (phase === 'DISPOSED') return () => undefined;
+    let active = true;
+    const baseUnsubscribe = controller.subscribe(() => {
+      if (!active || phase === 'DISPOSED') return;
+      try {
+        listener(snapshot(controller));
+      } catch (error) {
+        recordListenerError(error);
+      }
+    });
+    const cleanup = (): void => {
+      if (!active) return;
+      active = false;
+      baseUnsubscribe();
+      subscriptionCleanups.delete(cleanup);
+    };
+    subscriptionCleanups.add(cleanup);
+    return cleanup;
+  };
+
+  const mountHost = (host: ScoreEditorSdkHostV1): Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>> => {
+    const disposed = disposedFailure();
+    if (disposed !== null) return disposed;
+    if (!validHost(host)) {
+      return failure('SDK_HOST_INVALID', 'The host does not implement the versioned P06 SDK host contract.');
+    }
+    if (mountedHost !== null) {
+      return failure('SDK_ALREADY_MOUNTED', 'The SDK is already mounted to a host.');
+    }
+    try {
+      host.onMount(snapshot(controller));
+    } catch (error) {
+      const recorded = recordHostError(error);
+      return failure('SDK_HOST_FAILURE', recorded.message, { causeCode: recorded.code });
+    }
+    mountedHost = host;
+    phase = 'MOUNTED';
+    mountedHostUnsubscribe = controller.subscribe(() => {
+      if (phase !== 'MOUNTED' || mountedHost !== host) return;
+      try {
+        host.onUpdate(snapshot(controller));
+      } catch (error) {
+        recordHostError(error);
+      }
+    });
+    return success(lifecycleState());
+  };
+
+  const updateHost = (): Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>> => {
+    const disposed = disposedFailure();
+    if (disposed !== null) return disposed;
+    const host = mountedHost;
+    if (host === null) return failure('SDK_NOT_MOUNTED', 'The SDK has no mounted host to update.');
+    try {
+      host.onUpdate(snapshot(controller));
+      return success(lifecycleState());
+    } catch (error) {
+      const recorded = recordHostError(error);
+      return failure('SDK_HOST_FAILURE', recorded.message, { causeCode: recorded.code });
+    }
+  };
+
+  const unmountHost = (): Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>> => {
+    const disposed = disposedFailure();
+    if (disposed !== null) return disposed;
+    const host = cleanupMountedHost();
+    phase = 'UNMOUNTED';
+    if (host === null) return success(lifecycleState());
+    try {
+      host.onUnmount();
+      return success(lifecycleState());
+    } catch (error) {
+      const recorded = recordHostError(error);
+      return failure('SDK_HOST_FAILURE', recorded.message, { causeCode: recorded.code });
+    }
+  };
+
+  const dispose = (): Readonly<ScoreEditorSdkResultV1<Readonly<ScoreEditorSdkLifecycleStateV1>>> => {
+    if (phase === 'DISPOSED') return success(lifecycleState());
+    const host = cleanupMountedHost();
+    if (host !== null) {
+      try {
+        host.onUnmount();
+      } catch (error) {
+        recordHostError(error);
+      }
+    }
+    for (const cleanup of [...subscriptionCleanups]) cleanup();
+    controller.unmount();
+    phase = 'DISPOSED';
+    return success(lifecycleState());
+  };
 
   const sdk: ScoreEditorSdkV1 = {
     version: SCORE_EDITOR_SDK_V1_VERSION,
     capabilities: scoreEditorSdkCapabilitiesV1,
     getSnapshot: () => snapshot(controller),
     getRevisionGuard: () => guard(controller),
-    subscribe: (listener) => controller.subscribe(() => { listener(snapshot(controller)); }),
+    subscribe: safeSubscribe,
     supports: capabilityAvailable,
     requireCapability: (capability) => capabilityAvailable(capability)
       ? success(true as const)
@@ -251,8 +438,17 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
           `SDK capability ${capability} is not available in this host.`,
           { capability }
         ),
+    lifecycle: Object.freeze({
+      getState: lifecycleState,
+      mount: mountHost,
+      update: updateHost,
+      unmount: unmountHost,
+      dispose
+    }),
     document: Object.freeze({
       newDocument: (options: ScoreEditorSdkNewDocumentOptionsV1 = {}) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
         const input: NewAppDocumentOptions = {
           ...(options.title === undefined ? {} : { title: options.title }),
           ...(options.preset === undefined ? {} : { preset: options.preset }),
@@ -265,6 +461,8 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
         }
       },
       openMusicXml: async (musicXml: string, options: ScoreEditorSdkOpenMusicXmlOptionsV1 = {}) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
         const input: OpenMusicXmlAppDocumentOptions = {
           ...(options.title === undefined ? {} : { title: options.title }),
           ...(options.documentId === undefined ? {} : { documentId: options.documentId }),
@@ -278,6 +476,8 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
         }
       },
       exportMusicXml: (expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
         const rejected = guardFailure(controller, expected);
         if (rejected !== null) return rejected;
         try {
@@ -289,6 +489,8 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
     }),
     selection: Object.freeze({
       select: (address: SemanticAddressV3 | null, expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
         const rejected = guardFailure(controller, expected);
         if (rejected !== null) return rejected;
         try {
@@ -300,6 +502,8 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
     }),
     history: Object.freeze({
       undo: (expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
         const rejected = guardFailure(controller, expected);
         if (rejected !== null) return rejected;
         try {
@@ -309,6 +513,8 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
         }
       },
       redo: (expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
         const rejected = guardFailure(controller, expected);
         if (rejected !== null) return rejected;
         try {
@@ -320,6 +526,8 @@ export const createScoreEditorSdkV1 = (): Readonly<ScoreEditorSdkV1> => {
     }),
     authoring: Object.freeze({
       commitKeypad: (request: Readonly<ScoreEditorSdkKeypadCommitV1>) => {
+        const disposed = disposedFailure();
+        if (disposed !== null) return disposed;
         const rejected = guardFailure(controller, request.expected);
         if (rejected !== null) return rejected;
         const options: EditorKeypadV4Options | undefined = request.nextRevisionId === undefined
