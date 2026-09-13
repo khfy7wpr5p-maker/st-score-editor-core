@@ -80,6 +80,7 @@ test('P06-E public entry stays narrow and exports only admitted public SDK modul
   assert.deepEqual(lines, [
     "export * from './src/index.js';",
     "export * from './version-negotiation.js';",
-    "export * from './rollout.js';"
+    "export * from './rollout.js';",
+    "export * from './audio-v010.js';"
   ]);
 });
