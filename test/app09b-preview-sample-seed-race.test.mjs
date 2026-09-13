@@ -52,7 +52,7 @@ test('APP-09B stable preview seeds its sample before mounting interactive file c
     assert.match(bootstrap, /\.then\(\(\) => \{ controller\.mount\(root\); \}\);/);
     assert.match(
       bootstrap,
-      /waitForRendererHost\(\)\.then\(async \(api\) => \{\n    await initialSampleReady;\n    rendererApi = api;/
+      /waitForRendererHost\(\)\.then\(async \(api\) => \{\n    await initialSampleReady;\n    const mountedViewport = root\.querySelector\('\[data-st-score-editor-viewport\]'\);\n    if \(!\(mountedViewport instanceof HTMLElement\) \|\| !mountedViewport\.contains\(frame\)\) \{\n      throw new Error\('APP09B_RENDERER_STABLE_MOUNT_MISSING'\);\n    \}\n    document\.documentElement\.dataset\.app09bRendererFrameStable = 'true';\n    rendererApi = api;/
     );
     assert.doesNotMatch(
       bootstrap,
@@ -62,7 +62,10 @@ test('APP-09B stable preview seeds its sample before mounting interactive file c
     const sampleSeed = bootstrap.indexOf('const initialSampleReady = controller.openMusicXml(');
     const interactiveMount = bootstrap.indexOf('controller.mount(root);');
     const rendererWait = bootstrap.indexOf('waitForRendererHost().then(async (api) => {');
+    const stableMountCheck = bootstrap.indexOf("throw new Error('APP09B_RENDERER_STABLE_MOUNT_MISSING');");
+    const rendererApiAssignment = bootstrap.indexOf('rendererApi = api;');
     assert.ok(sampleSeed >= 0 && interactiveMount > sampleSeed && rendererWait > interactiveMount);
+    assert.ok(stableMountCheck > rendererWait && rendererApiAssignment > stableMountCheck);
     assert.equal((bootstrap.match(/title: 'APP-09B Touch Test'/g) ?? []).length, 1);
   } finally {
     await rm(temp, { recursive: true, force: true });
