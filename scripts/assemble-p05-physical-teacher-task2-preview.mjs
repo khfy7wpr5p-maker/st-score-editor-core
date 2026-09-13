@@ -2,7 +2,7 @@ import { copyFile, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { assembleStableRestV2PreviewCli } from './assemble-app09b-preview-stable-rest-v2.mjs';
+import { assembleGenericEventApp09BPreview } from './assemble-app09b-preview-generic-event-v1.mjs';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const defaultOutputDir = path.join(repoRoot, 'dist', 'browser');
@@ -48,12 +48,10 @@ export async function assembleP05PhysicalTask2PreviewCli({
   includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1',
   refreshRendererRuntime = process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1'
 } = {}) {
-  const result = await assembleStableRestV2PreviewCli({
-    runtimeDir,
-    outputDir,
-    includeIosDiagnostic,
-    refreshRendererRuntime
-  });
+  if (refreshRendererRuntime) {
+    throw new Error('P05 generic-event preview requires an explicitly supplied exact renderer runtime; implicit refresh is disabled.');
+  }
+  const result = await assembleGenericEventApp09BPreview({ runtimeDir, outputDir });
 
   const appManifest = JSON.parse(await readFile(path.join(outputDir, 'st-score-editor-app.manifest.json'), 'utf8'));
   const pilotContract = validateP05PhysicalTask2AppManifest(appManifest);
@@ -61,16 +59,21 @@ export async function assembleP05PhysicalTask2PreviewCli({
 
   const physicalManifest = Object.freeze({
     contract: 'ST_SCORE_EDITOR_P05_PHYSICAL_TEACHER_TASK2_PREVIEW',
-    version: '1.0.0',
+    version: '1.1.0',
     entryHtml: result.entryHtml,
     fixture: fixtureName,
     requiredPhysicalSequence: Object.freeze(['select-C', 'start', 'select-D', 'copy', 'select-trailing-rest', 'paste-once', 'undo-once']),
     teacherToolbarRequired: true,
-    restTouchPath: 'unique-current-revision-canonical-rest-fail-closed',
+    restTouchPath: 'generic-rendered-rest-target-to-current-semantic-address',
+    genericRenderedEventTargetingRequired: true,
+    genericRenderedEventTargetKinds: Object.freeze(['NOTE', 'REST']),
+    legacyUniqueRestFallbackRequired: false,
+    teacherActionScrollRestoreHackRequired: false,
     rendererCoordinateAuthoringAuthority: false,
     domAuthoringAuthority: false,
     canonicalMutationAuthority: 'existing-teacher-workflow-v4',
     historyAuthority: 'EditorSessionV4',
+    iosDiagnosticRequested: includeIosDiagnostic,
     physicalDevicePassClaim: false,
     teacherPilotPassClaim: false,
     releaseAuthority: false,
@@ -88,5 +91,5 @@ export async function assembleP05PhysicalTask2PreviewCli({
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
   const result = await assembleP05PhysicalTask2PreviewCli({ runtimeDir });
-  console.log(`P05 physical teacher Task 2 preview assembly: PASS (${result.renderer.rendererSourceRevision}, teacher-toolbar + rest-touch-v2, physical PASS still required)`);
+  console.log(`P05 physical teacher Task 2 preview assembly: PASS (${result.renderer.rendererSourceRevision}, generic NOTE+REST targeting, physical PASS still required)`);
 }
