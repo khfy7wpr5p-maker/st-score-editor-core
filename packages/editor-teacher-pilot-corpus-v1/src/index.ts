@@ -390,6 +390,8 @@ export const summarizeTeacherPilotCorpusV1 = (
   let physicalDeviceCases = 0;
   let teacherPilotPasses = 0;
   let physicalDevicePasses = 0;
+  let teacherPilotObservedCases = 0;
+  let physicalDeviceObservedCases = 0;
   const byCapability = new Map<string, { total: number; outcomes: TeacherPilotOutcomeCountsV1 }>();
 
   for (const entry of corpus.cases) {
@@ -397,10 +399,12 @@ export const summarizeTeacherPilotCorpusV1 = (
     if (entry.verification.level === 'AUTOMATED') automatedCases += 1;
     if (entry.verification.level === 'TEACHER_PILOT') {
       teacherPilotCases += 1;
+      if (entry.verification.outcome !== 'NOT_RUN') teacherPilotObservedCases += 1;
       if (entry.verification.outcome === 'PASS') teacherPilotPasses += 1;
     }
     if (entry.verification.level === 'PHYSICAL_DEVICE') {
       physicalDeviceCases += 1;
+      if (entry.verification.outcome !== 'NOT_RUN') physicalDeviceObservedCases += 1;
       if (entry.verification.outcome === 'PASS') physicalDevicePasses += 1;
     }
     for (const capability of entry.capabilities) {
@@ -430,8 +434,8 @@ export const summarizeTeacherPilotCorpusV1 = (
     physicalDeviceCases,
     teacherPilotPasses,
     physicalDevicePasses,
-    humanTeacherEvidenceAvailable: teacherPilotPasses > 0,
-    physicalDeviceEvidenceAvailable: physicalDevicePasses > 0,
+    humanTeacherEvidenceAvailable: teacherPilotObservedCases > 0,
+    physicalDeviceEvidenceAvailable: physicalDeviceObservedCases > 0,
     capabilitySummaries,
     externalTrainingAuthority: false as const,
     productionReleaseAuthority: false as const
