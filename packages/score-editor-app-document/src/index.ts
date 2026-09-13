@@ -11,6 +11,9 @@ import {
   commitSessionArticulationAuthoringIntentV4,
   commitSessionOrnamentAuthoringIntentV4,
   commitSessionKeypadActionV4,
+  commitSessionTeacherPasteOverwriteV4,
+  commitSessionTeacherInsertAfterEventV4,
+  commitSessionTeacherOctaveTransposeV4,
   commitSessionCrossStaffIntentV4,
   commitSessionTopologyIntentV4,
   selectSessionSemanticAddressV4,
@@ -25,6 +28,13 @@ import type { OrnamentAuthoringV4Options } from '../../editor-ornament-authoring
 import type { EditorKeypadV4Options } from '../../editor-keypad-execution-v4/src/index.js';
 import type { CrossStaffAuthoringV4Options } from '../../editor-cross-staff-authoring-v4/src/index.js';
 import type { TopologyAuthoringV3Options } from '../../editor-topology-authoring-v3/src/index.js';
+import type { TeacherCopySnapshotV4 } from '../../editor-teacher-copy-snapshot-v4/src/index.js';
+import type { TeacherPasteAdmissionV4 } from '../../editor-teacher-paste-admission-v4/src/index.js';
+import type { TeacherPasteIdentityPlanV4 } from '../../editor-teacher-paste-identity-plan-v4/src/index.js';
+import type { TeacherInsertAdmissionV4 } from '../../editor-teacher-insert-admission-v4/src/index.js';
+import type { TeacherEventSpanSelectionV4 } from '../../editor-teacher-event-span-v4/src/index.js';
+import type { TeacherOctaveTransposeAdmissionV4 } from '../../editor-teacher-octave-transpose-admission-v4/src/index.js';
+import type { TeacherOctaveTransposeAuthoringV4Options } from '../../editor-teacher-octave-transpose-authoring-v4/src/index.js';
 import { importNotationMusicXmlV2 } from '../../musicxml-v2/src/index.js';
 import { renderableMusicXmlV4, RendererContractV4Error } from '../../renderer-contract-v4/src/index.js';
 
@@ -340,6 +350,42 @@ export const commitAppKeypadAction = (
   advancedTarget: unknown,
   options: EditorKeypadV4Options
 ): Readonly<ScoreEditorAppDocument> => appState(document.title, document.origin, commitSessionKeypadActionV4(document.session, action, advancedTarget, options), document.savedRevisionId);
+
+export const commitAppTeacherPasteOverwrite = (
+  document: ScoreEditorAppDocument,
+  snapshot: TeacherCopySnapshotV4,
+  admission: TeacherPasteAdmissionV4,
+  identityPlan: TeacherPasteIdentityPlanV4
+): Readonly<ScoreEditorAppDocument> => appState(
+  document.title,
+  document.origin,
+  commitSessionTeacherPasteOverwriteV4(document.session, snapshot, admission, identityPlan),
+  document.savedRevisionId
+);
+
+export const commitAppTeacherInsertAfterEvent = (
+  document: ScoreEditorAppDocument,
+  snapshot: TeacherCopySnapshotV4,
+  admission: TeacherInsertAdmissionV4,
+  nextRevisionId: string
+): Readonly<ScoreEditorAppDocument> => appState(
+  document.title,
+  document.origin,
+  commitSessionTeacherInsertAfterEventV4(document.session, snapshot, admission, nextRevisionId),
+  document.savedRevisionId
+);
+
+export const commitAppTeacherOctaveTranspose = (
+  document: ScoreEditorAppDocument,
+  selection: TeacherEventSpanSelectionV4,
+  admission: TeacherOctaveTransposeAdmissionV4,
+  options: TeacherOctaveTransposeAuthoringV4Options
+): Readonly<ScoreEditorAppDocument> => appState(
+  document.title,
+  document.origin,
+  commitSessionTeacherOctaveTransposeV4(document.session, selection, admission, options),
+  document.savedRevisionId
+);
 
 export const commitAppCrossStaffIntent = (
   document: ScoreEditorAppDocument,
