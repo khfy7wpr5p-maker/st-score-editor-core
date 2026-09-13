@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assembleApp09BPreview } from './assemble-app09b-preview.mjs';
+import { assembleStableApp09BPreviewCli } from './assemble-app09b-preview-stable.mjs';
 
 export const APP09B_AUDIO_PREVIEW_VERSION = '1.0.0';
 export const APP09B_AUDIO_BUNDLE = 'st-score-audio-engine.js';
@@ -39,14 +39,24 @@ const patchHtml = source => {
     .replace('<title>ST Score Editor APP-09B Test</title>', '<title>ST Score Editor APP-09B Audio Test</title>');
 };
 
-export async function assembleApp09BAudioPreview({ runtimeDir, audioRuntimeDir, outputDir = defaultOutputDir } = {}) {
+export async function assembleApp09BAudioPreview({
+  runtimeDir,
+  audioRuntimeDir,
+  outputDir = defaultOutputDir,
+  refreshRendererRuntime = false
+} = {}) {
   if (typeof audioRuntimeDir !== 'string' || audioRuntimeDir.length === 0) {
     throw new TypeError('APP09B audio runtime directory is required.');
   }
   const audioBundlePath = path.join(audioRuntimeDir, APP09B_AUDIO_BUNDLE);
   await ensureRegularFile(audioBundlePath);
 
-  const baseManifest = await assembleApp09BPreview({ runtimeDir, outputDir });
+  const baseManifest = await assembleStableApp09BPreviewCli({
+    runtimeDir,
+    outputDir,
+    includeIosDiagnostic: false,
+    refreshRendererRuntime
+  });
   const audioTarget = path.join(outputDir, 'audio-runtime');
   await mkdir(audioTarget, { recursive: true });
   await cp(audioBundlePath, path.join(audioTarget, APP09B_AUDIO_BUNDLE));
@@ -73,8 +83,19 @@ export async function assembleApp09BAudioPreview({ runtimeDir, audioRuntimeDir, 
     restAudition: 'no-request',
     auditionHistoryMutationAuthority: false,
     rendererAudioAuthority: false,
+    rendererFrameStableAcrossEditorReconciliation: true,
     sampleHosts: Object.freeze(['https://raw.githubusercontent.com'])
   });
   await writeFile(path.join(outputDir, 'st-score-editor-app09b-audio.manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   return manifest;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const result = await assembleApp09BAudioPreview({
+    runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR,
+    audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR,
+    outputDir: process.env.ST_APP09B_OUTPUT_DIR || defaultOutputDir,
+    refreshRendererRuntime: process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1'
+  });
+  console.log(`APP-09B audio preview assembly: PASS (${result.audioArtifact}, ${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion})`);
 }
