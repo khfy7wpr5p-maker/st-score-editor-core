@@ -40,6 +40,7 @@ const patchHtml = source => {
 };
 
 export async function assembleProductionSite({
+  runtimeDir,
   audioRuntimeDir,
   outputDir = defaultOutputDir,
   refreshRendererRuntime = true
@@ -51,6 +52,7 @@ export async function assembleProductionSite({
   await ensureRegularFile(audioBundlePath);
 
   const baseManifest = await assembleStableApp09BPreviewCli({
+    runtimeDir,
     outputDir,
     includeIosDiagnostic: false,
     refreshRendererRuntime
@@ -101,6 +103,7 @@ export async function assembleProductionSite({
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const result = await assembleProductionSite({
+    runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR,
     audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR,
     outputDir: process.env.ST_PRODUCTION_OUTPUT_DIR || defaultOutputDir,
     refreshRendererRuntime: process.env.ST_PRODUCTION_REFRESH_RENDERER_RUNTIME !== '0'
