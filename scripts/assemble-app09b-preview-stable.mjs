@@ -78,6 +78,11 @@ const controllerMountBlock = `  const controller = globalThis.STScoreEditorApp.c
 const rendererReadyBlock = `  waitForRendererHost().then(async (api) => {
     rendererApi = api;`;
 
+const eagerRenderSubscriptionBlock = `  controller.subscribe(() => { scheduleRenderCurrent(); });`;
+const rendererAttachBlock = `    controller.attachOsmdRenderer(host);`;
+const rendererAttachWithDeferredSubscriptionBlock = `    controller.attachOsmdRenderer(host);
+    controller.subscribe(() => { scheduleRenderCurrent(); });`;
+
 const legacyOnHitBlock = `    const onHit = async (clientX, clientY) => {
       const evidence = renderEvidence;
       if (evidence === null) return;
@@ -224,12 +229,31 @@ const relocateSampleSeedBeforeMount = (bootstrap) => {
   Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });`;
   const safeRendererReadyBlock = `  waitForRendererHost().then(async (api) => {
     await initialSampleReady;
+    const mountedViewport = root.querySelector('[data-st-score-editor-viewport]');
+    if (!(mountedViewport instanceof HTMLElement) || !mountedViewport.contains(frame)) {
+      throw new Error('APP09B_RENDERER_STABLE_MOUNT_MISSING');
+    }
+    document.documentElement.dataset.app09bRendererFrameStable = 'true';
     rendererApi = api;`;
 
   const withoutLateSeed = bootstrap.replace(lateSeedPattern, '    // The preview sample was seeded before the editor UI became interactive.');
   return withoutLateSeed
     .replace(controllerMountBlock, safeMountBlock)
     .replace(rendererReadyBlock, safeRendererReadyBlock);
+};
+
+const deferRenderSubscriptionUntilRendererAttached = (bootstrap) => {
+  const subscriptionOccurrences = bootstrap.split(eagerRenderSubscriptionBlock).length - 1;
+  if (subscriptionOccurrences !== 1) {
+    throw new Error(`APP09B stable render subscription patch expected one eager subscription, observed ${subscriptionOccurrences}.`);
+  }
+  const attachOccurrences = bootstrap.split(rendererAttachBlock).length - 1;
+  if (attachOccurrences !== 1) {
+    throw new Error(`APP09B stable render subscription patch expected one renderer attach, observed ${attachOccurrences}.`);
+  }
+  return bootstrap
+    .replace(eagerRenderSubscriptionBlock, '  // Subscribe only after the renderer host is attached to avoid an initial stale render race.')
+    .replace(rendererAttachBlock, rendererAttachWithDeferredSubscriptionBlock);
 };
 
 const addUniqueRestTouchFallback = (bootstrap) => {
@@ -250,7 +274,8 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   }
   const stableBootstrap = bootstrap.replace(movingBridge, stableBridge);
   const seededBootstrap = relocateSampleSeedBeforeMount(stableBootstrap);
-  const patched = addUniqueRestTouchFallback(seededBootstrap);
+  const subscriptionSafeBootstrap = deferRenderSubscriptionUntilRendererAttached(seededBootstrap);
+  const patched = addUniqueRestTouchFallback(subscriptionSafeBootstrap);
   await writeFile(bootstrapPath, patched, 'utf8');
   return manifest;
 }
