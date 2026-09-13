@@ -3,7 +3,10 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { build } from 'esbuild';
 
 const OUT_DIR = 'dist/browser';
-const STANDALONE_APP_BUNDLE_MAX_BYTES = 524_288;
+// P03 re-baseline: APP-11F's 512 KiB cap predated the verified P02 teacher workflow.
+// Keep the increase deliberately bounded to +16 KiB rather than dropping safety validation.
+const STANDALONE_APP_BUNDLE_MAX_BYTES = 540_672;
+const STANDALONE_APP_BUNDLE_BUDGET_REVISION = 'P03-TEACHER-MOBILE-1';
 const COMMON_FORBIDDEN_TOKENS = [
   'node:',
   'XMLHttpRequest',
@@ -76,6 +79,7 @@ await buildBrowserArtifact({
   maxBytes: STANDALONE_APP_BUNDLE_MAX_BYTES,
   manifest: Object.freeze({
     contract: 'ST_SCORE_EDITOR_APP_BROWSER_BUNDLE', version: '1.0.0', runtimeVersion: '1.0.0', standaloneProduct: true,
+    bundleBudgetRevision: STANDALONE_APP_BUNDLE_BUDGET_REVISION,
     canonicalAuthority: false, networkCapable: false, persistenceCapable: false,
     rendererAuthority: false, rendererBundled: false, rendererLifecycleBundled: true, rendererImplementationBundled: false,
     rendererAutoRender: false, rendererFamily: 'osmd', rendererExactHostVersion: '2.1.1', staleRenderResultRejected: true,
@@ -173,6 +177,20 @@ await buildBrowserArtifact({
     tripletAuthoringRetimingAuthority: false, tripletAuthoringCreationPolicy: 'existing-canonical-3-in-the-time-of-2-only',
     tripletAuthoringRemovalAuthority: false, tripletAuthoringHistory: 'EditorSessionV4',
     tripletAuthoringRendererCoordinateAuthority: false, tripletAuthoringNetworkAuthority: false,
+    teacherWorkflowCommandsBundled: true, teacherWorkflowCanonicalAuthority: false,
+    teacherWorkflowHistoryAuthority: 'EditorSessionV4', teacherWorkflowClipboard: 'revision-bound-read-only-copy-snapshot',
+    teacherWorkflowPaste: 'bounded-neutral-rest-overwrite',
+    teacherWorkflowInsert: 'bounded-insert-after-event-with-trailing-neutral-rest-capacity',
+    teacherWorkflowTranspose: 'octave-only-plus-minus-one-or-two',
+    teacherWorkflowRendererCoordinateAuthority: false, teacherWorkflowDomAuthoringAuthority: false, teacherWorkflowNetworkAuthority: false,
+    mobileTeacherToolbarBundled: true, mobileTeacherToolbarCanonicalAuthority: false,
+    mobileTeacherToolbarSelectionAuthority: 'SemanticAddressV3-current-revision',
+    mobileTeacherToolbarRangeCapture: 'two-distinct-current-revision-events',
+    mobileTeacherToolbarMinimumTouchTargetPx: 44, mobileTeacherToolbarSafeAreaAware: true,
+    mobileTeacherToolbarRendererCoordinateAuthority: false, mobileTeacherToolbarDomAuthoringAuthority: false, mobileTeacherToolbarNetworkAuthority: false,
+    mobileTeacherViewportBundled: true, mobileTeacherViewportCanonicalAuthority: false,
+    mobileTeacherViewportSingleCanonicalController: true, mobileTeacherViewportReusesExistingViewport: true,
+    mobileTeacherViewportPresentationLayer: 'existing-viewport-enabled-v1', mobileTeacherViewportCoordinateAuthoring: false,
     browserContractTargets: ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox'],
     manualDeviceValidationRequired: true, standaloneReleaseGatePassed: false, seslitabCutoverAuthorized: false,
     serverRevisionAuthority: false, publicationAuthority: false,

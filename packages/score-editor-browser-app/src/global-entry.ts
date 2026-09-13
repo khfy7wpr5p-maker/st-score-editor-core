@@ -1,9 +1,9 @@
-import { createTripletRetimingStandaloneBrowserAppRuntime } from './triplet-retiming-authoring.js';
+import { createMobileTeacherViewportStandaloneBrowserAppRuntime } from './mobile-teacher-viewport.js';
 
 export const SCORE_EDITOR_APP_GLOBAL = 'STScoreEditorApp' as const;
 
 const target = globalThis as typeof globalThis & {
-  STScoreEditorApp?: ReturnType<typeof createTripletRetimingStandaloneBrowserAppRuntime>;
+  STScoreEditorApp?: ReturnType<typeof createMobileTeacherViewportStandaloneBrowserAppRuntime>;
 };
 
 if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
@@ -11,7 +11,7 @@ if (Object.prototype.hasOwnProperty.call(target, SCORE_EDITOR_APP_GLOBAL)) {
 }
 
 Object.defineProperty(target, SCORE_EDITOR_APP_GLOBAL, {
-  value: createTripletRetimingStandaloneBrowserAppRuntime(),
+  value: createMobileTeacherViewportStandaloneBrowserAppRuntime(),
   writable: false,
   configurable: false,
   enumerable: true
