@@ -23,8 +23,9 @@ test('APP-09 standalone artifact enforces automated hardening and current bounde
   assert.equal(manifest.pageHideRecoveryFlush, true);
   assert.equal(manifest.accessibilityStatusLiveRegion, true);
   assert.deepEqual(manifest.browserContractTargets, ['ios-safari', 'ipad-safari', 'desktop-safari', 'chromium', 'firefox']);
-  assert.equal(manifest.bundleBudgetRevision, 'P03-TEACHER-MOBILE-1');
-  assert.equal(manifest.maxBytes, 540672);
+  assert.equal(manifest.bundleBudgetRevision, 'P06-AUDIO-V010-1');
+  assert.equal(manifest.maxBytes, 542720);
+  assert.equal(manifest.maxBytes - 540672, 2048);
   assert.ok(bundle.byteLength <= manifest.maxBytes);
   assert.equal(manifest.teacherWorkflowCommandsBundled, true);
   assert.equal(manifest.mobileTeacherToolbarBundled, true);
