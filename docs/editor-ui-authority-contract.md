@@ -8,7 +8,8 @@ Existing-score selection path:
 
 ```text
 browser / pointer / keyboard / mobile input
-  -> presentation hit / opaque render token
+  -> presentation hit / generic rendered-event evidence
+  -> current renderEpoch/source evidence validation
   -> current E3 SemanticAddress + SelectionSnapshot
   -> typed score / notation / keypad / selected-rest note-entry intent
   -> canonical validation + atomic transaction
@@ -16,6 +17,8 @@ browser / pointer / keyboard / mobile input
   -> unified history
   -> new RenderRequest
 ```
+
+`NOTE` and `REST` may now arrive as bounded renderer-side target kinds through the generic rendered-event bridge. They are still presentation evidence only. Editor Core must resolve them against the current revision before any canonical action.
 
 Insertion/cursor path:
 
@@ -41,7 +44,9 @@ The UI may own:
 - pending form text;
 - temporary pointer/touch gesture state;
 - status/error presentation;
-- accessibility focus state.
+- accessibility focus state;
+- audition enabled/muted presentation state;
+- selected audition instrument preference, such as Grand Piano or Classical Guitar.
 
 This state is presentation/interaction state only.
 
@@ -51,8 +56,9 @@ This state is presentation/interaction state only.
 - `SelectionSnapshot`;
 - `InsertionPosition`;
 - current document/revision identity;
-- current RenderRequest identity and opaque hit tokens;
-- typed editor/action/authoring intents.
+- current RenderRequest identity and opaque/generic rendered-event hit evidence;
+- typed editor/action/authoring intents;
+- validated canonical NOTE pitch used to form a bounded audio audition request.
 
 The host may only use these values when they were created or validated against the current canonical revision.
 
@@ -71,9 +77,10 @@ The following may never independently authorize or commit a score edit:
 - pointer/touch event object identity;
 - stale `SelectionSnapshot`;
 - stale `InsertionPosition`;
-- stale `RendererRequest`;
+- stale `RendererRequest` / stale render epoch;
 - Guitar Workspace fingering/voicing result;
-- OMR/AI suggestion output.
+- OMR/AI suggestion output;
+- AudioContext state, sample identity, decoded audio buffers or instrument-profile state.
 
 No UI module may directly mutate `ScoreDocument` or `NotationDocument`.
 
@@ -97,11 +104,13 @@ Pointer, keyboard and mobile/touch input must converge on the same semantic comm
 
 Examples:
 
-- mouse hit -> opaque token -> canonical selection -> typed intent;
+- mouse hit -> generic rendered NOTE/REST evidence -> canonical selection -> typed intent;
 - keyboard navigation -> canonical selection/insertion movement -> typed intent;
-- iPhone touch -> visual hit -> opaque token or canonical insertion candidate -> current semantic identity -> typed intent.
+- iPhone touch -> visual hit -> current generic rendered-event evidence -> current semantic identity -> typed intent.
 
 Viewport changes, responsive reflow, orientation changes and renderer rerenders may invalidate visual geometry but may not silently retarget canonical semantic identity.
+
+P05 physical iPhone Safari Task 2 has verified the current bounded NOTE/REST path for source-range selection, REST destination selection, Paste rendering and exact Undo without the earlier viewport displacement. This is interaction evidence only; it does not expand renderer authority.
 
 ## Stale state
 
@@ -112,7 +121,7 @@ If the canonical revision changes before execution:
 - stale selection fails closed;
 - stale insertion position fails closed;
 - stale notation evidence fails closed;
-- stale render requests fail closed;
+- stale render requests / rendered-event evidence fail closed;
 - automatic retargeting is forbidden.
 
 After an accepted edit, selection may only be rebound deterministically by stable canonical entity identity to the new revision; otherwise it must be safely cleared.
@@ -123,7 +132,8 @@ The renderer may:
 
 - engrave/present the current RenderRequest;
 - perform visual hit testing;
-- return an opaque hit token associated with the exact current render request.
+- return bounded generic rendered-event evidence such as `NOTE` and `REST` associated with the exact current render request / render epoch;
+- expose presentation-only highlight/cursor primitives.
 
 The renderer may not:
 
@@ -131,10 +141,39 @@ The renderer may not:
 - mutate score/notation state;
 - decide writable timing gaps;
 - own editor history;
-- infer a target when hit testing is ambiguous.
+- infer a target when hit testing is ambiguous;
+- own Web Audio, playback transport, sample selection or audition state.
+
+## Audio audition boundary
+
+One-note audition is a noncanonical consumer path and remains separate from edit authority.
+
+Planned flow:
+
+```text
+current NOTE touch/selection
+  -> current rendered NOTE evidence
+  -> current SemanticAddressV3
+  -> exact canonical NOTE pitch
+  -> immutable AuditionRequest
+  -> external st-score-audio-engine
+  -> sound
+```
+
+Rules:
+
+- `REST` may be selected but produces no audition request;
+- audio failure must not invalidate an otherwise valid selection;
+- audition must not create an `EditorSessionV4` history revision;
+- Grand Piano is the first instrument profile; Classical Guitar follows only after the piano path is stable;
+- instrument choice is UI/audio preference only unless a future explicit canonical instrument authoring feature is separately admitted;
+- string/fret-aware guitar timbre may be used only from exact canonical guitar/TAB evidence, never screen geometry;
+- Editor Core must consume the versioned public contract from `st-score-audio-engine` rather than create a second audio contract or engine.
+
+See `docs/audio-engine-integration-boundary.md`.
 
 ## Production boundary
 
 Core UI/editor work does not itself activate public uploads, persistence, publication, remote write APIs, live AI edit authority or production deployment.
 
-SesliTab/other hosts orchestrate the core and rendering layers but may not introduce a second score model or dual-write mutation path.
+SesliTab/other hosts orchestrate the core, rendering and optional audio layers but may not introduce a second score model or dual-write mutation path.
