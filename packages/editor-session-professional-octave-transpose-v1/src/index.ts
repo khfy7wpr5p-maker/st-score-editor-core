@@ -1,4 +1,7 @@
-import type { ProfessionalSelectionV1 } from '../../editor-professional-selection-v1/src/index.js';
+import {
+  professionalSelectionActiveTargetV1,
+  type ProfessionalSelectionV1
+} from '../../editor-professional-selection-v1/src/index.js';
 import {
   executeProfessionalOctaveTransposeV1,
   type ProfessionalOctaveTransposeAdmissionV1
@@ -11,12 +14,12 @@ import {
 } from '../../editor-session-controller-v4/src/index.js';
 import { createRendererRequestV4WithProfile } from '../../renderer-contract-v4/src/index.js';
 
-export const EDITOR_SESSION_PROFESSIONAL_OCTAVE_TRANSPOSE_V1_VERSION = '1.0.0' as const;
+export const EDITOR_SESSION_PROFESSIONAL_OCTAVE_TRANSPOSE_V1_VERSION = '1.1.0' as const;
 
 export interface ProfessionalOctaveTransposeSessionResultV1 {
   readonly version: typeof EDITOR_SESSION_PROFESSIONAL_OCTAVE_TRANSPOSE_V1_VERSION;
   readonly session: Readonly<EditorSessionStateV4>;
-  readonly professionalSelection: Readonly<Extract<ProfessionalSelectionV1, { kind: 'EVENT_SPAN' }>>;
+  readonly professionalSelection: Readonly<ProfessionalSelectionV1>;
   readonly changedEventIds: readonly string[];
   readonly changedNoteIds: readonly string[];
   readonly historyCommitCount: 1;
@@ -38,10 +41,11 @@ export const commitSessionProfessionalOctaveTransposeV1 = (
     options
   );
   const history = commitEditorHistoryV4(session.history, result.score, result.notation);
+  const activeSelection = professionalSelectionActiveTargetV1(result.selection);
   const nextSession: Readonly<EditorSessionStateV4> = Object.freeze({
     version: EDITOR_SESSION_V4_VERSION,
     history,
-    selection: result.selection.focus,
+    selection: activeSelection,
     renderRequest: createRendererRequestV4WithProfile(
       history.present.score,
       history.present.notation,
@@ -49,7 +53,7 @@ export const commitSessionProfessionalOctaveTransposeV1 = (
     ),
     status: Object.freeze({
       code: 'PROFESSIONAL_OCTAVE_TRANSPOSE_EDIT_COMMITTED',
-      message: 'Professional cross-measure octave transpose committed atomically in the unified V4 history.'
+      message: 'Professional octave transpose committed atomically in the unified V4 history.'
     })
   });
 
