@@ -45,23 +45,24 @@ const writeRendererRuntime = async root => {
   await writeFile(path.join(root, 'runtime-manifest.json'), `${JSON.stringify(rendererManifest())}\n`);
 };
 
-test('production site pins the official Audio Engine v0.1.1 release identity', () => {
-  assert.match(source, /AUDIO_RELEASE = 'v0\.1\.1'/);
-  assert.match(source, /61d2b0a161d949588bb1bbd3c01caf819f03ec72/);
-  assert.equal(AUDIO_RELEASE_ASSET_SHA256, 'd997c6de77436ac3d7463e079904e5d29e52a06a30460330a6f1444ac0469092');
-  assert.match(source, /audioApi\.version !== '0\.1\.1'/);
+test('production site pins the official Audio Engine v0.1.2 release identity', () => {
+  assert.match(source, /AUDIO_RELEASE = 'v0\.1\.2'/);
+  assert.match(source, /26117ae90f213e208e06fb5c084fc0fad9f4ca86/);
+  assert.equal(AUDIO_RELEASE_ASSET_SHA256, '18f4e039ffe6e766916bd11f61d60b2496095aadbc61828ecd88545b8408504d');
+  assert.match(source, /audioApi\.version !== '0\.1\.2'/);
 });
 
-test('production host attaches the complete official runtime and qualifies piano only', () => {
+test('production host attaches the complete official runtime and qualifies Piano plus Violin only', () => {
   assert.match(source, /controller\.attachAudioPort\(audioEngine\)/);
   assert.doesNotMatch(source, /attachAudioPort\(Object\.freeze/);
   assert.match(source, /defaultInstrument: 'GRAND_PIANO'/);
-  assert.match(source, /qualifiedInstruments: Object\.freeze\(\['GRAND_PIANO'\]\)/);
+  assert.match(source, /instrumentSelection: 'host-ui-noncanonical'/);
+  assert.match(source, /qualifiedInstruments: Object\.freeze\(\['GRAND_PIANO', 'VIOLIN'\]\)/);
   assert.match(source, /suspendedInstruments: Object\.freeze\(\['CLASSICAL_GUITAR'\]\)/);
   assert.doesNotMatch(source, /qualifiedInstruments:[^\n]*CLASSICAL_GUITAR/);
 });
 
-test('P07 keeps note selection off the audio await critical path and prewarms piano samples', () => {
+test('P07 non-blocking selection and warm-cache hardening remain intact under P08 multi-instrument support', () => {
   assert.match(source, /const auditionPromise = controller\.selectRenderedScoreNoteRefWithAudition\(hit\.target\)/);
   assert.doesNotMatch(source, /const auditionResult = await controller\.selectRenderedScoreNoteRefWithAudition/);
   assert.match(source, /void auditionPromise\.then/);
@@ -69,11 +70,21 @@ test('P07 keeps note selection off the audio await critical path and prewarms pi
   assert.match(source, /audioInteractionSequence !== latestAudioInteractionSequence/);
   assert.match(source, /typeof audioEngine\.prepare === 'function'/);
   assert.match(source, /void audioEngine\.prepare\(\)\.then/);
-  assert.match(source, /grand-piano-raw-prepare-plus-decoded-warm-cache/);
-  assert.match(source, /audio-engine-v0\.1\.1-after-unlock/);
+  assert.match(source, /selected-qualified-instrument-raw-prepare-plus-decoded-warm-cache/);
+  assert.match(source, /audio-engine-v0\.1\.2-after-unlock/);
   assert.match(source, /raw-fetch-and-audio-decode/);
   assert.match(source, /stScoreSelectionDispatchMs/);
   assert.match(source, /stScoreAudioLatencyMs/);
+});
+
+test('P08 production selector is bounded and noncanonical', () => {
+  assert.match(source, /id="st-score-audio-instrument"/);
+  assert.match(source, /option value="GRAND_PIANO" selected>Piano<\/option>/);
+  assert.match(source, /option value="VIOLIN">Violin<\/option>/);
+  assert.match(source, /controller\.setAuditionInstrument\(nextInstrument\)/);
+  assert.match(source, /nextInstrument = audioInstrumentSelect\.value === 'VIOLIN' \? 'VIOLIN' : 'GRAND_PIANO'/);
+  assert.match(source, /stScoreAudioInstrument/);
+  assert.doesNotMatch(source, /option value="CLASSICAL_GUITAR"/);
 });
 
 test('production deployment keeps authority and cutover boundaries explicit', () => {
@@ -85,7 +96,7 @@ test('production deployment keeps authority and cutover boundaries explicit', ()
   assert.match(source, /manualDeviceValidationRequired: true/);
 });
 
-test('production assembly emits a root index that wires exact renderer plus non-blocking official piano audio host', async () => {
+test('production assembly emits a root index that wires exact renderer plus non-blocking Piano/Violin audio host', async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-production-'));
   try {
     const runtimeDir = path.join(temp, 'renderer');
@@ -107,14 +118,16 @@ test('production assembly emits a root index that wires exact renderer plus non-
     const copiedAudio = await readFile(path.join(outputDir, 'audio-runtime/st-score-audio-engine.js'), 'utf8');
 
     assert.equal(manifest.contract, 'ST_SCORE_EDITOR_PRODUCTION_SITE');
-    assert.equal(manifest.version, '1.2.0');
+    assert.equal(manifest.version, '1.3.0');
     assert.equal(manifest.renderer.rendererSourceRevision, APP09B_RENDERER_SOURCE_REVISION);
-    assert.equal(manifest.audio.release, 'v0.1.1');
-    assert.deepEqual(manifest.audio.qualifiedInstruments, ['GRAND_PIANO']);
+    assert.equal(manifest.audio.release, 'v0.1.2');
+    assert.equal(manifest.audio.defaultInstrument, 'GRAND_PIANO');
+    assert.equal(manifest.audio.instrumentSelection, 'host-ui-noncanonical');
+    assert.deepEqual(manifest.audio.qualifiedInstruments, ['GRAND_PIANO', 'VIOLIN']);
     assert.deepEqual(manifest.audio.suspendedInstruments, ['CLASSICAL_GUITAR']);
     assert.equal(manifest.audio.latencyHardening.selectionCriticalPath, 'non-blocking-audio');
-    assert.equal(manifest.audio.latencyHardening.preloadStrategy, 'grand-piano-raw-prepare-plus-decoded-warm-cache');
-    assert.equal(manifest.audio.latencyHardening.decodedWarmCache, 'audio-engine-v0.1.1-after-unlock');
+    assert.equal(manifest.audio.latencyHardening.preloadStrategy, 'selected-qualified-instrument-raw-prepare-plus-decoded-warm-cache');
+    assert.equal(manifest.audio.latencyHardening.decodedWarmCache, 'audio-engine-v0.1.2-after-unlock');
     assert.equal(manifest.audio.latencyHardening.inflightDedupe, 'raw-fetch-and-audio-decode');
     assert.equal(manifest.audio.latencyHardening.rapidTapStatusPolicy, 'latest-request-wins');
     assert.equal(manifest.seslitabCutoverAuthorized, false);
@@ -122,9 +135,12 @@ test('production assembly emits a root index that wires exact renderer plus non-
     assert.match(html, /audio-runtime\/st-score-audio-engine\.js/);
     assert.match(html, /st-score-editor-production-bootstrap\.js/);
     assert.match(html, /connect-src https:\/\/raw\.githubusercontent\.com/);
-    assert.match(bootstrap, /audioApi\.version !== '0\.1\.1'/);
+    assert.match(html, /id="st-score-audio-instrument"/);
+    assert.match(html, /value="VIOLIN">Violin/);
+    assert.match(bootstrap, /audioApi\.version !== '0\.1\.2'/);
     assert.match(bootstrap, /createAudioEngine\(\{ defaultInstrument: 'GRAND_PIANO' \}\)/);
     assert.match(bootstrap, /attachAudioPort\(audioEngine\)/);
+    assert.match(bootstrap, /setAuditionInstrument\(nextInstrument\)/);
     assert.match(bootstrap, /const auditionPromise = controller\.selectRenderedScoreNoteRefWithAudition\(hit\.target\)/);
     assert.doesNotMatch(bootstrap, /const auditionResult = await controller\.selectRenderedScoreNoteRefWithAudition/);
     assert.match(bootstrap, /void auditionPromise\.then/);
