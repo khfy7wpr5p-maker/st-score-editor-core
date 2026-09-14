@@ -188,21 +188,78 @@ test('P08-B1 preserves backward professional focus while mutating the canonical 
   });
 });
 
-test('P08-B1 fails closed for discontiguous EVENT_SET until dedicated relation closure is implemented', () => {
+test('P08-B2 transposes only explicitly selected discontiguous events and leaves intervening events untouched', () => {
+  const score = scoreFixture();
+  const notation = emptyNotationDocumentV4(score);
+  const originalScore = structuredClone(score);
+  const originalNotation = structuredClone(notation);
+  const session = createEditorSessionV4(score, notation);
+  const selection = createEventSetProfessionalSelectionV1(score, [
+    eventAddress(score, 'event-3'),
+    eventAddress(score, 'event-1')
+  ]);
+  assert.equal(selection.primary.eventId, 'event-3');
+  assert.deepEqual(selection.targets.map(target => target.eventId), ['event-1', 'event-3']);
+
+  const admission = analyzeProfessionalOctaveTransposeV1(score, notation, selection, 1);
+  assert.equal(admission.selectionKind, 'EVENT_SET');
+  assert.deepEqual(admission.targetEventIds, ['event-1', 'event-3']);
+  const result = commitSessionProfessionalOctaveTransposeV1(
+    session,
+    selection,
+    admission,
+    { nextRevisionId: 'p08b2-rev-2' }
+  );
+
+  assert.equal(result.historyCommitCount, 1);
+  assert.equal(result.session.history.past.length, 1);
+  assert.equal(result.professionalSelection.kind, 'EVENT_SET');
+  assert.equal(result.professionalSelection.primary.eventId, 'event-3');
+  assert.equal(result.session.selection.kind, 'event');
+  assert.equal(result.session.selection.eventId, 'event-3');
+  assert.equal(result.session.selection.revisionId, 'p08b2-rev-2');
+  assert.deepEqual(result.changedEventIds, ['event-1', 'event-3']);
+  assert.deepEqual(result.changedNoteIds, ['note-1', 'note-3a', 'note-3b']);
+  assert.deepEqual(pitches(result.session.history.present.score), {
+    event1: pitch('C', 1, 5),
+    event2Kind: 'rest',
+    event3: [pitch('E', -1, 5), pitch('G', 0, 5)],
+    event4: pitch('A', 0, 4)
+  });
+
+  const undone = navigateSessionHistoryV4(result.session, 'UNDO');
+  assert.deepEqual(undone.history.present.score, originalScore);
+  assert.deepEqual(undone.history.present.notation, originalNotation);
+  const redone = navigateSessionHistoryV4(undone, 'REDO');
+  assert.deepEqual(redone.history.present.score, result.session.history.present.score);
+});
+
+test('P08-B2 rejects a tampered event-set admission before mutation', () => {
   const score = scoreFixture();
   const notation = emptyNotationDocumentV4(score);
   const selection = createEventSetProfessionalSelectionV1(score, [
     eventAddress(score, 'event-1'),
     eventAddress(score, 'event-3')
   ]);
+  const admission = analyzeProfessionalOctaveTransposeV1(score, notation, selection, 1);
+  assert.equal(admission.selectionKind, 'EVENT_SET');
+  const tampered = structuredClone(admission);
+  tampered.targetNotePlans[0].targetPitch.octave = 9;
+  const session = createEditorSessionV4(score, notation);
 
   assert.throws(
-    () => analyzeProfessionalOctaveTransposeV1(score, notation, selection, 1),
-    error => error instanceof ProfessionalOctaveTransposeV1Error && error.code === 'SELECTION_KIND_UNSUPPORTED'
+    () => commitSessionProfessionalOctaveTransposeV1(
+      session,
+      selection,
+      tampered,
+      { nextRevisionId: 'p08b2-rev-tampered' }
+    ),
+    error => error instanceof ProfessionalOctaveTransposeV1Error && error.code === 'ADMISSION_STALE_OR_TAMPERED'
   );
+  assert.deepEqual(session.history.present.score, score);
 });
 
-test('P08-B1 fails closed when a professional span becomes stale after revision replacement', () => {
+test('P08 professional octave transpose fails closed when a selection becomes stale after revision replacement', () => {
   const score = scoreFixture();
   const notation = emptyNotationDocumentV4(score);
   const selection = createEventSpanProfessionalSelectionV1(
