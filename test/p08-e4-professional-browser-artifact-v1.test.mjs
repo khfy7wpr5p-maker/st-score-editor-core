@@ -49,9 +49,10 @@ test('P08-E4 professional artifact is independently bounded and integrity descri
   assert.equal(manifest.seslitabCutoverAuthorized, false);
   assert.equal(manifest.externalImports, 0);
   assert.equal(manifest.bytes, bundle.byteLength);
-  assert.ok(manifest.maxBytes >= bundle.byteLength);
-  assert.ok(manifest.maxBytes <= 700_000);
-  assert.match(manifest.bundleBudgetRevision, /^P08-E4-/);
+  assert.equal(manifest.maxBytes, 615_000);
+  assert.equal(manifest.bundleBudgetRevision, 'P08-E4-QUALIFIED-1');
+  assert.ok(manifest.bytes <= manifest.maxBytes);
+  assert.ok(manifest.maxBytes - manifest.bytes <= 20_000);
   assert.match(manifest.sha256, /^[a-f0-9]{64}$/);
   assert.equal(createHash('sha256').update(bundle).digest('hex'), manifest.sha256);
   assert.match(bundle.toString('utf8'), /STScoreEditorProfessionalApp/);
