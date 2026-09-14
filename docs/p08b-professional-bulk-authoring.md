@@ -2,9 +2,9 @@
 
 ## P08-B1: cross-measure octave transpose
 
-P08-B begins consuming the professional selection foundation in real authoring operations. The first admitted operation is octave transpose over a contiguous professional `EVENT_SPAN`.
+P08-B consumes the professional selection foundation in real authoring operations. P08-B1 admits octave transpose over a contiguous professional `EVENT_SPAN`.
 
-The implementation deliberately reuses the proven P02 teacher bulk-transpose path:
+The span path deliberately reuses the proven P02 teacher bulk-transpose implementation:
 
 ```text
 Professional EVENT_SPAN
@@ -18,37 +18,61 @@ Professional EVENT_SPAN
         -> exact Undo / Redo
 ```
 
-This avoids creating a second pitch mutation authority.
+This avoids creating a second contiguous-span pitch mutation authority.
 
-### Supported in B1
+## P08-B2: discontiguous event-set octave transpose
 
-- cross-measure contiguous `EVENT_SPAN`;
-- forward or backward professional anchor/focus;
+P08-B2 extends the same public professional octave-transpose API to explicit discontiguous `EVENT_SET` selections.
+
+```text
+Professional EVENT_SET
+        -> exact-current-revision revalidation
+        -> preserve explicit primary target
+        -> exact selected EventAddressV3 list only
+        -> relation-safety admission
+        -> exact note/chord pitch plans
+        -> mutate only admitted note ids
+        -> one direct-child ScoreDocumentV3 revision
+        -> notation rebind
+        -> one EditorHistoryV4 commit
+        -> exact Undo / Redo
+```
+
+Events between selected targets are never inferred, selected, or modified. This is the semantic substrate required for future Ctrl/Cmd/touch multi-select editing.
+
+### Supported in B1 + B2
+
+- contiguous cross-measure `EVENT_SPAN`;
+- explicit discontiguous `EVENT_SET`;
+- forward or backward span anchor/focus;
+- stable event-set primary target;
 - note and chord pitches;
-- REST events inside the span remain unchanged;
-- octave deltas `-2`, `-1`, `+1`, `+2` inherited from the proven admission profile;
+- selected REST events remain unchanged;
+- unselected intervening NOTE/CHORD/REST events remain unchanged;
+- octave deltas `-2`, `-1`, `+1`, `+2`;
 - step and alter preserved while octave changes;
 - notation is rebound to the direct-child revision;
 - one accepted bulk action creates exactly one unified V4 history commit;
 - exact Undo and Redo restore whole score + notation snapshots.
 
-### Existing safety rules intentionally inherited
+### Relation-safety rules
+
+For contiguous spans, the established P02 teacher admission remains authoritative. For discontiguous sets, P08-B2 applies the equivalent bounded safety profile directly to the exact selected event list:
 
 - stale or tampered selection fails closed;
-- exact professional target ids must equal the teacher-span target ids;
-- Voice gaps / unsupported span topology fail closed;
-- tied selected notes fail closed until relation closure is implemented;
+- duplicate/mixed-scope selection is already rejected by P08-A;
+- tied selected notes fail closed until tie relation closure is implemented;
 - grace-anchored selected events fail closed until grace relation closure is implemented;
 - canonical pitch range is enforced;
 - current/immediate-parent revision identity reuse fails closed;
+- every admitted note plan must apply exactly once to the same event/note/source pitch;
+- notation semantic addresses must all rebind after the mutation;
 - no renderer geometry is used as authoring evidence.
-
-### EVENT_SET
-
-Discontiguous `EVENT_SET` selections are intentionally **not** coerced into a contiguous span. P08-B1 returns `SELECTION_KIND_UNSUPPORTED` rather than silently transposing intervening events.
-
-P08-B2 will add dedicated discontiguous bulk-operation relation closure. This is necessary before Ctrl/Cmd-style multi-selection can safely mutate isolated notes without affecting events between them.
 
 ### Authority
 
-`ScoreDocumentV3 + NotationDocumentV4` remain canonical. The professional selection is noncanonical interaction state. Candidate authoring has no history authority; the session adapter commits the direct-child candidate through `EditorHistoryV4`, producing one unified history step.
+`ScoreDocumentV3 + NotationDocumentV4` remain canonical. Professional selection is noncanonical interaction state. Candidate authoring has no history authority; the session adapter commits the direct-child candidate through `EditorHistoryV4`, producing one unified history step.
+
+## Next P08-B work
+
+The next bulk-edit layer should add professional semitone/diatonic transpose and bounded delete/replace behavior over the same `EVENT_SPAN` / `EVENT_SET` selection contracts. Those operations must preserve the same one-action/one-history-revision rule and add relation closure only where it can be proven safe.
