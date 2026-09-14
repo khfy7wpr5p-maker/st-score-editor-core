@@ -76,20 +76,25 @@ try {
   );
 
   const boot = await page.evaluate(() => {
+    const runtime = globalThis.STScoreEditorProfessionalApp;
     const controller = globalThis.STScoreEditorProfessionalAppController;
     return {
-      globalVersion: globalThis.STScoreEditorProfessionalApp.version,
-      professionalVersion: globalThis.STScoreEditorProfessionalApp.professionalVersion,
-      hasRoot: Boolean(document.querySelector('[data-st-score-editor-root]')),
+      rangeVersion: runtime.professionalRangeToolbar?.version ?? null,
+      rangeAvailable: runtime.professionalRangeToolbar?.available ?? false,
+      structureVersion: runtime.professionalStructureInspector?.version ?? null,
+      structureAvailable: runtime.professionalStructureInspector?.available ?? false,
+      hasApp: Boolean(document.querySelector('[data-st-score-editor-app]')),
       hasRange: Boolean(document.querySelector('[data-st-professional-range-toolbar]')),
       hasStructure: Boolean(document.querySelector('[data-st-professional-structure-inspector]')),
       historyPast: controller.getDocument().session.history.past.length
     };
   });
   if (
-    boot.globalVersion !== '1.0.0' ||
-    boot.professionalVersion !== '1.0.0' ||
-    !boot.hasRoot ||
+    boot.rangeVersion !== '1.0.0' ||
+    !boot.rangeAvailable ||
+    boot.structureVersion !== '1.0.0' ||
+    !boot.structureAvailable ||
+    !boot.hasApp ||
     !boot.hasRange ||
     !boot.hasStructure ||
     boot.historyPast !== 0
