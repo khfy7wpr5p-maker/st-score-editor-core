@@ -175,12 +175,18 @@ The P08-E4 build also verifies the already-qualified default standalone budget b
 
 The professional artifact intentionally does not claim the default audio-host integration. `audioEngineBundled=false` and `audioHostIntegrated=false` are explicit until a separately designed and qualified composition path exists.
 
-### Qualification boundary
+### Qualified bundle boundary
 
-P08-E4 is included in the repository browser build/test path so CI verifies its TypeScript closure, bounded bundle, manifest integrity, SHA-256 and default-budget non-regression. Automated WebKit regression remains a browser compatibility gate only; it is not physical-device evidence.
+The measured minified P08-E4 artifact is `599398` bytes on the qualification toolchain. The final deterministic ceiling is `615000` bytes under budget revision `P08-E4-QUALIFIED-1`, leaving less than 20 KB bounded headroom. The former `700000` byte provisional measurement ceiling is no longer accepted by tests.
 
-The dedicated `st-score-editor-professional.html` is a qualification surface. It does not grant production release, publication, or SesliTab cutover authority. Physical iPhone/Safari validation remains a separate manual gate.
+### Browser qualification boundary
+
+The dedicated WebKit regression mounts `st-score-editor-professional.html`, verifies the professional global/controller, performs semantic range Clear with one-history-step Undo, performs a semantic key-signature edit with one-history-step Undo, and verifies 44px touch-target minimums. The Undo contract restores absence of an explicit key signature as `null`; it does not synthesize `{ fifths: 0 }`.
+
+Automated WebKit is browser compatibility evidence only. It is not physical-device evidence.
+
+The dedicated `st-score-editor-professional.html` remains a qualification surface. It does not grant production release, publication, or SesliTab cutover authority. Physical iPhone/Safari validation remains a separate manual gate before any production exposure decision.
 
 ## Next integration work
 
-After P08-E4 is CI/WebKit green with its final tightened byte ceiling, the next safe slice is a dedicated WebKit regression for the professional artifact itself: mount the qualification HTML, create/open a bounded score, exercise semantic range Clear/transpose plus one structure edit, and prove one-history-step/Undo behavior. Physical iPhone/Safari validation should follow separately before any production exposure decision.
+After exact-head CI and dedicated WebKit are green, the next safe step is physical iPhone/Safari qualification of the separate professional artifact. Only after that evidence should a production-exposure decision be considered. Audio composition for this artifact remains separate work because `audioEngineBundled=false` and `audioHostIntegrated=false` are explicit in the manifest.
