@@ -109,11 +109,11 @@ try {
       .slice(0, 2);
     if (entries.length !== 2) throw new Error('P08E4_RANGE_TARGETS_MISSING');
     controller.select(entries[0].address);
-    controller.captureProfessionalRangeStart();
+    controller.captureTeacherRangeStartAtSelection();
     controller.select(entries[1].address);
-    return controller.getProfessionalRangeState();
+    return controller.getProfessionalRangeToolbarState();
   });
-  if (!rangeReady.ready || rangeReady.startEventId === null || rangeReady.endEventId === null) {
+  if (!rangeReady.rangeReady || rangeReady.rangeStartEventId === null || rangeReady.rangeStopEventId === null) {
     throw new Error(`P08-E4 range preparation mismatch: ${JSON.stringify(rangeReady)}`);
   }
 
@@ -123,13 +123,13 @@ try {
     const documentValue = controller.getDocument();
     const events = documentValue.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events;
     return {
-      ok: result.ok,
       error: result.error,
+      revisionId: result.revisionId,
       historyPast: documentValue.session.history.past.length,
       kinds: events.slice(0, 2).map(event => event.kind)
     };
   });
-  if (!clearResult.ok || clearResult.error !== null || clearResult.historyPast !== 1 ||
+  if (clearResult.error !== null || clearResult.historyPast !== 1 ||
       JSON.stringify(clearResult.kinds) !== JSON.stringify(['rest', 'rest'])) {
     throw new Error(`P08-E4 professional Clear mismatch: ${JSON.stringify(clearResult)}`);
   }
