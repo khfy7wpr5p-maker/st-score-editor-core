@@ -4,11 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { assembleStableApp09BPreviewCli } from './assemble-app09b-preview-stable.mjs';
 import { ensureProductionAudioRuntime } from './ensure-production-audio-runtime.mjs';
 
-export const PRODUCTION_SITE_VERSION = '1.2.0';
-export const AUDIO_RELEASE = 'v0.1.1';
-export const AUDIO_RELEASE_COMMIT = '61d2b0a161d949588bb1bbd3c01caf819f03ec72';
-export const AUDIO_RELEASE_ASSET_SHA256 = 'd997c6de77436ac3d7463e079904e5d29e52a06a30460330a6f1444ac0469092';
-export const AUDIO_RELEASE_URL = 'https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.1/st-score-audio-engine.browser.v0.1.1.js';
+export const PRODUCTION_SITE_VERSION = '1.3.0';
+export const AUDIO_RELEASE = 'v0.1.2';
+export const AUDIO_RELEASE_COMMIT = '26117ae90f213e208e06fb5c084fc0fad9f4ca86';
+export const AUDIO_RELEASE_ASSET_SHA256 = '18f4e039ffe6e766916bd11f61d60b2496095aadbc61828ecd88545b8408504d';
+export const AUDIO_RELEASE_URL = 'https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.2/st-score-audio-engine.browser.v0.1.2.js';
 export const AUDIO_BUNDLE = 'st-score-audio-engine.js';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -25,7 +25,7 @@ const patchBootstrap = source => {
   if (controllerOccurrences !== 1) {
     throw new Error(`PRODUCTION_AUDIO_CONTROLLER_HOOK_MISSING:${controllerOccurrences}`);
   }
-  const controllerPatch = `${controllerAnchor}\n\n  const audioApi = globalThis.STScoreAudioEngine;\n  if (!audioApi || audioApi.version !== '0.1.1' || typeof audioApi.createAudioEngine !== 'function' || typeof controller.attachAudioPort !== 'function') {\n    throw new Error('PRODUCTION_AUDIO_ENGINE_HOST_UNAVAILABLE');\n  }\n  const audioEngine = audioApi.createAudioEngine({ defaultInstrument: 'GRAND_PIANO' });\n  controller.attachAudioPort(audioEngine);\n  Object.defineProperty(globalThis, 'STScoreEditorAudioEngine', { value: audioEngine, writable: false, configurable: false });\n  let latestAudioInteractionSequence = 0;\n  if (typeof audioEngine.prepare === 'function') {\n    document.documentElement.dataset.stScoreAudioWarmup = 'loading';\n    void audioEngine.prepare().then(\n      () => { document.documentElement.dataset.stScoreAudioWarmup = 'ready'; },\n      () => { document.documentElement.dataset.stScoreAudioWarmup = 'failed'; }\n    );\n  }`;
+  const controllerPatch = `${controllerAnchor}\n\n  const audioApi = globalThis.STScoreAudioEngine;\n  if (!audioApi || audioApi.version !== '0.1.2' || typeof audioApi.createAudioEngine !== 'function' || typeof controller.attachAudioPort !== 'function' || typeof controller.setAuditionInstrument !== 'function') {\n    throw new Error('PRODUCTION_AUDIO_ENGINE_HOST_UNAVAILABLE');\n  }\n  const audioEngine = audioApi.createAudioEngine({ defaultInstrument: 'GRAND_PIANO' });\n  controller.attachAudioPort(audioEngine);\n  Object.defineProperty(globalThis, 'STScoreEditorAudioEngine', { value: audioEngine, writable: false, configurable: false });\n  let latestAudioInteractionSequence = 0;\n  document.documentElement.dataset.stScoreAudioInstrument = 'grand_piano';\n  if (typeof audioEngine.prepare === 'function') {\n    document.documentElement.dataset.stScoreAudioWarmup = 'loading';\n    void audioEngine.prepare().then(\n      () => { document.documentElement.dataset.stScoreAudioWarmup = 'ready'; },\n      () => { document.documentElement.dataset.stScoreAudioWarmup = 'failed'; }\n    );\n  }\n  const audioInstrumentSelect = document.getElementById('st-score-audio-instrument');\n  if (!(audioInstrumentSelect instanceof HTMLSelectElement)) {\n    throw new Error('PRODUCTION_AUDIO_INSTRUMENT_SELECTOR_MISSING');\n  }\n  audioInstrumentSelect.addEventListener('change', () => {\n    const nextInstrument = audioInstrumentSelect.value === 'VIOLIN' ? 'VIOLIN' : 'GRAND_PIANO';\n    const previousInstrument = controller.getAudioHostState().instrumentId;\n    audioInstrumentSelect.disabled = true;\n    document.documentElement.dataset.stScoreAudioWarmup = 'loading';\n    void controller.setAuditionInstrument(nextInstrument).then(\n      (audioState) => {\n        audioInstrumentSelect.value = audioState.instrumentId;\n        document.documentElement.dataset.stScoreAudioInstrument = audioState.instrumentId.toLowerCase();\n        document.documentElement.dataset.stScoreAudioWarmup = 'ready';\n        delete document.documentElement.dataset.stScoreAudioError;\n      },\n      () => {\n        audioInstrumentSelect.value = previousInstrument;\n        document.documentElement.dataset.stScoreAudioInstrument = previousInstrument.toLowerCase();\n        document.documentElement.dataset.stScoreAudioWarmup = 'failed';\n        document.documentElement.dataset.stScoreAudioError = 'AUDIO_INSTRUMENT_SWITCH_FAILED';\n      }\n    ).finally(() => { audioInstrumentSelect.disabled = false; });\n  });`;
 
   const selectionNeedle = "        controller.selectRenderedScoreNoteRef(hit.target);\n";
   const selectionOccurrences = source.split(selectionNeedle).length - 1;
@@ -40,11 +40,15 @@ const patchBootstrap = source => {
 const patchHtml = source => {
   const editorScript = '<script src="./st-score-editor-app.js"></script>';
   if (!source.includes(editorScript)) throw new Error('PRODUCTION_AUDIO_EDITOR_SCRIPT_HOOK_MISSING');
+  const closingBody = '</body>';
+  if (source.split(closingBody).length - 1 !== 1) throw new Error('PRODUCTION_AUDIO_BODY_HOOK_MISSING');
+  const instrumentControl = `<label id="st-score-audio-instrument-control" style="position:fixed;top:max(8px,env(safe-area-inset-top));right:8px;z-index:10000;padding:6px 8px;border:1px solid currentColor;border-radius:8px;background:Canvas;color:CanvasText;font:12px/1.2 system-ui,-apple-system,sans-serif">Ses <select id="st-score-audio-instrument" aria-label="Ses enstrümanı"><option value="GRAND_PIANO" selected>Piano</option><option value="VIOLIN">Violin</option></select></label>`;
   return source
     .replace(editorScript, '<script src="./audio-runtime/st-score-audio-engine.js"></script>\n<script src="./st-score-editor-app.js"></script>')
     .replace("connect-src 'none';", "connect-src https://raw.githubusercontent.com;")
     .replace('./st-score-editor-app09b-bootstrap.js', './st-score-editor-production-bootstrap.js')
-    .replace('<title>ST Score Editor APP-09B Test</title>', '<title>ST Score Editor</title>');
+    .replace('<title>ST Score Editor APP-09B Test</title>', '<title>ST Score Editor</title>')
+    .replace(closingBody, `${instrumentControl}\n${closingBody}`);
 };
 
 export async function assembleProductionSite({
@@ -93,7 +97,9 @@ export async function assembleProductionSite({
       artifact: AUDIO_BUNDLE,
       global: 'STScoreAudioEngine',
       attachedByHost: true,
-      qualifiedInstruments: Object.freeze(['GRAND_PIANO']),
+      defaultInstrument: 'GRAND_PIANO',
+      instrumentSelection: 'host-ui-noncanonical',
+      qualifiedInstruments: Object.freeze(['GRAND_PIANO', 'VIOLIN']),
       suspendedInstruments: Object.freeze(['CLASSICAL_GUITAR']),
       restAudition: 'no-request',
       staleRevision: 'fail-closed',
@@ -103,8 +109,8 @@ export async function assembleProductionSite({
       sampleHosts: Object.freeze(['https://raw.githubusercontent.com']),
       latencyHardening: Object.freeze({
         selectionCriticalPath: 'non-blocking-audio',
-        preloadStrategy: 'grand-piano-raw-prepare-plus-decoded-warm-cache',
-        decodedWarmCache: 'audio-engine-v0.1.1-after-unlock',
+        preloadStrategy: 'selected-qualified-instrument-raw-prepare-plus-decoded-warm-cache',
+        decodedWarmCache: 'audio-engine-v0.1.2-after-unlock',
         inflightDedupe: 'raw-fetch-and-audio-decode',
         rapidTapStatusPolicy: 'latest-request-wins',
         selectionDispatchMetric: 'stScoreSelectionDispatchMs',
