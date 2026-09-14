@@ -148,10 +148,39 @@ Invalid UI values are rejected before bridge mutation. Missing deterministic sem
 - `EditorHistoryV4` remains sole history authority;
 - no network or publication authority is added.
 
-### Production bundle boundary
+## P08-E4: independently qualified professional browser artifact
 
-P08-E2/E3 remain optional professional browser UI packages and are intentionally **not yet imported into the existing `STScoreEditorApp` production global entry**. The current production bundle is close to its qualified byte ceiling, so P08 does not weaken or silently re-baseline that release budget. A later integration step must prove the existing bundle still fits unchanged or expose the professional UI through a separately qualified extension artifact.
+P08-E4 packages the E2/E3 professional browser surface behind its own immutable global entry without importing it into the existing `STScoreEditorApp` global.
+
+```text
+packages/score-editor-browser-professional-app-v1/src/global-entry.ts
+          |
+          v
+STScoreEditorProfessionalApp
+          |
+          +-- P08-E2 professional range toolbar
+          +-- P08-E3 semantic structure inspector
+          |
+          v
+dist/browser/st-score-editor-professional.js
+          +-- independent manifest
+          +-- independent SHA-256
+          +-- independent byte ceiling
+          +-- dedicated qualification HTML
+```
+
+The artifact is `optional-professional-browser-surface`; it is not the production default and it does not replace `STScoreEditorApp`. Its manifest explicitly records that canonical authority remains false, `EditorHistoryV4` remains the history authority, semantic target authority remains `SemanticAddressV3-current-revision`, and renderer coordinates/DOM/network remain non-authoritative.
+
+The P08-E4 build also verifies the already-qualified default standalone budget before emitting the professional artifact. The default `STScoreEditorApp` ceiling remains exactly `542720` bytes with budget revision `P06-AUDIO-V010-1`. A silent default-app budget rebaseline therefore fails the professional build instead of being accepted incidentally.
+
+The professional artifact intentionally does not claim the default audio-host integration. `audioEngineBundled=false` and `audioHostIntegrated=false` are explicit until a separately designed and qualified composition path exists.
+
+### Qualification boundary
+
+P08-E4 is included in the repository browser build/test path so CI verifies its TypeScript closure, bounded bundle, manifest integrity, SHA-256 and default-budget non-regression. Automated WebKit regression remains a browser compatibility gate only; it is not physical-device evidence.
+
+The dedicated `st-score-editor-professional.html` is a qualification surface. It does not grant production release, publication, or SesliTab cutover authority. Physical iPhone/Safari validation remains a separate manual gate.
 
 ## Next integration work
 
-The next high-leverage step is to qualify a separate optional professional browser extension artifact (or prove an unchanged production bundle budget) so the E2/E3 surfaces can be loaded without expanding the already-qualified standalone application bundle. Physical Safari validation remains a separate manual gate after such a browser artifact exists.
+After P08-E4 is CI/WebKit green with its final tightened byte ceiling, the next safe slice is a dedicated WebKit regression for the professional artifact itself: mount the qualification HTML, create/open a bounded score, exercise semantic range Clear/transpose plus one structure edit, and prove one-history-step/Undo behavior. Physical iPhone/Safari validation should follow separately before any production exposure decision.
