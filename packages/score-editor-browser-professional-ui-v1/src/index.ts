@@ -11,7 +11,10 @@ import {
   type MobileTeacherViewportStandaloneScoreEditorController
 } from '../../score-editor-browser-app/src/mobile-teacher-viewport.js';
 import type { TeacherWorkflowControllerOptions } from '../../score-editor-browser-app/src/teacher-workflow.js';
-import type { ScoreEditorBrowserAppSnapshot } from '../../score-editor-browser-app/src/index.js';
+import type {
+  ScoreEditorBrowserAppSnapshot,
+  StandaloneScoreEditorController
+} from '../../score-editor-browser-app/src/index.js';
 
 export const PROFESSIONAL_RANGE_TOOLBAR_V1_VERSION = '1.0.0' as const;
 export const PROFESSIONAL_RANGE_TOOLBAR_MIN_TOUCH_TARGET_PX = 44 as const;
@@ -142,7 +145,11 @@ export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
   options: ProfessionalRangeToolbarOptions = {}
 ): Readonly<ProfessionalRangeToolbarStandaloneScoreEditorControllerV1> => {
   const base = createMobileTeacherViewportStandaloneScoreEditorController(options);
-  const professional = attachProfessionalWorkstationToBrowserControllerV1(base);
+  // Higher browser layers widen only the literal profile while preserving the complete
+  // StandaloneScoreEditorController document/adoption/subscription contract consumed by E1.
+  const professional = attachProfessionalWorkstationToBrowserControllerV1(
+    base as unknown as StandaloneScoreEditorController
+  );
   const revisionIdFactory = options.professionalRevisionIdFactory ?? options.revisionIdFactory ?? browserRevisionId;
   let root: HTMLElement | null = null;
   let disposed = false;
