@@ -2,11 +2,13 @@ import { cp, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assembleStableApp09BPreviewCli } from './assemble-app09b-preview-stable.mjs';
+import { ensureProductionAudioRuntime } from './ensure-production-audio-runtime.mjs';
 
-export const PRODUCTION_SITE_VERSION = '1.0.0';
-export const AUDIO_RELEASE = 'v0.1.0';
-export const AUDIO_RELEASE_COMMIT = 'd11a2dd9141169ddfec5901f3cadc4cce0d7b345';
-export const AUDIO_RELEASE_ASSET_SHA256 = '0f25713f481c42d7a1909e15f968635202d3247203402d8f9f95c19a0a0fb99c';
+export const PRODUCTION_SITE_VERSION = '1.2.0';
+export const AUDIO_RELEASE = 'v0.1.1';
+export const AUDIO_RELEASE_COMMIT = '61d2b0a161d949588bb1bbd3c01caf819f03ec72';
+export const AUDIO_RELEASE_ASSET_SHA256 = 'd997c6de77436ac3d7463e079904e5d29e52a06a30460330a6f1444ac0469092';
+export const AUDIO_RELEASE_URL = 'https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.1/st-score-audio-engine.browser.v0.1.1.js';
 export const AUDIO_BUNDLE = 'st-score-audio-engine.js';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -23,14 +25,14 @@ const patchBootstrap = source => {
   if (controllerOccurrences !== 1) {
     throw new Error(`PRODUCTION_AUDIO_CONTROLLER_HOOK_MISSING:${controllerOccurrences}`);
   }
-  const controllerPatch = `${controllerAnchor}\n\n  const audioApi = globalThis.STScoreAudioEngine;\n  if (!audioApi || audioApi.version !== '0.1.0' || typeof audioApi.createAudioEngine !== 'function' || typeof controller.attachAudioPort !== 'function') {\n    throw new Error('PRODUCTION_AUDIO_ENGINE_HOST_UNAVAILABLE');\n  }\n  const audioEngine = audioApi.createAudioEngine({ defaultInstrument: 'GRAND_PIANO' });\n  controller.attachAudioPort(audioEngine);\n  Object.defineProperty(globalThis, 'STScoreEditorAudioEngine', { value: audioEngine, writable: false, configurable: false });`;
+  const controllerPatch = `${controllerAnchor}\n\n  const audioApi = globalThis.STScoreAudioEngine;\n  if (!audioApi || audioApi.version !== '0.1.1' || typeof audioApi.createAudioEngine !== 'function' || typeof controller.attachAudioPort !== 'function') {\n    throw new Error('PRODUCTION_AUDIO_ENGINE_HOST_UNAVAILABLE');\n  }\n  const audioEngine = audioApi.createAudioEngine({ defaultInstrument: 'GRAND_PIANO' });\n  controller.attachAudioPort(audioEngine);\n  Object.defineProperty(globalThis, 'STScoreEditorAudioEngine', { value: audioEngine, writable: false, configurable: false });\n  let latestAudioInteractionSequence = 0;\n  if (typeof audioEngine.prepare === 'function') {\n    document.documentElement.dataset.stScoreAudioWarmup = 'loading';\n    void audioEngine.prepare().then(\n      () => { document.documentElement.dataset.stScoreAudioWarmup = 'ready'; },\n      () => { document.documentElement.dataset.stScoreAudioWarmup = 'failed'; }\n    );\n  }`;
 
   const selectionNeedle = "        controller.selectRenderedScoreNoteRef(hit.target);\n";
   const selectionOccurrences = source.split(selectionNeedle).length - 1;
   if (selectionOccurrences !== 1) {
     throw new Error(`PRODUCTION_AUDIO_SELECTION_HOOK_MISSING:${selectionOccurrences}`);
   }
-  const selectionPatch = "        const auditionResult = await controller.selectRenderedScoreNoteRefWithAudition(hit.target);\n        document.documentElement.dataset.stScoreAudioStatus = auditionResult.audioStatus.toLowerCase();\n        if (auditionResult.audioError) document.documentElement.dataset.stScoreAudioError = auditionResult.audioError.code;\n        else delete document.documentElement.dataset.stScoreAudioError;\n";
+  const selectionPatch = "        const audioInteractionSequence = ++latestAudioInteractionSequence;\n        const audioInteractionStartedAt = globalThis.performance?.now?.() ?? Date.now();\n        const auditionPromise = controller.selectRenderedScoreNoteRefWithAudition(hit.target);\n        document.documentElement.dataset.stScoreSelectionDispatchMs = String(Math.max(0, (globalThis.performance?.now?.() ?? Date.now()) - audioInteractionStartedAt));\n        void auditionPromise.then(\n          (auditionResult) => {\n            if (audioInteractionSequence !== latestAudioInteractionSequence) return;\n            document.documentElement.dataset.stScoreAudioStatus = auditionResult.audioStatus.toLowerCase();\n            if (auditionResult.audioError) document.documentElement.dataset.stScoreAudioError = auditionResult.audioError.code;\n            else delete document.documentElement.dataset.stScoreAudioError;\n            document.documentElement.dataset.stScoreAudioLatencyMs = String(Math.max(0, (globalThis.performance?.now?.() ?? Date.now()) - audioInteractionStartedAt));\n          },\n          () => {\n            if (audioInteractionSequence !== latestAudioInteractionSequence) return;\n            document.documentElement.dataset.stScoreAudioStatus = 'failed';\n            document.documentElement.dataset.stScoreAudioError = 'AUDIO_AUDITION_REJECTED';\n            document.documentElement.dataset.stScoreAudioLatencyMs = String(Math.max(0, (globalThis.performance?.now?.() ?? Date.now()) - audioInteractionStartedAt));\n          }\n        );\n";
 
   return source.replace(controllerAnchor, controllerPatch).replace(selectionNeedle, selectionPatch);
 };
@@ -86,6 +88,7 @@ export async function assembleProductionSite({
       release: AUDIO_RELEASE,
       releaseCommit: AUDIO_RELEASE_COMMIT,
       releaseAssetSha256: AUDIO_RELEASE_ASSET_SHA256,
+      releaseUrl: AUDIO_RELEASE_URL,
       runtimeDirectory: 'audio-runtime',
       artifact: AUDIO_BUNDLE,
       global: 'STScoreAudioEngine',
@@ -97,7 +100,16 @@ export async function assembleProductionSite({
       canonicalMutationAuthority: false,
       historyMutationAuthority: false,
       rendererAuthority: false,
-      sampleHosts: Object.freeze(['https://raw.githubusercontent.com'])
+      sampleHosts: Object.freeze(['https://raw.githubusercontent.com']),
+      latencyHardening: Object.freeze({
+        selectionCriticalPath: 'non-blocking-audio',
+        preloadStrategy: 'grand-piano-raw-prepare-plus-decoded-warm-cache',
+        decodedWarmCache: 'audio-engine-v0.1.1-after-unlock',
+        inflightDedupe: 'raw-fetch-and-audio-decode',
+        rapidTapStatusPolicy: 'latest-request-wins',
+        selectionDispatchMetric: 'stScoreSelectionDispatchMs',
+        audioLatencyMetric: 'stScoreAudioLatencyMs'
+      })
     }),
     productionDeploymentAuthorized: true,
     seslitabCutoverAuthorized: false,
@@ -108,9 +120,17 @@ export async function assembleProductionSite({
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const audioRuntimeDir = process.env.ST_SCORE_AUDIO_RUNTIME_DIR;
+  const ensured = await ensureProductionAudioRuntime({
+    audioRuntimeDir,
+    bundleName: AUDIO_BUNDLE,
+    releaseUrl: AUDIO_RELEASE_URL,
+    expectedSha256: AUDIO_RELEASE_ASSET_SHA256
+  });
+  console.log(`ST Score Editor production audio runtime: ${ensured.source} (${ensured.sha256})`);
   const result = await assembleProductionSite({
     runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR,
-    audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR,
+    audioRuntimeDir,
     outputDir: process.env.ST_PRODUCTION_OUTPUT_DIR || defaultOutputDir,
     refreshRendererRuntime: process.env.ST_PRODUCTION_REFRESH_RENDERER_RUNTIME !== '0'
   });
