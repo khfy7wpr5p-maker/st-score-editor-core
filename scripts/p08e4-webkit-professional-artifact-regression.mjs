@@ -46,6 +46,9 @@ try {
 
   await page.goto(`http://127.0.0.1:${address.port}/st-score-editor-professional.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => globalThis.STScoreEditorProfessionalAppController !== undefined);
+  await page.waitForFunction(() =>
+    globalThis.STScoreEditorProfessionalAppController?.getDocument?.()?.session !== undefined
+  );
 
   const boot = await page.evaluate(() => {
     const controller = globalThis.STScoreEditorProfessionalAppController;
