@@ -2,11 +2,13 @@ import { cp, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assembleStableApp09BPreviewCli } from './assemble-app09b-preview-stable.mjs';
+import { ensureProductionAudioRuntime } from './ensure-production-audio-runtime.mjs';
 
 export const PRODUCTION_SITE_VERSION = '1.2.0';
 export const AUDIO_RELEASE = 'v0.1.1';
 export const AUDIO_RELEASE_COMMIT = '61d2b0a161d949588bb1bbd3c01caf819f03ec72';
 export const AUDIO_RELEASE_ASSET_SHA256 = 'd997c6de77436ac3d7463e079904e5d29e52a06a30460330a6f1444ac0469092';
+export const AUDIO_RELEASE_URL = 'https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.1/st-score-audio-engine.browser.v0.1.1.js';
 export const AUDIO_BUNDLE = 'st-score-audio-engine.js';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -86,6 +88,7 @@ export async function assembleProductionSite({
       release: AUDIO_RELEASE,
       releaseCommit: AUDIO_RELEASE_COMMIT,
       releaseAssetSha256: AUDIO_RELEASE_ASSET_SHA256,
+      releaseUrl: AUDIO_RELEASE_URL,
       runtimeDirectory: 'audio-runtime',
       artifact: AUDIO_BUNDLE,
       global: 'STScoreAudioEngine',
@@ -117,9 +120,17 @@ export async function assembleProductionSite({
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const audioRuntimeDir = process.env.ST_SCORE_AUDIO_RUNTIME_DIR;
+  const ensured = await ensureProductionAudioRuntime({
+    audioRuntimeDir,
+    bundleName: AUDIO_BUNDLE,
+    releaseUrl: AUDIO_RELEASE_URL,
+    expectedSha256: AUDIO_RELEASE_ASSET_SHA256
+  });
+  console.log(`ST Score Editor production audio runtime: ${ensured.source} (${ensured.sha256})`);
   const result = await assembleProductionSite({
     runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR,
-    audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR,
+    audioRuntimeDir,
     outputDir: process.env.ST_PRODUCTION_OUTPUT_DIR || defaultOutputDir,
     refreshRendererRuntime: process.env.ST_PRODUCTION_REFRESH_RENDERER_RUNTIME !== '0'
   });
