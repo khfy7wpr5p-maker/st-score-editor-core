@@ -8,10 +8,12 @@ import { readFile } from 'node:fs/promises';
 const execFileAsync = promisify(execFile);
 const readJson = async (path) => JSON.parse(await readFile(path, 'utf8'));
 
-await execFileAsync(process.execPath, ['scripts/build-professional-browser.mjs'], {
+const professionalBuild = await execFileAsync(process.execPath, ['scripts/build-professional-browser.mjs'], {
   cwd: process.cwd(),
   maxBuffer: 1024 * 1024
 });
+if (professionalBuild.stdout.length > 0) process.stdout.write(professionalBuild.stdout);
+if (professionalBuild.stderr.length > 0) process.stderr.write(professionalBuild.stderr);
 
 test('P08-E4 professional artifact is independently bounded and integrity described', async () => {
   const manifest = await readJson('dist/browser/st-score-editor-professional.manifest.json');
