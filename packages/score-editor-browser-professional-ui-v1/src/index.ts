@@ -135,6 +135,7 @@ export interface ProfessionalRangeToolbarStandaloneScoreEditorControllerV1 exten
   readonly transposeProfessionalRangeByOctaves: (octaveDelta: TeacherOctaveDeltaV4) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly mount: (root: HTMLElement) => void;
   readonly unmount: () => void;
+  readonly disposeProfessionalRangeToolbar: () => void;
 }
 
 export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
@@ -144,6 +145,7 @@ export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
   const professional = attachProfessionalWorkstationToBrowserControllerV1(base);
   const revisionIdFactory = options.professionalRevisionIdFactory ?? options.revisionIdFactory ?? browserRevisionId;
   let root: HTMLElement | null = null;
+  let disposed = false;
   let lastError: Readonly<{ readonly code: string; readonly message: string }> | null = null;
 
   const rangeIds = (): Readonly<{ readonly start: string; readonly stop: string }> | null => {
@@ -255,7 +257,7 @@ export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
   };
 
   const decorate = (): void => {
-    if (root === null) return;
+    if (root === null || disposed) return;
     const app = root.querySelector<HTMLElement>('[data-st-score-editor-app]');
     if (app === null) return;
     if (app.querySelector('[data-st-professional-range-toolbar-style]') === null) {
@@ -296,6 +298,7 @@ export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
   };
 
   const unsubscribeBase = base.subscribe(() => {
+    if (disposed) return;
     if (professional.getSnapshot().professionalSelectionKind !== null && !rangeIds()) {
       professional.clearProfessionalSelection();
     }
@@ -310,25 +313,25 @@ export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
     clearProfessionalRangeToRest: clearToRest,
     transposeProfessionalRangeByOctaves: transpose,
     mount: (nextRoot) => {
+      if (disposed) throw new ProfessionalRangeToolbarErrorV1('Professional range toolbar has been disposed.', 'RANGE_TARGET_INVALID');
       base.mount(nextRoot);
       root = nextRoot;
       decorate();
     },
     unmount: () => {
-      professional.clearProfessionalSelection();
+      if (professional.getSnapshot().professionalSelectionKind !== null) professional.clearProfessionalSelection();
       lastError = null;
       root = null;
       base.unmount();
-    }
-  };
-
-  Object.defineProperty(controller, Symbol.for('st-score-editor-professional-range-dispose'), {
-    value: () => {
+    },
+    disposeProfessionalRangeToolbar: () => {
+      if (disposed) return;
+      disposed = true;
+      root = null;
       unsubscribeBase();
       professional.dispose();
-    },
-    enumerable: false
-  });
+    }
+  };
 
   return Object.freeze(controller);
 };
