@@ -20,8 +20,8 @@
     "xmlchars": "2.2.0"
   },
   "optionalDependencies": {
-    "@st/score-audio-contracts": "https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.0/st-score-audio-contracts-0.1.0.tgz",
-    "@st/score-audio-web": "https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.0/st-score-audio-web-0.1.0.tgz"
+    "@st/score-audio-contracts": "https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.1/st-score-audio-contracts-0.1.0.tgz",
+    "@st/score-audio-web": "https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.1/st-score-audio-web-0.1.1.tgz"
   },
   "devDependencies": {
     "esbuild": "0.28.2",
