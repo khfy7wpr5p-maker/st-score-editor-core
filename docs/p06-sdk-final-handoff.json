@@ -2,9 +2,9 @@
   "schema_version": "1.0.0",
   "document_type": "P06_SDK_DEVELOPMENT_HANDOFF",
   "project": "st-score-editor-core",
-  "date": "2026-09-13",
-  "phase": "P06 reusable SDK / integration contract",
-  "status": "HANDOFF_CANDIDATE_FINAL_EXACT_HEAD_VALIDATION_REQUIRED",
+  "date": "2026-09-14",
+  "phase": "P06 reusable SDK / Audio Engine v0.1.0 production integration",
+  "status": "PRODUCTION_INTEGRATED_AUDIO_V010",
   "authority": {
     "canonical_score": "ScoreDocumentV3 + NotationDocumentV4",
     "history": "EditorSessionV4",
@@ -23,7 +23,8 @@
     "public_modules": [
       "./src/index.js",
       "./version-negotiation.js",
-      "./rollout.js"
+      "./rollout.js",
+      "./audio-v010.js"
     ],
     "base_capabilities": {
       "document": true,
@@ -68,97 +69,113 @@
     {
       "id": "P06-A",
       "status": "PASS",
-      "pull_request": 154,
-      "summary": "Existing integration surfaces and authority boundaries inventoried; standalone V4 controller selected as reuse base."
+      "pull_request": 154
     },
     {
       "id": "P06-B",
       "status": "PASS",
       "pull_request": 155,
-      "verified_head": "25861c66c2762f8226f529b5860f72643b600eaa",
-      "summary": "Versioned capability-driven generic SDK with typed results, revision guards and no second score/history authority."
+      "verified_head": "25861c66c2762f8226f529b5860f72643b600eaa"
     },
     {
       "id": "P06-C",
       "status": "PASS",
       "pull_request": 156,
-      "verified_head": "9ccf5922a927ee2fd272416d2c6a375b5e38396b",
-      "summary": "Deterministic generic host lifecycle with reusable unmount, terminal idempotent dispose and callback-failure isolation."
+      "verified_head": "9ccf5922a927ee2fd272416d2c6a375b5e38396b"
     },
     {
       "id": "P06-D",
       "status": "PASS",
       "pull_request": 157,
-      "verified_head": "51fe560f3d6d5f1e08354b5b4a1d9c291a05ca1c",
-      "summary": "Neutral third-party example uses only the public SDK entry and demonstrates open/select/edit/undo with capability-local degradation."
+      "verified_head": "51fe560f3d6d5f1e08354b5b4a1d9c291a05ca1c"
     },
     {
       "id": "P06-E",
       "status": "PASS",
       "pull_request": 158,
       "validation_pull_request": 159,
-      "verified_head": "fee469cc0d000bc8f9b791bafc4a11728bc9f939",
-      "summary": "Version negotiation, conformance and additive migration rules; cumulative A-E Node and WebKit/P05 regression gates passed."
+      "verified_head": "fee469cc0d000bc8f9b791bafc4a11728bc9f939"
     },
     {
       "id": "P06-F",
-      "status": "BLOCKED_EXTERNAL_DISTRIBUTION_GATE",
-      "pull_request": 160,
-      "verified_head": "f53edc8cf7195efc9e183de8d8ae228e4beffdaa",
-      "summary": "Audio integration intentionally not activated because upstream source packages are versioned but no immutable release/tag distribution identity is published."
+      "status": "PASS_RESOLVED_BY_P06_F2",
+      "historical_gate_pull_request": 160,
+      "integration_pull_request": 166,
+      "validation_pull_request": 167,
+      "validated_head": "e3216ddb99f1db0a2184eeaf7760230e442dd115"
     },
     {
       "id": "P06-G",
       "status": "PASS",
       "pull_request": 161,
-      "verified_head": "13599036f2a9cdf8d17d6313a4d6ee939d061520",
-      "summary": "Optional integration rollout flags default off and cannot enable an unavailable capability."
+      "verified_head": "13599036f2a9cdf8d17d6313a4d6ee939d061520"
     },
     {
       "id": "P06-H",
-      "status": "IN_PROGRESS_FINAL_EXACT_HEAD_VALIDATION_REQUIRED",
-      "summary": "Documentation, durable handoff, rollback and remaining-gate record."
+      "status": "PASS_PRODUCTION_RECONCILED",
+      "historical_validation_pull_request": 164
     }
   ],
   "audio_gate": {
     "upstream_repository": "khfy7wpr5p-maker/st-score-audio-engine",
-    "verified_upstream_head": "779a0d9c3c3cb8d91607d3e96c60554d47de1a27",
+    "release": "v0.1.0",
+    "release_commit": "d11a2dd9141169ddfec5901f3cadc4cce0d7b345",
     "source_contract_package": "@st/score-audio-contracts@0.1.0",
     "source_web_package": "@st/score-audio-web@0.1.0",
-    "github_release_observed": false,
-    "git_tag_observed": false,
-    "editor_core_audio_dependency_added_by_p06": false,
+    "browser_asset_sha256": "0f25713f481c42d7a1909e15f968635202d3247203402d8f9f95c19a0a0fb99c",
+    "github_release_observed": true,
+    "git_tag_observed": true,
+    "official_release_artifacts_pinned": true,
     "local_parallel_audition_contract_added_by_p06": false,
-    "physical_iphone_audio_pass_claimed": false,
-    "unblock_requires_immutable_published_distribution_identity": true
+    "stale_revision_rechecked_before_audition": true,
+    "rest_non_note_silent": true,
+    "audio_failure_capability_local": true,
+    "audition_creates_history_revision": false
+  },
+  "production_evidence": {
+    "production_merge_pr": 169,
+    "production_merge_commit": "30c16f61b016ae7e659d91bfc36f858e856fbfe0",
+    "production_site_pr": 170,
+    "production_site_commit": "519adabf2b91b15b8fa263b5d8a45bf4992a227b",
+    "render_service": "st-score-editor-core",
+    "render_url": "https://st-score-editor-core.onrender.com",
+    "render_last_deploy_id": "dep-dajgjh0ae00c739t8e8g",
+    "render_last_deploy_commit": "519adabf2b91b15b8fa263b5d8a45bf4992a227b",
+    "render_last_deploy_status": "live",
+    "render_service_currently_suspended_by_user": true
+  },
+  "instrument_readiness": {
+    "GRAND_PIANO": "ACTIVE_QUALIFIED",
+    "CLASSICAL_GUITAR": "SUSPENDED",
+    "VIOLIN": "SCAFFOLD_UNQUALIFIED",
+    "OTHER_ORCHESTRAL": "SCAFFOLD_UNQUALIFIED"
+  },
+  "physical_evidence": {
+    "iphone_safari_score_editor_grand_piano_note_touch_pass": true,
+    "production_render_physical_revalidation_completed": false,
+    "automated_webkit_is_physical_speaker_evidence": false
   },
   "frozen_boundaries": {
-    "seslitab_or_smoosic_changes_in_p06": false,
-    "renderer_dependency_repin_in_p06": false,
-    "force_push_or_destructive_rebase_in_p06": false,
-    "protected_branch_merge_authorized": false,
-    "production_release_authorized": false,
-    "production_cutover_authorized": false
+    "seslitab_cutover_authorized": false,
+    "renderer_or_audio_is_canonical_authority": false,
+    "unqualified_instrument_fallback_authorized": false,
+    "force_push_or_destructive_rebase_authorized": false
   },
   "remaining_human_or_external_gates": [
-    "Publish and independently verify immutable ST Score Audio Engine distribution identity before P06-F activation.",
-    "Run and record physical iPhone Safari audio evidence separately; automated WebKit is not physical-speaker evidence.",
-    "Complete remaining teacher physical tasks/pilot evidence that were not executed by P06.",
-    "Obtain explicit approval before protected-branch merge, production release, deployment or SesliTab cutover."
+    "Resume the Render production service before production-host physical revalidation.",
+    "Re-run physical iPhone Safari Grand Piano note-touch on the production Render URL; do not infer it from local/device preview or automated WebKit.",
+    "Qualify Violin and later orchestral instruments separately before marking them production-ready.",
+    "Keep Classical Guitar suspended until its own quality/qualification work is explicitly resumed.",
+    "Obtain separate explicit authorization before SesliTab production cutover."
   ],
   "rollback": {
-    "strategy": "Keep P06 as an unmerged stacked draft-PR chain; optional flags remain default-off.",
-    "audio": "Leave audioAudition capability unavailable until the external gate opens.",
+    "audio": "Disable the audioAudition rollout flag or omit the admitted runtime; canonical score/history behavior remains available.",
     "host_integration": "A host can decline the SDK contract or keep optional flags disabled without changing canonical score/history semantics.",
     "destructive_history_rewrite_required": false
   },
   "final_validation": {
-    "required_on_exact_p06_h_head": [
-      "Node 18 core CI",
-      "Node 20 core CI",
-      "Node 22 core CI",
-      "APP-09B/P05 WebKit regression through validation-only PR"
-    ],
-    "physical_device_pass_inferred_from_automated_validation": false
+    "production_integration_exact_head_ci_and_webkit_passed": true,
+    "physical_device_pass_inferred_from_automated_validation": false,
+    "documentation_reconciliation_requires_normal_ci_before_merge": true
   }
 }
