@@ -1,23 +1,50 @@
 {
   "stage": "P06-F2",
-  "status": "IN_PROGRESS",
+  "status": "PASS_PRODUCTION_INTEGRATED",
   "upstream": {
     "repository": "khfy7wpr5p-maker/st-score-audio-engine",
     "release": "v0.1.0",
     "commit": "d11a2dd9141169ddfec5901f3cadc4cce0d7b345",
     "contracts": "@st/score-audio-contracts@0.1.0",
-    "runtime": "@st/score-audio-web@0.1.0"
+    "runtime": "@st/score-audio-web@0.1.0",
+    "browser_asset_sha256": "0f25713f481c42d7a1909e15f968635202d3247203402d8f9f95c19a0a0fb99c"
   },
   "requirements": {
     "no_contract_duplication": true,
     "revision_bound": true,
     "default_off": true,
     "noncanonical": true,
-    "exact_head_ci_required": true,
-    "webkit_required": true
+    "exact_head_ci_passed": true,
+    "webkit_passed": true,
+    "rest_silent": true,
+    "audio_failure_capability_local": true,
+    "history_revision_created_by_audition": false
   },
-  "merge_authorized": false,
-  "release_authorized": false,
-  "deployment_authorized": false,
+  "evidence": {
+    "integration_pr": 166,
+    "validation_pr": 167,
+    "validated_head": "e3216ddb99f1db0a2184eeaf7760230e442dd115",
+    "production_merge_pr": 169,
+    "production_merge_commit": "30c16f61b016ae7e659d91bfc36f858e856fbfe0",
+    "production_site_pr": 170,
+    "production_site_commit": "519adabf2b91b15b8fa263b5d8a45bf4992a227b",
+    "physical_iphone_score_editor_piano_pass": true,
+    "physical_iphone_production_render_revalidation_required": true
+  },
+  "instrument_readiness": {
+    "GRAND_PIANO": "ACTIVE_QUALIFIED",
+    "CLASSICAL_GUITAR": "SUSPENDED",
+    "VIOLIN": "SCAFFOLD_UNQUALIFIED",
+    "OTHER_ORCHESTRAL": "SCAFFOLD_UNQUALIFIED"
+  },
+  "deployment": {
+    "render_service": "st-score-editor-core",
+    "render_service_id": "srv-dajgjgoae00c739t8dog",
+    "url": "https://st-score-editor-core.onrender.com",
+    "last_deploy_id": "dep-dajgjh0ae00c739t8e8g",
+    "last_deploy_commit": "519adabf2b91b15b8fa263b5d8a45bf4992a227b",
+    "last_deploy_status": "live",
+    "service_currently_suspended_by_user": true
+  },
   "seslitab_cutover_authorized": false
 }
