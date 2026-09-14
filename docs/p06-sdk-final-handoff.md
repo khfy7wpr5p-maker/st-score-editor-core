@@ -1,25 +1,24 @@
-# P06 reusable SDK — final development handoff
+# P06 reusable SDK — current production handoff
 
-Date: 2026-09-13
+Date: 2026-09-14
 
-Status at document creation: **handoff candidate; final exact-head P06-H CI + WebKit validation still required**.
+Status: **production-integrated with ST Score Audio Engine v0.1.0; SesliTab cutover still separate**.
 
-This document closes the autonomous implementation/documentation portion of P06 without granting merge, release, deployment or SesliTab cutover authority. It records what a future developer or host integrator may rely on, what remains optional, and which external/human gates must remain explicit.
+This document supersedes the earlier handoff snapshot that recorded P06-F as `BLOCKED_EXTERNAL_DISTRIBUTION_GATE`. That historical decision was correct at the time because no immutable upstream distribution existed. The block is now resolved through P06-F2 and the production integration chain.
 
-## 1. Product direction preserved
+## 1. Product direction and authority
 
-P06 turns the standalone editor work into a reusable, versioned integration boundary without creating a second editor architecture.
+P06 remains a reusable, versioned integration boundary rather than a second editor architecture.
 
-The invariants remain:
+The authority rules are unchanged:
 
 - `ScoreDocumentV3` + `NotationDocumentV4` are the canonical score pair.
-- `EditorSessionV4` is the unified mutation/history authority.
+- `EditorSessionV4` owns mutation/history.
 - `SemanticAddressV3` is semantic identity.
-- Renderer, file, recovery, playback, teacher workflow and audio state are capabilities, not canonical truth.
-- Presentation/host lifecycle never creates score-history revisions.
-- Stale document/revision evidence fails closed; no automatic retargeting.
+- Renderer, audio, files, recovery, playback and teacher workflow are capabilities, not canonical truth.
+- stale document/revision evidence fails closed; no automatic retargeting.
 - DOM/SVG/renderer geometry cannot authorize a canonical edit.
-- SesliTab/Smoosic remains outside the generic SDK work and was not repinned or modified by P06.
+- audio audition creates no score/history revision.
 
 ## 2. Public SDK boundary
 
@@ -27,100 +26,22 @@ Public consumers use only:
 
 `packages/score-editor-sdk-v1/public.ts`
 
-The admitted public modules are:
+Current admitted public modules:
 
-- base SDK contract/implementation (`./src/index.js`),
-- explicit version negotiation (`./version-negotiation.js`),
-- capability-aware rollout gate (`./rollout.js`).
+- `./src/index.js`
+- `./version-negotiation.js`
+- `./rollout.js`
+- `./audio-v010.js`
 
-A generic consumer must not import private browser-app composition, app-document/session internals, score model internals, renderer internals, recovery storage internals or SesliTab host packages.
+SDK contract version: `1.0.0`.
 
-Current SDK contract version: `1.0.0`.
+Negotiation contract version: `1.0.0`.
 
-Current negotiation contract version: `1.0.0`.
+There is no silent version fallback.
 
-There is no silent version fallback. A host must explicitly accept a supported version.
+## 3. Optional capability rollout
 
-## 3. Base capabilities
-
-The P06 base SDK admits:
-
-- document lifecycle: create/open/export,
-- semantic selection and revision-bound target enumeration,
-- unified undo/redo,
-- bounded canonical authoring already admitted by the existing V4 path,
-- read-only snapshots and exact document/revision guards,
-- deterministic host subscription/lifecycle behavior.
-
-Public mutation calls continue to delegate into the existing V4 standalone controller/session path. The SDK does not expose the underlying `EditorSessionV4` or mutable document as a host escape hatch.
-
-## 4. Revision and stale-request contract
-
-Operations that act on an existing document require the exact current `{ documentId, revisionId }` guard.
-
-If the document or revision has changed:
-
-- the request returns `STALE_REQUEST`,
-- it is not silently retargeted,
-- stale semantic enumeration is rejected,
-- renderer-local identities cannot replace the semantic guard.
-
-This is the principal safety boundary for embedding the editor in an external host.
-
-## 5. Generic host lifecycle
-
-P06-C adds a headless lifecycle to the SDK boundary:
-
-- `mount(host)` — attach one compatible presentation host,
-- `update()` — request a presentation refresh,
-- `unmount()` — detach the host while keeping the SDK reusable,
-- `dispose()` — terminal, idempotent cleanup.
-
-`dispose()` clears SDK-managed subscriptions and rejects later mutating/lifecycle calls with a typed disposed error.
-
-A third-party host/listener exception is diagnostic state. It must not retroactively turn an already successful canonical edit into a failed edit.
-
-## 6. Neutral consumer proof
-
-The P06-D example demonstrates a third-party path that imports only the public SDK entry:
-
-1. mount a neutral host,
-2. create/export a seed score,
-3. open MusicXML,
-4. enumerate a revision-bound semantic target,
-5. select the target,
-6. perform a real canonical duration edit,
-7. undo through unified history,
-8. observe missing renderer/playback as capability-local degradation,
-9. unmount and dispose.
-
-This proves the integration contract can be consumed without SesliTab-specific code or private score/session imports.
-
-## 7. Version and migration policy
-
-Within SDK major version `1.x`, compatibility is additive by default.
-
-Allowed additive evolution includes:
-
-- a new optional capability that defaults unavailable/off,
-- a new helper that preserves the existing authority boundaries,
-- additive immutable result fields whose absence is explicitly tolerated,
-- new error/result codes tied to newly introduced operations.
-
-A separate breaking-contract approval is required for changes such as:
-
-- removing or renaming an existing public operation/field,
-- changing the meaning or authority of an existing field,
-- making an optional host capability mandatory,
-- weakening stale-revision rejection,
-- exposing mutable score/session/history ownership,
-- making renderer/audio/presentation state canonical authority.
-
-An incompatible consumer migration requires a new major contract and explicit migration path.
-
-## 8. Optional capability rollout
-
-P06-G defines these rollout-controlled optional feature ids:
+Optional features remain rollout-controlled and default-off:
 
 - `renderer`
 - `files`
@@ -129,115 +50,114 @@ P06-G defines these rollout-controlled optional feature ids:
 - `teacherWorkflow`
 - `audioAudition`
 
-All rollout flags default to `false`.
+A feature becomes enabled only when the rollout flag is true **and** the SDK actually reports the capability. A flag cannot manufacture an unavailable capability.
 
-A feature becomes enabled only when both conditions hold:
+## 4. P06-F audio gate — resolved
 
-`flag requested == true` **and** `SDK capability available == true`.
+Historical P06-F PR #160 correctly blocked integration because upstream source packages existed without a GitHub release or tag.
 
-The resulting states are:
+The upstream distribution now has an immutable published identity:
 
-- `FLAG_DISABLED`
-- `CAPABILITY_UNAVAILABLE`
-- `ENABLED`
+- repository: `khfy7wpr5p-maker/st-score-audio-engine`
+- release/tag: `v0.1.0`
+- release commit: `d11a2dd9141169ddfec5901f3cadc4cce0d7b345`
+- contract package: `@st/score-audio-contracts@0.1.0`
+- browser runtime package: `@st/score-audio-web@0.1.0`
+- production browser asset SHA-256: `0f25713f481c42d7a1909e15f968635202d3247203402d8f9f95c19a0a0fb99c`
 
-A flag never manufactures a missing capability. Rollout inspection is read-only and must not change canonical document/revision/history state.
+P06-F2 then admitted the official contract without redefining `AuditionRequest` or creating a second audio schema.
 
-This permits staged host adoption without making optional infrastructure a global editor blocker.
+Evidence:
 
-## 9. P06-F audio gate
+- integration PR #166
+- exact-head validation PR #167
+- validated P06-F2 head `e3216ddb99f1db0a2184eeaf7760230e442dd115`
 
-P06-F is intentionally **`BLOCKED_EXTERNAL_DISTRIBUTION_GATE`**.
-
-Verified upstream repository:
-
-`khfy7wpr5p-maker/st-score-audio-engine`
-
-Verified upstream source HEAD during the gate:
-
-`779a0d9c3c3cb8d91607d3e96c60554d47de1a27`
-
-Source package definitions exist for:
-
-- `@st/score-audio-contracts@0.1.0`
-- `@st/score-audio-web@0.1.0`
-
-The web runtime consumes the contracts package and the contract owns `AuditionRequest`/instrument/result shapes. Editor Core must not create a parallel substitute schema.
-
-At the P06-F check, upstream GitHub had no release and no tag. Therefore P06 did **not** add an Editor Core audio dependency, copy sample assets, or copy/redefine the external `AuditionRequest` contract.
-
-`audioAudition: true` in rollout therefore remains `CAPABILITY_UNAVAILABLE` until the external distribution gate opens.
-
-P06-F can be unblocked only after the official audio package has an immutable, independently verifiable published distribution identity and the exact package/version can be pinned reproducibly.
-
-When later integrated, the audio seam must still preserve:
+The adapter preserves:
 
 - current canonical NOTE pitch as pitch authority,
-- stale-revision recheck before audition execution,
+- stale-revision recheck before runtime execution,
 - REST/non-note silence,
-- audio failure as capability-local degradation,
+- capability-local audio failure,
 - zero `EditorSessionV4` history entries for audition,
-- separate physical iPhone evidence rather than treating WebKit as speaker-output proof.
+- external Audio Engine contract ownership.
 
-## 10. Stage/evidence map
+## 5. Production integration
 
-P06 was kept as a stacked draft-PR sequence rather than one opaque change:
+The validated P06 stack and Audio Engine v0.1.0 were composed into production through:
 
-- **P06-A / PR #154 — PASS:** integration-surface inventory and authority map.
-- **P06-B / PR #155 — PASS:** versioned generic SDK contract; verified head `25861c66…`.
-- **P06-C / PR #156 — PASS:** deterministic host lifecycle; verified head `9ccf5922…`.
-- **P06-D / PR #157 — PASS:** neutral public host example; verified head `51fe560f…`.
-- **P06-E / PR #158 — PASS:** version negotiation/conformance/migration; verified head `fee469cc…`.
-- **Validation-only PR #159 — PASS:** same P06-A–E head passed Node CI plus APP-09B/P05 WebKit, including paste/render/undo. It is not a merge request.
-- **P06-F / PR #160 — BLOCKED_EXTERNAL_DISTRIBUTION_GATE:** block documented, exact-head Node matrix green at `f53edc8c…`.
-- **P06-G / PR #161 — PASS:** capability-aware default-off rollout; exact-head Node 18/20/22 green at `13599036…`.
-- **P06-H — this documentation/handoff stage:** final exact-head Node + WebKit validation must be run after documentation is committed.
+- PR #169 — production P06 + Audio Engine integration
+- `main` commit `30c16f61b016ae7e659d91bfc36f858e856fbfe0`
+- PR #170 — production static-site assembly
+- current production assembly commit `519adabf2b91b15b8fa263b5d8a45bf4992a227b`
 
-PASS above means development/automated gate PASS only. It does not convert unexecuted physical/device/teacher gates into PASS.
+The production assembly verifies the pinned Audio Engine browser artifact checksum before building the site.
 
-## 11. Frozen and prohibited actions preserved
+Render service:
 
-P06 did not authorize or perform:
+- service: `st-score-editor-core`
+- URL: `https://st-score-editor-core.onrender.com`
+- last deploy: `dep-dajgjh0ae00c739t8e8g`
+- deploy commit: `519adabf2b91b15b8fa263b5d8a45bf4992a227b`
+- recorded deploy status: `live`
+- current service state: suspended by the user
 
-- protected-branch merge,
-- production release/deployment,
+The service must be resumed before a new production-host physical-device validation can be performed.
+
+## 6. Instrument readiness
+
+Current production readiness is intentionally narrow:
+
+- Grand Piano — `ACTIVE / QUALIFIED`
+- Classical Guitar — `SUSPENDED`
+- Violin — `SCAFFOLD / UNQUALIFIED`
+- remaining orchestral registry entries — `SCAFFOLD / UNQUALIFIED`
+
+Unqualified instruments must fail closed. No hidden timbre fallback is authorized.
+
+## 7. Physical evidence
+
+A physical iPhone Safari test of the Score Editor note-touch path successfully produced Grand Piano audio.
+
+That is valid evidence for the tested Score Editor device/preview path. It is **not** a substitute for an unperformed physical test against the production Render URL.
+
+Automated WebKit remains separate from physical speaker-output evidence.
+
+## 8. Stage/evidence map
+
+- P06-A / PR #154 — PASS
+- P06-B / PR #155 — PASS
+- P06-C / PR #156 — PASS
+- P06-D / PR #157 — PASS
+- P06-E / PR #158 + validation PR #159 — PASS
+- historical P06-F / PR #160 — correctly BLOCKED at the time
+- P06-G / PR #161 — PASS
+- historical final validation PR #164 — automated validation surface
+- P06-F2 / PR #166 + validation PR #167 — PASS / distribution gate resolved
+- production integration PR #169 — merged
+- production site PR #170 — merged
+
+## 9. Current frozen boundaries
+
+Still prohibited unless separately authorized:
+
 - SesliTab production cutover,
-- SesliTab/Smoosic refactor or dependency repin,
-- force-push or destructive rebase,
-- replacement of `EditorSessionV4` history authority,
-- renderer/DOM identity as canonical mutation authority,
-- unpublished audio package pretending to be a released dependency.
+- treating suspended/unqualified instruments as production-ready,
+- renderer/audio becoming canonical score or history authority,
+- hidden fallback from an unavailable instrument to another timbre,
+- destructive history rewrites merely to change host/audio integration.
 
-## 12. Remaining human/external gates
+## 10. Remaining gates
 
-The next engineer must keep the following distinct:
+1. Resume the Render production service before production-host device validation.
+2. Re-run physical iPhone Safari Grand Piano note-touch on the production Render URL.
+3. Keep Classical Guitar suspended until its own qualification work is explicitly resumed.
+4. Qualify Violin and later orchestral instruments independently before activation.
+5. Keep teacher/pilot evidence task-specific; do not generalize unperformed physical tasks.
+6. Obtain separate explicit approval before SesliTab production cutover.
 
-1. **Audio distribution:** publish/verify immutable ST Score Audio Engine distribution identity before activating P06-F.
-2. **Physical iPhone audio:** real Safari/user-gesture/speaker evidence remains a separate human-device gate; automated WebKit is not enough.
-3. **Teacher physical evidence:** P06 does not claim teacher tasks/pilot runs that were not actually executed. Existing earlier evidence must remain task-specific rather than being generalized.
-4. **Merge/release/cutover:** requires explicit human approval after exact-head review; draft PR success alone is not authorization.
+## 11. Rollback / containment
 
-## 13. Rollback / containment
-
-P06 is intentionally easy to contain:
-
-- the work remains a stacked draft-PR chain,
-- optional rollout flags default off,
-- a host can decline the SDK version negotiation,
-- missing optional capabilities degrade locally,
-- `audioAudition` remains unavailable while P06-F is blocked,
-- no destructive repository history rewrite is required to back out of P06,
-- no canonical score/history migration is required merely to stop using the generic SDK host boundary.
-
-## 14. Final validation rule
-
-Before calling P06-H development-green, validate the **exact P06-H HEAD** with:
-
-- Node 18 core CI,
-- Node 20 core CI,
-- Node 22 core CI,
-- APP-09B/P05 WebKit through a validation-only PR that targets an admitted WebKit workflow base.
-
-The validation-only PR must remain explicitly non-merge. Automated WebKit PASS must not be described as physical iPhone/device PASS.
+Audio remains capability-local. A host can disable `audioAudition` or omit the admitted runtime without changing canonical score/history semantics. No canonical score/history migration or destructive Git history operation is required to stop using the audio capability.
 
 Machine-readable companion: `docs/p06-sdk-final-handoff.json`.
