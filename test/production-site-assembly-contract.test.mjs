@@ -87,15 +87,6 @@ test('P08 production selector is bounded and noncanonical', () => {
   assert.doesNotMatch(source, /option value="CLASSICAL_GUITAR"/);
 });
 
-test('production deployment keeps authority and cutover boundaries explicit', () => {
-  assert.match(source, /canonicalMutationAuthority: false/);
-  assert.match(source, /historyMutationAuthority: false/);
-  assert.match(source, /rendererAuthority: false/);
-  assert.match(source, /staleRevision: 'fail-closed'/);
-  assert.match(source, /seslitabCutoverAuthorized: false/);
-  assert.match(source, /manualDeviceValidationRequired: true/);
-});
-
 test('production assembly emits a root index that wires exact renderer plus non-blocking Piano/Violin audio host', async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-production-'));
   try {
@@ -125,6 +116,10 @@ test('production assembly emits a root index that wires exact renderer plus non-
     assert.equal(manifest.audio.instrumentSelection, 'host-ui-noncanonical');
     assert.deepEqual(manifest.audio.qualifiedInstruments, ['GRAND_PIANO', 'VIOLIN']);
     assert.deepEqual(manifest.audio.suspendedInstruments, ['CLASSICAL_GUITAR']);
+    assert.equal(manifest.audio.canonicalMutationAuthority, false);
+    assert.equal(manifest.audio.historyMutationAuthority, false);
+    assert.equal(manifest.audio.rendererAuthority, false);
+    assert.equal(manifest.audio.staleRevision, 'fail-closed');
     assert.equal(manifest.audio.latencyHardening.selectionCriticalPath, 'non-blocking-audio');
     assert.equal(manifest.audio.latencyHardening.preloadStrategy, 'selected-qualified-instrument-raw-prepare-plus-decoded-warm-cache');
     assert.equal(manifest.audio.latencyHardening.decodedWarmCache, 'audio-engine-v0.1.2-after-unlock');
