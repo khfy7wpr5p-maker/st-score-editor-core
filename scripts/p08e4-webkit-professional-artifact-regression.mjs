@@ -46,6 +46,31 @@ try {
 
   await page.goto(`http://127.0.0.1:${address.port}/st-score-editor-professional.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => globalThis.STScoreEditorProfessionalAppController !== undefined);
+  await page.evaluate(async () => {
+    const controller = globalThis.STScoreEditorProfessionalAppController;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>8</divisions>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>eighth</type></note>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>eighth</type></note>
+      <note><rest/><duration>8</duration><voice>1</voice><type>quarter</type></note>
+    </measure>
+  </part>
+</score-partwise>`;
+    await controller.openMusicXml(xml, {
+      documentId: 'doc:p08e4-qualification',
+      revisionId: 'rev:p08e4-saved',
+      title: 'P08-E4 Professional Qualification',
+      sha256Hex: async () => '8'.repeat(64)
+    });
+  });
   await page.waitForFunction(() =>
     globalThis.STScoreEditorProfessionalAppController?.getDocument?.()?.session !== undefined
   );
