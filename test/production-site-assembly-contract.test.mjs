@@ -122,7 +122,7 @@ test('production assembly emits a root index that wires exact renderer plus non-
     assert.match(bootstrap, /void auditionPromise\.then/);
     assert.match(bootstrap, /void audioEngine\.prepare\(\)\.then/);
     const auditionIndex = bootstrap.indexOf('const auditionPromise = controller.selectRenderedScoreNoteRefWithAudition(hit.target);');
-    const highlightIndex = bootstrap.indexOf('await api.clearHighlights();');
+    const highlightIndex = bootstrap.indexOf('await api.clearHighlights();', auditionIndex);
     assert.notEqual(auditionIndex, -1);
     assert.notEqual(highlightIndex, -1);
     assert.ok(auditionIndex < highlightIndex);
