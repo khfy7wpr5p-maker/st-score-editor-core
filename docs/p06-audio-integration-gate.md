@@ -1,61 +1,83 @@
 # P06-F — Audio Integration Gate
 
-Status: `BLOCKED_EXTERNAL_DISTRIBUTION_GATE`
+Status: `RESOLVED_DISTRIBUTION_ADMITTED_AND_PRODUCTION_INTEGRATED`
 
-Date: 2026-09-13
+Current-state reconciliation date: 2026-09-14
 
-## Decision
+## Current decision
 
-P06-F does **not** activate ST Score Audio Engine inside the P06 standalone SDK stack yet.
+The original P06-F external distribution block is resolved. ST Score Audio Engine now has an official immutable public distribution identity and Editor Core consumes that identity through the P06-F2 adapter without creating a second score/history/audio contract authority.
 
-This is intentional and fail-closed. The handoff requires Editor Core to integrate only against the official published, versioned public audio contract. The upstream repository currently contains versioned public package definitions and green automated CI, but no GitHub release or tag is published. The Editor Core P06 stack therefore must not invent a parallel local `AuditionRequest`, copy upstream contract types, or pin an unpublished source tree as though it were a released package.
+The historical blocked state below remains relevant as the reason the integration originally failed closed, but it is no longer the current product state.
 
-## Verified upstream evidence
+## Verified immutable upstream identity
 
 Repository: `khfy7wpr5p-maker/st-score-audio-engine`
 
-Verified upstream HEAD during this gate: `779a0d9c3c3cb8d91607d3e96c60554d47de1a27`
+Release/tag: `v0.1.0`
 
-Public package definitions present in source:
+Release commit: `d11a2dd9141169ddfec5901f3cadc4cce0d7b345`
 
-- `@st/score-audio-contracts` version `0.1.0`
-- `@st/score-audio-web` version `0.1.0`
+Official package identities:
 
-The public contract defines canonical `AuditionRequest` with `requestId`, `sourceRevisionId`, canonical MIDI pitch, `instrumentId` and bounded optional audition metadata. The web engine consumes `@st/score-audio-contracts`; Editor Core should not redefine those shapes.
+- `@st/score-audio-contracts@0.1.0`
+- `@st/score-audio-web@0.1.0`
 
-Current GitHub distribution evidence:
+Published release assets include both package tarballs, the browser SDK bundle, and SHA-256 checksums. Editor Core pins the official release artifacts rather than an unpublished source tree.
 
-- releases: none
-- tags: none
+## Editor Core admission and validation evidence
 
-The upstream handoff also records physical iPhone Safari audition as a separate human-device evidence gate. Automated WebKit must not be reported as physical-speaker PASS.
+- P06-F2 integration PR: `#166`
+- exact-head P06-F2 validation PR: `#167`
+- validated integration head: `e3216ddb99f1db0a2184eeaf7760230e442dd115`
+- production P06 + Audio Engine merge PR: `#169`
+- production P06 merge commit on `main`: `30c16f61b016ae7e659d91bfc36f858e856fbfe0`
+- production static-site assembly PR: `#170`
+- current production assembly commit on `main`: `519adabf2b91b15b8fa263b5d8a45bf4992a227b`
 
-## Existing Editor Core evidence
+The production assembly pins the Audio Engine `v0.1.0` browser asset and verifies SHA-256 before assembling the site.
 
-Editor Core `main` already contains AUDIO-01C on merge commit `cb43122d5331c5cde6344ddfe405411569d3c3f7`, including canonical NOTE-to-audition adaptation and stale-revision fail-closed behavior. The P05/P06 product stack is intentionally diverged from that main line and must not be blindly rebased or cherry-picked merely to make P06-F appear complete.
+## Admission requirements — current disposition
 
-## Admission requirements for unblocking P06-F
+1. immutable published distribution identity — **PASS** (`v0.1.0` release/tag),
+2. exact public package/version reproducibly pinned — **PASS**,
+3. external package contract remains authoritative for `AuditionRequest`/instrument/result types — **PASS**,
+4. no second score/history authority — **PASS**,
+5. stale revision rechecked before audition — **PASS**,
+6. REST/non-note selection remains silent — **PASS**,
+7. audio failure remains capability-local — **PASS**,
+8. audition creates no `EditorSessionV4` history entry — **PASS**,
+9. automated and physical evidence remain separately labelled — **PASS as a boundary rule**.
 
-P06-F may proceed when all of the following are independently verified:
+## Current capability behavior
 
-1. the official audio packages have an immutable published distribution identity (release/tag or equivalent package publication evidence),
-2. the exact public package/version to consume is pinned and reproducible,
-3. the package contract remains authoritative for `AuditionRequest`, instrument IDs and audio result/error types,
-4. the P06 stack can consume the contract without creating a second score/history authority,
-5. stale revision is rechecked before audition execution,
-6. REST/non-note selection remains silent,
-7. audio failure remains capability-local and cannot block canonical editing,
-8. audition creates no `EditorSessionV4` history entry,
-9. physical iPhone evidence remains separately labelled until explicitly performed.
+- `audioAudition` is available only when the admitted Audio Engine runtime is injected and the rollout flag permits it.
+- rollout flags remain default-off; a flag does not manufacture a missing capability.
+- `GRAND_PIANO` is the only production-qualified audition instrument.
+- Classical Guitar remains `SUSPENDED`.
+- Violin and the remaining orchestral registry entries remain unqualified until their separate sample/device gates pass.
+- unqualified instruments fail closed; no hidden timbre fallback is authorized.
+- renderer/DOM/SVG geometry does not own pitch or audio authority.
+- canonical edit, selection, history, import/export and generic-host lifecycle remain independent of audio success.
 
-## Current P06 capability behavior
+## Physical-device evidence boundary
 
-Until the gate opens:
+A physical iPhone Safari test of the Score Editor note-touch path successfully produced Grand Piano audio. That evidence applies to the tested Score Editor preview/device path and must not be generalized into an unperformed production-host speaker test.
 
-- `audioAudition` remains unavailable in the P06 SDK capability surface,
-- no audio dependency is added to `st-score-editor-core`,
-- no sample assets are copied into Editor Core,
-- no local provisional audio contract is created,
-- canonical edit, selection, history, import/export and generic-host lifecycle continue independently.
+The current Render production service has a successful deploy at commit `519adabf2b91b15b8fa263b5d8a45bf4992a227b`, but the service is presently suspended by the user; production-host physical revalidation remains separate.
 
-This blocked stage does not prevent P06-G feature-flag work or P06-H documentation/handoff work because those stages do not require an active audio implementation.
+## Historical snapshot — why P06-F originally blocked
+
+At the original P06-F check, upstream package definitions already existed, but GitHub had no release and no tag. The stage therefore correctly used `BLOCKED_EXTERNAL_DISTRIBUTION_GATE` and refused to:
+
+- invent a provisional/local `AuditionRequest`,
+- copy upstream contract types,
+- copy sample assets into Editor Core,
+- pin an unpublished source tree as a released dependency,
+- claim physical iPhone PASS from automated WebKit.
+
+That fail-closed decision is preserved as historical evidence; it was superseded only after the official `v0.1.0` distribution was published and P06-F2 passed its integration/validation gates.
+
+## Still not authorized by this gate
+
+Resolving P06-F does not authorize SesliTab production cutover, make suspended/unqualified instruments production-ready, or transfer canonical score/history authority to the audio or renderer layers.
