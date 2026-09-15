@@ -79,6 +79,7 @@ test('P06-E public entry stays narrow and exports only admitted public SDK modul
   const lines = source.trim().split(/\r?\n/);
   assert.deepEqual(lines, [
     "export * from './src/index.js';",
+    "export * from './source-note-identity.js';",
     "export * from './version-negotiation.js';",
     "export * from './rollout.js';",
     "export * from './audio-v010.js';"
