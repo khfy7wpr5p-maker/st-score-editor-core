@@ -1,175 +1,205 @@
-# Roadmap
+# ST Score Editor Core — Roadmap
 
-## Current source of truth
+Updated: **2026-09-15**  
+Repository source of truth: `main` at **`0adabbdc426f8481196ee41cce5c9b2bbff2768e`**.
 
-Repository reality only. Planned capability is not production capability.
+Planned capability is not production capability. Automated browser evidence is not physical-device evidence.
 
-## Completed baseline
+## Product objective
 
-- **E0–E7-H — COMPLETE**
-- **E8-A/B/C — IMPLEMENTED**
-- **E8-D — HUMAN-GATED / NOT AUTHORIZED**
-- **SEC-KP-00–10 — COMPLETE**
-- **SEC-NE-00–09 + XML ROUNDTRIP — COMPLETE / MERGED** within documented bounded profiles.
-- **SSE-00–10 — COMPLETE / MERGED** including bounded V3 topology and V4 cross-staff runtime.
-- **Stage 07 semantic -> renderer presentation locators — COMPLETE / MERGED.**
+Build ST Score Editor Core into a professional, reusable notation-editing platform that can operate as:
 
-## ST Score Editor App productization
+1. a standalone score editor;
+2. an embeddable/browser product component;
+3. a versioned SDK for external hosts;
+4. a commercially licensable editing engine.
 
-### APP-00–10O
+The architectural goal is professional notation editing with fast input, exact semantic targeting, reliable Undo/Redo, renderer independence, safe MusicXML interchange, optional audio audition and strong desktop/mobile workflows.
 
-**COMPLETE / MERGED.**
+SesliTab remains a separate product integration decision, not an architectural dependency.
 
-Standalone document/runtime, `EditorSessionV4` history, browser shell, local MusicXML files/recovery, guarded renderer interaction, playback, export/print, Guitar/Piano starts, Voice 1–5, semantic Staff and measure navigation, note/chord authoring, articulation/ornament groups and exact explicit accidentals are merged.
+## Completed / merged foundation
 
-### APP-11A — Rhythm Timing Admission
+- **SSE semantic/model foundation — COMPLETE / MERGED** within the repository's bounded V3/V4 profiles.
+- **APP-00–10O — COMPLETE / MERGED**: standalone runtime, files/recovery, renderer bridge, playback, export/print, note/chord/Voice/staff/measure authoring, articulations, ornaments and explicit accidentals.
+- **APP-11 rhythm/relation program — merged bounded capabilities** including shared safe rhythm authority, semantic multi-target selection, Tie, Slur, Triplet metadata and straight-triplet retiming paths.
+- **P05 generic NOTE/REST renderer targeting + paste/render/undo regression — retained.**
+- **P06 versioned SDK/audio admission work — production-composed where explicitly merged; historical stacked validation PRs remain non-current merge surfaces.**
+- **P07 latency hardening — merged** for non-blocking note selection / Grand Piano audition behavior.
+- **P08-A–D — COMPLETE / MERGED**: professional semantic selection, range transforms, score structure authoring and unified workstation controller.
+- **P08-E1–E3 — COMPLETE / MERGED**: browser professional bridge, responsive professional range toolbar and semantic structure inspector.
+- **P08-E4 — COMPLETE / MERGED via PR #187**: separately qualified professional browser artifact.
 
-**COMPLETE / MERGED — PR #129.**
+## Current professional browser milestone
 
-Read-only exact-event timing analysis for contraction/growth/no-op, next-event occupancy, synthetic measure bounds, existing invalid timing and dots/beams/tuplets/ties coupling. Imported trailing growth without proven measure evidence fails closed.
+`STScoreEditorProfessionalApp` is now an independently built optional artifact rather than an expansion of the default app bundle.
 
-### APP-11B — Safe Duration + Explicit Rest Balancing
+Qualification facts:
 
-**COMPLETE / MERGED — PR #131.**
+- main merge: `0adabbdc426f8481196ee41cce5c9b2bbff2768e`;
+- professional bundle measured: **599,398 bytes**;
+- maximum: **615,000 bytes**;
+- budget revision: `P08-E4-QUALIFIED-1`;
+- default app budget remains **542,720 bytes / `P06-AUDIO-V010-1`**;
+- Node 18/20/22 exact-head tests: PASS;
+- dedicated professional WebKit regression: PASS;
+- retained APP-10/11, APP-09B and P05 WebKit regressions: PASS.
 
-Basic duration and keypad Duration/Rest/Dot timing changes converge on shared V4 rhythm authority. Contraction creates or extends explicit residual rest; growth consumes only exact adjacent admitted neutral rest. One accepted edit creates one `EditorSessionV4` history revision.
+This is **not** a physical iPhone PASS and does **not** authorize production exposure.
 
-### APP-11C — Semantic Selection V4
+## Open manual gate — Issue #188
 
-**COMPLETE / MERGED — PR #133.**
+**PHYSICAL-IOS: qualify P08-E4 Professional Browser Artifact**
 
-Revision-bound `SINGLE`, `NOTE_PAIR` and contiguous same-measure `EVENT_RANGE`. Selection remains noncanonical/history-free. Duplicate, stale, reversed, mixed-scope and non-contiguous targets fail closed.
+The real-device test must confirm on physical iPhone Safari:
 
-### APP-11D — Tie
+- professional artifact opens without disappearing/blank editor state;
+- bounded MusicXML opens;
+- semantic professional range operations work;
+- Clear -> REST preserves rhythmic position/duration;
+- Undo restores the notes;
+- structure edit + Undo works;
+- controls are practically tappable and safe-area compatible;
+- no crash/freeze occurs.
 
-**COMPLETE / MERGED — PR #134.**
+Only explicit observed physical evidence may close this gate.
 
-Explicit semantic note-pair capture exposes bounded Tie authoring through the existing V4 relation primitive. Capture is history-free; Apply creates one history revision.
+## Next autonomous development track — P09 Fast Entry / Keyboard Workstation
 
-### APP-11E — Slur
+This is the next recommended engineering track because professional editor quality now depends strongly on input speed and command ergonomics, while the canonical mutation engines already exist.
 
-**COMPLETE / MERGED — PR #135.**
+### P09-A — existing capability inventory and gap matrix
 
-Explicit semantic note-pair capture exposes bounded Slur authoring through the existing V4 primitive. Tie remains unchanged beneath this layer.
+**NEXT AUTONOMOUS ACTION.**
 
-### APP-11F — Metadata-only Triplet
+Read the current `main` implementation and document, without duplicating behavior:
 
-**COMPLETE / MERGED — PR #136.**
+- all `editor-keypad-*` packages/contracts;
+- keypad session/browser execution paths;
+- existing keyboard shortcuts and focus handling;
+- APP-10 insertion and selected-note editing;
+- rhythm-changing duration/rest/dot paths;
+- semantic navigation and active Voice/staff/measure behavior;
+- Undo/Redo semantics;
+- professional selection interactions;
+- SDK exposure and host lifecycle;
+- mobile behavior where desktop keyboard concepts do not apply.
 
-Three explicit contiguous events may receive 3:2 Triplet metadata only when their canonical timing is already exact Triplet timing. APP-11F never retimes onsets or durations.
-
-### APP-11G — Triplet Retiming Admission Foundation
-
-**COMPLETE / MERGED — PR #138 / merge `91d6e162392149399daae476efe13936a1686ddf`.**
-
-Analysis-only admission for exactly three current-revision, consecutive, contiguous events with equal supported simple written-base duration.
-
-Example:
-
-```text
-straight eighths
-onsets:    0, 1/8, 1/4
-durations: 1/8, 1/8, 1/8
-
-candidate 3:2 timing
-onsets:    0, 1/12, 1/6
-durations: 1/12, 1/12, 1/12
-```
-
-APP-11G exposes the released interval for later explicit-rest balancing. Dots, beams, existing tuplets, ties, selected cross-staff events, unsupported written bases, stale ranges and invalid timing fail closed. Imported MusicXML contraction is admissible because no trailing growth/topology invention is required.
-
-### APP-11H — Atomic Triplet Retiming Authoring
-
-**COMPLETE / MERGED — PR #139 / merge `bd210bac620489a108c42dd565e85084b64294fd`.**
-
-Consumes APP-11G evidence and atomically:
-
-- rewrites the three admitted event onsets/durations;
-- preserves event/note identities and Voice ordering;
-- adds Triplet start/middle/stop notation in the same next revision;
-- extends an immediately adjacent neutral rest backward or creates deterministic `tuplet-rest:<hex>` residual rest space;
-- leaves notation-coupled/cross-staff adjacent rests untouched;
-- validates final occupancy before returning.
-
-The package does not independently own history; session integration remains the history authority.
-
-### APP-11I — Session + Browser Triplet Retiming
-
-**COMPLETE / MERGED — PR #140 / merge `6b0e2cac572dfcfa570bfab2bb8eb47a9d7f68fc`.**
-
-APP-11H is productized through `EditorSessionV4` and the standalone browser runtime.
-
-Two Triplet paths deliberately coexist:
-
-1. **Triplet Apply** — APP-11F metadata-only path for events already in exact canonical 3:2 timing.
-2. **Triplet Retiming** — APP-11G/H path for three explicitly captured supported straight events.
-
-A successful retiming user action creates exactly one unified history revision. Exact Undo restores the pre-retiming `ScoreDocumentV3 + NotationDocumentV4` snapshot. Event/note identities remain stable and explicit-rest occupancy remains exact.
-
-Dedicated mobile WebKit proves straight eighths -> canonical `1/12 + 1/12 + 1/12` Triplet -> exact Undo. The same exact head also passed retained APP-10E–O, APP-11B/D/E/F, exact renderer build, APP-09B renderer and controlled-layout regressions.
-
-## Current architecture phase
+Output a machine-readable and human-readable matrix:
 
 ```text
-exact semantic target/range
-        -> read-only admission when timing may change
-        -> bounded canonical mutation
-        -> exact explicit-rest balance where required
-        -> EditorSessionV4 one user action / one history revision
-        -> MusicXML projection
-        -> renderer presentation
+capability
+  -> existing implementation
+  -> canonical mutation owner
+  -> browser/UI surface
+  -> missing gap
+  -> reuse plan
+  -> risk / fail-closed boundary
 ```
 
-`ScoreDocumentV3 + NotationDocumentV4` remains canonical. Staff/measure navigation, multi-target capture, palette state, file/recovery state, renderer/viewport state, playback and export/print state remain noncanonical. Renderer coordinates never become authoring authority.
+P09-A should avoid production code unless a small test/documentation change is required to prove current behavior.
 
-## Next development action
+### P09-B — command-intent contract
 
-**APP-11J — Triplet Removal / Unretiming Admission Foundation.**
+Proceed only if P09-A proves a real gap.
 
-Start read-only. Before any removal mutation is exposed, APP-11J must prove when an exact canonical 3:2 Triplet can safely return to a supported straight written rhythm while preserving event identities and avoiding overlap, hidden-gap invention, unsupported rest redistribution, topology invention or imported-measure ambiguity.
+Define a versioned, bounded keyboard command vocabulary that maps to existing semantic authoring primitives. It must not become a second mutation engine.
 
-Minimum first-step boundaries:
+Required properties:
 
-- exactly three explicit current-revision events in one exact measure/Voice;
-- existing consistent 3:2 Triplet metadata/timing must be proven;
-- target straight written base must be deterministic and supported;
-- all resulting onset/end boundaries must be calculated exactly;
-- required rest consumption/release must be explicit and locally bounded;
-- dots, beams, ties, cross-staff timing dependencies and unsupported relation semantics fail closed until separately admitted;
-- no unrelated following event may move implicitly;
-- analysis creates no history/mutation;
-- renderer geometry and MusicXML layout remain non-authoritative.
+- deterministic semantic target/insertion state;
+- explicit focus/input-field guards;
+- current-revision target validation;
+- no renderer/DOM geometry as musical authority;
+- keyboard auto-repeat bounded or explicitly handled;
+- command dispatch errors capability-local;
+- no history for navigation-only commands;
+- exactly one history revision for one accepted authoring command.
 
-Mutation/removal may be a later bounded stage only after this admission contract is proven.
+### P09-C — browser keyboard adapter
 
-## Still fail-closed / gated
+After the contract is proven:
 
-- Triplet removal/unretiming until APP-11J or later explicitly admits it;
-- arbitrary tuplet ratios/cardinalities outside the bounded 3:2 profile;
-- automatic renderer-derived Triplet range inference;
-- arbitrary imported trailing MusicXML growth without pickup/non-controlling evidence;
-- independent retiming of dot/beam/tuplet/tie-coupled events outside admitted atomic programs;
-- selected cross-staff Triplet retiming;
-- arbitrary rest redistribution beyond admitted local contracts;
-- spanning tremolo/wavy-line and broader grace workflows until separately admitted;
+- desktop keyboard routing;
+- safe `preventDefault` policy only for admitted notation commands;
+- text form fields/contenteditable elements excluded;
+- canonical selection/insertion state reflected visually but not stored in DOM as authority;
+- keyboard and pointer/touch edits must converge on the same mutation engines;
+- mobile behavior must remain intact.
+
+### P09-D — fast-entry workflow qualification
+
+Only after B/C are green, qualify a compact professional entry flow such as:
+
+```text
+choose duration / pitch intent
+        -> exact semantic insertion target
+        -> accepted note/rest mutation
+        -> selection/caret rebound
+        -> next command
+        -> unified Undo
+```
+
+Do not introduce hidden cursor semantics until their canonical/noncanonical role is explicitly defined and tested.
+
+## Parallel tracks that must not silently merge into P09
+
+### Audio
+
+- Grand Piano remains the qualified default audition capability from current merged production work.
+- Classical Guitar remains suspended.
+- Open Violin PR #176 is not current `main`; do not merge it as part of P09.
+- The P08-E4 professional artifact currently has no bundled/integrated audio host.
+
+### Physical validation
+
+Issue #188 remains manual and may progress in parallel. Automated WebKit cannot close it.
+
+### Production / SesliTab
+
+P09 does not authorize:
+
+- professional artifact production exposure;
+- SesliTab cutover;
+- Render production activation;
+- release publication;
+- repinning external product dependencies.
+
+## Current fail-closed boundaries
+
+Continue to reject or defer unsupported/unproven cases rather than inventing behavior:
+
+- stale revision targets;
+- renderer-coordinate/DOM/SVG authoring;
 - imported automatic Voice/measure invention;
-- `.mxl` container support;
-- direct PDF bytes;
-- V4-native cross-staff MusicXML round trip;
-- polymeter/non-controlling topology;
-- part groups/brackets/braces;
-- arbitrary instrument transposition/percussion maps;
-- renderer-coordinate authoring, DOM/SVG authority and host dual-write;
-- cloud collaboration/server revision authority;
-- public-write/production activation.
+- unsupported trailing timing growth;
+- arbitrary tuplets/rhythm transforms beyond admitted profiles;
+- unsupported cross-staff MusicXML projection;
+- `.mxl` container support until separately admitted;
+- cloud/server canonical revision authority;
+- unqualified audio instruments;
+- automatic Classical Guitar reactivation;
+- production exposure without physical and explicit human gates.
 
-## Release state
+## Required exact-head validation before implementation merge
 
-The release manifest deliberately remains:
+At minimum preserve:
+
+- Node 18 / 20 / 22 repository contract + build/test;
+- retained APP-10/11 browser authoring regressions;
+- APP-09B exact renderer build and renderer regression;
+- APP-09B controlled-layout rerender regression;
+- P05 paste/render/undo regression;
+- P08-E4 professional WebKit regression when professional/shared browser code changes;
+- dedicated P09 command tests once P09 implementation begins.
+
+## Current release/product flags
 
 ```text
-manualDeviceValidationRequired = true
+professionalArtifactMerged = true
+professionalArtifactAutomatedWebKitPassed = true
+professionalArtifactPhysicalIPhonePassed = false
+professionalArtifactProductionExposureAuthorized = false
 standaloneReleaseGatePassed = false
+seslitabCutoverAuthorized = false
 ```
-
-Required physical release targets remain real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox. iPad Safari remains secondary. Automated WebKit regression is not physical-device evidence.
