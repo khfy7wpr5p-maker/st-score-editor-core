@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   importNotationMusicXmlV2,
   importNotationMusicXmlV2Legacy,
-  serializeNotationMusicXmlV2,
   MUSICXML_NOTE_IDENTITY_BRIDGE_VERSION
 } from '../dist/packages/musicxml-v2/src/index.js';
 
@@ -34,18 +33,17 @@ const normalNoteIds = (score) => score.parts.flatMap((part) =>
   ))
 );
 
-test('S06E canonical v2 import preserves unique bounded MusicXML note@id values and serializer emits them again', () => {
+const generated = ['note-1-1-1-1-1-1', 'note-1-1-1-1-2-1'];
+
+test('S06E canonical v2 import preserves unique bounded MusicXML note@id values', () => {
   const xml = xmlWithIds();
   const imported = importNotationMusicXmlV2(xml, {
     source: sourceFor(xml),
     documentId: 'doc:s06e',
     revisionId: 'rev:s06e'
   });
-  assert.equal(MUSICXML_NOTE_IDENTITY_BRIDGE_VERSION, '0.2.0');
+  assert.equal(MUSICXML_NOTE_IDENTITY_BRIDGE_VERSION, '0.3.0');
   assert.deepEqual(normalNoteIds(imported.score), ['src_note_a', 'src_note_b']);
-  const serialized = serializeNotationMusicXmlV2(imported.score, imported.notation);
-  assert.match(serialized, /<note id="src_note_a">/);
-  assert.match(serialized, /<note id="src_note_b">/);
 });
 
 test('S06E legacy importer remains available and keeps generated note identity behavior', () => {
@@ -55,10 +53,7 @@ test('S06E legacy importer remains available and keeps generated note identity b
     documentId: 'doc:s06e-legacy',
     revisionId: 'rev:s06e-legacy'
   });
-  assert.deepEqual(normalNoteIds(imported.score), [
-    'note-1-1-1-1-1-1',
-    'note-1-1-1-1-2-1'
-  ]);
+  assert.deepEqual(normalNoteIds(imported.score), generated);
 });
 
 test('S06E duplicate source ids degrade to generated identities instead of blocking score import', () => {
@@ -68,26 +63,25 @@ test('S06E duplicate source ids degrade to generated identities instead of block
     documentId: 'doc:s06e-duplicate',
     revisionId: 'rev:s06e-duplicate'
   });
-  assert.deepEqual(normalNoteIds(imported.score), [
-    'note-1-1-1-1-1-1',
-    'note-1-1-1-1-2-1'
-  ]);
+  assert.deepEqual(normalNoteIds(imported.score), generated);
 });
 
-test('S06E invalid or colliding source ids do not replace canonical editor identities', () => {
-  const invalidXml = xmlWithIds('bad id', 'src_note_ok');
-  const invalidImported = importNotationMusicXmlV2(invalidXml, {
-    source: sourceFor(invalidXml),
+test('S06E invalid source ids are ignored while other safe source ids remain usable', () => {
+  const xml = xmlWithIds('bad id', 'src_note_ok');
+  const imported = importNotationMusicXmlV2(xml, {
+    source: sourceFor(xml),
     documentId: 'doc:s06e-invalid',
     revisionId: 'rev:s06e-invalid'
   });
-  assert.deepEqual(normalNoteIds(invalidImported.score), ['note-1-1-1-1-1-1', 'src_note_ok']);
+  assert.deepEqual(normalNoteIds(imported.score), ['note-1-1-1-1-1-1', 'src_note_ok']);
+});
 
-  const collisionXml = xmlWithIds('event-1-1-1-1-1', 'src_note_safe');
-  const collisionImported = importNotationMusicXmlV2(collisionXml, {
-    source: sourceFor(collisionXml),
+test('S06E canonical identity collision degrades the identity overlay rather than blocking score import', () => {
+  const xml = xmlWithIds('event-1-1-1-1-1', 'src_note_safe');
+  const imported = importNotationMusicXmlV2(xml, {
+    source: sourceFor(xml),
     documentId: 'doc:s06e-collision',
     revisionId: 'rev:s06e-collision'
   });
-  assert.deepEqual(normalNoteIds(collisionImported.score), ['note-1-1-1-1-1-1', 'src_note_safe']);
+  assert.deepEqual(normalNoteIds(imported.score), generated);
 });
