@@ -1,0 +1,259 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "AUTONOMOUS_DEVELOPER_CONTINUATION_HANDOFF",
+  "project": {
+    "name": "ST Score Editor Core",
+    "repository": "khfy7wpr5p-maker/st-score-editor-core",
+    "date": "2026-09-15",
+    "execution_mode": "AUTONOMOUS_SAFE_CONTINUATION_WITH_HUMAN_GATES",
+    "source_of_truth_branch": "main",
+    "source_of_truth_commit": "0adabbdc426f8481196ee41cce5c9b2bbff2768e",
+    "primary_product_goal": "Build a professional, renderer-independent semantic score editor that can operate standalone, be embedded through a versioned SDK, and become a commercially licensable notation workstation with fast note entry, reliable semantic editing, exact Undo/Redo, safe MusicXML interchange, professional score-structure editing, renderer independence and optional audio audition.",
+    "product_positioning": "Sibelius-class problem space without copying a second canonical architecture from any external editor.",
+    "seslitab_dependency": false
+  },
+  "current_state": {
+    "latest_merged_milestone": {
+      "id": "P08-E4",
+      "name": "Independently Qualified Professional Browser Artifact",
+      "pull_request": 187,
+      "merge_commit": "0adabbdc426f8481196ee41cce5c9b2bbff2768e",
+      "status": "COMPLETE_MERGED_AUTOMATED_QUALIFICATION_PASS"
+    },
+    "professional_artifact": {
+      "global": "STScoreEditorProfessionalApp",
+      "artifact": "dist/browser/st-score-editor-professional.js",
+      "artifact_class": "optional-professional-browser-surface",
+      "measured_bytes": 599398,
+      "max_bytes": 615000,
+      "budget_revision": "P08-E4-QUALIFIED-1",
+      "default_app_max_bytes": 542720,
+      "default_app_budget_revision": "P06-AUDIO-V010-1",
+      "audio_engine_bundled": false,
+      "audio_host_integrated": false,
+      "production_exposure_authorized": false
+    },
+    "automated_validation": {
+      "node_18": "PASS",
+      "node_20": "PASS",
+      "node_22": "PASS",
+      "p08_e4_professional_webkit": "PASS",
+      "retained_app_10_11_webkit": "PASS",
+      "app_09b_renderer_regression": "PASS",
+      "app_09b_controlled_layout_rerender": "PASS",
+      "p05_paste_render_undo": "PASS",
+      "physical_device_inferred_from_webkit": false
+    },
+    "manual_gate": {
+      "issue": 188,
+      "title": "PHYSICAL-IOS: qualify P08-E4 Professional Browser Artifact",
+      "physical_iphone_safari_pass": false,
+      "rule": "Only explicit user-observed physical-device evidence may set this PASS. Never infer PASS from Playwright/WebKit, screenshots alone, CI or browser emulation."
+    },
+    "audio_state": {
+      "grand_piano": "QUALIFIED_IN_MERGED_DEFAULT_EDITOR_PATH",
+      "classical_guitar": "SUSPENDED_DO_NOT_REACTIVATE_AUTOMATICALLY",
+      "violin_editor_integration_pr": 176,
+      "violin_editor_integration_status": "OPEN_DRAFT_NOT_MAIN_DO_NOT_MERGE_AS_PART_OF_THIS_TRACK"
+    },
+    "historical_pr_policy": {
+      "p06_stacked_validation_prs": "HISTORICAL_NON_CURRENT_MERGE_SURFACES",
+      "rule": "Start all new work from current main unless an explicit migration/recovery task says otherwise. Do not revive old stacked branches as the implementation base."
+    }
+  },
+  "canonical_architecture": {
+    "canonical_pair": "ScoreDocumentV3 + NotationDocumentV4",
+    "history_authority": "EditorSessionV4 / EditorHistoryV4",
+    "semantic_identity": "SemanticAddressV3 current revision",
+    "renderer_authority": false,
+    "dom_svg_authority": false,
+    "screen_coordinate_authority": false,
+    "audio_authority": false,
+    "host_sdk_canonical_authority": false,
+    "musicxml_role": "exchange_and_projection_not_canonical_editing_model",
+    "core_rule": "No renderer, browser shell, audio engine, SDK host or persistence layer may dual-write canonical score state."
+  },
+  "merged_professional_architecture": {
+    "P08_A": "Professional revision-bound EVENT_SPAN and EVENT_SET semantic selection.",
+    "P08_B": "Professional octave transpose plus rhythm-preserving Clear/Delete-to-REST over admitted selections.",
+    "P08_C": "Staff-local key/clef, propagation-safe frame-global time signature, frame barline/repeat authoring.",
+    "P08_D": "Unified professional workstation controller delegating to existing semantic mutation engines.",
+    "P08_E1": "Browser professional bridge over the existing standalone controller.",
+    "P08_E2": "Responsive professional semantic range toolbar.",
+    "P08_E3": "Semantic score-structure inspector.",
+    "P08_E4": "Separately bounded professional browser artifact with independent manifest, checksum, byte ceiling and WebKit qualification."
+  },
+  "next_development_track": {
+    "id": "P09",
+    "name": "Fast Entry / Keyboard Workstation",
+    "why_now": "The main professional product gap is input speed and command ergonomics. Existing semantic mutation engines are already substantial, so the next step should reuse them rather than create another editor core.",
+    "first_stage": {
+      "id": "P09-A",
+      "name": "Existing Capability Inventory and Gap Matrix",
+      "mode": "READ_ONLY_FIRST",
+      "goal": "Prove what already exists for keypad, keyboard, note insertion, rhythm commands, navigation, selection and SDK integration before implementing any new command layer.",
+      "inspect": [
+        "all editor-keypad-* packages and contracts",
+        "keypad execution/session/browser paths",
+        "browser keyboard handlers and focus rules",
+        "APP-10 note insertion and selected-note editing",
+        "duration/rest/dot paths and shared rhythm authority",
+        "semantic Staff/measure/Voice navigation",
+        "Undo/Redo and selection rebinding",
+        "P08 professional selection interactions",
+        "public SDK exposure and host lifecycle",
+        "mobile behavior where desktop keyboard concepts do not apply"
+      ],
+      "required_output": {
+        "human_readable": "P09-A architecture/gap document",
+        "machine_readable": "P09-A capability matrix JSON",
+        "matrix_columns": [
+          "capability",
+          "existing_implementation",
+          "canonical_mutation_owner",
+          "browser_ui_surface",
+          "missing_gap",
+          "reuse_plan",
+          "risk_or_fail_closed_boundary"
+        ]
+      },
+      "do_not": [
+        "Do not create a second note-entry engine.",
+        "Do not create a second rhythm mutation authority.",
+        "Do not introduce a hidden cursor state before its canonical/noncanonical role is specified.",
+        "Do not change production exposure, SesliTab or audio qualification in P09-A."
+      ]
+    },
+    "conditional_later_stages": [
+      {
+        "id": "P09-B",
+        "name": "Bounded Keyboard Command Intent Contract",
+        "condition": "Only if P09-A proves a real gap.",
+        "requirements": [
+          "Versioned bounded command vocabulary.",
+          "Routes to existing semantic authoring primitives.",
+          "Current-revision semantic target validation.",
+          "Text input/contenteditable focus guards.",
+          "Explicit keyboard auto-repeat policy.",
+          "Navigation-only commands create no history.",
+          "One accepted authoring command creates exactly one unified history revision."
+        ]
+      },
+      {
+        "id": "P09-C",
+        "name": "Browser Keyboard Adapter",
+        "condition": "After P09-B contract/tests pass.",
+        "requirements": [
+          "Safe desktop keyboard routing.",
+          "preventDefault only for admitted notation commands.",
+          "Pointer/touch/keyboard paths converge on the same mutation engines.",
+          "No DOM/SVG/renderer-coordinate musical authority.",
+          "Mobile behavior remains intact."
+        ]
+      },
+      {
+        "id": "P09-D",
+        "name": "Fast Entry Workflow Qualification",
+        "condition": "After P09-B/C are green.",
+        "requirements": [
+          "Bounded duration/pitch intent to exact semantic insertion target.",
+          "Deterministic selection/caret rebound.",
+          "Exact unified Undo.",
+          "No silent bundle budget expansion.",
+          "Dedicated WebKit regression for the admitted workflow."
+        ]
+      }
+    ]
+  },
+  "parallel_manual_work": {
+    "p08_e4_physical_ios_issue": 188,
+    "may_run_in_parallel_with_p09_a": true,
+    "developer_rule": "Keep manual physical evidence separate from autonomous code/CI evidence. Do not block P09-A inventory on the physical gate, but do not close the physical gate autonomously."
+  },
+  "safety_and_fail_closed_rules": [
+    "Renderer coordinates, DOM/SVG ids and viewport geometry are never canonical authoring authority.",
+    "Stale SemanticAddressV3 or revision evidence fails closed before mutation.",
+    "Unsupported imported timing or topology must be rejected rather than invented.",
+    "Do not silently broaden tuplets/rhythm transformations beyond admitted profiles.",
+    "Do not invent automatic imported Voice/measure topology.",
+    "Do not add .mxl container support without separate archive/dependency/security admission.",
+    "Do not give cloud/server/host code canonical revision authority.",
+    "Do not activate unqualified audio instruments.",
+    "Do not reactivate Classical Guitar unless explicitly requested.",
+    "Do not merge open Violin PR #176 as part of P09.",
+    "Do not expose STScoreEditorProfessionalApp to production before physical qualification and explicit authorization.",
+    "Do not perform SesliTab cutover without explicit authorization."
+  ],
+  "validation_contract": {
+    "exact_head_required": true,
+    "required_before_implementation_merge": [
+      "Node 18 repository contract + build/test",
+      "Node 20 repository contract + build/test",
+      "Node 22 repository contract + build/test",
+      "retained APP-10/11 browser authoring regressions",
+      "exact ST Score Rendering Layer checkout/build",
+      "APP-09B renderer regression",
+      "APP-09B controlled-layout rerender regression",
+      "P05 paste/render/undo regression",
+      "P08-E4 professional WebKit regression when professional/shared browser code changes",
+      "dedicated P09 tests once implementation begins"
+    ],
+    "physical_device_evidence_is_separate": true,
+    "bundle_budget_policy": "Do not silently rebaseline default or professional bundle ceilings. Any increase needs explicit architecture evidence and review."
+  },
+  "autonomous_execution_policy": {
+    "allowed_without_new_human_approval": [
+      "Fresh-read current main and current architecture docs.",
+      "Create feature/documentation branches from current main.",
+      "Perform P09-A read-only inventory and write architecture/capability matrix documents.",
+      "Add bounded tests that only prove existing behavior.",
+      "Implement later P09 stages only when prior-stage evidence explicitly admits them and architecture invariants remain intact.",
+      "Run exact-head CI/regressions.",
+      "Fix deterministic test/build failures on the feature branch without weakening safety contracts.",
+      "Open/update PRs and developer handoff documents.",
+      "Update the continuation JSON after each completed stage so the next developer resumes from the actual remaining step."
+    ],
+    "requires_explicit_human_approval": [
+      "Merge into main/protected production branch.",
+      "Production deployment or professional artifact exposure.",
+      "Release publication or public cutover.",
+      "SesliTab integration/cutover or external-product dependency repin.",
+      "Reactivation of Classical Guitar.",
+      "Merge/resume of Violin PR #176 as a product decision.",
+      "Declaration of physical iPhone/Safari PASS.",
+      "Destructive history rewrite, force-push over shared work, or deletion of evidence."
+    ]
+  },
+  "developer_workflow": [
+    "1. Fresh-read main, ARCHITECTURE.md, ROADMAP.md, README.md and relevant package/test files. Never trust this handoff over newer repository evidence.",
+    "2. Confirm main still descends from 0adabbdc...; if main moved, reconcile this handoff against the new head before editing.",
+    "3. Start P09-A on a new branch from current main.",
+    "4. Inventory existing keypad/keyboard/authoring paths and produce the reuse/gap matrix before coding.",
+    "5. Prefer deletion of duplicated plans over introduction of parallel mutation engines.",
+    "6. If P09-B is admitted, implement the smallest command-intent contract first with tests.",
+    "7. Add browser keyboard routing only after the command contract is stable.",
+    "8. Preserve exact semantic authority, unified history, renderer non-authority and mobile usability.",
+    "9. Run exact-head CI and WebKit gates. Diagnose root cause; never weaken a test simply to make CI green unless the test itself contradicts the authoritative contract.",
+    "10. At each completed stage, update architecture docs and this continuation handoff with exact commit/PR/CI evidence and the next remaining action.",
+    "11. Stop at any explicit human gate and report the exact evidence needed from the user."
+  ],
+  "stop_conditions": [
+    "A change would create a second canonical score/history authority.",
+    "The proposed keyboard workflow requires renderer geometry to decide musical identity.",
+    "A required semantic target cannot be proven current-revision exact.",
+    "A bundle ceiling must be increased without explicit architecture review.",
+    "Physical-device behavior is required but no real-device evidence exists.",
+    "The work crosses into production deployment, release, SesliTab cutover, Guitar reactivation or Violin product merge without explicit approval."
+  ],
+  "reporting_contract": {
+    "after_each_stage": [
+      "what changed",
+      "exact branch/head SHA",
+      "tests and CI results",
+      "authority/safety boundaries preserved",
+      "remaining risks/gates",
+      "single next recommended action"
+    ],
+    "final_rule": "Do not claim COMPLETE, production-ready, physical-device PASS or release-ready unless the evidence for that exact claim exists."
+  }
+}
