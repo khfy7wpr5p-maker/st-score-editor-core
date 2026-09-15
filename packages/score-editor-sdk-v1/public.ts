@@ -1,4 +1,5 @@
 export * from './src/index.js';
+export * from './source-note-identity.js';
 export * from './version-negotiation.js';
 export * from './rollout.js';
 export * from './audio-v010.js';
