@@ -35,6 +35,7 @@ const ATTRIBUTES: Readonly<Record<string, ReadonlySet<string>>> = Object.freeze(
   'score-part': new Set(['id']),
   part: new Set(['id']),
   measure: new Set(['number','implicit','non-controlling']),
+  note: new Set(['id']),
   clef: new Set(['number']),
   barline: new Set(['location']),
   repeat: new Set(['direction']),
