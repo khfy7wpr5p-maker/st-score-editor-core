@@ -1,12 +1,17 @@
 import { addressEntityV2 } from '../../addressing-v2/src/index.js';
 import type { ParsedXmlNode } from '../../musicxml/src/index.js';
-import { createScoreDocumentV2, type ScoreDocumentV2, type ScoreEvent } from '../../score-model-v2/src/index.js';
+import {
+  createScoreDocumentV2,
+  type GraceEvent,
+  type ScoreDocumentV2,
+  type ScoreEvent
+} from '../../score-model-v2/src/index.js';
 import { createNotationDocumentV2, type NotationDocumentV2 } from '../../notation-structure-v2/src/index.js';
 import { importNotationMusicXmlV2 as importLegacy, type NotationMusicXmlV2ImportResult } from './importer.js';
 import { parseMusicXmlV2Tree } from './parser.js';
 import { serializeNotationMusicXmlV2 as serializeLegacy } from './serializer.js';
 
-export const MUSICXML_NOTE_IDENTITY_BRIDGE_VERSION = '0.1.0' as const;
+export const MUSICXML_NOTE_IDENTITY_BRIDGE_VERSION = '0.2.0' as const;
 const XML_ID = /^[A-Za-z_][A-Za-z0-9._-]{0,127}$/;
 
 const children = (node: ParsedXmlNode, name?: string): readonly ParsedXmlNode[] =>
@@ -21,10 +26,10 @@ const textInt = (node: ParsedXmlNode | undefined): number => {
 const validIdentity = (value: string | undefined): value is string =>
   value !== undefined && XML_ID.test(value);
 
-const explicitNormalNoteIdMap = (root: ParsedXmlNode): ReadonlyMap<string, string> => {
-  const candidates: { generatedId: string; explicitId: string }[] = [];
-  const counts = new Map<string, number>();
+type IdentityCandidate = Readonly<{ generatedId: string; explicitId: string }>;
 
+const explicitNormalNoteIdCandidates = (root: ParsedXmlNode): readonly IdentityCandidate[] => {
+  const candidates: IdentityCandidate[] = [];
   for (const [partIndex, part] of children(root, 'part').entries()) {
     const p = partIndex + 1;
     for (const [measureIndex, measure] of children(part, 'measure').entries()) {
@@ -48,16 +53,61 @@ const explicitNormalNoteIdMap = (root: ParsedXmlNode): ReadonlyMap<string, strin
         noteCounters.set(key, noteIndex);
         const explicitId = attr(note, 'id');
         if (!validIdentity(explicitId)) continue;
-        const generatedId = `note-${p}-${staff}-${m}-${voice}-${eventIndex}-${noteIndex}`;
-        candidates.push({ generatedId, explicitId });
-        counts.set(explicitId, (counts.get(explicitId) ?? 0) + 1);
+        candidates.push(Object.freeze({
+          generatedId: `note-${p}-${staff}-${m}-${voice}-${eventIndex}-${noteIndex}`,
+          explicitId
+        }));
       }
     }
   }
+  return Object.freeze(candidates);
+};
 
-  return new Map(candidates
-    .filter((candidate) => counts.get(candidate.explicitId) === 1)
-    .map((candidate) => [candidate.generatedId, candidate.explicitId] as const));
+const allEntityIds = (score: ScoreDocumentV2): ReadonlySet<string> => {
+  const ids = new Set<string>([score.id]);
+  for (const part of score.parts) {
+    ids.add(part.id);
+    for (const staff of part.staves) {
+      ids.add(staff.id);
+      for (const measure of staff.measures) {
+        ids.add(measure.id);
+        for (const voice of measure.voices) {
+          ids.add(voice.id);
+          for (const event of voice.events) {
+            ids.add(event.id);
+            if (event.kind === 'note') ids.add(event.note.id);
+            else if (event.kind === 'chord') event.notes.forEach((note) => ids.add(note.id));
+          }
+          for (const group of voice.graceGroups) {
+            ids.add(group.id);
+            for (const event of group.events) {
+              ids.add(event.id);
+              if (event.kind === 'note') ids.add(event.note.id);
+              else if (event.kind === 'chord') event.notes.forEach((note) => ids.add(note.id));
+            }
+          }
+        }
+      }
+    }
+  }
+  return ids;
+};
+
+const safeExplicitNormalNoteIdMap = (
+  root: ParsedXmlNode,
+  score: ScoreDocumentV2
+): ReadonlyMap<string, string> => {
+  const candidates = explicitNormalNoteIdCandidates(root);
+  const explicitCounts = new Map<string, number>();
+  for (const candidate of candidates) {
+    explicitCounts.set(candidate.explicitId, (explicitCounts.get(candidate.explicitId) ?? 0) + 1);
+  }
+  const occupied = allEntityIds(score);
+  const admitted = candidates.filter((candidate) =>
+    explicitCounts.get(candidate.explicitId) === 1 &&
+    (candidate.explicitId === candidate.generatedId || !occupied.has(candidate.explicitId))
+  );
+  return new Map(admitted.map((candidate) => [candidate.generatedId, candidate.explicitId] as const));
 };
 
 const rewriteEventNoteIds = (event: ScoreEvent, ids: ReadonlyMap<string, string>): ScoreEvent => {
@@ -119,7 +169,7 @@ export const importNotationMusicXmlV2PreservingNoteIds = (
 ): NotationMusicXmlV2ImportResult => {
   const parsed = parseMusicXmlV2Tree(input, options);
   const imported = importLegacy(input, options);
-  const ids = explicitNormalNoteIdMap(parsed.root);
+  const ids = safeExplicitNormalNoteIdMap(parsed.root, imported.score);
   const score = rewriteScoreNoteIds(imported.score, ids);
   const notation = rewriteNotationNoteTargets(score, imported.notation, ids);
   return Object.freeze({ score, notation });
@@ -130,10 +180,10 @@ const normalAtoms = (event: ScoreEvent): readonly (string | null)[] =>
     : event.kind === 'note' ? Object.freeze([event.note.id])
       : Object.freeze(event.notes.map((note) => note.id));
 
-const graceAtoms = (event: Parameters<ScoreDocumentV2['parts'][number]['staves'][number]['measures'][number]['voices'][number]['graceGroups'][number]['events']['map']>[0]): readonly (string | null)[] => {
-  const value = event as unknown as ScoreEvent;
-  return normalAtoms(value);
-};
+const gracePlaceholders = (event: GraceEvent): readonly null[] =>
+  event.kind === 'chord'
+    ? Object.freeze(event.notes.map(() => null))
+    : Object.freeze([null]);
 
 const serializedNoteIdPlan = (score: ScoreDocumentV2): readonly (string | null)[] => {
   const out: (string | null)[] = [];
@@ -149,10 +199,10 @@ const serializedNoteIdPlan = (score: ScoreDocumentV2): readonly (string | null)[
           if (voice.events.length === 0) continue;
           for (const event of voice.events) {
             const before = voice.graceGroups.find((group) => group.anchorEventId === event.id && group.placement === 'before');
-            if (before !== undefined) for (const grace of before.events) out.push(...graceAtoms(grace));
+            if (before !== undefined) for (const grace of before.events) out.push(...gracePlaceholders(grace));
             out.push(...normalAtoms(event));
             const after = voice.graceGroups.find((group) => group.anchorEventId === event.id && group.placement === 'after');
-            if (after !== undefined) for (const grace of after.events) out.push(...graceAtoms(grace));
+            if (after !== undefined) for (const grace of after.events) out.push(...gracePlaceholders(grace));
           }
         }
       }
