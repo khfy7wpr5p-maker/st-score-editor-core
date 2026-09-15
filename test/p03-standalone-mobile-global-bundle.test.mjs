@@ -36,7 +36,7 @@ test('P03-BUNDLE01 global runtime preserves prior standalone capabilities and ad
   assert.equal(app.mobileTeacherViewport.presentationOnly,true);
   assert.equal(app.mobileTeacherViewport.coordinateAuthoring,false);
   assert.ok(app.audioAudition);
-  assert.deepEqual(Array.from(app.audioAudition.instruments),['GRAND_PIANO']);
+  assert.deepEqual(Array.from(app.audioAudition.instruments),['GRAND_PIANO','VIOLIN']);
 
   const controller=app.createController();
   assert.equal(Object.isFrozen(controller),true);
