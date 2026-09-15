@@ -120,7 +120,7 @@ export const createScoreEditorSdkV1WithSourceIdentity = (): Readonly<ScoreEditor
 
   const sourceIdentity: Readonly<ScoreEditorSdkSourceIdentitySurfaceV1> = Object.freeze({
     version: SCORE_EDITOR_SOURCE_NOTE_IDENTITY_V1_VERSION,
-    listNoteMappings: (expected) => {
+    listNoteMappings: (expected: Readonly<ScoreEditorSdkRevisionGuardV1>) => {
       const targets = base.selection.listTargets(expected);
       if (!targets.ok) return targets;
       const current = new Map<string, Readonly<ScoreEditorSdkSemanticTargetV1>>();
