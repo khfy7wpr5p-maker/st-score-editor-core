@@ -1,4 +1,4 @@
-import type { AuditionRequest } from '@st/score-audio-contracts';
+import type { AuditionRequest, InstrumentId } from '@st/score-audio-contracts';
 import type { TeacherWorkflowControllerOptions } from './teacher-workflow.js';
 import {
   createMobileTeacherViewportStandaloneBrowserAppRuntime,
@@ -13,7 +13,9 @@ import {
   type ScoreAudioRuntimeV010
 } from '../../score-editor-sdk-v1/audio-v010.js';
 
-export const AUDIO_HOST_INTEGRATED_BROWSER_VERSION = '1.1.0' as const;
+export const AUDIO_HOST_INTEGRATED_BROWSER_VERSION = '1.2.0' as const;
+export const QUALIFIED_AUDITION_INSTRUMENTS_V1 = Object.freeze(['GRAND_PIANO', 'VIOLIN'] as const);
+export type QualifiedAuditionInstrumentV1 = (typeof QUALIFIED_AUDITION_INSTRUMENTS_V1)[number];
 
 export const audioHostIntegratedBrowserAppProfile = Object.freeze({
   ...mobileTeacherViewportBrowserAppProfile,
@@ -22,6 +24,7 @@ export const audioHostIntegratedBrowserAppProfile = Object.freeze({
   audioEngineBundled: false,
   externalAudioRuntimeRequired: true,
   qualifiedAuditionInstrument: 'GRAND_PIANO' as const,
+  qualifiedAuditionInstruments: QUALIFIED_AUDITION_INSTRUMENTS_V1,
   rendererAudioAuthority: false,
   auditionCanonicalMutationAuthority: false,
   auditionHistoryMutationAuthority: false
@@ -30,7 +33,7 @@ export const audioHostIntegratedBrowserAppProfile = Object.freeze({
 export interface AudioHostStateV1 {
   readonly version: typeof AUDIO_HOST_INTEGRATED_BROWSER_VERSION;
   readonly attached: boolean;
-  readonly instrumentId: 'GRAND_PIANO';
+  readonly instrumentId: QualifiedAuditionInstrumentV1;
   readonly lastStatus: 'DETACHED' | 'READY' | ScoreAudioAuditionStatusV010;
   readonly lastError: Readonly<{ readonly code: string; readonly message: string }> | null;
 }
@@ -46,14 +49,23 @@ export interface AudioHostIntegratedStandaloneScoreEditorController extends Omit
   readonly attachAudioPort: (runtime: ScoreAudioRuntimeV010) => Readonly<AudioHostStateV1>;
   readonly detachAudioPort: () => Readonly<AudioHostStateV1>;
   readonly getAudioHostState: () => Readonly<AudioHostStateV1>;
+  readonly setAuditionInstrument: (instrumentId: QualifiedAuditionInstrumentV1) => Promise<Readonly<AudioHostStateV1>>;
   readonly selectRenderedScoreNoteRefWithAudition: (rawRef: unknown) => Promise<Readonly<RenderedNoteAuditionResultV1>>;
 }
+
+const assertQualifiedAuditionInstrument = (instrumentId: InstrumentId): QualifiedAuditionInstrumentV1 => {
+  if (!(QUALIFIED_AUDITION_INSTRUMENTS_V1 as readonly InstrumentId[]).includes(instrumentId)) {
+    throw new RangeError(`Unsupported production audition instrument: ${instrumentId}`);
+  }
+  return instrumentId as QualifiedAuditionInstrumentV1;
+};
 
 export const createAudioHostIntegratedStandaloneScoreEditorController = (
   options: TeacherWorkflowControllerOptions = {}
 ): Readonly<AudioHostIntegratedStandaloneScoreEditorController> => {
   const base = createMobileTeacherViewportStandaloneScoreEditorController(options);
   let runtime: ScoreAudioRuntimeV010 | null = null;
+  let instrumentId: QualifiedAuditionInstrumentV1 = 'GRAND_PIANO';
   let lastStatus: AudioHostStateV1['lastStatus'] = 'DETACHED';
   let lastError: AudioHostStateV1['lastError'] = null;
   let requestSequence = 0;
@@ -61,10 +73,32 @@ export const createAudioHostIntegratedStandaloneScoreEditorController = (
   const state = (): Readonly<AudioHostStateV1> => Object.freeze({
     version: AUDIO_HOST_INTEGRATED_BROWSER_VERSION,
     attached: runtime !== null,
-    instrumentId: 'GRAND_PIANO',
+    instrumentId,
     lastStatus,
     lastError
   });
+
+  const setAuditionInstrument = async (
+    nextInstrumentId: QualifiedAuditionInstrumentV1
+  ): Promise<Readonly<AudioHostStateV1>> => {
+    const next = assertQualifiedAuditionInstrument(nextInstrumentId);
+    const previous = instrumentId;
+    instrumentId = next;
+    lastError = null;
+    try {
+      if (runtime) await runtime.setInstrument(next);
+      lastStatus = runtime ? 'READY' : 'DETACHED';
+      return state();
+    } catch (error) {
+      instrumentId = previous;
+      lastStatus = 'FAILED';
+      lastError = Object.freeze({
+        code: 'AUDIO_INSTRUMENT_SWITCH_FAILED',
+        message: error instanceof Error ? error.message : 'Audio instrument switch failed.'
+      });
+      throw error;
+    }
+  };
 
   const selectRenderedScoreNoteRefWithAudition = async (
     rawRef: unknown
@@ -83,7 +117,7 @@ export const createAudioHostIntegratedStandaloneScoreEditorController = (
       documentValue.session.selection,
       Object.freeze({
         requestId: `editor-note-touch-${++requestSequence}`,
-        instrumentId: 'GRAND_PIANO',
+        instrumentId,
         velocity: 0.78,
         durationMs: 800
       })
@@ -115,6 +149,7 @@ export const createAudioHostIntegratedStandaloneScoreEditorController = (
       return state();
     },
     getAudioHostState: state,
+    setAuditionInstrument,
     selectRenderedScoreNoteRefWithAudition
   });
 };
@@ -132,7 +167,7 @@ export const createAudioHostIntegratedStandaloneBrowserAppRuntime = () => {
       canonicalMutationAuthority: false,
       historyMutationAuthority: false,
       rendererAudioAuthority: false,
-      instruments: Object.freeze(['GRAND_PIANO'] as const),
+      instruments: QUALIFIED_AUDITION_INSTRUMENTS_V1,
       suspendedInstruments: Object.freeze(['CLASSICAL_GUITAR'] as const)
     })
   });
