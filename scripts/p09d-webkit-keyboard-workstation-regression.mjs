@@ -89,17 +89,19 @@ try {
     const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard').measures[0].voices[0].events[0];
     return {
       kind: event.kind,
+      eventId: event.id,
       pitch: event.kind === 'note' ? event.note.pitch : null,
       duration: event.duration,
       past: d.session.history.past.length,
       selectionKind: d.session.selection?.kind ?? null,
+      selectionEventId: d.session.selection?.eventId ?? null,
       selectionRevision: d.session.selection?.revisionId ?? null,
       revision: d.session.history.present.score.revision.id
     };
   });
   if (entered.kind !== 'note' || JSON.stringify(entered.pitch) !== JSON.stringify({ step: 'C', alter: 0, octave: 4 }) ||
       JSON.stringify(entered.duration) !== JSON.stringify({ numerator: 1, denominator: 4 }) || entered.past !== 1 ||
-      entered.selectionKind !== 'note' || entered.selectionRevision !== entered.revision) {
+      entered.selectionKind !== 'note' || entered.selectionEventId !== entered.eventId || entered.selectionRevision !== entered.revision) {
     throw new Error(`P09-D Enter note mismatch: ${JSON.stringify(entered)}`);
   }
 
@@ -108,10 +110,20 @@ try {
   const undone = await page.evaluate(() => {
     const d = globalThis.STScoreEditorKeyboardWorkstationController.getDocument();
     const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard').measures[0].voices[0].events[0];
-    return { kind: event.kind, past: d.session.history.past.length, future: d.session.history.future.length, selection: d.session.selection };
+    return {
+      kind: event.kind,
+      eventId: event.id,
+      past: d.session.history.past.length,
+      future: d.session.history.future.length,
+      selectionKind: d.session.selection?.kind ?? null,
+      selectionEventId: d.session.selection?.eventId ?? null,
+      selectionRevision: d.session.selection?.revisionId ?? null,
+      revision: d.session.history.present.score.revision.id
+    };
   });
-  if (undone.kind !== 'rest' || undone.past !== 0 || undone.future !== 1 || undone.selection !== null) {
-    throw new Error(`P09-D keyboard Undo mismatch: ${JSON.stringify(undone)}`);
+  if (undone.kind !== 'rest' || undone.past !== 0 || undone.future !== 1 ||
+      undone.selectionKind !== 'event' || undone.selectionEventId !== undone.eventId || undone.selectionRevision !== undone.revision) {
+    throw new Error(`P09-D keyboard Undo/rebound mismatch: ${JSON.stringify(undone)}`);
   }
 
   await viewport.focus();
@@ -119,10 +131,20 @@ try {
   const redone = await page.evaluate(() => {
     const d = globalThis.STScoreEditorKeyboardWorkstationController.getDocument();
     const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard').measures[0].voices[0].events[0];
-    return { kind: event.kind, past: d.session.history.past.length, future: d.session.history.future.length };
+    return {
+      kind: event.kind,
+      eventId: event.id,
+      past: d.session.history.past.length,
+      future: d.session.history.future.length,
+      selectionKind: d.session.selection?.kind ?? null,
+      selectionEventId: d.session.selection?.eventId ?? null,
+      selectionRevision: d.session.selection?.revisionId ?? null,
+      revision: d.session.history.present.score.revision.id
+    };
   });
-  if (redone.kind !== 'note' || redone.past !== 1 || redone.future !== 0) {
-    throw new Error(`P09-D keyboard Redo mismatch: ${JSON.stringify(redone)}`);
+  if (redone.kind !== 'note' || redone.past !== 1 || redone.future !== 0 ||
+      redone.selectionKind !== 'note' || redone.selectionEventId !== redone.eventId || redone.selectionRevision !== redone.revision) {
+    throw new Error(`P09-D keyboard Redo/rebound mismatch: ${JSON.stringify(redone)}`);
   }
 
   const editableBefore = await page.evaluate(() => {
