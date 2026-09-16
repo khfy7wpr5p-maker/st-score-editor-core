@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0.0",
+  "stage": "P09-A",
+  "title": "Fast Entry / Keyboard Workstation Capability Matrix",
+  "audited_main_commit": "4d8920c81ebb34af31f62f4a8e9ba24a4d7d7e15",
+  "audited_after_handoff_commit": "e281d52881aaad0fade574a944251b12ea752038",
+  "assessment": "P09-B/C/D may proceed only as thin adapters over existing semantic authoring, selection and history authorities. A second note-entry, rhythm or history authority is not admitted.",
+  "capabilities": [
+    {
+      "capability": "Versioned keypad action vocabulary",
+      "existing_implementation": "packages/editor-keypad/src/index.ts exposes EDITOR_KEYPAD_CONTRACT_VERSION 1.0.0 and ACTION_ID_ONLY actions for duration, rests, accidentals, dots, triplet, tie and slur.",
+      "canonical_mutation_owner": "None at contract layer; the contract only identifies an admitted action.",
+      "browser_ui_surface": "Existing score-editor browser keypad manifests/actions.",
+      "missing_gap": "No bounded desktop keyboard command vocabulary maps physical key gestures to the admitted semantic actions and authoring primitives.",
+      "reuse_plan": "Reuse EditorKeypadActionId for editing commands where the semantic operation already exists. Add only a versioned keyboard command-intent contract; do not add mutation logic here.",
+      "risk_or_fail_closed_boundary": "Unknown command/version must be rejected. Glyph metadata and DOM/SVG identity must never become semantic authority."
+    },
+    {
+      "capability": "Selected event/note keypad editing",
+      "existing_implementation": "commitSessionKeypadActionV4 routes through executeSafeEditorKeypadActionV4 using current SemanticAddressV3 selection and commits the result through unified EditorHistoryV4.",
+      "canonical_mutation_owner": "Existing V4 semantic authoring primitives reached by EditorSessionV4.",
+      "browser_ui_surface": "Keypad buttons and existing app controller paths.",
+      "missing_gap": "No desktop key gesture adapter invokes the same session command path.",
+      "reuse_plan": "Keyboard edit gestures should call the same app/session keypad action path and let existing selection rebinding rules apply.",
+      "risk_or_fail_closed_boundary": "Null, stale or wrong-kind semantic selection must fail before mutation; keyboard layer must not synthesize renderer-derived targets."
+    },
+    {
+      "capability": "Duration/rest/dot timing edits",
+      "existing_implementation": "packages/editor-keypad-rhythm-safe-v4/src/index.ts routes duration/rest/dot changes to executeRhythmAuthoringV4; non-timing keypad operations remain delegated to editor-keypad-execution-v4.",
+      "canonical_mutation_owner": "editor-rhythm-authoring-v4 for timing-changing actions.",
+      "browser_ui_surface": "Existing keypad duration/rest/dot controls.",
+      "missing_gap": "Keyboard shortcuts are absent, but no new rhythm implementation is required.",
+      "reuse_plan": "Map admitted keyboard intents to existing keypad action IDs or existing authoring methods. Never compute or write timing in the browser adapter.",
+      "risk_or_fail_closed_boundary": "Unsupported timing, stale target, notation orphan risk and cross-staff conflict remain rejected by the shared rhythm authority."
+    },
+    {
+      "capability": "Fast note insertion",
+      "existing_implementation": "Authoring workspace exposes active Voice, pitch, duration and enterNoteAtSelection. Position note entry is explicit-rest-only and commits through EditorSessionV4 history.",
+      "canonical_mutation_owner": "Existing position/note-entry V4 authoring path and EditorSessionV4.",
+      "browser_ui_surface": "packages/score-editor-browser-app/src/authoring-workspace.ts palette.",
+      "missing_gap": "No keyboard command surface selects entry pitch/duration/voice and triggers the existing note-entry operation.",
+      "reuse_plan": "Keyboard fast-entry should update noncanonical authoring preferences through existing controller setters and invoke enterNoteAtSelection; it must not create a parallel insertion engine.",
+      "risk_or_fail_closed_boundary": "Current explicit-rest-only admission remains authoritative. Keyboard entry must not invent missing timing/topology or silently overwrite occupied music."
+    },
+    {
+      "capability": "Active Voice / entry pitch / entry duration state",
+      "existing_implementation": "Authoring workspace maintains activeVoiceOrdinal, pitch and duration as browser presentation/workflow state and resets it on document change; canonicalAuthority is false.",
+      "canonical_mutation_owner": "No canonical owner for preferences; canonical score mutation occurs only when an admitted authoring action commits.",
+      "browser_ui_surface": "Authoring palette Voice/pitch/duration controls.",
+      "missing_gap": "No defined keyboard-intent semantics for changing these preferences.",
+      "reuse_plan": "P09-B may expose bounded intents that call setActiveVoice, setEntryPitch and setEntryDuration; state stays explicitly noncanonical.",
+      "risk_or_fail_closed_boundary": "Do not introduce hidden canonical cursor state. Unsupported Voice/pitch/duration values must be rejected by existing bounds."
+    },
+    {
+      "capability": "Semantic measure navigation",
+      "existing_implementation": "packages/score-editor-browser-app/src/measure-navigation.ts navigates previous/next global measure frame on the same part/staff, carries exact containing-event onset when available, and reselects through SemanticAddressV3. It has no history mutation authority.",
+      "canonical_mutation_owner": "None; navigation changes semantic selection only.",
+      "browser_ui_surface": "Previous/next measure controls in the authoring palette.",
+      "missing_gap": "No keyboard navigation binding exists; event-within-measure and staff navigation are not established as general keyboard commands by this audit.",
+      "reuse_plan": "Reuse navigateMeasure for admitted previous/next measure commands. Define any finer-grained navigation separately only after semantic ordering is explicit.",
+      "risk_or_fail_closed_boundary": "Do not derive musical navigation from renderer coordinates. Missing frame/staff/measure context must fail closed."
+    },
+    {
+      "capability": "Undo/Redo",
+      "existing_implementation": "EditorSessionV4 / EditorHistoryV4 is the unified history authority; existing tests assert exact score+notation restoration for professional and authoring edits.",
+      "canonical_mutation_owner": "EditorHistoryV4 through EditorSessionV4 wrappers.",
+      "browser_ui_surface": "Existing app/history navigation controls and SDK/session methods.",
+      "missing_gap": "No focus-safe keyboard binding for standard undo/redo is established by current P09 audit.",
+      "reuse_plan": "P09 command execution should call existing history navigation only; one accepted semantic edit remains one history revision.",
+      "risk_or_fail_closed_boundary": "Keyboard layer must never write history directly or coalesce unrelated edits without a separately admitted transaction contract."
+    },
+    {
+      "capability": "Professional single/range selection",
+      "existing_implementation": "P08 professional selection uses current-revision SemanticAddressV3 endpoints; professional range UI declares EditorHistoryV4 as history authority and renderer coordinates as non-authoritative.",
+      "canonical_mutation_owner": "Selection model is semantic/noncanonical; edits route through P08 professional workstation/session authorities.",
+      "browser_ui_surface": "Professional range toolbar and structure inspector in STScoreEditorProfessionalApp.",
+      "missing_gap": "Keyboard extension/Shift-selection behavior is not yet implemented as a focus-safe desktop gesture layer.",
+      "reuse_plan": "Future Shift-selection should reuse P08 semantic endpoints/range model rather than create a keyboard-only range representation.",
+      "risk_or_fail_closed_boundary": "Stale revision endpoints must be rejected; renderer hit order/DOM ids must not define the range."
+    },
+    {
+      "capability": "Browser keyboard and focus handling",
+      "existing_implementation": "viewport-presentation.ts installs a root keydown listener for Ctrl/Cmd +/-/0, arrows, PageUp/PageDown, Home/End when the event target is inside the score viewport.",
+      "canonical_mutation_owner": "None; existing listener is presentation-only zoom/pan/page navigation.",
+      "browser_ui_surface": "Score viewport.",
+      "missing_gap": "There is no centralized edit-keyboard adapter and the existing viewport handler has no general text-input/contenteditable exclusion because it currently only owns viewport presentation gestures.",
+      "reuse_plan": "P09-C should add a separate focus-safe adapter with explicit editable-target exclusion and conflict arbitration with viewport shortcuts, then delegate semantic commands to existing controller APIs.",
+      "risk_or_fail_closed_boundary": "Never hijack input, textarea, select, contenteditable or host-reserved shortcuts. Do not let both viewport and editing adapters execute one gesture."
+    },
+    {
+      "capability": "Public SDK lifecycle/exposure",
+      "existing_implementation": "P06 SDK has reusable mount/update/unmount/remount lifecycle tests and presentation-host lifecycle boundaries; current main also contains S06E source-note identity mapping at the SDK/import boundary.",
+      "canonical_mutation_owner": "SDK host is non-authoritative; EditorSessionV4 and canonical documents remain authoritative.",
+      "browser_ui_surface": "Generic SDK hosts plus standalone/professional browser artifacts.",
+      "missing_gap": "Keyboard workstation exposure is not part of the versioned public SDK contract yet.",
+      "reuse_plan": "Keep P09 browser adapter internal until behavior is qualified; expose only a bounded versioned SDK capability if host-driven keyboard intents are later required.",
+      "risk_or_fail_closed_boundary": "Do not make SDK lifecycle or host state a second score/history authority. Preserve source identity revision guards introduced by S06E."
+    },
+    {
+      "capability": "Mobile behavior",
+      "existing_implementation": "Current authoring/professional UI is button/touch based and prior stages include WebKit/mobile regressions; physical iPhone/Safari P08-E4 qualification remains a separate pending gate.",
+      "canonical_mutation_owner": "Unchanged semantic/session authorities.",
+      "browser_ui_surface": "Responsive authoring and professional browser UIs.",
+      "missing_gap": "P09 keyboard workflow is desktop-oriented; it must not regress touch controls or become required for core authoring.",
+      "reuse_plan": "Keep touch UI operational and add P09 as progressive enhancement. Run dedicated WebKit regression when shared browser code changes.",
+      "risk_or_fail_closed_boundary": "Do not declare physical iPhone/Safari PASS from automated keyboard tests; do not expose professional artifact to production through P09."
+    }
+  ],
+  "admission_for_next_stage": {
+    "P09_B": "ADMITTED_BOUNDED",
+    "reason": "Existing semantic action, note-entry, navigation and history primitives are sufficient for a command-intent layer without a second mutation engine.",
+    "constraints": [
+      "Keyboard contract is intent-only and versioned.",
+      "All score mutations delegate to existing controller/session primitives.",
+      "No hidden canonical cursor or timing state.",
+      "Unsupported command/selection/topology fails closed."
+    ],
+    "P09_C": "CONDITIONALLY_ADMITTED_AFTER_P09_B_TESTS",
+    "P09_D": "CONDITIONALLY_ADMITTED_AFTER_P09_C_FOCUS_AND_WEBKIT_TESTS"
+  }
+}
