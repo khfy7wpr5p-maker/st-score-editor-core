@@ -15,7 +15,7 @@ const contentTypes = new Map([
 
 const resolveRequestPath = requestUrl => {
   const pathname = decodeURIComponent(new URL(requestUrl ?? '/', 'http://127.0.0.1').pathname);
-  const resolved = path.resolve(browserRoot, pathname.replace(/^\/+/, '') || 'st-score-editor-app.html');
+  const resolved = path.resolve(browserRoot, pathname.replace(/^\/+/, '') || 'p09d-keyboard-workstation.html');
   if (resolved !== browserRoot && !resolved.startsWith(`${browserRoot}${path.sep}`)) throw new Error('request escaped browser output root');
   return resolved;
 };
@@ -52,22 +52,22 @@ try {
   page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   page.on('pageerror', error => consoleErrors.push(error.message));
 
-  await page.goto(`http://127.0.0.1:${address.port}/st-score-editor-app.html`, { waitUntil: 'load', timeout: 30000 });
-  await page.waitForFunction(() => Boolean(globalThis.STScoreEditorAppController?.getKeyboardWorkstationState));
+  await page.goto(`http://127.0.0.1:${address.port}/p09d-keyboard-workstation.html`, { waitUntil: 'load', timeout: 30000 });
+  await page.waitForFunction(() => Boolean(globalThis.STScoreEditorKeyboardWorkstationController?.getKeyboardWorkstationState));
 
   const bootstrap = await page.evaluate(() => ({
-    bundled: globalThis.STScoreEditorApp?.profile?.keyboardWorkstationBundled ?? false,
-    authority: globalThis.STScoreEditorApp?.profile?.keyboardWorkstationCanonicalAuthority ?? true,
-    state: globalThis.STScoreEditorAppController.getKeyboardWorkstationState()
+    bundled: globalThis.STScoreEditorKeyboardWorkstation?.profile?.keyboardWorkstationBundled ?? false,
+    authority: globalThis.STScoreEditorKeyboardWorkstation?.profile?.keyboardWorkstationCanonicalAuthority ?? true,
+    state: globalThis.STScoreEditorKeyboardWorkstationController.getKeyboardWorkstationState()
   }));
   if (!bootstrap.bundled || bootstrap.authority !== false || bootstrap.state.intentVersion !== '1.0.0' || bootstrap.state.bindingCount !== 6 || !bootstrap.state.mounted) {
     throw new Error(`P09-D keyboard bootstrap mismatch: ${JSON.stringify(bootstrap)}`);
   }
 
   await page.getByRole('button', { name: 'New', exact: true }).click();
-  await page.waitForFunction(() => globalThis.STScoreEditorAppController?.getSnapshot?.().hasDocument === true);
+  await page.waitForFunction(() => globalThis.STScoreEditorKeyboardWorkstationController?.getSnapshot?.().hasDocument === true);
   await page.evaluate(() => {
-    const controller = globalThis.STScoreEditorAppController;
+    const controller = globalThis.STScoreEditorKeyboardWorkstationController;
     const d = controller.getDocument();
     const score = d.session.history.present.score;
     const event = score.parts[0].staves.find(staff => staff.role === 'standard').measures[0].voices[0].events[0];
@@ -81,10 +81,10 @@ try {
   const viewport = page.locator('[data-st-score-editor-viewport]');
   await viewport.focus();
   await page.keyboard.press('Enter');
-  await page.waitForFunction(() => globalThis.STScoreEditorAppController?.getAuthoringState?.().status?.code === 'NOTE_ENTERED');
+  await page.waitForFunction(() => globalThis.STScoreEditorKeyboardWorkstationController?.getAuthoringState?.().status?.code === 'NOTE_ENTERED');
 
   const entered = await page.evaluate(() => {
-    const controller = globalThis.STScoreEditorAppController;
+    const controller = globalThis.STScoreEditorKeyboardWorkstationController;
     const d = controller.getDocument();
     const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard').measures[0].voices[0].events[0];
     return {
@@ -106,7 +106,7 @@ try {
   await viewport.focus();
   await page.keyboard.press('Control+z');
   const undone = await page.evaluate(() => {
-    const d = globalThis.STScoreEditorAppController.getDocument();
+    const d = globalThis.STScoreEditorKeyboardWorkstationController.getDocument();
     const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard').measures[0].voices[0].events[0];
     return { kind: event.kind, past: d.session.history.past.length, future: d.session.history.future.length, selection: d.session.selection };
   });
@@ -117,7 +117,7 @@ try {
   await viewport.focus();
   await page.keyboard.press('Control+y');
   const redone = await page.evaluate(() => {
-    const d = globalThis.STScoreEditorAppController.getDocument();
+    const d = globalThis.STScoreEditorKeyboardWorkstationController.getDocument();
     const event = d.session.history.present.score.parts[0].staves.find(staff => staff.role === 'standard').measures[0].voices[0].events[0];
     return { kind: event.kind, past: d.session.history.past.length, future: d.session.history.future.length };
   });
@@ -126,8 +126,8 @@ try {
   }
 
   const editableBefore = await page.evaluate(() => {
-    const controller = globalThis.STScoreEditorAppController;
-    const root = document.getElementById('st-score-editor-app-root');
+    const controller = globalThis.STScoreEditorKeyboardWorkstationController;
+    const root = document.getElementById('st-score-editor-keyboard-workstation-root');
     const input = document.createElement('input');
     input.setAttribute('data-p09d-editable-probe', 'true');
     root.append(input);
@@ -136,25 +136,25 @@ try {
     return d.session.history.past.length;
   });
   await page.keyboard.press('Enter');
-  const editableAfter = await page.evaluate(() => globalThis.STScoreEditorAppController.getDocument().session.history.past.length);
+  const editableAfter = await page.evaluate(() => globalThis.STScoreEditorKeyboardWorkstationController.getDocument().session.history.past.length);
   if (editableAfter !== editableBefore) throw new Error(`P09-D editable target was hijacked: ${editableBefore} -> ${editableAfter}`);
 
   await viewport.focus();
   const beforePan = await page.evaluate(() => ({
-    x: globalThis.STScoreEditorAppController.getViewportState().scrollX,
-    past: globalThis.STScoreEditorAppController.getDocument().session.history.past.length
+    x: globalThis.STScoreEditorKeyboardWorkstationController.getViewportState().scrollX,
+    past: globalThis.STScoreEditorKeyboardWorkstationController.getDocument().session.history.past.length
   }));
   await page.keyboard.press('ArrowRight');
   const afterPan = await page.evaluate(() => ({
-    x: globalThis.STScoreEditorAppController.getViewportState().scrollX,
-    past: globalThis.STScoreEditorAppController.getDocument().session.history.past.length
+    x: globalThis.STScoreEditorKeyboardWorkstationController.getViewportState().scrollX,
+    past: globalThis.STScoreEditorKeyboardWorkstationController.getDocument().session.history.past.length
   }));
   if (afterPan.x <= beforePan.x || afterPan.past !== beforePan.past) {
     throw new Error(`P09-D viewport coexistence mismatch: ${JSON.stringify({ beforePan, afterPan })}`);
   }
 
   const navigationSetup = await page.evaluate(() => {
-    const controller = globalThis.STScoreEditorAppController;
+    const controller = globalThis.STScoreEditorKeyboardWorkstationController;
     controller.appendMeasure();
     const d = controller.getDocument();
     return { past: d.session.history.past.length, frameId: d.session.selection?.frameId ?? null, frames: d.session.history.present.score.measureFrames.map(frame => frame.id) };
@@ -162,7 +162,7 @@ try {
   await viewport.focus();
   await page.keyboard.press('[');
   const previous = await page.evaluate(() => {
-    const d = globalThis.STScoreEditorAppController.getDocument();
+    const d = globalThis.STScoreEditorKeyboardWorkstationController.getDocument();
     return { past: d.session.history.past.length, frameId: d.session.selection?.frameId ?? null };
   });
   if (previous.frameId !== navigationSetup.frames[0] || previous.past !== navigationSetup.past) {
@@ -171,7 +171,7 @@ try {
   await viewport.focus();
   await page.keyboard.press(']');
   const next = await page.evaluate(() => {
-    const d = globalThis.STScoreEditorAppController.getDocument();
+    const d = globalThis.STScoreEditorKeyboardWorkstationController.getDocument();
     return { past: d.session.history.past.length, frameId: d.session.selection?.frameId ?? null };
   });
   if (next.frameId !== navigationSetup.frames[1] || next.past !== navigationSetup.past) {
@@ -179,12 +179,12 @@ try {
   }
 
   await page.evaluate(() => {
-    const controller = globalThis.STScoreEditorAppController;
-    const root = document.getElementById('st-score-editor-app-root');
+    const controller = globalThis.STScoreEditorKeyboardWorkstationController;
+    const root = document.getElementById('st-score-editor-keyboard-workstation-root');
     controller.unmount();
     controller.mount(root);
   });
-  const remounted = await page.evaluate(() => globalThis.STScoreEditorAppController.getKeyboardWorkstationState());
+  const remounted = await page.evaluate(() => globalThis.STScoreEditorKeyboardWorkstationController.getKeyboardWorkstationState());
   if (!remounted.mounted || remounted.bindingCount !== 6) throw new Error(`P09-D remount mismatch: ${JSON.stringify(remounted)}`);
 
   if (consoleErrors.length !== 0) throw new Error(`P09-D browser console errors: ${JSON.stringify(consoleErrors)}`);
