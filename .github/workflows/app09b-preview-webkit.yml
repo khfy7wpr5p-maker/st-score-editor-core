@@ -30,6 +30,8 @@ jobs:
         run: npx playwright install --with-deps webkit
       - name: Build Editor Core browser artifacts
         run: npm run build:browser
+      - name: Run P09-D WebKit keyboard workstation regression
+        run: node scripts/p09d-webkit-keyboard-workstation-regression.mjs
       - name: Run APP-10E WebKit authoring workspace regression
         run: node scripts/app10e-webkit-authoring-workspace-regression.mjs
       - name: Run APP-10F WebKit selected-note editing regression
