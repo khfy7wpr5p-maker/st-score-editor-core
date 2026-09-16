@@ -1,4 +1,6 @@
 import type { TeacherWorkflowControllerOptions } from './teacher-workflow.js';
+import type { Pitch, Rational } from '../../score-model/src/index.js';
+import type { EditorKeypadAction } from '../../editor-keypad/src/index.js';
 import {
   audioHostIntegratedBrowserAppProfile,
   createAudioHostIntegratedStandaloneBrowserAppRuntime,
@@ -8,8 +10,11 @@ import {
 import {
   EDITOR_KEYBOARD_INTENT_VERSION,
   dispatchEditorKeyboardIntent,
+  type EditorKeyboardHistoryDirection,
   type EditorKeyboardIntent,
-  type EditorKeyboardIntentSink
+  type EditorKeyboardIntentSink,
+  type EditorKeyboardMeasureDirection,
+  type EditorKeyboardVoiceOrdinal
 } from '../../editor-keyboard-intents-v1/src/index.js';
 import {
   DEFAULT_EDITOR_KEYBOARD_BINDINGS_V1,
@@ -60,19 +65,19 @@ export const createKeyboardWorkstationStandaloneScoreEditorController = (
   const bindings = options.keyboardBindings ?? DEFAULT_EDITOR_KEYBOARD_BINDINGS_V1;
 
   const sink: EditorKeyboardIntentSink = Object.freeze({
-    applyKeypadAction: (action) => {
+    applyKeypadAction: (action: Readonly<EditorKeypadAction>) => {
       const snapshot = base.commitKeypad(action);
       if (snapshot.error !== null) throw Object.assign(new Error(snapshot.error.message), { code: snapshot.error.code });
     },
-    setEntryPitch: (step, alter, octave) => {
+    setEntryPitch: (step: Pitch['step'], alter: number, octave: number) => {
       const state = base.setEntryPitch(step, alter, octave);
       if (state.status?.error === true) throw Object.assign(new Error(state.status.message), { code: state.status.code });
     },
-    setEntryDuration: (duration) => {
+    setEntryDuration: (duration: Readonly<Rational>) => {
       const state = base.setEntryDuration(duration);
       if (state.status?.error === true) throw Object.assign(new Error(state.status.message), { code: state.status.code });
     },
-    setActiveVoice: (voice) => {
+    setActiveVoice: (voice: EditorKeyboardVoiceOrdinal) => {
       const state = base.setActiveVoice(voice);
       if (state.status?.error === true) throw Object.assign(new Error(state.status.message), { code: state.status.code });
     },
@@ -80,10 +85,10 @@ export const createKeyboardWorkstationStandaloneScoreEditorController = (
       const state = base.enterNoteAtSelection();
       if (state.status?.error === true) throw Object.assign(new Error(state.status.message), { code: state.status.code });
     },
-    navigateMeasure: (direction) => {
+    navigateMeasure: (direction: EditorKeyboardMeasureDirection) => {
       base.navigateMeasure(direction);
     },
-    navigateHistory: (direction) => {
+    navigateHistory: (direction: EditorKeyboardHistoryDirection) => {
       const snapshot = direction === 'UNDO' ? base.undo() : base.redo();
       if (snapshot.error !== null) throw Object.assign(new Error(snapshot.error.message), { code: snapshot.error.code });
     }
