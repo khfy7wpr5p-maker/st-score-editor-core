@@ -77,7 +77,7 @@ test('P09-D keyboard note entry reuses the explicit-rest authoring path and rebo
   assert.equal(after.session.selection?.revisionId, after.session.history.present.score.revision.id);
 });
 
-test('P09-D selected-note keypad edit is one history revision and exact Undo/Redo restores the canonical pair', () => {
+test('P09-D selected-note keypad edit is one history revision and exact Undo/Redo restores the canonical pair with deterministic rebound', () => {
   const controller = createKeyboardWorkstationStandaloneScoreEditorController();
   controller.newDocument({ preset: 'GUITAR_TREBLE' });
   selectFirstEvent(controller);
@@ -87,28 +87,40 @@ test('P09-D selected-note keypad edit is one history revision and exact Undo/Red
   assert.ok(beforeEdit);
   const beforePair = structuredClone(beforeEdit.session.history.present);
   const beforePast = beforeEdit.session.history.past.length;
+  const beforeEvent = firstStandardMeasure(beforeEdit).voices[0]?.events[0];
+  assert.equal(beforeEvent?.kind, 'note');
 
   controller.dispatchKeyboardIntent({ version: '1.0.0', type: 'KEYPAD_ACTION', actionId: 'duration.eighth' });
   const edited = controller.getDocument();
   assert.ok(edited);
   const editedPair = structuredClone(edited.session.history.present);
   const event = firstStandardMeasure(edited).voices[0]?.events[0];
+  assert.equal(event?.kind, 'note');
   assert.deepEqual(event?.duration, { numerator: 1, denominator: 8 });
   assert.equal(edited.session.history.past.length, beforePast + 1);
   assert.equal(edited.session.selection?.kind, 'note');
+  assert.equal(edited.session.selection?.eventId, event?.id);
   assert.equal(edited.session.selection?.revisionId, edited.session.history.present.score.revision.id);
 
   controller.dispatchKeyboardIntent({ version: '1.0.0', type: 'NAVIGATE_HISTORY', direction: 'UNDO' });
   const undone = controller.getDocument();
   assert.ok(undone);
   assert.deepEqual(undone.session.history.present, beforePair);
-  assert.equal(undone.session.selection, null);
+  const undoneEvent = firstStandardMeasure(undone).voices[0]?.events[0];
+  assert.equal(undoneEvent?.kind, 'note');
+  assert.equal(undone.session.selection?.kind, 'note');
+  assert.equal(undone.session.selection?.eventId, undoneEvent?.id);
+  assert.equal(undone.session.selection?.revisionId, undone.session.history.present.score.revision.id);
 
   controller.dispatchKeyboardIntent({ version: '1.0.0', type: 'NAVIGATE_HISTORY', direction: 'REDO' });
   const redone = controller.getDocument();
   assert.ok(redone);
   assert.deepEqual(redone.session.history.present, editedPair);
-  assert.equal(redone.session.selection, null);
+  const redoneEvent = firstStandardMeasure(redone).voices[0]?.events[0];
+  assert.equal(redoneEvent?.kind, 'note');
+  assert.equal(redone.session.selection?.kind, 'note');
+  assert.equal(redone.session.selection?.eventId, redoneEvent?.id);
+  assert.equal(redone.session.selection?.revisionId, redone.session.history.present.score.revision.id);
 });
 
 test('P09-D previous/next measure intents reuse semantic measure navigation without creating history', () => {
