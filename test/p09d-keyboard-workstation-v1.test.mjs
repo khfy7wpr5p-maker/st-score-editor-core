@@ -54,6 +54,23 @@ test('P09-D workstation is a non-authoritative composition over the existing sta
   assert.equal(controller.getAudioHostState().instrumentId, 'GRAND_PIANO');
 });
 
+test('P09-D newDocument initial anchor is one-shot and explicit selection clear remains null', () => {
+  const controller = createKeyboardWorkstationStandaloneScoreEditorController();
+  controller.newDocument({ preset: 'GUITAR_TREBLE' });
+
+  let documentValue = controller.getDocument();
+  assert.ok(documentValue);
+  assert.equal(documentValue.session.selection?.kind, 'event');
+  assert.equal(documentValue.session.history.past.length, 0);
+
+  controller.select(null);
+
+  documentValue = controller.getDocument();
+  assert.ok(documentValue);
+  assert.equal(documentValue.session.selection, null);
+  assert.equal(documentValue.session.history.past.length, 0);
+});
+
 test('P09-D keyboard note entry reuses the explicit-rest authoring path and rebound selection', () => {
   const controller = createKeyboardWorkstationStandaloneScoreEditorController();
   controller.newDocument({ preset: 'GUITAR_TREBLE' });
@@ -77,7 +94,7 @@ test('P09-D keyboard note entry reuses the explicit-rest authoring path and rebo
   assert.equal(after.session.selection?.revisionId, after.session.history.present.score.revision.id);
 });
 
-test('P09-D selected-note keypad edit is one history revision and exact Undo/Redo restores the canonical pair with deterministic rebound', () => {
+test('P09-D selected-note keypad edit is one history revision and exact Undo/Redo restores the canonical pair with selection cleared', () => {
   const controller = createKeyboardWorkstationStandaloneScoreEditorController();
   controller.newDocument({ preset: 'GUITAR_TREBLE' });
   selectFirstEvent(controller);
@@ -108,9 +125,7 @@ test('P09-D selected-note keypad edit is one history revision and exact Undo/Red
   assert.deepEqual(undone.session.history.present, beforePair);
   const undoneEvent = firstStandardMeasure(undone).voices[0]?.events[0];
   assert.equal(undoneEvent?.kind, 'note');
-  assert.equal(undone.session.selection?.kind, 'note');
-  assert.equal(undone.session.selection?.eventId, undoneEvent?.id);
-  assert.equal(undone.session.selection?.revisionId, undone.session.history.present.score.revision.id);
+  assert.equal(undone.session.selection, null);
 
   controller.dispatchKeyboardIntent({ version: '1.0.0', type: 'NAVIGATE_HISTORY', direction: 'REDO' });
   const redone = controller.getDocument();
@@ -118,9 +133,7 @@ test('P09-D selected-note keypad edit is one history revision and exact Undo/Red
   assert.deepEqual(redone.session.history.present, editedPair);
   const redoneEvent = firstStandardMeasure(redone).voices[0]?.events[0];
   assert.equal(redoneEvent?.kind, 'note');
-  assert.equal(redone.session.selection?.kind, 'note');
-  assert.equal(redone.session.selection?.eventId, redoneEvent?.id);
-  assert.equal(redone.session.selection?.revisionId, redone.session.history.present.score.revision.id);
+  assert.equal(redone.session.selection, null);
 });
 
 test('P09-D previous/next measure intents reuse semantic measure navigation without creating history', () => {
@@ -160,6 +173,7 @@ test('P09-D rejected selected-score edit with no semantic selection does not mut
   controller.select(null);
   const before = controller.getDocument();
   assert.ok(before);
+  assert.equal(before.session.selection, null);
   const pair = structuredClone(before.session.history.present);
   const past = before.session.history.past.length;
 
@@ -172,4 +186,5 @@ test('P09-D rejected selected-score edit with no semantic selection does not mut
   assert.ok(after);
   assert.deepEqual(after.session.history.present, pair);
   assert.equal(after.session.history.past.length, past);
+  assert.equal(after.session.selection, null);
 });
