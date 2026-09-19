@@ -1,8 +1,8 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10O + APP-11A–I COMPLETE / MERGED / STAGE 07 COMPLETE / MERGED / MANUAL RELEASE MATRIX OPEN AND REQUIRED BEFORE RELEASE**
+Status: **ACTIVE / APP-00–10O + APP-11A–I + P09-A/B/C/D COMPLETE / MERGED / P09 QUALIFIED / APP-11J ANALYSIS PRESENT ON MAIN / FULL RELEASE MATRIX OPEN**
 
-Date: 2026-09-06
+Date: 2026-09-19
 
 ## Product decision
 
@@ -24,13 +24,21 @@ Standalone document/runtime, unified V4 authoring history, browser shell, bounde
 
 **AUTOMATED HARDENING COMPLETE / PHYSICAL RELEASE MATRIX STILL OPEN.**
 
-Responsive/mobile/accessibility/recovery hardening, standalone bundle budget and exact-current-revision host-controlled renderer rerender are merged. Existing physical iPhone Safari evidence is partial only. Automated WebKit is regression evidence, not a physical-device PASS.
+Responsive/mobile/accessibility/recovery hardening, standalone bundle budget and exact-current-revision host-controlled renderer rerender are merged. iPhone Safari P08/P09 device gate PASS is recorded for the tested professional/keyboard/renderer scope. The full APP-09 G1–G10 multi-platform release matrix remains incomplete. Automated WebKit is regression evidence and cannot by itself establish a physical-device PASS.
 
 ### APP-10A–O
 
 **COMPLETE / MERGED.**
 
 The standalone editor product now includes bounded Guitar/Piano starts, Voice 1–5, note entry, exact selected-note edit/delete, semantic Staff/measure navigation, bounded synthetic measure append, chord-tone authoring, articulation/ornament groups and exact explicit Flat/Natural/Sharp authoring.
+
+## P09 Fast Entry / Keyboard Workstation
+
+**COMPLETE / MERGED / QUALIFIED — PR #191 / merge `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`.**
+
+Exact qualified P09-D head: `636c17dc27b657d273cf2e4f630a2e7c11ffa8f6`.
+
+P09 adds versioned keyboard intents, focus-safe browser dispatch, semantic measure navigation and delegation into the existing note-entry/keypad/session authorities. It does not add a second canonical cursor, score, rhythm engine or history authority. Physical iPhone/Safari evidence covers renderer startup, rendered-note selection, edit, Undo/Redo, orientation, lifecycle return and continued touch selection.
 
 ## APP-11 strong-editor program
 
@@ -118,13 +126,21 @@ A successful retiming operation:
 
 Dedicated mobile WebKit verifies straight eighths -> canonical `1/12 + 1/12 + 1/12` Triplet -> exact Undo. The same exact head also passed the retained APP-10E–O, APP-11B/D/E/F, exact renderer build and APP-09B renderer/controlled-layout regression chain.
 
+### APP-11J — Triplet Removal / Unretiming Admission
+
+**ANALYSIS FOUNDATION PRESENT ON MAIN / CANONICAL MUTATION NOT EXPOSED.**
+
+Foundation commit `674187b920434d6d7d72330baba44c2692a64596` is already an ancestor of the P10 baseline main commit. The read-only admission package and regression tests are present on main. Historical PR #142 remaining open is stacked metadata and is not code-presence authority.
+
+APP-11J keeps canonical mutation authority, history authority and renderer-coordinate authority false. The later bounded mutation/productization stage must consume this evidence rather than recreate it.
+
 ## Product authority boundaries
 
 The browser is allowed to present and invoke only already-admitted semantic operations. It may not infer canonical targets/timing from renderer geometry.
 
 Current fail-closed boundaries include:
 
-- Triplet removal/unretiming;
+- canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission;
 - arbitrary tuplet ratios/cardinalities outside the bounded 3:2 profile;
 - renderer-derived Triplet range inference;
 - selected cross-staff Triplet retiming;
@@ -147,22 +163,20 @@ standaloneReleaseGatePassed = false
 seslitabCutoverAuthorized = false
 ```
 
-Required physical validation targets remain:
+Physical target status:
 
-- real iPhone Safari;
-- Android Chrome;
-- Windows Edge;
-- Windows Chrome;
-- Windows Firefox.
+- iPhone Safari — P08/P09 DEVICE GATE PASS / FULL G1–G10 INCOMPLETE;
+- Android Chrome — PENDING;
+- Windows Edge — PENDING;
+- Windows Chrome — PENDING;
+- Windows Firefox — PENDING.
 
-Real iPad Safari remains secondary.
+Real iPad Safari remains secondary. The full release matrix remains open.
 
-APP-11I automated WebKit success does not change the physical matrix status.
+Automated WebKit success remains regression evidence only; the iPhone Safari P08/P09 device gate PASS is separate human physical-device evidence.
 
 ## Next bounded development action
 
-**APP-11J — Triplet Removal / Unretiming Admission Foundation.**
+**P10-0 — Architecture Reality Refresh.**
 
-APP-11J must begin read-only. It must prove when an exact canonical 3:2 Triplet can be restored to a supported straight written rhythm without overlap, semantic loss, unsupported rest redistribution, topology invention or imported-measure ambiguity. Only after that analysis contract is proven may a later atomic removal mutation be considered.
-
-After the bounded relation/rhythm program, strong-editor development can continue with grace notes, beam authoring, measure/signature topology, staff/part/instrument management, range transforms, dynamics/text/lyrics, guitar/TAB workflows, engraving/layout and MIDI/keyboard entry.
+P10-0 aligns documentation and machine-readable productization state with current main while leaving runtime behavior unchanged. Subsequent P10 stages require separate architectural specs. The next Triplet-removal mutation work must consume the APP-11J analysis already present on main.
