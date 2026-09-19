@@ -101,6 +101,8 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
 ): Readonly<ActiveStaffAuthoringStandaloneScoreEditorController> => {
   const base = createSelectedNoteEditingStandaloneScoreEditorController(options);
   let root: HTMLElement | null = null;
+  let observedDocumentId: string | null = null;
+  let pendingInitialAnchorDocumentId: string | null = null;
   const currentContext = (): StaffContext | null => {
     const documentValue = base.getDocument();
     if (documentValue === null) return null;
@@ -187,7 +189,26 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
     palette.prepend(group);
   };
 
+  const synchronizeInitialNewScoreAnchor = (): void => {
+    const documentValue = base.getDocument();
+    const documentId = documentValue?.session.history.present.score.id ?? null;
+
+    if (documentId !== observedDocumentId) {
+      observedDocumentId = documentId;
+      pendingInitialAnchorDocumentId =
+        documentValue !== null && documentValue.origin === 'NEW' && documentValue.session.selection === null
+          ? documentId
+          : null;
+    }
+
+    if (documentId !== null && pendingInitialAnchorDocumentId === documentId) {
+      pendingInitialAnchorDocumentId = null;
+      selectInitialNewScoreAnchor();
+    }
+  };
+
   base.subscribe(() => {
+    synchronizeInitialNewScoreAnchor();
     decorate();
   });
 
