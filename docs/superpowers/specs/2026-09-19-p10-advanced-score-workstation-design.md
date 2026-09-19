@@ -404,6 +404,7 @@ P10 work must keep these distinctions explicit.
 
 At the P10 design baseline, several repository documents lag current reality:
 
+- README.md still presents APP-11J as the next bounded action and does not reflect the post-P09 physical iPhone/Safari evidence;
 - ARCHITECTURE.md does not yet describe P09;
 - ROADMAP.md still points to APP-11J as future work even though the read-only APP-11J admission package/test is already present on main, and it also does not reflect the newly merged P09 workstation layer;
 - docs/st-score-editor-app-productization.md does not reflect P09 composition and still phrases APP-11J as future admission work;
@@ -418,7 +419,7 @@ These are source-of-truth drift, not runtime defects.
 
 P10-0 is complete only when:
 
-- the above documentation files consistently describe the current main state;
+- README.md and the above documentation files consistently describe the current main state;
 - APP-11J is described as an existing read-only admission capability on main, not re-planned as missing foundation work;
 - PR #191 and merge commit 9dfa253a55982a66b01b5eaa2f8df614b1e58e9b are represented;
 - P09-A/B/C/D is marked merged/qualified;
