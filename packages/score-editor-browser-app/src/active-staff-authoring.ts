@@ -101,8 +101,8 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
 ): Readonly<ActiveStaffAuthoringStandaloneScoreEditorController> => {
   const base = createSelectedNoteEditingStandaloneScoreEditorController(options);
   let root: HTMLElement | null = null;
-  let initialSelectionSyncInFlight = false;
-
+  let observedDocumentId: string | null = null;
+  let pendingInitialAnchorDocumentId: string | null = null;
   const currentContext = (): StaffContext | null => {
     const documentValue = base.getDocument();
     if (documentValue === null) return null;
@@ -189,15 +189,26 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
     palette.prepend(group);
   };
 
-  base.subscribe(() => {
-    if (!initialSelectionSyncInFlight) {
-      initialSelectionSyncInFlight = true;
-      try {
-        if (selectInitialNewScoreAnchor()) return;
-      } finally {
-        initialSelectionSyncInFlight = false;
-      }
+  const synchronizeInitialNewScoreAnchor = (): void => {
+    const documentValue = base.getDocument();
+    const documentId = documentValue?.session.history.present.score.id ?? null;
+
+    if (documentId !== observedDocumentId) {
+      observedDocumentId = documentId;
+      pendingInitialAnchorDocumentId =
+        documentValue !== null && documentValue.origin === 'NEW' && documentValue.session.selection === null
+          ? documentId
+          : null;
     }
+
+    if (documentId !== null && pendingInitialAnchorDocumentId === documentId) {
+      pendingInitialAnchorDocumentId = null;
+      selectInitialNewScoreAnchor();
+    }
+  };
+
+  base.subscribe(() => {
+    synchronizeInitialNewScoreAnchor();
     decorate();
   });
 
@@ -206,7 +217,7 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
     profile: activeStaffAuthoringBrowserAppProfile,
     newDocument: (newOptions) => {
       base.newDocument(newOptions);
-      if (!initialSelectionSyncInFlight) selectInitialNewScoreAnchor();
+      selectInitialNewScoreAnchor();
       decorate();
       return base.getSnapshot();
     },

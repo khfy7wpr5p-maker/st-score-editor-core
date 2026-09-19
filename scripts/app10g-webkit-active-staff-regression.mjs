@@ -145,6 +145,22 @@ try {
     throw new Error(`APP-10G return-to-upper mismatch: ${JSON.stringify(upperReturn)}`);
   }
 
+  const explicitClear = await page.evaluate(() => {
+    const controller = globalThis.STScoreEditorAppController;
+    const before = controller.getDocument();
+    const past = before.session.history.past.length;
+    controller.select(null);
+    const after = controller.getDocument();
+    return {
+      selection: after.session.selection,
+      pastBefore: past,
+      pastAfter: after.session.history.past.length
+    };
+  });
+  if (explicitClear.selection !== null || explicitClear.pastAfter !== explicitClear.pastBefore) {
+    throw new Error(`APP-10G explicit selection clear was not preserved: ${JSON.stringify(explicitClear)}`);
+  }
+
   if (consoleErrors.length !== 0) throw new Error(`APP-10G browser console errors: ${JSON.stringify(consoleErrors)}`);
   console.log('APP-10G WebKit active-staff authoring regression: PASS');
 } finally {
