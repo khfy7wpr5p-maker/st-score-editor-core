@@ -2,11 +2,11 @@
 
 Status: **DEFERRED FOR CURRENT DEVELOPMENT / MANUAL DEVICE-BROWSER MATRIX REQUIRED BEFORE RELEASE**
 
-APP-09/09B automated hardening is merged. The physical iPhone renderer-selection/orientation blocker was resolved earlier, but the full practical device/browser matrix is still incomplete.
+APP-09/09B automated hardening is merged. The iPhone Safari P08/P09 DEVICE GATE PASS is now recorded for the tested professional/keyboard/renderer interaction scope, while the FULL G1–G10 INCOMPLETE multi-platform release matrix remains open.
 
 Automated repository validation is currently **PASS** through APP-11I on Node 18 / 20 / 22 and the retained WebKit/renderer chain. This includes APP-10E–O, APP-11B safe rhythm timing, APP-11D Tie, APP-11E Slur, APP-11F metadata-only Triplet, APP-11I straight-note Triplet Retiming, exact ST Score Rendering Layer build, APP-09B renderer regression and controlled-layout rerender regression.
 
-Automated WebKit is regression evidence only. It is **not** evidence that real iPhone/Android/Windows browser behavior has passed the release matrix.
+Automated WebKit is regression evidence only and cannot by itself establish physical-device PASS. The scoped iPhone Safari P08/P09 PASS below comes from separate human device evidence; Android/Windows release evidence remains pending.
 
 ## Release invariants
 
@@ -38,7 +38,7 @@ Every manual run must preserve these invariants:
 
 | Target | Status | Evidence required |
 | --- | --- | --- |
-| Real iPhone Safari | PARTIAL | complete applicable G1–G10 + iOS/Safari version |
+| Real iPhone Safari | P08/P09 DEVICE GATE PASS / FULL G1–G10 INCOMPLETE | physical P08/P09 renderer-selection-edit-history-orientation-lifecycle evidence exists; remaining applicable G1–G10 release scenarios still require closeout |
 | Android Chrome | PENDING | real device + Android/Chrome version + G1–G10 |
 | Windows 10/11 Edge | PENDING | Windows/Edge version + G1–G10 |
 | Windows Chrome | PENDING | Windows/Chrome version + G1–G10 |
@@ -50,7 +50,7 @@ Every manual run must preserve these invariants:
 | --- | --- | --- |
 | Real iPad Safari | DEFERRED / PENDING | secondary tablet/Safari evidence only |
 
-Existing physical iPhone evidence confirms semantic selection and portrait -> landscape -> portrait interaction after the permanent APP-09B renderer policy. That evidence is partial and predates the full APP-10/11 product surface.
+Physical iPhone/Safari evidence on P09 qualified head `636c17dc27b657d273cf2e4f630a2e7c11ffa8f6`, later merged through PR #191 at `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`, confirms renderer startup, rendered-note semantic selection, an accepted edit, one-step Undo/Redo, portrait -> landscape -> portrait stability, Safari background/foreground return and continued touch selection. This closes the P08/P09 device gate for that scope only; it does not satisfy all APP-09 G1–G10 release evidence.
 
 ## Required scenarios per target
 
