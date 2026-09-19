@@ -65,3 +65,35 @@ test('P10-0 productization sources distinguish scoped iPhone PASS from the still
   assert.equal(productization.app_11.app_11j.canonical_mutation_exposed, false);
   assert.equal(productization.seslitab_cutover_authorized, false);
 });
+
+
+test('P10-0 stage docs preserve history while exposing the current scoped device and APP-11J state', async () => {
+  const [releaseGate, p08e, p09, app11j] = await Promise.all([
+    readRoot('docs/app-09-standalone-release-gate.md'),
+    readRoot('docs/p08e-browser-professional-integration.md'),
+    readRoot('docs/p09-fast-entry-keyboard-inventory.md'),
+    readRoot('docs/app-11j-triplet-unretiming-admission.md')
+  ]);
+
+  assert.match(
+    releaseGate,
+    /iPhone Safari.*P08\/P09 DEVICE GATE PASS.*FULL G1–G10 INCOMPLETE/is
+  );
+  assert.match(releaseGate, /Android Chrome.*PENDING/is);
+  assert.match(releaseGate, /Windows Edge.*PENDING/is);
+  assert.match(releaseGate, /standaloneReleaseGatePassed\s*=\s*false/);
+
+  assert.match(p08e, /Physical iPhone\/Safari.*PASS/is);
+  assert.doesNotMatch(
+    p08e,
+    /Physical iPhone\/Safari validation remains a separate manual gate before any production exposure decision\./
+  );
+
+  assert.match(p09, /P09-D.*MERGED.*QUALIFIED/is);
+  assert.match(p09, /PR #191/);
+  assert.match(p09, /636c17dc27b657d273cf2e4f630a2e7c11ffa8f6/);
+
+  assert.match(app11j, /ANALYSIS FOUNDATION PRESENT ON MAIN/i);
+  assert.match(app11j, /674187b920434d6d7d72330baba44c2692a64596/);
+  assert.match(app11j, /canonical.*mutation.*(?:not exposed|false)/is);
+});
