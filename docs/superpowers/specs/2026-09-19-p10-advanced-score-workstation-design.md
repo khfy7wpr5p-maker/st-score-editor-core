@@ -165,14 +165,19 @@ The composition layer may coordinate UI/workflow state but may not own canonical
 
 ### P10-2 — Advanced Rhythm and Relations
 
-Continue from current APP-11 boundary:
+Continue from the actual current APP-11 boundary.
 
-1. APP-11J Triplet Removal / Unretiming Admission;
-2. bounded Triplet removal authoring;
-3. broader tuplet ratios/cardinalities only after explicit admission contracts;
-4. beam authoring;
-5. stronger grace-note workflows;
-6. relation-safe retiming programs.
+APP-11J read-only Triplet Removal / Unretiming Admission already exists on current main. Commit `674187b920434d6d7d72330baba44c2692a64596` is an ancestor of the P10 baseline main commit, the `editor-tuplet-unretiming-admission-v4` package and tests are present, and the admission remains mutation/history/renderer-authority false. PR #142 remains open as stale stacked metadata and must not be treated as evidence that the code is absent from main.
+
+P10-2 therefore starts after the admission foundation:
+
+1. document/close out the APP-11J mainline reality without duplicating the existing analyzer;
+2. design and admit bounded canonical Triplet removal/unretiming mutation consuming APP-11J evidence;
+3. productize that mutation through EditorSessionV4/browser with one accepted action = one history revision and exact Undo;
+4. broaden tuplet ratios/cardinalities only after separate explicit admission contracts;
+5. beam authoring;
+6. stronger grace-note workflows;
+7. relation-safe retiming programs.
 
 Every timing-changing program must preserve exact rational timing and use read-only admission before mutation.
 
@@ -400,11 +405,12 @@ P10 work must keep these distinctions explicit.
 At the P10 design baseline, several repository documents lag current reality:
 
 - ARCHITECTURE.md does not yet describe P09;
-- ROADMAP.md still points directly to APP-11J without reflecting the newly merged P09 workstation layer;
-- docs/st-score-editor-app-productization.md does not reflect P09 composition;
+- ROADMAP.md still points to APP-11J as future work even though the read-only APP-11J admission package/test is already present on main, and it also does not reflect the newly merged P09 workstation layer;
+- docs/st-score-editor-app-productization.md does not reflect P09 composition and still phrases APP-11J as future admission work;
 - docs/app-09-standalone-release-gate.md still lists real iPhone Safari as PARTIAL;
 - docs/p08e-browser-professional-integration.md still says physical iPhone/Safari qualification remains pending;
-- docs/p09-fast-entry-keyboard-inventory.md remains an admission-stage document and therefore still describes P09-C/D as conditional even though P09-D is now merged/qualified.
+- docs/p09-fast-entry-keyboard-inventory.md remains an admission-stage document and therefore still describes P09-C/D as conditional even though P09-D is now merged/qualified;
+- docs/st-score-editor-app-productization.json correctly exposes APP-11J evidence but retains stale `VERIFIED_PR_OPEN` / PR #142 wording even though the APP-11J foundation commit is already an ancestor of current main; P10-0 must distinguish code reality from stale PR metadata.
 
 These are source-of-truth drift, not runtime defects.
 
@@ -413,6 +419,7 @@ These are source-of-truth drift, not runtime defects.
 P10-0 is complete only when:
 
 - the above documentation files consistently describe the current main state;
+- APP-11J is described as an existing read-only admission capability on main, not re-planned as missing foundation work;
 - PR #191 and merge commit 9dfa253a55982a66b01b5eaa2f8df614b1e58e9b are represented;
 - P09-A/B/C/D is marked merged/qualified;
 - the physical iPhone/Safari P08/P09 gate is recorded as PASS;
