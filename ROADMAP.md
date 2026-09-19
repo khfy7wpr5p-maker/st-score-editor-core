@@ -13,6 +13,7 @@ Repository reality only. Planned capability is not production capability.
 - **SEC-NE-00–09 + XML ROUNDTRIP — COMPLETE / MERGED** within documented bounded profiles.
 - **SSE-00–10 — COMPLETE / MERGED** including bounded V3 topology and V4 cross-staff runtime.
 - **Stage 07 semantic -> renderer presentation locators — COMPLETE / MERGED.**
+- **P09-A/B/C/D Fast Entry / Keyboard Workstation — COMPLETE / MERGED / QUALIFIED — PR #191 / merge `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`; qualified head `636c17dc27b657d273cf2e4f630a2e7c11ffa8f6`.**
 
 ## ST Score Editor App productization
 
@@ -108,6 +109,14 @@ A successful retiming user action creates exactly one unified history revision. 
 
 Dedicated mobile WebKit proves straight eighths -> canonical `1/12 + 1/12 + 1/12` Triplet -> exact Undo. The same exact head also passed retained APP-10E–O, APP-11B/D/E/F, exact renderer build, APP-09B renderer and controlled-layout regressions.
 
+### APP-11J — Triplet Removal / Unretiming Admission Foundation
+
+**ANALYSIS FOUNDATION PRESENT ON MAIN / CANONICAL MUTATION NOT EXPOSED.**
+
+The read-only admission package and tests are already present on current main. Foundation commit `674187b920434d6d7d72330baba44c2692a64596` is an ancestor of the P10 baseline merge `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`.
+
+APP-11J proves bounded exact 3:2 Triplet -> supported straight-three timing and adjacent neutral-rest requirements without mutating score/notation or owning history/renderer authority. Historical PR #142 remains open as stacked metadata; that PR state is not the source of truth for code presence.
+
 ## Current architecture phase
 
 ```text
@@ -124,27 +133,15 @@ exact semantic target/range
 
 ## Next development action
 
-**APP-11J — Triplet Removal / Unretiming Admission Foundation.**
+**P10-0 — Architecture Reality Refresh.**
 
-Start read-only. Before any removal mutation is exposed, APP-11J must prove when an exact canonical 3:2 Triplet can safely return to a supported straight written rhythm while preserving event identities and avoiding overlap, hidden-gap invention, unsupported rest redistribution, topology invention or imported-measure ambiguity.
+Align README, architecture, roadmap, productization and stage/release documentation with the post-PR #191 mainline state. Keep this tranche documentation/test-only.
 
-Minimum first-step boundaries:
-
-- exactly three explicit current-revision events in one exact measure/Voice;
-- existing consistent 3:2 Triplet metadata/timing must be proven;
-- target straight written base must be deterministic and supported;
-- all resulting onset/end boundaries must be calculated exactly;
-- required rest consumption/release must be explicit and locally bounded;
-- dots, beams, ties, cross-staff timing dependencies and unsupported relation semantics fail closed until separately admitted;
-- no unrelated following event may move implicitly;
-- analysis creates no history/mutation;
-- renderer geometry and MusicXML layout remain non-authoritative.
-
-Mutation/removal may be a later bounded stage only after this admission contract is proven.
+After P10-0, the next rhythm work is bounded canonical Triplet removal/unretiming mutation that consumes the existing APP-11J admission evidence, followed by session/browser productization with one accepted action = one EditorSessionV4 history revision and exact Undo.
 
 ## Still fail-closed / gated
 
-- Triplet removal/unretiming until APP-11J or later explicitly admits it;
+- canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission;
 - arbitrary tuplet ratios/cardinalities outside the bounded 3:2 profile;
 - automatic renderer-derived Triplet range inference;
 - arbitrary imported trailing MusicXML growth without pickup/non-controlling evidence;
@@ -172,4 +169,4 @@ manualDeviceValidationRequired = true
 standaloneReleaseGatePassed = false
 ```
 
-Required physical release targets remain real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox. iPad Safari remains secondary. Automated WebKit regression is not physical-device evidence.
+The P08/P09 professional/keyboard/renderer physical iPhone Safari device gate is PASS on the P09-qualified baseline, but full APP-09 G1–G10 release evidence remains incomplete. Android Chrome and Windows Edge/Chrome/Firefox remain pending physical release targets; iPad Safari remains secondary. Automated WebKit regression alone is not physical-device evidence.
