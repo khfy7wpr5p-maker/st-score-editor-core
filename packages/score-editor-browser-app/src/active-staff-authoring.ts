@@ -101,8 +101,6 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
 ): Readonly<ActiveStaffAuthoringStandaloneScoreEditorController> => {
   const base = createSelectedNoteEditingStandaloneScoreEditorController(options);
   let root: HTMLElement | null = null;
-  let initialSelectionSyncInFlight = false;
-
   const currentContext = (): StaffContext | null => {
     const documentValue = base.getDocument();
     if (documentValue === null) return null;
@@ -190,14 +188,6 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
   };
 
   base.subscribe(() => {
-    if (!initialSelectionSyncInFlight) {
-      initialSelectionSyncInFlight = true;
-      try {
-        if (selectInitialNewScoreAnchor()) return;
-      } finally {
-        initialSelectionSyncInFlight = false;
-      }
-    }
     decorate();
   });
 
@@ -206,7 +196,7 @@ export const createActiveStaffAuthoringStandaloneScoreEditorController = (
     profile: activeStaffAuthoringBrowserAppProfile,
     newDocument: (newOptions) => {
       base.newDocument(newOptions);
-      if (!initialSelectionSyncInFlight) selectInitialNewScoreAnchor();
+      selectInitialNewScoreAnchor();
       decorate();
       return base.getSnapshot();
     },
