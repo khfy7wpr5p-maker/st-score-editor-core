@@ -7,8 +7,10 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **SSE-00–10 — COMPLETE / MERGED:** canonical V3/V4 score+notation, bounded MusicXML, topology and cross-staff runtime.
 - **APP-00–10O — COMPLETE / MERGED:** standalone document/runtime, unified V4 history, browser shell, local files/recovery, guarded renderer interaction, playback, export/print, Guitar/Piano starts, Voice 1–5, semantic Staff/measure navigation, note/chord authoring, articulations, ornaments and explicit accidentals.
 - **APP-11A–I — COMPLETE / MERGED:** safe duration/rest balancing, semantic multi-target selection, Tie, Slur, bounded Triplet metadata authoring, straight-three Triplet retiming admission, atomic retiming mutation and final session/browser product surface are merged.
+- **P09-A/B/C/D — COMPLETE / MERGED / QUALIFIED:** PR #191 merged at `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`; exact qualified P09-D head `636c17dc27b657d273cf2e4f630a2e7c11ffa8f6`.
+- **APP-11J — ANALYSIS FOUNDATION PRESENT ON MAIN:** read-only Triplet removal/unretiming admission from foundation commit `674187b920434d6d7d72330baba44c2692a64596` is present; canonical unretiming mutation is not exposed.
 - **Stage 07 — COMPLETE / MERGED:** exact current-revision semantic-to-render presentation locators are read-only.
-- **Standalone release gate — OPEN:** automated hardening is green, but the required physical device/browser matrix is still incomplete.
+- **Standalone release gate — OPEN:** iPhone Safari P08/P09 device gate PASS is recorded for the tested professional/keyboard/renderer scope, but the full APP-09 G1–G10 multi-platform release matrix is still incomplete.
 - **SesliTab product cutover — NOT AUTHORIZED:** SesliTab is not an architectural dependency of ST Score Editor and is outside the current development scope.
 
 ## Canonical authority
@@ -100,7 +102,7 @@ Dedicated mobile WebKit coverage proves straight eighths -> canonical `1/12` tri
 - renderer-coordinate authoring;
 - unsupported cross-staff MusicXML projection;
 - `.mxl`, direct PDF-byte generation and cloud/server revision authority;
-- Triplet removal/unretiming until separately admitted.
+- canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission.
 
 ## Automated quality gate
 
@@ -113,7 +115,7 @@ Feature PRs require exact-head validation before merge:
 - APP-09B renderer regression;
 - APP-09B controlled-layout rerender regression.
 
-Automated WebKit is regression evidence only; it is not a physical-device PASS.
+Automated WebKit is regression evidence only and cannot by itself establish a physical-device PASS. The separate iPhone Safari P08/P09 device gate PASS comes from human physical-device evidence.
 
 ## Release state
 
@@ -123,12 +125,12 @@ standaloneReleaseGatePassed = false
 seslitabCutoverAuthorized = false
 ```
 
-Required physical targets before release remain real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox. Real iPad Safari remains secondary.
+The iPhone Safari P08/P09 device gate PASS closes only that scoped professional/keyboard/renderer check. Android Chrome, Windows Edge, Windows Chrome and Windows Firefox remain pending; real iPad Safari remains secondary. The full release matrix remains open.
 
 ## Next bounded development action
 
-**APP-11J — Triplet Removal / Unretiming Admission Foundation.**
+**P10-0 — Architecture Reality Refresh.**
 
-APP-11J should begin analysis-only. It must prove when an exact canonical 3:2 Triplet can be converted back to a supported straight written rhythm without overlap, semantic loss, unsupported rest redistribution or topology invention. No automatic removal mutation should be exposed until that evidence contract is proven.
+P10-0 aligns repository architecture, roadmap, productization and release-gate sources with current main. It is documentation/test-only and does not change editor runtime behavior.
 
-After the relation/rhythm program, larger strong-editor work can continue with grace notes, beam authoring, measure/signature topology, staff/part/instrument management, range transforms, dynamics/text/lyrics, guitar/TAB workflows, engraving/layout and MIDI/keyboard entry.
+After P10-0, the advanced workstation program continues through separate architectural stages. Rhythm work must consume the APP-11J admission already present on main when designing bounded canonical Triplet removal/unretiming; it must not duplicate that analyzer.

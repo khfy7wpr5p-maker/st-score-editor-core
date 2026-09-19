@@ -119,7 +119,7 @@ P06 already has reusable mount/update/unmount/remount lifecycle tests. The SDK h
 
 P09 is a desktop productivity enhancement, not a replacement for existing touch authoring.
 
-Existing authoring/professional button surfaces must remain operational. Changes to shared browser code require retained WebKit regressions. Automated keyboard qualification cannot satisfy the separate pending physical iPhone/Safari gate for `STScoreEditorProfessionalApp`.
+Existing authoring/professional button surfaces must remain operational. Changes to shared browser code require retained WebKit regressions. At audit time, automated keyboard qualification could not satisfy the then-pending physical iPhone/Safari gate for `STScoreEditorProfessionalApp`. That separate gate was later completed as recorded in the closeout section below.
 
 ## 10. Canonical authority map for P09
 
@@ -180,3 +180,18 @@ P09-D remains conditional on P09-C qualification and must include deterministic 
 - retained WebKit regression when shared browser code changes.
 
 No production exposure, physical iPhone PASS declaration, SesliTab cutover, Classical Guitar reactivation or merge-to-main is authorized by P09-A.
+
+
+## P09 closeout / current state
+
+The admission sections above are retained as the design-time rationale. Their conditions have now been satisfied.
+
+- **P09-B — MERGED / QUALIFIED.**
+- **P09-C — MERGED / QUALIFIED.**
+- **P09-D — MERGED / QUALIFIED.**
+- PR #191 merged to main at `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`.
+- Exact qualified P09-D head: `636c17dc27b657d273cf2e4f630a2e7c11ffa8f6`.
+- Exact-head Node 18 / 20 / 22 repository validation and retained WebKit qualification passed.
+- Physical iPhone/Safari P08/P09 device gate passed for renderer startup, rendered-note semantic selection, edit, one-step Undo/Redo, orientation, Safari background/foreground lifecycle and continued touch selection.
+- The keyboard layer remains intent-only/noncanonical; touch/mobile authoring remains independent.
+- Production exposure, public-write activation and SesliTab cutover remain separate human decisions.

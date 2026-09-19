@@ -1,8 +1,8 @@
 # APP-11J — Triplet Removal / Unretiming Admission Foundation
 
-Status: **IN_PROGRESS / WORK BRANCH**
+Status: **ANALYSIS FOUNDATION PRESENT ON MAIN / CANONICAL MUTATION NOT EXPOSED**
 
-APP-11J is an analysis-only foundation. It does not expose score/notation mutation, browser authoring, session history mutation, release authority or SesliTab cutover.
+APP-11J is an analysis-only foundation already present on current main. Foundation commit `674187b920434d6d7d72330baba44c2692a64596` is an ancestor of the P10 baseline main commit `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`. Historical PR #142 remains open as stacked metadata and is not the source of truth for code presence. APP-11J does not expose canonical score/notation mutation, browser authoring, session history mutation, release authority or SesliTab cutover.
 
 ## Purpose
 
@@ -45,7 +45,7 @@ A successful analysis returns immutable evidence containing:
 - `historyMutationAuthority = false`;
 - `rendererCoordinateAuthority = false`.
 
-The analyzer itself never changes the score, notation, selection or history.
+The analyzer itself never changes the score, notation, selection or history. Its canonical mutation authority is false, history authority is false and renderer-coordinate authority is false.
 
 ## Fail-closed boundaries
 

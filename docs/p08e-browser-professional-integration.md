@@ -185,8 +185,8 @@ The dedicated WebKit regression mounts `st-score-editor-professional.html`, veri
 
 Automated WebKit is browser compatibility evidence only. It is not physical-device evidence.
 
-The dedicated `st-score-editor-professional.html` remains a qualification surface. It does not grant production release, publication, or SesliTab cutover authority. Physical iPhone/Safari validation remains a separate manual gate before any production exposure decision.
+The dedicated `st-score-editor-professional.html` remains a qualification surface. It does not grant production release, publication, or SesliTab cutover authority. Physical iPhone/Safari qualification for the P08/P09 professional-renderer interaction scope is now PASS on the P09-qualified baseline. This closes the former P08-E4 device blocker for that scope only; it does not authorize production exposure and it does not close the wider APP-09 G1–G10 multi-platform release matrix.
 
-## Next integration work
+## Current integration state
 
-After exact-head CI and dedicated WebKit are green, the next safe step is physical iPhone/Safari qualification of the separate professional artifact. Only after that evidence should a production-exposure decision be considered. Audio composition for this artifact remains separate work because `audioEngineBundled=false` and `audioHostIntegrated=false` are explicit in the manifest.
+Exact-head CI, dedicated WebKit and the scoped physical iPhone/Safari P08/P09 professional-renderer device gate are complete. The professional artifact remains qualification-only; the wider APP-09 G1–G10 multi-platform release matrix and any production-exposure decision remain separate. Audio composition for this artifact remains separate work because `audioEngineBundled=false` and `audioHostIntegrated=false` are explicit in the manifest.

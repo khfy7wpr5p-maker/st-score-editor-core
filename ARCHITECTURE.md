@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SSE-00–10, APP-00–10O, APP-11A–I and Stage 07 are COMPLETE / MERGED. The standalone physical device/browser release matrix remains open and is required before release.**
+Status: **SSE-00–10, APP-00–10O, APP-11A–I, P09-A/B/C/D and Stage 07 are COMPLETE / MERGED; P09 is QUALIFIED. APP-11J read-only admission is present on main. The standalone physical device/browser release matrix remains open and is required before release.**
 
 ## Canonical architecture
 
@@ -44,7 +44,15 @@ No browser, renderer, playback or persistence layer may dual-write canonical sco
 
 APP-00–08 provide standalone document lifecycle, unified V4 history, browser shell, bounded local `.musicxml/.xml` workflow, browser-local recovery, guarded renderer interaction, revision-bound local playback and noncanonical export/print.
 
-APP-09/09B add responsive/accessibility/recovery hardening and host-controlled exact-current-revision renderer rerender. The renderer remains a presentation consumer; physical iPhone evidence is partial and does not close the full release gate.
+APP-09/09B add responsive/accessibility/recovery hardening and host-controlled exact-current-revision renderer rerender. The renderer remains a presentation consumer. The P08/P09 professional/keyboard/renderer physical iPhone Safari device gate is PASS on the P09-qualified baseline; the wider APP-09 G1–G10 multi-platform release matrix remains open.
+
+## P09 — Fast Entry / Keyboard Workstation
+
+P09-A/B/C/D is merged and qualified through PR #191, merge commit `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`. The exact qualified P09-D head is `636c17dc27b657d273cf2e4f630a2e7c11ffa8f6`.
+
+P09 adds versioned keyboard intents, a focus-safe browser adapter, semantic measure navigation and delegation to the existing note-entry/keypad/session authorities. It does not create a hidden canonical cursor, second note-entry engine, second rhythm engine or second history authority. Touch authoring remains independent.
+
+Physical iPhone/Safari evidence on the qualified head covers renderer startup, rendered-note hit-test to semantic selection, an accepted edit, exact one-step Undo/Redo, orientation changes, Safari background/foreground lifecycle and continued touch selection. This is scoped P08/P09 device evidence and is not a full APP-09 release authorization.
 
 ## Standalone authoring — APP-10A–O
 
@@ -162,6 +170,12 @@ APP-11I also handles nested browser rerenders without changing semantic capture 
 
 Successful retiming creates exactly one history revision. Exact Undo restores the prior canonical score+notation pair.
 
+## APP-11J mainline reality
+
+The read-only Triplet Removal / Unretiming admission foundation is already present on current main. Foundation commit `674187b920434d6d7d72330baba44c2692a64596` is an ancestor of the P10 baseline main commit `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`, and `editor-tuplet-unretiming-admission-v4` plus its regression tests are in the repository.
+
+APP-11J remains analysis-only: canonical unretiming mutation authority is false, history authority is false and renderer-coordinate authority is false. Historical PR #142 remaining open is stale stacked PR metadata and must not be interpreted as evidence that the analyzer is absent from main.
+
 ## Triplet retiming invariants
 
 For the admitted APP-11G/H/I profile:
@@ -184,7 +198,7 @@ For the admitted APP-11G/H/I profile:
 
 The following remain outside current production authority:
 
-- Triplet removal/unretiming;
+- canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission;
 - arbitrary tuplet ratios/cardinalities beyond the bounded 3:2 profile;
 - automatic range inference from renderer layout;
 - independent retiming of dots/beams/existing tuplets/ties outside admitted atomic programs;
@@ -201,9 +215,9 @@ The following remain outside current production authority:
 
 ## Next architecture step
 
-**APP-11J — Triplet Removal / Unretiming Admission Foundation.**
+**P10-0 — Architecture Reality Refresh.**
 
-This must begin read-only. Before any removal mutation is exposed, it must prove deterministic straight timing, exact affected boundaries and local rest-space requirements while preserving identities and rejecting overlap, semantic loss, unsupported coupling, imported-measure ambiguity and topology invention.
+P10-0 is documentation/test-only. It aligns architecture, roadmap, productization and release-gate sources with the post-PR #191 mainline reality while preserving all release/cutover safety gates. P10-2 will consume the existing APP-11J read-only admission when designing bounded canonical Triplet removal/unretiming mutation; it must not duplicate the analyzer.
 
 ## Automated validation contract
 
@@ -216,7 +230,7 @@ Before feature merge, exact-head validation includes:
 - APP-09B renderer regression;
 - APP-09B controlled-layout rerender regression.
 
-Automated WebKit is regression evidence only and does not constitute a physical-device PASS.
+Automated WebKit remains regression evidence only and cannot itself constitute a physical-device PASS. The separate P08/P09 physical iPhone/Safari PASS was established by human device evidence on the qualified P09 baseline.
 
 ## Release state
 
@@ -225,4 +239,4 @@ manualDeviceValidationRequired = true
 standaloneReleaseGatePassed = false
 ```
 
-Required physical targets remain real iPhone Safari, Android Chrome, Windows Edge, Windows Chrome and Windows Firefox, with iPad Safari secondary.
+The P08/P09 iPhone Safari device gate is PASS for its tested scope, but the full APP-09 G1–G10 release matrix is incomplete. Android Chrome, Windows Edge, Windows Chrome and Windows Firefox remain pending physical release targets, with iPad Safari secondary.
