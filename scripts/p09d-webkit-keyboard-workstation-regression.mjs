@@ -122,8 +122,8 @@ try {
     };
   });
   if (undone.kind !== 'rest' || undone.past !== 0 || undone.future !== 1 ||
-      undone.selectionKind !== 'event' || undone.selectionEventId !== undone.eventId || undone.selectionRevision !== undone.revision) {
-    throw new Error(`P09-D keyboard Undo/rebound mismatch: ${JSON.stringify(undone)}`);
+      undone.selectionKind !== null || undone.selectionEventId !== null || undone.selectionRevision !== null) {
+    throw new Error(`P09-D keyboard Undo selection-clear mismatch: ${JSON.stringify(undone)}`);
   }
 
   await viewport.focus();
@@ -143,8 +143,8 @@ try {
     };
   });
   if (redone.kind !== 'note' || redone.past !== 1 || redone.future !== 0 ||
-      redone.selectionKind !== 'note' || redone.selectionEventId !== redone.eventId || redone.selectionRevision !== redone.revision) {
-    throw new Error(`P09-D keyboard Redo/rebound mismatch: ${JSON.stringify(redone)}`);
+      redone.selectionKind !== null || redone.selectionEventId !== null || redone.selectionRevision !== null) {
+    throw new Error(`P09-D keyboard Redo selection-clear mismatch: ${JSON.stringify(redone)}`);
   }
 
   const editableBefore = await page.evaluate(() => {
