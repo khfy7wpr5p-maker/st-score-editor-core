@@ -1,9 +1,9 @@
 {
-  "schema_version": "2.3.0",
+  "schema_version": "2.4.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
-  "date": "2026-09-06",
-  "status": "APP_11I_COMPLETE_MERGED_APP_11J_ANALYSIS_VERIFIED_PR_OPEN_MANUAL_DEVICE_MATRIX_REQUIRED_BEFORE_RELEASE",
+  "date": "2026-09-19",
+  "status": "P09_COMPLETE_MERGED_APP_11J_ANALYSIS_PRESENT_MAIN_P10_0_ACTIVE_FULL_DEVICE_MATRIX_OPEN",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "canonical_pair": {
     "score": "ScoreDocumentV3/3.0.0",
@@ -27,10 +27,11 @@
     "app_00_08": "COMPLETE_MERGED",
     "app_09_09b": "AUTOMATED_HARDENING_COMPLETE_RELEASE_MATRIX_OPEN",
     "app_10a_10o": "COMPLETE_MERGED",
-    "stage_07": "COMPLETE_MERGED"
+    "stage_07": "COMPLETE_MERGED",
+    "p09_a_d": "COMPLETE_MERGED_QUALIFIED"
   },
   "app_11": {
-    "status": "APP_11A_TO_APP_11I_COMPLETE_MERGED_APP_11J_VERIFIED_PR_OPEN",
+    "status": "APP_11A_TO_APP_11I_COMPLETE_MERGED_APP_11J_ANALYSIS_PRESENT_MAIN",
     "app_11a": {
       "status": "COMPLETE_MERGED",
       "pr": 129,
@@ -90,18 +91,20 @@
       "dedicated_mobile_webkit_regression": true
     },
     "app_11j": {
-      "status": "VERIFIED_PR_OPEN",
-      "pr": 142,
-      "head_sha": "b21ffd21b35075267022ba1e6645af6ac7bd136c",
-      "base_pr": 141,
+      "status": "ANALYSIS_PRESENT_MAIN",
+      "foundation_commit": "674187b920434d6d7d72330baba44c2692a64596",
+      "historical_pr": 142,
+      "historical_pr_state": "OPEN_STACKED_METADATA",
+      "historical_pr_head_sha": "9c4eeac57d2b836c69404430c29483e6c5428e4a",
       "capability": "analysis_only_exact_3_2_triplet_to_supported_straight_three_unretiming_admission",
+      "canonical_mutation_exposed": false,
       "mutation_authority": false,
       "history_authority": false,
       "renderer_coordinate_authority": false,
       "adjacent_rest_policy": "consume_exact_adjacent_neutral_rest_only",
       "topology_invention": false,
-      "ci_run": 34043178547,
-      "node_18_20_22_validation_build_full_tests": "PASS",
+      "historical_ci_run": 34043178547,
+      "historical_node_18_20_22_validation_build_full_tests": "PASS",
       "physical_device_pass_claimed": false
     }
   },
@@ -124,8 +127,8 @@
     },
     "unretiming_admission": {
       "label": "Triplet Removal / Unretiming Admission",
-      "source": "APP_11J_WORK_BRANCH",
-      "status": "VERIFIED_PR_OPEN",
+      "source": "APP_11J_MAIN",
+      "status": "ANALYSIS_PRESENT_MAIN",
       "requires_exact_current_3_2_triplet": true,
       "requires_exact_adjacent_neutral_rest": true,
       "rest_actions": [
@@ -162,16 +165,21 @@
     "renderer_derived_range_inference"
   ],
   "automated_validation": {
-    "node_versions": [18, 20, 22],
+    "node_versions": [
+      18,
+      20,
+      22
+    ],
     "retained_webkit_authoring_regressions": true,
     "app_11i_straight_notes_to_triplet_to_undo": true,
-    "app_11j_exact_head_ci_run": 34043178547,
-    "app_11j_exact_head": "b21ffd21b35075267022ba1e6645af6ac7bd136c",
     "app_11j_analysis_validation_build_full_tests": "PASS",
     "exact_renderer_build": true,
     "app_09b_renderer_regression": true,
     "app_09b_controlled_layout_regression": true,
-    "physical_device_pass_inferred_from_webkit": false
+    "physical_device_pass_inferred_from_webkit": false,
+    "app_11j_mainline_foundation_commit": "674187b920434d6d7d72330baba44c2692a64596",
+    "historical_app_11j_exact_head_ci_run": 34043178547,
+    "historical_app_11j_exact_head": "b21ffd21b35075267022ba1e6645af6ac7bd136c"
   },
   "release_gate": {
     "manualDeviceValidationRequired": true,
@@ -183,13 +191,21 @@
       "Windows Chrome",
       "Windows Firefox"
     ],
-    "secondary_target": "iPad Safari"
+    "secondary_target": "iPad Safari",
+    "target_status": {
+      "iPhone Safari": "P08_P09_DEVICE_GATE_PASS_FULL_G1_G10_INCOMPLETE",
+      "Android Chrome": "PENDING",
+      "Windows Edge": "PENDING",
+      "Windows Chrome": "PENDING",
+      "Windows Firefox": "PENDING",
+      "iPad Safari": "SECONDARY_PENDING"
+    }
   },
   "next_development_action": {
-    "id": "APP-11J-CLOSEOUT",
-    "title": "Keep APP-11J analysis boundary reviewable while continuing independent P01 reliability work",
-    "mode": "verified_pr_open",
-    "mutation_exposed": false,
+    "id": "P10-0",
+    "title": "Architecture Reality Refresh",
+    "mode": "documentation_reality_alignment",
+    "production_code_change": false,
     "merge_or_release_authority_inferred": false
   },
   "remaining_gates": [
@@ -202,5 +218,6 @@
     "v4_native_cross_staff_musicxml_roundtrip",
     "cloud_server_revision_authority",
     "public_write_production_activation"
-  ]
+  ],
+  "seslitab_cutover_authorized": false
 }
