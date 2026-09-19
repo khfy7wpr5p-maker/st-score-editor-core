@@ -80,7 +80,7 @@ test('P10-0 stage docs preserve history while exposing the current scoped device
     /iPhone Safari.*P08\/P09 DEVICE GATE PASS.*FULL G1–G10 INCOMPLETE/is
   );
   assert.match(releaseGate, /Android Chrome.*PENDING/is);
-  assert.match(releaseGate, /Windows Edge.*PENDING/is);
+  assert.match(releaseGate, /Windows(?: 10\/11)? Edge.*PENDING/is);
   assert.match(releaseGate, /standaloneReleaseGatePassed\s*=\s*false/);
 
   assert.match(p08e, /Physical iPhone\/Safari.*PASS/is);
