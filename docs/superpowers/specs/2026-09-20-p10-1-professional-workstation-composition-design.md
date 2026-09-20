@@ -503,10 +503,18 @@ Audio failure must not:
 
 P10-1 must not change qualification policy.
 
-- GRAND_PIANO stays qualified.
-- VIOLIN stays qualified where current audio-host code allows it.
-- CLASSICAL_GUITAR stays suspended.
-- other orchestral instruments remain outside P10-1.
+Current runtime/test/production-assembly evidence on main treats GRAND_PIANO and VIOLIN as qualified audition instruments. The P08 Violin production integration was merged in commit `e281d52881aaad0fade574a944251b12ea752038`, and current `audio-host-integrated.ts`, P08 Violin admission tests and production-site assembly contracts all expose `['GRAND_PIANO', 'VIOLIN']`.
+
+Legacy P06 handoff/status documents still describe VIOLIN as `SCAFFOLD_UNQUALIFIED`; those records predate the later P08 Violin qualification and must not override current runtime/test/production-assembly truth.
+
+Therefore P10-1 preserves:
+
+- GRAND_PIANO qualified;
+- VIOLIN qualified;
+- CLASSICAL_GUITAR suspended;
+- other orchestral instruments outside P10-1.
+
+P10-1 does not reopen instrument qualification work.
 
 ## 13. Combined UI artifact
 
