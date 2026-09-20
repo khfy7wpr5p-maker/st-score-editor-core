@@ -141,10 +141,10 @@ export interface ProfessionalRangeToolbarStandaloneScoreEditorControllerV1 exten
   readonly disposeProfessionalRangeToolbar: () => void;
 }
 
-export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
+export const attachProfessionalRangeToolbarToBrowserControllerV1 = (
+  base: MobileTeacherViewportStandaloneScoreEditorController,
   options: ProfessionalRangeToolbarOptions = {}
 ): Readonly<ProfessionalRangeToolbarStandaloneScoreEditorControllerV1> => {
-  const base = createMobileTeacherViewportStandaloneScoreEditorController(options);
   // Higher browser layers widen only the literal profile while preserving the complete
   // StandaloneScoreEditorController document/adoption/subscription contract consumed by E1.
   const professional = attachProfessionalWorkstationToBrowserControllerV1(
@@ -342,6 +342,14 @@ export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
 
   return Object.freeze(controller);
 };
+
+export const createProfessionalRangeToolbarStandaloneScoreEditorControllerV1 = (
+  options: ProfessionalRangeToolbarOptions = {}
+): Readonly<ProfessionalRangeToolbarStandaloneScoreEditorControllerV1> =>
+  attachProfessionalRangeToolbarToBrowserControllerV1(
+    createMobileTeacherViewportStandaloneScoreEditorController(options),
+    options
+  );
 
 export const createProfessionalRangeToolbarStandaloneBrowserAppRuntimeV1 = () => {
   const base = createMobileTeacherViewportStandaloneBrowserAppRuntime();
