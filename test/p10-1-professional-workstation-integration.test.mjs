@@ -161,7 +161,9 @@ test('P10-1 revision-changing keyboard edit clears stale professional selection'
 });
 
 test('P10-1 audio attach/audition/failure is history-neutral and later canonical edit still works', async () => {
-  const controller = createProfessionalWorkstationStandaloneScoreEditorControllerV1();
+  const controller = createProfessionalWorkstationStandaloneScoreEditorControllerV1({
+    rendererProfile: rendererProfileForIntegration('st-score-rendering-layer')
+  });
   controller.newDocument({ preset: 'GUITAR_TREBLE' });
   selectFirstEvent(controller);
   enterQuarterC(controller);
