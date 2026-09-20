@@ -520,16 +520,16 @@ P10-1 does not reopen instrument qualification work.
 
 P10-1 introduces a separate qualification artifact rather than replacing current artifacts.
 
-Proposed global/artifact identity:
+The qualification artifact identity is fixed for P10-1:
 
 ~~~text
-STScoreEditorProfessionalWorkstation
-st-score-editor-professional-workstation.js
-st-score-editor-professional-workstation.html
-st-score-editor-professional-workstation.manifest.json
+global: STScoreEditorProfessionalWorkstation
+bundle: st-score-editor-professional-workstation.js
+entry HTML: st-score-editor-professional-workstation.html
+manifest: st-score-editor-professional-workstation.manifest.json
 ~~~
 
-Exact names may be adjusted during implementation planning if repository naming conventions require it, but the artifact must remain separate.
+Implementation planning must preserve these names unless a concrete repository collision is discovered and documented before code changes.
 
 Existing artifacts remain intact:
 
