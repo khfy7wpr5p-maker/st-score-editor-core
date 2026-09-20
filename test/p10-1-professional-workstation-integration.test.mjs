@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
+import { rendererProfileForIntegration } from '../dist/packages/renderer-contract/src/index.js';
 import {
   createProfessionalWorkstationStandaloneScoreEditorControllerV1
 } from '../dist/packages/score-editor-browser-professional-workstation-v1/src/index.js';
@@ -53,6 +54,13 @@ const canonical = documentValue => JSON.stringify({
   notation: documentValue.session.history.present.notation
 });
 
+const rendererHost = () => ({
+  packageName: 'opensheetmusicdisplay',
+  packageVersion: '2.1.2',
+  license: 'BSD-3-Clause',
+  instance: { async load() {}, render() {}, clear() {} }
+});
+
 const activeAudioRuntime = auditionResult => Object.freeze({
   supports: capability => capability === 'note-audition',
   unlockFromUserGesture: async () => Object.freeze({ ok: true }),
@@ -67,7 +75,9 @@ const activeAudioRuntime = auditionResult => Object.freeze({
 });
 
 test('P10-1 mixed P09 then P08 edits share one ordered EditorHistoryV4 chain', () => {
-  const controller = createProfessionalWorkstationStandaloneScoreEditorControllerV1();
+  const controller = createProfessionalWorkstationStandaloneScoreEditorControllerV1({
+    rendererProfile: rendererProfileForIntegration('st-score-rendering-layer')
+  });
   controller.newDocument({ preset: 'GUITAR_TREBLE' });
 
   const r0Document = controller.getDocument();
@@ -84,18 +94,21 @@ test('P10-1 mixed P09 then P08 edits share one ordered EditorHistoryV4 chain', (
   assert.equal(r1Document.session.history.past.length, 1);
   assert.notEqual(r1, r0);
 
-  const currentEvent = firstEvent(r1Document);
-  const eventAddress = addressEntityV3(r1Document.session.history.present.score, currentEvent.id);
-  assert.equal(eventAddress.kind, 'event');
+  const events = standardMeasure(r1Document).voices[0]?.events ?? [];
+  assert.ok(events.length >= 2);
+  const firstAddress = addressEntityV3(r1Document.session.history.present.score, events[0].id);
+  const lastAddress = addressEntityV3(r1Document.session.history.present.score, events[events.length - 1].id);
+  assert.equal(firstAddress.kind, 'event');
+  assert.equal(lastAddress.kind, 'event');
 
   const beforeSelectionPast = r1Document.session.history.past.length;
-  const selected = controller.professional.selectEventSet([eventAddress]);
+  const selected = controller.professional.selectEventSpan(firstAddress, lastAddress);
   assert.equal(selected.error, null);
-  assert.equal(controller.professional.getProfessionalSelection()?.kind, 'EVENT_SET');
+  assert.equal(controller.professional.getProfessionalSelection()?.kind, 'EVENT_SPAN');
   assert.equal(controller.getDocument().session.history.past.length, beforeSelectionPast);
 
-  const transposed = controller.professional.transposeOctaves(1, { nextRevisionId: 'p10-1-professional-r2' });
-  assert.equal(transposed.error, null);
+  const cleared = controller.professional.clearToRest({ nextRevisionId: 'p10-1-professional-r2' });
+  assert.equal(cleared.error, null);
 
   const r2Document = controller.getDocument();
   assert.ok(r2Document);
@@ -125,12 +138,15 @@ test('P10-1 revision-changing keyboard edit clears stale professional selection'
 
   let documentValue = controller.getDocument();
   assert.ok(documentValue);
-  const event = firstEvent(documentValue);
-  const address = addressEntityV3(documentValue.session.history.present.score, event.id);
-  assert.equal(address.kind, 'event');
+  const events = standardMeasure(documentValue).voices[0]?.events ?? [];
+  assert.ok(events.length >= 2);
+  const firstAddress = addressEntityV3(documentValue.session.history.present.score, events[0].id);
+  const lastAddress = addressEntityV3(documentValue.session.history.present.score, events[events.length - 1].id);
+  assert.equal(firstAddress.kind, 'event');
+  assert.equal(lastAddress.kind, 'event');
 
-  controller.professional.selectEventSet([address]);
-  assert.equal(controller.professional.getProfessionalSelection()?.kind, 'EVENT_SET');
+  controller.professional.selectEventSpan(firstAddress, lastAddress);
+  assert.equal(controller.professional.getProfessionalSelection()?.kind, 'EVENT_SPAN');
 
   controller.dispatchKeyboardIntent({
     version: '1.0.0',
@@ -151,6 +167,10 @@ test('P10-1 audio attach/audition/failure is history-neutral and later canonical
   enterQuarterC(controller);
 
   let documentValue = controller.getDocument();
+  assert.ok(documentValue);
+  controller.attachOsmdRenderer(rendererHost());
+  await controller.renderCurrent();
+  documentValue = controller.getDocument();
   assert.ok(documentValue);
   const noteAddress = documentValue.session.renderRequest.manifest.entries.find(entry => entry.address.kind === 'note')?.address;
   assert.ok(noteAddress && noteAddress.kind === 'note');
