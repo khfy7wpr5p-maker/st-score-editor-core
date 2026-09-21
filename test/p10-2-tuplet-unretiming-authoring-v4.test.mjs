@@ -42,7 +42,7 @@ const fixture=(restDuration={numerator:1,denominator:8},extras={})=>{
       {target:addressEntityV3(score,'e3'),notation:{...triplet('stop'),...(extras.eventNotationById?.e3??{})}},
       ...Object.entries(extras.eventNotationById??{})
         .filter(([eventId])=>!['e1','e2','e3'].includes(eventId))
-        .map(([eventId,value])=>({target:addressEntityV3(score,eventId),notation:eventNotation(value)})
+        .map(([eventId,value])=>({target:addressEntityV3(score,eventId),notation:eventNotation(value)}))
     ],
     notes:Object.entries(extras.noteNotationById??{}).map(([noteId,value])=>({
       target:addressEntityV3(score,noteId),
