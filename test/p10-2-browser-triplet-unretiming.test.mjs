@@ -7,7 +7,7 @@ import { createNotationDocumentV4 } from '../dist/packages/notation-structure-v4
 import { createNewScoreEditorAppDocument } from '../dist/packages/score-editor-app-document/src/index.js';
 import { createEditorSessionV4 } from '../dist/packages/editor-session-controller-v4/src/index.js';
 import { executeStraightThreeToTripletAuthoringV4 } from '../dist/packages/editor-tuplet-retiming-authoring-v4/src/index.js';
-import { createStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/index.js';
+import { createTripletRetimingStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/triplet-retiming-authoring.js';
 
 const ids=()=>{let n=0;return()=>`p10-2-browser-${++n}`;};
 const note=(id,noteId,onset,duration,step)=>({
@@ -51,26 +51,36 @@ const tripletDocument=()=>{
   });
 };
 
-test('P10-2 base browser controller delegates Triplet unretiming through the app mutation path',()=>{
-  const controller=createStandaloneScoreEditorController();
-  controller.adoptValidatedSnapshot(tripletDocument());
+test('P10-2 optional browser decorator exposes admitted Triplet removal without changing the default controller',async()=>{
+  const module=await import('../dist/packages/score-editor-browser-app/src/triplet-unretiming-authoring.js').catch(()=>({}));
   assert.equal(
-    typeof controller.commitTupletUnretiming,
+    typeof module.attachTripletUnretimingToBrowserControllerV1,
     'function',
-    'browser base must expose the bounded inverse commit entry point'
+    'optional P10-2 decorator must exist before browser productization can pass'
   );
 
-  const current=controller.getDocument();
-  const intent={
-    version:'1.0.0',
-    type:'UNRETIMING_TRIPLET_TO_STRAIGHT_THREE',
-    targets:['e1','e2','e3'].map(id=>addressEntityV3(current.session.history.present.score,id))
-  };
-  const snapshot=controller.commitTupletUnretiming(
-    intent,{nextRevisionId:'p10-2-browser-straight'}
+  const base=createTripletRetimingStandaloneScoreEditorController();
+  const controller=module.attachTripletUnretimingToBrowserControllerV1(
+    base,
+    {revisionIdFactory:()=> 'p10-2-browser-straight'}
   );
+  controller.adoptValidatedSnapshot(tripletDocument());
+
+  for(const eventId of ['e1','e2','e3']){
+    const current=controller.getDocument();
+    controller.select(addressEntityV3(current.session.history.present.score,eventId));
+    controller.captureTripletEvent();
+  }
+
+  const ready=controller.getTripletUnretimingState();
+  assert.equal(ready.canRemoveTriplet,true);
+  assert.equal(ready.admissionReason,'ADMITTED_TRIPLET_TO_STRAIGHT_THREE');
+  assert.equal(controller.getDocument().session.history.past.length,0);
+
+  const snapshot=controller.removeTripletFromCapturedEvents();
   assert.equal(snapshot.error,null);
   assert.equal(snapshot.revisionId,'p10-2-browser-straight');
   assert.equal(snapshot.statusCode,'TRIPLET_UNRETIMING_COMMITTED');
   assert.equal(controller.getDocument().session.history.past.length,1);
+  assert.deepEqual(controller.getTripletAuthoringState().capturedEventIds,[]);
 });
