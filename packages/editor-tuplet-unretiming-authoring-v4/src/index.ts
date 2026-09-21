@@ -153,6 +153,13 @@ const withoutTuplet = (current: EventNotationV2): EventNotationV2 => ({
   tuplet: null
 });
 
+const neutralEventNotation = (value: EventNotationV2): boolean =>
+  value.dots === 0 &&
+  value.beams.length === 0 &&
+  value.tuplet === null &&
+  value.articulations.length === 0 &&
+  value.ornaments.length === 0;
+
 const buildNotation = (
   score: ScoreDocumentV3,
   base: NotationDocumentV4,
@@ -298,7 +305,9 @@ const mutate = (
     notation.events.map(entry => [entry.target.eventId, entry.notation] as const)
   );
   for (const eventId of admission.targetEventIds) {
-    eventMap.set(eventId, withoutTuplet(eventNotationFor(notation, eventId)));
+    const nextNotation = withoutTuplet(eventNotationFor(notation, eventId));
+    if (neutralEventNotation(nextNotation)) eventMap.delete(eventId);
+    else eventMap.set(eventId, nextNotation);
   }
   if (restPlan.action === 'REMOVE_ADJACENT_REST') {
     eventMap.delete(restPlan.restEventId);
