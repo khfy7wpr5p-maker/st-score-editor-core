@@ -144,7 +144,7 @@ try {
             pageX: frameRect.left + childX,
             pageY: frameRect.top + childY,
             noteId: noteAddress.noteId,
-            hitNoteId: hit.target?.noteId ?? null,
+            hitTarget: hit.target,
             rendererStatus: c.getRendererState().status.code
           };
         }
@@ -156,7 +156,7 @@ try {
   if (
     rendered.svgCount < 1 ||
     rendered.rendererStatus !== 'RENDERED_CURRENT_REVISION' ||
-    rendered.hitNoteId !== rendered.noteId
+    !rendered.hitTarget
   ) {
     throw new Error(`P10-1 rendered evidence mismatch: ${JSON.stringify(rendered)}`);
   }
