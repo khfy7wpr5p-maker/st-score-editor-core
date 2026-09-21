@@ -14,7 +14,8 @@
     "build:browser:professional": "npm run build:browser && node scripts/build-professional-browser.mjs",
     "validate": "node scripts/validate-repo.mjs",
     "test": "npm run build:browser && node --test",
-    "ci": "npm run validate && npm test"
+    "ci": "npm run validate && npm test",
+    "build:browser:professional-workstation": "npm run build:browser && node scripts/build-professional-browser.mjs && node scripts/build-p09d-keyboard-workstation-browser.mjs && node scripts/build-p10-1-professional-workstation-browser.mjs"
   },
   "dependencies": {
     "saxes": "6.0.0",
