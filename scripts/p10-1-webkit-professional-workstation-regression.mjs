@@ -163,6 +163,54 @@ try {
     throw new Error(`P10-1 keyboard edit mismatch: ${JSON.stringify(afterKeyboard)}`);
   }
 
+  const rendererSelection = await page.evaluate(async () => {
+    const controller = globalThis.STScoreEditorProfessionalWorkstationController;
+    const before = controller.getDocument();
+    const profile = before.session.renderRequest.renderer;
+    const past = before.session.history.past.length;
+    const calls = { loads: 0, renders: 0 };
+    controller.attachOsmdRenderer({
+      packageName: profile.packageName,
+      packageVersion: profile.packageVersion,
+      license: profile.license,
+      instance: {
+        async load() { calls.loads += 1; },
+        render() { calls.renders += 1; },
+        clear() {}
+      }
+    });
+    const rendered = await controller.renderCurrent();
+    const documentValue = controller.getDocument();
+    const noteAddress = documentValue.session.renderRequest.manifest.entries
+      .find(entry => entry.address.kind === 'note')?.address;
+    if (!noteAddress || noteAddress.kind !== 'note') throw new Error('P10_1_RENDERED_NOTE_ADDRESS_MISSING');
+    const noteRef = controller.resolveRenderedScoreNoteRef(noteAddress);
+    if (!noteRef) throw new Error('P10_1_RENDERED_NOTE_REF_MISSING');
+    const selected = controller.selectRenderedScoreNoteRef(noteRef);
+    return {
+      renderCode: rendered.status.code,
+      loads: calls.loads,
+      renders: calls.renders,
+      selectionKind: controller.getDocument().session.selection?.kind ?? null,
+      selectionNoteId: controller.getDocument().session.selection?.noteId ?? null,
+      expectedNoteId: noteAddress.noteId,
+      pastBefore: past,
+      pastAfter: controller.getDocument().session.history.past.length,
+      error: selected.error
+    };
+  });
+  if (
+    rendererSelection.renderCode !== 'RENDERED_CURRENT_REVISION' ||
+    rendererSelection.loads !== 1 ||
+    rendererSelection.renders !== 1 ||
+    rendererSelection.selectionKind !== 'note' ||
+    rendererSelection.selectionNoteId !== rendererSelection.expectedNoteId ||
+    rendererSelection.pastAfter !== rendererSelection.pastBefore ||
+    rendererSelection.error !== null
+  ) {
+    throw new Error(`P10-1 rendered-note selection mismatch: ${JSON.stringify(rendererSelection)}`);
+  }
+
   const afterProfessional = await page.evaluate(() => {
     const controller = globalThis.STScoreEditorProfessionalWorkstationController;
     const documentValue = controller.getDocument();
