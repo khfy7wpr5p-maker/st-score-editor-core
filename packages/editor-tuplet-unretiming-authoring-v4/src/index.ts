@@ -262,14 +262,6 @@ const mutate = (
   }
 
   const restPlan = admission.restPlan;
-  if (restPlan.action !== 'REMOVE_ADJACENT_REST') {
-    throw new TupletUnretimingAuthoringV4Error(
-      'This Triplet unretiming authoring tranche has not admitted the planned rest action.',
-      'RESULT_INVALID',
-      { action: restPlan.action }
-    );
-  }
-
   const restIndex = events.findIndex(event => event.id === restPlan.restEventId);
   const restEvent = restIndex < 0 ? null : events[restIndex]!;
   if (
@@ -284,7 +276,23 @@ const mutate = (
       { restEventId: restPlan.restEventId }
     );
   }
-  events.splice(restIndex, 1);
+
+  if (restPlan.action === 'REMOVE_ADJACENT_REST') {
+    events.splice(restIndex, 1);
+  } else {
+    if (restPlan.proposedOnset === null || restPlan.proposedDuration === null) {
+      throw new TupletUnretimingAuthoringV4Error(
+        'Admitted adjacent-rest shrink plan is incomplete.',
+        'RESULT_INVALID',
+        { restEventId: restPlan.restEventId }
+      );
+    }
+    events[restIndex] = {
+      ...restEvent,
+      onset: Object.freeze({ ...restPlan.proposedOnset }),
+      duration: Object.freeze({ ...restPlan.proposedDuration })
+    };
+  }
 
   const eventMap = new Map(
     notation.events.map(entry => [entry.target.eventId, entry.notation] as const)
@@ -292,7 +300,9 @@ const mutate = (
   for (const eventId of admission.targetEventIds) {
     eventMap.set(eventId, withoutTuplet(eventNotationFor(notation, eventId)));
   }
-  eventMap.delete(restPlan.restEventId);
+  if (restPlan.action === 'REMOVE_ADJACENT_REST') {
+    eventMap.delete(restPlan.restEventId);
+  }
 
   (voice as { events: readonly ScoreEvent[] }).events = events;
   (candidate as { revision: { id: string; parentId: string | null } }).revision = {
@@ -338,15 +348,40 @@ const mutate = (
     }
   }
 
-  try {
-    addressEntityV3(nextScore, restPlan.restEventId);
-    throw new TupletUnretimingAuthoringV4Error(
-      'Triplet unretiming result retained an exactly consumed adjacent rest.',
-      'RESULT_INVALID',
-      { restEventId: restPlan.restEventId }
+  if (restPlan.action === 'REMOVE_ADJACENT_REST') {
+    try {
+      addressEntityV3(nextScore, restPlan.restEventId);
+      throw new TupletUnretimingAuthoringV4Error(
+        'Triplet unretiming result retained an exactly consumed adjacent rest.',
+        'RESULT_INVALID',
+        { restEventId: restPlan.restEventId }
+      );
+    } catch (error) {
+      if (error instanceof TupletUnretimingAuthoringV4Error) throw error;
+    }
+  } else {
+    if (restPlan.proposedOnset === null || restPlan.proposedDuration === null) {
+      throw new TupletUnretimingAuthoringV4Error(
+        'Triplet unretiming result lost the admitted adjacent-rest shrink plan.',
+        'RESULT_INVALID'
+      );
+    }
+    const rebound = resolveSemanticAddressV3(
+      nextScore,
+      addressEntityV3(nextScore, restPlan.restEventId)
     );
-  } catch (error) {
-    if (error instanceof TupletUnretimingAuthoringV4Error) throw error;
+    if (
+      rebound.kind !== 'event' ||
+      rebound.value.kind !== 'rest' ||
+      !sameRational(rebound.value.onset, restPlan.proposedOnset) ||
+      !sameRational(rebound.value.duration, restPlan.proposedDuration)
+    ) {
+      throw new TupletUnretimingAuthoringV4Error(
+        'Triplet unretiming result does not match the admitted adjacent-rest shrink plan.',
+        'RESULT_INVALID',
+        { restEventId: restPlan.restEventId }
+      );
+    }
   }
 
   return Object.freeze({ score: nextScore, notation: nextNotation });
