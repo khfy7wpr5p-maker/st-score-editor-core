@@ -68,3 +68,21 @@ export const createP10_2ProfessionalWorkstationStandaloneScoreEditorControllerV1
     profile: p10_2ProfessionalWorkstationBrowserAppProfile
   }) as Readonly<P10_2ProfessionalWorkstationStandaloneScoreEditorControllerV1>;
 };
+
+
+export const createP10_2ProfessionalWorkstationStandaloneBrowserAppRuntimeV1 = () => Object.freeze({
+  runtimeVersion: P10_2_PROFESSIONAL_WORKSTATION_V1_VERSION,
+  profile: p10_2ProfessionalWorkstationBrowserAppProfile,
+  createController: createP10_2ProfessionalWorkstationStandaloneScoreEditorControllerV1,
+  p10_2Workstation: Object.freeze({
+    version: P10_2_PROFESSIONAL_WORKSTATION_V1_VERSION,
+    p10_1QualifiedBasePreserved: true,
+    tripletUnretimingBundled: true,
+    canonicalAuthority: false,
+    historyAuthority: 'EditorHistoryV4',
+    rendererCoordinateAuthority: false,
+    productionDefault: false,
+    productionReleaseAuthorized: false,
+    seslitabCutoverAuthorized: false
+  })
+});
