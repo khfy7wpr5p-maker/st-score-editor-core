@@ -2,6 +2,7 @@ import { createScoreDocumentV3, type ScoreDocumentV3 } from '../../score-model-v
 import type { ScoreEvent } from '../../score-model/src/index.js';
 import {
   addressEntityV3,
+  resolveSemanticAddressV3,
   type EventAddressV3,
   type SemanticAddressV3
 } from '../../addressing-v3/src/index.js';
@@ -312,7 +313,8 @@ const mutate = (
   const nextNotation = buildNotation(nextScore, notation, eventMap);
 
   for (const plan of admission.eventPlans) {
-    const rebound = addressEntityV3(nextScore, plan.eventId);
+    const reboundAddress = addressEntityV3(nextScore, plan.eventId);
+    const rebound = resolveSemanticAddressV3(nextScore, reboundAddress);
     if (
       rebound.kind !== 'event' ||
       !sameRational(rebound.value.onset, plan.proposedOnset) ||
