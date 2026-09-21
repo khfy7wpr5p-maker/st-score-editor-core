@@ -1,0 +1,32 @@
+name: P10-1 professional workstation WebKit
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  professional-workstation-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Editor Core
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Install Editor Core dependencies and pinned Playwright
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+      - name: Install pinned WebKit browser
+        run: npx playwright install --with-deps webkit
+      - name: Build bounded P10-1 professional workstation artifact
+        run: npm run build:browser:professional-workstation
+      - name: Run P10-1 professional workstation WebKit regression
+        run: node scripts/p10-1-webkit-professional-workstation-regression.mjs

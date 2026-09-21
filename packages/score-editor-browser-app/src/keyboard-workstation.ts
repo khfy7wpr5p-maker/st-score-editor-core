@@ -58,13 +58,9 @@ export interface KeyboardWorkstationStandaloneScoreEditorController extends Omit
   readonly unmount: () => void;
 }
 
-export const createKeyboardWorkstationStandaloneScoreEditorController = (
-  options: KeyboardWorkstationControllerOptions = {}
-): Readonly<KeyboardWorkstationStandaloneScoreEditorController> => {
-  const base = createAudioHostIntegratedStandaloneScoreEditorController(options);
-  const bindings = options.keyboardBindings ?? DEFAULT_EDITOR_KEYBOARD_BINDINGS_V1;
-
-  const sink: EditorKeyboardIntentSink = Object.freeze({
+const createKeyboardIntentSinkForController = (
+  base: AudioHostIntegratedStandaloneScoreEditorController
+): Readonly<EditorKeyboardIntentSink> => Object.freeze({
     applyKeypadAction: (action: Readonly<EditorKeypadAction>) => {
       const snapshot = base.commitKeypad(action);
       if (snapshot.error !== null) throw Object.assign(new Error(snapshot.error.message), { code: snapshot.error.code });
@@ -94,6 +90,11 @@ export const createKeyboardWorkstationStandaloneScoreEditorController = (
     }
   });
 
+export const attachKeyboardWorkstationToBrowserControllerV1 = (
+  base: AudioHostIntegratedStandaloneScoreEditorController,
+  bindings: readonly Readonly<EditorKeyboardBindingV1>[] = DEFAULT_EDITOR_KEYBOARD_BINDINGS_V1
+): Readonly<KeyboardWorkstationStandaloneScoreEditorController> => {
+  const sink = createKeyboardIntentSinkForController(base);
   const keyboard = createEditorKeyboardBrowserAdapterV1(sink, bindings);
 
   const controller: KeyboardWorkstationStandaloneScoreEditorController = {
@@ -118,6 +119,14 @@ export const createKeyboardWorkstationStandaloneScoreEditorController = (
 
   return Object.freeze(controller);
 };
+
+export const createKeyboardWorkstationStandaloneScoreEditorController = (
+  options: KeyboardWorkstationControllerOptions = {}
+): Readonly<KeyboardWorkstationStandaloneScoreEditorController> =>
+  attachKeyboardWorkstationToBrowserControllerV1(
+    createAudioHostIntegratedStandaloneScoreEditorController(options),
+    options.keyboardBindings ?? DEFAULT_EDITOR_KEYBOARD_BINDINGS_V1
+  );
 
 export const createKeyboardWorkstationStandaloneBrowserAppRuntime = () => {
   const base = createAudioHostIntegratedStandaloneBrowserAppRuntime();

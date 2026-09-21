@@ -241,10 +241,10 @@ export interface ProfessionalStructureInspectorStandaloneScoreEditorControllerV1
   readonly disposeProfessionalStructureInspector: () => void;
 }
 
-export const createProfessionalStructureInspectorStandaloneScoreEditorControllerV1 = (
+export const attachProfessionalStructureInspectorToRangeControllerV1 = (
+  base: ProfessionalRangeToolbarStandaloneScoreEditorControllerV1,
   options: ProfessionalStructureInspectorOptionsV1 = {}
 ): Readonly<ProfessionalStructureInspectorStandaloneScoreEditorControllerV1> => {
-  const base = createProfessionalRangeToolbarStandaloneScoreEditorControllerV1(options);
   const revisionIdFactory = options.structureRevisionIdFactory ?? options.professionalRevisionIdFactory ?? options.revisionIdFactory ?? browserRevisionId;
   let root: HTMLElement | null = null;
   let disposed = false;
@@ -483,6 +483,14 @@ export const createProfessionalStructureInspectorStandaloneScoreEditorController
 
   return Object.freeze(controller);
 };
+
+export const createProfessionalStructureInspectorStandaloneScoreEditorControllerV1 = (
+  options: ProfessionalStructureInspectorOptionsV1 = {}
+): Readonly<ProfessionalStructureInspectorStandaloneScoreEditorControllerV1> =>
+  attachProfessionalStructureInspectorToRangeControllerV1(
+    createProfessionalRangeToolbarStandaloneScoreEditorControllerV1(options),
+    options
+  );
 
 export const createProfessionalStructureInspectorStandaloneBrowserAppRuntimeV1 = () => {
   const base = createProfessionalRangeToolbarStandaloneBrowserAppRuntimeV1();
