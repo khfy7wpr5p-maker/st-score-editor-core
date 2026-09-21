@@ -1,0 +1,159 @@
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { build } from 'esbuild';
+
+const OUT_DIR = 'dist/browser';
+const ARTIFACT = 'st-score-editor-p10-2-workstation.js';
+const MANIFEST_FILE = 'st-score-editor-p10-2-workstation.manifest.json';
+const ENTRY_HTML = 'st-score-editor-p10-2-workstation.html';
+const GLOBAL_NAME = 'STScoreEditorP10_2Workstation';
+const MAX_BYTES = 624_640;
+const BUDGET_REVISION = 'P10-2-UNRETIMING-1';
+const FORBIDDEN_TOKENS = [
+  'node:',
+  'XMLHttpRequest',
+  'WebSocket',
+  'EventSource',
+  'navigator.sendBeacon',
+  'localStorage',
+  'sessionStorage',
+  'document.cookie'
+];
+
+const P10_1_RETAINED = Object.freeze({
+  file: 'st-score-editor-professional-workstation.manifest.json',
+  maxBytes: 604_160,
+  revision: 'P10-1-COMPOSITION-1'
+});
+
+await mkdir(OUT_DIR, { recursive: true });
+
+const p10_1Manifest = JSON.parse(
+  await readFile(`${OUT_DIR}/${P10_1_RETAINED.file}`, 'utf8')
+);
+if (
+  p10_1Manifest.maxBytes !== P10_1_RETAINED.maxBytes ||
+  p10_1Manifest.bundleBudgetRevision !== P10_1_RETAINED.revision
+) {
+  throw new Error(
+    `P10-2 refuses a silent P10-1 budget change: ${p10_1Manifest.maxBytes}/${p10_1Manifest.bundleBudgetRevision}`
+  );
+}
+
+const outFile = `${OUT_DIR}/${ARTIFACT}`;
+const result = await build({
+  entryPoints: ['packages/score-editor-browser-professional-workstation-p10-2-v1/src/global-entry.ts'],
+  outfile: outFile,
+  bundle: true,
+  format: 'iife',
+  platform: 'browser',
+  target: ['es2022'],
+  minify: true,
+  sourcemap: false,
+  legalComments: 'eof',
+  metafile: true,
+  logLevel: 'warning'
+});
+
+const externalImports = Object.values(result.metafile.outputs)
+  .flatMap(output => output.imports)
+  .filter(entry => entry.external === true);
+if (externalImports.length !== 0) {
+  throw new Error(
+    `P10-2 workstation bundle contains external imports: ${JSON.stringify(externalImports)}`
+  );
+}
+
+const bundle = await readFile(outFile);
+const text = bundle.toString('utf8');
+for (const token of FORBIDDEN_TOKENS) {
+  if (text.includes(token)) {
+    throw new Error(`P10-2 workstation bundle contains forbidden capability token: ${token}`);
+  }
+}
+if (!text.includes(GLOBAL_NAME)) {
+  throw new Error(`P10-2 workstation bundle does not expose ${GLOBAL_NAME}.`);
+}
+if (bundle.byteLength > MAX_BYTES) {
+  throw new Error(
+    `P10-2 workstation bundle exceeds bounded budget: ${bundle.byteLength} > ${MAX_BYTES}`
+  );
+}
+
+const sha256 = createHash('sha256').update(bundle).digest('hex');
+const manifest = Object.freeze({
+  contract: 'ST_SCORE_EDITOR_P10_2_PROFESSIONAL_WORKSTATION_BUNDLE',
+  version: '1.0.0',
+  artifactClass: 'optional-p10-2-professional-workstation-composition',
+  artifact: ARTIFACT,
+  format: 'iife',
+  target: 'es2022',
+  global: GLOBAL_NAME,
+  entryHtml: ENTRY_HTML,
+  bundler: Object.freeze({ package: 'esbuild', version: '0.28.2', license: 'MIT' }),
+  externalImports: 0,
+  bundleBudgetRevision: BUDGET_REVISION,
+  maxBytes: MAX_BYTES,
+  bytes: bundle.byteLength,
+  sha256,
+  retainedBudgets: Object.freeze({
+    p10_1Workstation: Object.freeze({
+      maxBytes: P10_1_RETAINED.maxBytes,
+      bundleBudgetRevision: P10_1_RETAINED.revision
+    })
+  }),
+  p10_1QualifiedBasePreserved: true,
+  tripletUnretimingBundled: true,
+  canonicalAuthority: false,
+  historyAuthority: 'EditorHistoryV4',
+  semanticTargetAuthority: 'SemanticAddressV3-current-revision',
+  rendererIntegrated: true,
+  audioHostIntegrated: true,
+  audioEngineBundled: false,
+  externalAudioRuntimeRequired: true,
+  rendererCoordinateAuthority: false,
+  domAuthoringAuthority: false,
+  productionDefault: false,
+  replacesP10_1Artifact: false,
+  productionReleaseAuthorized: false,
+  seslitabCutoverAuthorized: false,
+  physicalDeviceValidationRequired: true,
+  physicalDeviceValidationPassed: false
+});
+await writeFile(
+  `${OUT_DIR}/${MANIFEST_FILE}`,
+  `${JSON.stringify(manifest, null, 2)}\n`,
+  'utf8'
+);
+
+const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ST Score Editor P10-2 Workstation Qualification</title>
+<style>html,body,#st-score-editor-p10-2-workstation-root{margin:0;width:100%;height:100%;min-height:100%;}body{overflow:hidden;overscroll-behavior:none;}@supports(height:100dvh){html,body,#st-score-editor-p10-2-workstation-root{height:100dvh;min-height:100dvh;}}</style>
+</head>
+<body>
+<div id="st-score-editor-p10-2-workstation-root"></div>
+<script src="./${ARTIFACT}"></script>
+<script>
+(() => {
+  const root = document.getElementById('st-score-editor-p10-2-workstation-root');
+  const controller = globalThis.${GLOBAL_NAME}.createController();
+  controller.mount(root);
+  Object.defineProperty(globalThis, 'STScoreEditorP10_2WorkstationController', {
+    value: controller,
+    writable: false,
+    configurable: false
+  });
+})();
+</script>
+</body>
+</html>
+`;
+await writeFile(`${OUT_DIR}/${ENTRY_HTML}`, html, 'utf8');
+
+console.log(
+  `P10-2 workstation bundle: PASS (${manifest.bytes} bytes, max ${manifest.maxBytes}, sha256 ${manifest.sha256})`
+);
