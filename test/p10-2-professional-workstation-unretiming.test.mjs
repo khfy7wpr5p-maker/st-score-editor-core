@@ -1,23 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  createProfessionalWorkstationStandaloneScoreEditorControllerV1
-} from '../dist/packages/score-editor-browser-professional-workstation-v1/src/index.js';
-
-test('P10-2 professional workstation composes optional Triplet unretiming without replacing P08 P09 or audio surfaces',()=>{
-  const controller=createProfessionalWorkstationStandaloneScoreEditorControllerV1();
-
+test('P10-2 optional workstation composes Triplet unretiming over the qualified P10-1 controller without replacing P08 P09 or audio surfaces',async()=>{
+  const module=await import('../dist/packages/score-editor-browser-professional-workstation-p10-2-v1/src/index.js').catch(()=>({}));
   assert.equal(
-    typeof controller.getTripletUnretimingState,
+    typeof module.createP10_2ProfessionalWorkstationStandaloneScoreEditorControllerV1,
     'function',
-    'professional workstation must expose the optional P10-2 admission state'
+    'P10-2 optional workstation composition must exist before exposure can pass'
   );
-  assert.equal(
-    typeof controller.removeTripletFromCapturedEvents,
-    'function',
-    'professional workstation must expose the bounded Remove Triplet action'
-  );
+
+  const controller=module.createP10_2ProfessionalWorkstationStandaloneScoreEditorControllerV1();
+
+  assert.equal(typeof controller.getTripletUnretimingState,'function');
+  assert.equal(typeof controller.removeTripletFromCapturedEvents,'function');
 
   assert.equal(typeof controller.getKeyboardWorkstationState,'function');
   assert.equal(typeof controller.dispatchKeyboardIntent,'function');
@@ -27,9 +22,12 @@ test('P10-2 professional workstation composes optional Triplet unretiming withou
   assert.equal(typeof controller.getAudioHostState,'function');
   assert.equal(typeof controller.attachAudioPort,'function');
 
+  assert.equal(controller.profile.p10_2WorkstationComposition,true);
   assert.equal(controller.profile.tripletUnretimingAuthoringBundled,true);
   assert.equal(controller.profile.tripletUnretimingCanonicalAuthority,false);
   assert.equal(controller.profile.tripletUnretimingRendererCoordinateAuthority,false);
+  assert.equal(controller.profile.p10_1QualifiedBasePreserved,true);
   assert.equal(controller.profile.productionDefault,false);
+  assert.equal(controller.profile.productionReleaseAuthorized,false);
   assert.equal(controller.profile.seslitabCutoverAuthorized,false);
 });
