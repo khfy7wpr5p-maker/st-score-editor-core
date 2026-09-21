@@ -3,6 +3,11 @@ import {
   type AudioHostIntegratedStandaloneScoreEditorController
 } from '../../score-editor-browser-app/src/audio-host-integrated.js';
 import {
+  attachTripletUnretimingToBrowserControllerV1,
+  tripletUnretimingBrowserAppProfile,
+  type TripletUnretimingStandaloneScoreEditorControllerV1
+} from '../../score-editor-browser-app/src/triplet-unretiming-authoring.js';
+import {
   attachKeyboardWorkstationToBrowserControllerV1,
   keyboardWorkstationBrowserAppProfile,
   type KeyboardWorkstationControllerOptions,
@@ -22,6 +27,7 @@ import {
 export const PROFESSIONAL_WORKSTATION_V1_VERSION = '1.0.0' as const;
 
 export const professionalWorkstationBrowserAppProfile = Object.freeze({
+  ...tripletUnretimingBrowserAppProfile,
   ...professionalStructureInspectorBrowserAppProfile,
   ...keyboardWorkstationBrowserAppProfile,
   professionalWorkstationComposition: true,
@@ -49,6 +55,11 @@ type KeyboardSurface = Pick<
   'getKeyboardWorkstationState' | 'dispatchKeyboardIntent'
 >;
 
+type TripletUnretimingSurface = Pick<
+  TripletUnretimingStandaloneScoreEditorControllerV1,
+  'getTripletUnretimingState' | 'removeTripletFromCapturedEvents'
+>;
+
 type AudioSurface = Pick<
   AudioHostIntegratedStandaloneScoreEditorController,
   'attachAudioPort' |
@@ -61,6 +72,7 @@ type AudioSurface = Pick<
 export type ProfessionalWorkstationStandaloneScoreEditorControllerV1 =
   Omit<ProfessionalStructureInspectorStandaloneScoreEditorControllerV1, 'profile'> &
   KeyboardSurface &
+  TripletUnretimingSurface &
   AudioSurface & {
     readonly profile: typeof professionalWorkstationBrowserAppProfile;
   };
@@ -69,8 +81,12 @@ export const createProfessionalWorkstationStandaloneScoreEditorControllerV1 = (
   options: ProfessionalWorkstationControllerOptionsV1 = {}
 ): Readonly<ProfessionalWorkstationStandaloneScoreEditorControllerV1> => {
   const audio = createAudioHostIntegratedStandaloneScoreEditorController(options);
-  const keyboard = attachKeyboardWorkstationToBrowserControllerV1(
+  const unretiming = attachTripletUnretimingToBrowserControllerV1(
     audio,
+    { revisionIdFactory: options.revisionIdFactory }
+  );
+  const keyboard = attachKeyboardWorkstationToBrowserControllerV1(
+    unretiming as unknown as AudioHostIntegratedStandaloneScoreEditorController,
     options.keyboardBindings
   );
   const range = attachProfessionalRangeToolbarToBrowserControllerV1(
@@ -99,6 +115,7 @@ export const createProfessionalWorkstationStandaloneBrowserAppRuntimeV1 = () => 
     semanticTargetAuthority: 'SemanticAddressV3-current-revision',
     p08ProfessionalBundled: true,
     p09KeyboardBundled: true,
+    tripletUnretimingBundled: true,
     audioHostIntegrated: true,
     audioEngineBundled: false,
     externalAudioRuntimeRequired: true,
