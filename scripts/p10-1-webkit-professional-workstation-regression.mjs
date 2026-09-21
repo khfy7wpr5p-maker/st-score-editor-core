@@ -48,11 +48,6 @@ if (address === null || typeof address === 'string') {
   throw new Error('P10-1 WebKit server did not expose a TCP port.');
 }
 
-const canonical = documentValue => JSON.stringify({
-  score: documentValue.session.history.present.score,
-  notation: documentValue.session.history.present.notation
-});
-
 let browser;
 try {
   browser = await webkit.launch({ headless: true });
@@ -109,7 +104,13 @@ try {
     globalThis.STScoreEditorProfessionalWorkstationController?.getSnapshot?.().hasDocument === true
   );
 
-  const r0 = await page.evaluate(canonical);
+  const r0 = await page.evaluate(() => {
+    const d = globalThis.STScoreEditorProfessionalWorkstationController.getDocument();
+    return JSON.stringify({
+      score: d.session.history.present.score,
+      notation: d.session.history.present.notation
+    });
+  });
 
   await page.evaluate(() => {
     const controller = globalThis.STScoreEditorProfessionalWorkstationController;
