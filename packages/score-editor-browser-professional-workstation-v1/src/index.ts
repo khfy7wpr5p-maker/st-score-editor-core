@@ -83,7 +83,9 @@ export const createProfessionalWorkstationStandaloneScoreEditorControllerV1 = (
   const audio = createAudioHostIntegratedStandaloneScoreEditorController(options);
   const unretiming = attachTripletUnretimingToBrowserControllerV1(
     audio,
-    { revisionIdFactory: options.revisionIdFactory }
+    options.revisionIdFactory === undefined
+      ? {}
+      : { revisionIdFactory: options.revisionIdFactory }
   );
   const keyboard = attachKeyboardWorkstationToBrowserControllerV1(
     unretiming as unknown as AudioHostIntegratedStandaloneScoreEditorController,
