@@ -67,6 +67,7 @@ export type P10_3AProfessionalWorkstationStandaloneScoreEditorControllerV1 =
     ) => Readonly<ScoreEditorBrowserAppSnapshot>;
     readonly mount: (root: HTMLElement) => void;
     readonly unmount: () => void;
+    readonly disposeP10_3APitchControls: () => void;
   };
 
 const errorInfo = (error: unknown): Readonly<{ readonly code: string; readonly message: string }> => {
@@ -263,15 +264,13 @@ export const createP10_3AProfessionalWorkstationStandaloneScoreEditorControllerV
     }
   };
 
-  const originalDispose = base.dispose;
   return Object.freeze({
     ...controller,
-    dispose: () => {
+    disposeP10_3APitchControls: () => {
       if (disposed) return;
       disposed = true;
       root = null;
       unsubscribeBase();
-      originalDispose();
     }
   }) as Readonly<P10_3AProfessionalWorkstationStandaloneScoreEditorControllerV1>;
 };
