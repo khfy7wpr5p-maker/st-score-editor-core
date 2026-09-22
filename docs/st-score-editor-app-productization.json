@@ -291,7 +291,7 @@
     "seslitab_cutover_authorized": false
   },
   "p10_3a": {
-    "status": "PROFESSIONAL_PITCH_TRANSPOSE_IMPLEMENTED_QUALIFICATION_PENDING",
+    "status": "PROFESSIONAL_PITCH_TRANSPOSE_IMPLEMENTED_QUALIFIED",
     "package": "editor-professional-pitch-transpose-v1",
     "session_package": "editor-session-professional-pitch-transpose-v1",
     "workstation_adapter": "score-editor-professional-pitch-transpose-workstation-v1",
