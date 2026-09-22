@@ -101,6 +101,7 @@ export async function installVerifiedAudioDependencies({
   manifestPath = defaultManifestPath,
   tempRoot = os.tmpdir(),
   npmExecPath = process.env.npm_execpath,
+  includePlaywright = false,
   fetcher = globalThis.fetch,
   execFileImpl = execFileAsync
 } = {}) {
@@ -157,7 +158,8 @@ export async function installVerifiedAudioDependencies({
         '--no-fund',
         '--no-package-lock',
         '--no-save',
-        ...verifiedPaths
+        ...verifiedPaths,
+        ...(includePlaywright ? ['playwright@1.62.1'] : [])
       ],
       {
         cwd: repoRoot,
@@ -178,7 +180,13 @@ export async function installVerifiedAudioDependencies({
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const result = await installVerifiedAudioDependencies();
+  const allowedArgs = new Set(['--with-playwright']);
+  for (const arg of process.argv.slice(2)) {
+    if (!allowedArgs.has(arg)) fail('AUDIO_DEPENDENCY_CLI_ARGUMENT_UNSUPPORTED');
+  }
+  const result = await installVerifiedAudioDependencies({
+    includePlaywright: process.argv.includes('--with-playwright')
+  });
   console.log(
     'Verified Audio Engine dependencies: PASS (' +
     result.packages.map(item => item.name + '@' + item.version).join(', ') +
