@@ -77,9 +77,9 @@ TDD evidence:
 
 The `st-score-audio-engine` v0.1.2 release workflow packages both tarballs and generates `SHA256SUMS.txt` using `sha256sum`.
 
-This means rows 13–14 are not missing producer-side checksums. The remaining gap is **consumer-side enforcement inside Editor Core installation**.
+This means rows 13–14 were not missing producer-side checksums; the Editor Core consumer-side integrity gap is now closed by the pinned SHA-512 manifest plus verified local-tarball installer.
 
-Do not remove the official package boundary or duplicate the audio contract merely to silence Sonar.
+The official package boundary remains intact; no audio contract was duplicated or weakened to satisfy Sonar.
 
 ## Scanner/configuration ruling
 
