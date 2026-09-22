@@ -192,15 +192,18 @@ All canonical spellings for that target pitch with:
 
 are candidate spellings.
 
-Candidates are ranked deterministically:
+Candidates are ranked deterministically.
 
-1. prefer the candidate whose accidental agrees with the effective key signature;
-2. then prefer the candidate requiring the smaller absolute accidental magnitude;
-3. then prefer a natural spelling;
-4. if still tied:
+For a candidate letter, "agrees with the effective key signature" means the candidate `alter` exactly equals the signature accidental implied for that letter by `fifths`.
+
+Ranking:
+
+1. prefer candidates that agree with the effective key signature;
+2. then prefer the smaller absolute accidental magnitude;
+3. if still tied:
    - upward transpose prefers the sharp-direction spelling;
    - downward transpose prefers the flat-direction spelling;
-5. final ties are resolved by fixed canonical letter order so the result is reproducible.
+4. final ties are resolved by fixed canonical letter order so the result is reproducible.
 
 The same source score, selection, key context and interval must always produce the same target spelling.
 
@@ -213,14 +216,16 @@ Canonical pitch and explicit accidental-display metadata must never drift apart.
 For every changed note:
 
 - P10-3A computes the canonical target `Pitch`;
-- it computes whether an explicit accidental display is required for the target spelling under the effective key signature;
-- if an explicit display is required, it writes the corresponding existing notation value:
-  - `sharp`;
-  - `flat`;
-  - `natural`;
-  - `double-sharp`;
-  - `double-flat`;
-- if no explicit display is required, the accidental metadata becomes `null`.
+- it derives the signature accidental for the target letter from the effective key signature;
+- if target `alter` equals that signature accidental, explicit accidental metadata becomes `null`;
+- otherwise it writes the notation value that directly represents the canonical target alteration:
+  - `alter = +1` -> `sharp`;
+  - `alter = -1` -> `flat`;
+  - `alter = 0` while the key signature alters that letter -> `natural`;
+  - `alter = +2` -> `double-sharp`;
+  - `alter = -2` -> `double-flat`.
+
+This is a bounded **key-signature-relative explicit accidental policy**, not a full engraving accidental-state engine. P10-3A does not infer whether an accidental could be visually omitted because of an earlier accidental in the same measure; that future engraving concern must not change canonical pitch.
 
 The score-pitch update and notation update are one atomic candidate.
 
