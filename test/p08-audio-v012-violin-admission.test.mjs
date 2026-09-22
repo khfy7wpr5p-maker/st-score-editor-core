@@ -12,6 +12,7 @@ import {
 import { SCORE_AUDIO_ENGINE_V010 } from '../dist/packages/score-editor-sdk-v1/audio-v010.js';
 
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const verifiedAudioDependencies = JSON.parse(fs.readFileSync('contracts/audio-release-dependencies-v1.json', 'utf8'));
 const productionSource = fs.readFileSync('scripts/assemble-production-site.mjs', 'utf8');
 const hostSource = fs.readFileSync('packages/score-editor-browser-app/src/audio-host-integrated.ts', 'utf8');
 
@@ -21,8 +22,16 @@ test('P08 pins the official Audio Engine v0.1.2 Violin-qualified release assets'
   assert.equal(AUDIO_RELEASE_ASSET_SHA256, '18f4e039ffe6e766916bd11f61d60b2496095aadbc61828ecd88545b8408504d');
   assert.equal(AUDIO_RELEASE_URL, 'https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.2/st-score-audio-engine.browser.v0.1.2.js');
   assert.equal(PRODUCTION_SITE_VERSION, '1.3.0');
-  assert.match(packageJson.optionalDependencies['@st/score-audio-contracts'], /releases\/download\/v0\.1\.2\/st-score-audio-contracts-0\.1\.0\.tgz$/);
-  assert.match(packageJson.optionalDependencies['@st/score-audio-web'], /releases\/download\/v0\.1\.2\/st-score-audio-web-0\.1\.2\.tgz$/);
+  assert.equal(packageJson.optionalDependencies?.['@st/score-audio-contracts'], undefined);
+  assert.equal(packageJson.optionalDependencies?.['@st/score-audio-web'], undefined);
+  assert.equal(packageJson.scripts['install:verified-audio'], 'node scripts/install-verified-audio-dependencies.mjs');
+  assert.deepEqual(
+    verifiedAudioDependencies.packages.map(entry => [entry.name, entry.version]),
+    [
+      ['@st/score-audio-contracts', '0.1.0'],
+      ['@st/score-audio-web', '0.1.2']
+    ]
+  );
 });
 
 test('P08 advances runtime qualification without changing the public audio contract', () => {

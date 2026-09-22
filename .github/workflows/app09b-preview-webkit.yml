@@ -8,12 +8,11 @@ on:
       - p05-physical-teacher-task2-preview-v1
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   webkit-preview:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout Editor Core
@@ -25,7 +24,7 @@ jobs:
       - name: Install Editor Core dependencies and regression Playwright
         run: |
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+          npm run install:verified-audio -- --with-playwright
       - name: Install pinned WebKit browser
         run: npx playwright install --with-deps webkit
       - name: Build Editor Core browser artifacts
@@ -86,7 +85,9 @@ jobs:
         run: node scripts/app09b-webkit-controlled-layout-regression.mjs
 
   p05-paste-render:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout Editor Core
@@ -98,7 +99,7 @@ jobs:
       - name: Install Editor Core dependencies and regression Playwright
         run: |
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+          npm run install:verified-audio -- --with-playwright
       - name: Install pinned WebKit browser
         run: npx playwright install --with-deps webkit
       - name: Build Editor Core browser artifacts

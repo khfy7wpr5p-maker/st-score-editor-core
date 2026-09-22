@@ -1,0 +1,23 @@
+{
+  "contract": "ST_SCORE_EDITOR_VERIFIED_AUDIO_DEPENDENCIES",
+  "version": "1.0.0",
+  "repository": "khfy7wpr5p-maker/st-score-audio-engine",
+  "release": "v0.1.2",
+  "releaseCommit": "26117ae90f213e208e06fb5c084fc0fad9f4ca86",
+  "packages": [
+    {
+      "name": "@st/score-audio-contracts",
+      "version": "0.1.0",
+      "fileName": "st-score-audio-contracts-0.1.0.tgz",
+      "url": "https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.2/st-score-audio-contracts-0.1.0.tgz",
+      "integrity": "sha512-w5esj/tbxipcdxQhIIRZkemThsbP1r8KZKBVSBzt6UjQYWKBASyTsRW3Q+ScFC2ymbHPTU1RSfRLyMOnapDPlQ=="
+    },
+    {
+      "name": "@st/score-audio-web",
+      "version": "0.1.2",
+      "fileName": "st-score-audio-web-0.1.2.tgz",
+      "url": "https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.2/st-score-audio-web-0.1.2.tgz",
+      "integrity": "sha512-ajmk2ATxfzn815WDamE6faDANAdCs8GRZ50gxmC0YjdjXTcDmX5pLWjsSyV1tMBuVPFfk+isVaAql2m4rRynMw=="
+    }
+  ]
+}

@@ -6,12 +6,11 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   professional-webkit:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Checkout Editor Core
@@ -23,7 +22,7 @@ jobs:
       - name: Install Editor Core dependencies and pinned Playwright
         run: |
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+          npm run install:verified-audio -- --with-playwright
       - name: Install pinned WebKit browser
         run: npx playwright install --with-deps webkit
       - name: Build independently bounded professional browser artifact

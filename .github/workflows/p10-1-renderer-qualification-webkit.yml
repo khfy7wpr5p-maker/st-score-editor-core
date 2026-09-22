@@ -23,7 +23,7 @@ jobs:
       - name: Install Editor Core dependencies and pinned Playwright
         run: |
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+          npm run install:verified-audio -- --with-playwright
       - name: Install pinned WebKit browser
         run: npx playwright install --with-deps webkit
       - name: Build bounded P10-1 workstation artifacts
