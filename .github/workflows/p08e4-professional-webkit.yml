@@ -6,11 +6,10 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   professional-webkit:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
