@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / FULL RELEASE MATRIX OPEN**
+Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / P10-3A PITCH TRANSPOSE IMPLEMENTED, QUALIFICATION PENDING / FULL RELEASE MATRIX OPEN**
 
 Date: 2026-09-19
 
@@ -31,6 +31,30 @@ Responsive/mobile/accessibility/recovery hardening, standalone bundle budget and
 **COMPLETE / MERGED.**
 
 The standalone editor product now includes bounded Guitar/Piano starts, Voice 1–5, note entry, exact selected-note edit/delete, semantic Staff/measure navigation, bounded synthetic measure append, chord-tone authoring, articulation/ornament groups and exact explicit Flat/Natural/Sharp authoring.
+
+## P10-3A — Professional key-aware pitch transpose
+
+**IMPLEMENTED ON AN OPTIONAL P10-3A PROFESSIONAL WORKSTATION COMPOSITION; EXACT-HEAD QUALIFICATION PENDING.**
+
+P10-3A adds key-aware professional pitch transpose over the existing semantic `EVENT_SPAN` and `EVENT_SET` selection contracts. The bounded public engine supports semitone intervals `±1..±12` and diatonic intervals `±1..±7`. Canonical `Pitch(step, alter, octave)` and explicit accidental-display metadata are updated atomically, while REST content and unselected events remain unchanged.
+
+The optional P10-3A workstation composition preserves the qualified P10-1 artifact; it does not widen or replace the P10-1 bundle. The optional P10-3A workstation composition also preserves the qualified P10-2 artifact and layers pitch-transpose capability on top of the existing optional P10-2 composition.
+
+Architecture:
+
+```text
+P10-1 qualified workstation
+        -> P10-2 optional unretiming composition
+        -> P10-3A optional pitch-transpose composition
+             -> score-editor-professional-pitch-transpose-workstation-v1
+             -> editor-session-professional-pitch-transpose-v1
+             -> editor-professional-pitch-transpose-v1
+             -> EditorHistoryV4
+```
+
+Key-signature context is resolved staff-locally and inherited from the nearest earlier explicit key signature, defaulting to C major when none exists. Enharmonic spelling is deterministic and key-aware. Tie relation closure and grace relation closure remain **fail-closed**; no silent relation repair is authorized.
+
+The P10-3A browser surface exposes `−½`, `+½`, `−Step` and `+Step` presentation-only controls. Renderer coordinates and DOM order never determine target membership. The bounded P10-3A artifact remains optional, production-default false, production-release unauthorized and SesliTab-cutover unauthorized.
 
 ## P09 Fast Entry / Keyboard Workstation
 
