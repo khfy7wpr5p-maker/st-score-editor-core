@@ -216,7 +216,7 @@ List only REVIEW_REQUIRED rows.
 Record the exact Sonar Quality Gate value observed during this task. CI success is not a substitute.
 ```
 
-If the live service value differs from the handoff baseline `Not computed`, replace that line with the exact live value before saving.
+If the live service Quality Gate differs from the handoff baseline `Not computed`, replace that line with the exact live value before saving. If the live open-security count differs from the handoff baseline `14`, replace the count with the exact live count and add one sentence explaining the drift.
 
 - [ ] **Step 5: Verify all 14 rows are present and no unsupported PASS claim exists**
 
@@ -227,7 +227,10 @@ node - <<'NODE'
 const fs=require('node:fs');
 const s=fs.readFileSync('docs/p10-2b-sonar-security-triage.md','utf8');
 const rows=s.split('\n').filter(line=>/^\| [0-9]+ \|/.test(line));
-if(rows.length!==14) throw new Error(`expected 14 Sonar rows, got ${rows.length}`);
+const match=s.match(/Observed open security findings:\s*([0-9]+)/);
+if(!match) throw new Error('missing observed Sonar finding count');
+const observed=Number(match[1]);
+if(rows.length!==observed) throw new Error(`expected ${observed} Sonar rows, got ${rows.length}`);
 if(/Quality Gate:\s*PASS/i.test(s) && !/service-reported PASS/i.test(s)) {
   throw new Error('unsupported Sonar PASS wording');
 }
@@ -422,10 +425,10 @@ git commit -m "feat(P10-2B): add read-only 4:3 tuplet admission"
 
 - [ ] **Step 1: Add RED tests for cardinality, duplicate, stale, reordered, nonconsecutive, and cross-scope targets**
 
-Add these assertions:
+Add these assertions, including a runtime wrong-kind address check:
 
 ```js
-test('P10-2B fails closed for wrong cardinality and duplicate targets',()=>{
+test('P10-2B fails closed for wrong cardinality, wrong target kind, and duplicate targets',()=>{
   const {score,notation}=validState();
   const exact=targets(score,'e1','e2','e3','e4');
 
@@ -434,6 +437,13 @@ test('P10-2B fails closed for wrong cardinality and duplicate targets',()=>{
   );
   assert.equal(result.admitted,false);
   assert.equal(result.reason,'BLOCKED_WRONG_CARDINALITY');
+
+  const partAddress=addressEntityV3(score,score.parts[0].id);
+  result=analyzeGeneralizedTupletToStraightV4(
+    score,notation,[partAddress,exact[1],exact[2],exact[3]],FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_TARGET_KIND');
 
   result=analyzeGeneralizedTupletToStraightV4(
     score,notation,[exact[0],exact[1],exact[1],exact[3]],FOUR_TO_THREE_TUPLET_PROFILE_V4
@@ -582,7 +592,7 @@ Create cases for:
 - following event beginning before the current group end;
 - a current duration whose `* 4 / 3` result is not in `SIMPLE_WRITTEN_BASES`.
 
-All invalid occupancy cases expect `BLOCKED_CURRENT_TIMING_INVALID`; unsupported written base expects `BLOCKED_WRITTEN_BASE_UNSUPPORTED`.
+All invalid occupancy cases expect `BLOCKED_CURRENT_TIMING_INVALID`; unsupported written base expects `BLOCKED_WRITTEN_BASE_UNSUPPORTED`. Add one arithmetic-boundary fixture with duration `1 / Number.MAX_SAFE_INTEGER` and exact contiguous onsets `0`, `1/max`, `2/max`, `3/max`; multiplying by `4/3` must return `BLOCKED_ARITHMETIC` rather than throw or use floating point.
 
 - [ ] **Step 3: Add RED coupling tests**
 
@@ -868,13 +878,16 @@ node - <<'NODE'
 const fs=require('node:fs');
 const s=fs.readFileSync('docs/p10-2b-sonar-security-triage.md','utf8');
 const rows=s.split('\n').filter(line=>/^\| [0-9]+ \|/.test(line));
+const match=s.match(/Observed open security findings:\s*([0-9]+)/);
+if(!match) throw new Error('missing observed Sonar finding count');
+const observed=Number(match[1]);
 const truePositives=rows.filter(line=>line.includes('| TRUE_POSITIVE_FIX |'));
-console.log(JSON.stringify({rows:rows.length,truePositives:truePositives.length},null,2));
-if(rows.length!==14) process.exitCode=2;
+console.log(JSON.stringify({observed,rows:rows.length,truePositives:truePositives.length},null,2));
+if(rows.length!==observed) process.exitCode=2;
 NODE
 ```
 
-Expected: `rows` is 14.
+Expected: `rows` equals the exact live `observed` count recorded in Task 1; the handoff baseline is 14.
 
 - [ ] **Step 2: Branch on verified evidence, never on assumptions**
 
