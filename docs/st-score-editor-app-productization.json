@@ -265,5 +265,29 @@
     "production_release_authorized": false,
     "seslitab_cutover_authorized": false,
     "physical_device_validation_required_before_release_claim": true
+  },
+  "p10_2b": {
+    "status": "READ_ONLY_4_3_ADMISSION_IMPLEMENTED_QUALIFICATION_PENDING",
+    "package": "editor-generalized-tuplet-admission-v4",
+    "profile": {
+      "actual_notes": 4,
+      "normal_notes": 3,
+      "target_cardinality": 4
+    },
+    "current_revision_semantic_targets_required": true,
+    "exact_rational_timing": true,
+    "adjacent_neutral_rest_capacity_required": true,
+    "imported_musicxml_identity_preserved": true,
+    "canonical_mutation_authority": false,
+    "history_mutation_authority": false,
+    "renderer_coordinate_authority": false,
+    "browser_authoring_authority": false,
+    "arbitrary_tuplet_support": false,
+    "generalized_tuplet_mutation_authorized": false,
+    "sonar_live_triage_status": "PENDING_LIVE_ISSUE_DETAILS",
+    "sonar_quality_gate_pass_claimed": false,
+    "default_standalone_cutover": false,
+    "production_release_authorized": false,
+    "seslitab_cutover_authorized": false
   }
 }
