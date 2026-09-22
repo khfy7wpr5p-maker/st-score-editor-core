@@ -13,6 +13,8 @@ import {
   commitProfessionalWorkstationFrameBarlinesV1,
   commitProfessionalWorkstationKeySignatureV1,
   commitProfessionalWorkstationOctaveTransposeV1,
+  commitProfessionalWorkstationSemitoneTransposeV1,
+  commitProfessionalWorkstationDiatonicTransposeV1,
   commitProfessionalWorkstationTimeSignatureV1,
   commitProfessionalWorkstationTopologyV1,
   createScoreEditorProfessionalWorkstationV1,
@@ -158,6 +160,41 @@ test('P08-D keeps professional selection across bulk transpose/clear and clears 
     { step: 'C', alter: 0, octave: 5 },
     { step: 'D', alter: 0, octave: 5 }
   ]);
+});
+
+test('P10-3A workstation exposes semitone and diatonic edits over the same professional selection', () => {
+  let workstation = createScoreEditorProfessionalWorkstationV1(appDocument());
+
+  assert.throws(
+    () => commitProfessionalWorkstationSemitoneTransposeV1(
+      workstation, 1, { nextRevisionId: 'p10-3a-missing-selection' }
+    ),
+    error => error instanceof ProfessionalWorkstationV1Error && error.code === 'SELECTION_REQUIRED'
+  );
+
+  workstation = selectProfessionalEventSpanV1(
+    workstation,
+    eventAddress(workstation, 'event-1'),
+    eventAddress(workstation, 'event-2')
+  );
+
+  workstation = commitProfessionalWorkstationSemitoneTransposeV1(
+    workstation,
+    1,
+    { nextRevisionId: 'p10-3a-workstation-2' }
+  );
+  assert.equal(workstation.professionalSelection.kind, 'EVENT_SPAN');
+  assert.equal(workstation.professionalSelection.anchor.revisionId, 'p10-3a-workstation-2');
+  assert.equal(workstation.document.session.history.past.length, 1);
+
+  workstation = commitProfessionalWorkstationDiatonicTransposeV1(
+    workstation,
+    1,
+    { nextRevisionId: 'p10-3a-workstation-3' }
+  );
+  assert.equal(workstation.professionalSelection.kind, 'EVENT_SPAN');
+  assert.equal(workstation.professionalSelection.anchor.revisionId, 'p10-3a-workstation-3');
+  assert.equal(workstation.document.session.history.past.length, 2);
 });
 
 test('P08-D exposes key/clef/meter/barline structure edits through one app-facing state surface', () => {
