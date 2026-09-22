@@ -144,29 +144,61 @@ const same = (left: Rational, right: Rational): boolean => compare(left, right) 
 const endOf = (event: ScoreEvent): Readonly<Rational> => add(event.onset, event.duration);
 const frozenRational = (value: Rational): Readonly<Rational> => Object.freeze({ ...value });
 
-const exactFourToThreeNotation = (
+const SIMPLE_WRITTEN_BASES: readonly Readonly<Rational>[] = Object.freeze([
+  Object.freeze({ numerator: 1, denominator: 1 }),
+  Object.freeze({ numerator: 1, denominator: 2 }),
+  Object.freeze({ numerator: 1, denominator: 4 }),
+  Object.freeze({ numerator: 1, denominator: 8 }),
+  Object.freeze({ numerator: 1, denominator: 16 }),
+  Object.freeze({ numerator: 1, denominator: 32 })
+]);
+
+const noteIdsFor = (event: ScoreEvent): readonly string[] =>
+  event.kind === 'note'
+    ? Object.freeze([event.note.id])
+    : event.kind === 'chord'
+      ? Object.freeze(event.notes.map(note => note.id))
+      : Object.freeze([]);
+
+const hasCrossStaff = (notation: NotationDocumentV4, eventId: string): boolean =>
+  notation.crossStaffPlacements.some(item => item.source.eventId === eventId);
+
+const tupletBoundaryReason = (
   notation: NotationDocumentV4,
   eventIds: readonly string[]
-): boolean => {
-  if (eventIds.length !== 4) return false;
+): GeneralizedTupletAdmissionReasonV4 | null => {
+  if (eventIds.length !== 4) return 'BLOCKED_WRONG_CARDINALITY';
   const tuplets = eventIds.map(eventId =>
     notation.events.find(entry => entry.target.eventId === eventId)?.notation.tuplet ?? null
   );
-  if (tuplets.some(value => value === null)) return false;
-  if (tuplets.some(value => value?.actualNotes !== 4 || value.normalNotes !== 3)) return false;
+  if (tuplets.some(value => value === null)) return 'BLOCKED_TUPLET_BOUNDARY_INVALID';
+  if (tuplets.some(value => value?.actualNotes !== 4 || value.normalNotes !== 3)) {
+    return 'BLOCKED_TUPLET_PROFILE_UNSUPPORTED';
+  }
   const first = tuplets[0]!;
   const second = tuplets[1]!;
   const third = tuplets[2]!;
   const fourth = tuplets[3]!;
+  if (
+    first.marks.length > 1 ||
+    second.marks.length > 0 ||
+    third.marks.length > 0 ||
+    fourth.marks.length > 1
+  ) {
+    return 'BLOCKED_NESTED_OR_OVERLAPPING_TUPLET';
+  }
   const firstMark = first.marks[0];
   const fourthMark = fourth.marks[0];
-  return first.marks.length === 1 &&
-    firstMark?.type === 'start' &&
-    second.marks.length === 0 &&
-    third.marks.length === 0 &&
-    fourth.marks.length === 1 &&
-    fourthMark?.type === 'stop' &&
-    firstMark.number === fourthMark.number;
+  if (
+    first.marks.length !== 1 ||
+    firstMark?.type !== 'start' ||
+    fourth.marks.length !== 1 ||
+    fourthMark?.type !== 'stop' ||
+    firstMark.number !== fourthMark.number
+  ) {
+    return 'BLOCKED_TUPLET_BOUNDARY_INVALID';
+  }
+  return null;
 };
 
 const result = (
@@ -213,6 +245,18 @@ export const analyzeGeneralizedTupletToStraightV4 = (
   const score = createScoreDocumentV3(scoreInput);
   const notation = createNotationDocumentV4(score, notationInput);
   const profile = Object.freeze({ ...profileInput });
+
+  if (
+    profile.version !== FOUR_TO_THREE_TUPLET_PROFILE_V4.version ||
+    profile.actualNotes !== FOUR_TO_THREE_TUPLET_PROFILE_V4.actualNotes ||
+    profile.normalNotes !== FOUR_TO_THREE_TUPLET_PROFILE_V4.normalNotes ||
+    profile.targetCardinality !== FOUR_TO_THREE_TUPLET_PROFILE_V4.targetCardinality
+  ) {
+    return result(score, FOUR_TO_THREE_TUPLET_PROFILE_V4, [], {
+      admitted: false,
+      reason: 'BLOCKED_TUPLET_PROFILE_UNSUPPORTED'
+    });
+  }
 
   const targetEventIds = targetsInput.flatMap(target => {
     const candidate = target as EventAddressV3 & { readonly eventId?: unknown };
@@ -300,6 +344,8 @@ export const analyzeGeneralizedTupletToStraightV4 = (
   const events = indices.map(index => voice.events[index]!);
   const firstEvent = events[0]!;
   const fourthEvent = events[3]!;
+  const previousEvent = firstIndex > 0 ? voice.events[firstIndex - 1] ?? null : null;
+  const nextEvent = voice.events[fourthIndex + 1] ?? null;
 
   if (!events.every(event => same(event.duration, firstEvent.duration))) {
     return result(score, profile, targets.map(target => target.eventId), {
@@ -307,23 +353,152 @@ export const analyzeGeneralizedTupletToStraightV4 = (
       reason: 'BLOCKED_CURRENT_TIMING_INVALID'
     });
   }
-  if (!exactFourToThreeNotation(notation, targets.map(target => target.eventId))) {
+
+  let currentGroupEnd: Readonly<Rational>;
+  try {
+    const firstEnd = endOf(events[0]!);
+    const secondEnd = endOf(events[1]!);
+    const thirdEnd = endOf(events[2]!);
+    currentGroupEnd = endOf(fourthEvent);
+    const selectedContiguous =
+      same(firstEnd, events[1]!.onset) &&
+      same(secondEnd, events[2]!.onset) &&
+      same(thirdEnd, events[3]!.onset);
+    const precedingOverlap = previousEvent !== null && compare(endOf(previousEvent), firstEvent.onset) > 0;
+    const followingOverlap = nextEvent !== null && compare(nextEvent.onset, currentGroupEnd) < 0;
+    if (!selectedContiguous || precedingOverlap || followingOverlap) {
+      return result(score, profile, targets.map(target => target.eventId), {
+        currentGroupOnset: frozenRational(firstEvent.onset),
+        currentGroupEnd: frozenRational(currentGroupEnd),
+        nextEventId: nextEvent?.id ?? null,
+        nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+        admitted: false,
+        reason: 'BLOCKED_CURRENT_TIMING_INVALID'
+      });
+    }
+  } catch {
     return result(score, profile, targets.map(target => target.eventId), {
       admitted: false,
-      reason: 'BLOCKED_TUPLET_BOUNDARY_INVALID'
+      reason: 'BLOCKED_ARITHMETIC'
     });
   }
 
-  const restoredWrittenBase = multiply(firstEvent.duration, 4, 3);
-  const proposedOnsets = [
-    frozenRational(firstEvent.onset),
-    add(firstEvent.onset, restoredWrittenBase),
-    add(add(firstEvent.onset, restoredWrittenBase), restoredWrittenBase),
-    add(add(add(firstEvent.onset, restoredWrittenBase), restoredWrittenBase), restoredWrittenBase)
-  ] as const;
-  const proposedGroupEnd = add(proposedOnsets[3], restoredWrittenBase);
-  const currentGroupEnd = endOf(fourthEvent);
-  const growthDuration = subtract(proposedGroupEnd, currentGroupEnd);
+  const boundaryReason = tupletBoundaryReason(notation, targets.map(target => target.eventId));
+  if (boundaryReason !== null) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      currentTupletDuration: frozenRational(firstEvent.duration),
+      currentGroupOnset: frozenRational(firstEvent.onset),
+      currentGroupEnd: frozenRational(currentGroupEnd),
+      nextEventId: nextEvent?.id ?? null,
+      nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+      admitted: false,
+      reason: boundaryReason
+    });
+  }
+
+  const dotReasons = events.flatMap(event => {
+    const eventNotation = notation.events.find(entry => entry.target.eventId === event.id)?.notation;
+    return (eventNotation?.dots ?? 0) > 0 ? [`dots:${event.id}`] : [];
+  });
+  if (dotReasons.length > 0) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      currentTupletDuration: frozenRational(firstEvent.duration),
+      currentGroupOnset: frozenRational(firstEvent.onset),
+      currentGroupEnd: frozenRational(currentGroupEnd),
+      nextEventId: nextEvent?.id ?? null,
+      nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+      couplingReasons: Object.freeze(dotReasons),
+      admitted: false,
+      reason: 'BLOCKED_TIMING_COUPLED_DOTS'
+    });
+  }
+
+  const beamReasons = events.flatMap(event => {
+    const eventNotation = notation.events.find(entry => entry.target.eventId === event.id)?.notation;
+    return (eventNotation?.beams.length ?? 0) > 0 ? [`beams:${event.id}`] : [];
+  });
+  if (beamReasons.length > 0) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      currentTupletDuration: frozenRational(firstEvent.duration),
+      currentGroupOnset: frozenRational(firstEvent.onset),
+      currentGroupEnd: frozenRational(currentGroupEnd),
+      nextEventId: nextEvent?.id ?? null,
+      nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+      couplingReasons: Object.freeze(beamReasons),
+      admitted: false,
+      reason: 'BLOCKED_TIMING_COUPLED_BEAMS'
+    });
+  }
+
+  const tieReasons = events.flatMap(event =>
+    noteIdsFor(event).flatMap(noteId => {
+      const noteNotation = notation.notes.find(entry => entry.target.noteId === noteId)?.notation;
+      return (noteNotation?.ties.length ?? 0) > 0 ? [`tie:${noteId}`] : [];
+    })
+  );
+  if (tieReasons.length > 0) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      currentTupletDuration: frozenRational(firstEvent.duration),
+      currentGroupOnset: frozenRational(firstEvent.onset),
+      currentGroupEnd: frozenRational(currentGroupEnd),
+      nextEventId: nextEvent?.id ?? null,
+      nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+      couplingReasons: Object.freeze(tieReasons),
+      admitted: false,
+      reason: 'BLOCKED_TIMING_COUPLED_TIES'
+    });
+  }
+
+  if (targets.some(target => hasCrossStaff(notation, target.eventId))) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      currentTupletDuration: frozenRational(firstEvent.duration),
+      currentGroupOnset: frozenRational(firstEvent.onset),
+      currentGroupEnd: frozenRational(currentGroupEnd),
+      nextEventId: nextEvent?.id ?? null,
+      nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+      admitted: false,
+      reason: 'BLOCKED_CROSS_STAFF_TARGET'
+    });
+  }
+
+  let restoredWrittenBase: Readonly<Rational>;
+  let proposedOnsets: readonly Readonly<Rational>[];
+  let proposedGroupEnd: Readonly<Rational>;
+  let growthDuration: Readonly<Rational>;
+  try {
+    restoredWrittenBase = multiply(firstEvent.duration, 4, 3);
+    if (!SIMPLE_WRITTEN_BASES.some(value => same(value, restoredWrittenBase))) {
+      return result(score, profile, targets.map(target => target.eventId), {
+        currentTupletDuration: frozenRational(firstEvent.duration),
+        restoredWrittenBase: frozenRational(restoredWrittenBase),
+        currentGroupOnset: frozenRational(firstEvent.onset),
+        currentGroupEnd: frozenRational(currentGroupEnd),
+        nextEventId: nextEvent?.id ?? null,
+        nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+        admitted: false,
+        reason: 'BLOCKED_WRITTEN_BASE_UNSUPPORTED'
+      });
+    }
+    proposedOnsets = Object.freeze([
+      frozenRational(firstEvent.onset),
+      add(firstEvent.onset, restoredWrittenBase),
+      add(add(firstEvent.onset, restoredWrittenBase), restoredWrittenBase),
+      add(add(add(firstEvent.onset, restoredWrittenBase), restoredWrittenBase), restoredWrittenBase)
+    ]);
+    proposedGroupEnd = add(proposedOnsets[3]!, restoredWrittenBase);
+    growthDuration = subtract(proposedGroupEnd, currentGroupEnd);
+  } catch {
+    return result(score, profile, targets.map(target => target.eventId), {
+      currentTupletDuration: frozenRational(firstEvent.duration),
+      currentGroupOnset: frozenRational(firstEvent.onset),
+      currentGroupEnd: frozenRational(currentGroupEnd),
+      nextEventId: nextEvent?.id ?? null,
+      nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+      admitted: false,
+      reason: 'BLOCKED_ARITHMETIC'
+    });
+  }
+
   const eventPlans = Object.freeze(events.map((event, index) => Object.freeze({
     eventId: event.id,
     currentOnset: frozenRational(event.onset),
@@ -336,8 +511,6 @@ export const analyzeGeneralizedTupletToStraightV4 = (
     duration: frozenRational(growthDuration),
     end: frozenRational(proposedGroupEnd)
   });
-
-  const nextEvent = voice.events[fourthIndex + 1] ?? null;
 
   return result(score, profile, targets.map(target => target.eventId), {
     currentTupletDuration: frozenRational(firstEvent.duration),
