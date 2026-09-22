@@ -290,6 +290,25 @@ Responsibilities:
 
 It must not mutate history arrays directly.
 
+## 12A. Implementation packaging ruling — preserve qualified workstation artifacts
+
+During TDD, directly importing P10-3A into the qualified P10-1 workstation exceeded the frozen P10-1 bundle budget and correctly broke the retained P10-2 artifact contract. The implementation therefore preserves those qualified artifacts rather than raising an old budget.
+
+P10-3A uses a separate optional composition:
+
+```text
+P10-1 qualified workstation (unchanged)
+        -> P10-2 optional composition (unchanged)
+        -> P10-3A optional composition
+             -> score-editor-professional-pitch-transpose-workstation-v1
+             -> editor-session-professional-pitch-transpose-v1
+             -> editor-professional-pitch-transpose-v1
+```
+
+The browser composition package is `score-editor-browser-professional-workstation-p10-3a-v1`; the optional artifact contract is `ST_SCORE_EDITOR_P10_3A_PROFESSIONAL_WORKSTATION_BUNDLE`.
+
+This packaging change does not alter the approved key-aware musical behavior, history authority, semantic-target authority or fail-closed relation rules. It prevents P10-3A from silently widening already-qualified P10-1/P10-2 artifacts.
+
 ## 13. Workstation API
 
 `score-editor-professional-workstation-v1` adds:
