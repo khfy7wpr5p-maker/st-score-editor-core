@@ -32,8 +32,8 @@ The 14 rows below are the repository-to-rule matches that account for the 14 obs
 | 10 | S4036 — Searching OS commands in PATH is security-sensitive | `scripts/assemble-app09b-preview-stable.mjs:287` | Security Hotspot | UNAVAILABLE_FROM_CURRENT_ACCESS | UNAVAILABLE_FROM_CURRENT_ACCESS | build/diagnostic | ACCEPTED_RISK_CANDIDATE | Literal `git checkout --detach` with exact revision; no user-provided executable or revision. |
 | 11 | S4036 — Searching OS commands in PATH is security-sensitive | `scripts/assemble-app09b-preview-stable.mjs:292` | Security Hotspot | UNAVAILABLE_FROM_CURRENT_ACCESS | UNAVAILABLE_FROM_CURRENT_ACCESS | build/diagnostic | ACCEPTED_RISK_CANDIDATE | Literal `npm`; install explicitly uses `--ignore-scripts --no-audit --no-fund --no-package-lock`; only the explicit refresh path reaches it. |
 | 12 | S4036 — Searching OS commands in PATH is security-sensitive | `scripts/assemble-app09b-preview-stable.mjs:296` | Security Hotspot | UNAVAILABLE_FROM_CURRENT_ACCESS | UNAVAILABLE_FROM_CURRENT_ACCESS | build/diagnostic | ACCEPTED_RISK_CANDIDATE | Literal `npm run export:workstation-runtime` after exact detached renderer checkout; no user-controlled executable string. |
-| 13 | S5725 — Remote artifacts should not be used without integrity checks | `package.json:25` | Security Hotspot | UNAVAILABLE_FROM_CURRENT_ACCESS | UNAVAILABLE_FROM_CURRENT_ACCESS | install/build | REVIEW_REQUIRED | Direct HTTPS audio-contract tarball is version-pinned but `package.json` itself does not enforce its published SHA-256. Upstream v0.1.2 release workflow generates `SHA256SUMS.txt`; consumption-side enforcement needs a bounded install design rather than a suppression. |
-| 14 | S5725 — Remote artifacts should not be used without integrity checks | `package.json:26` | Security Hotspot | UNAVAILABLE_FROM_CURRENT_ACCESS | UNAVAILABLE_FROM_CURRENT_ACCESS | install/build | REVIEW_REQUIRED | Same supply-chain boundary for `@st/score-audio-web`. Do not mark safe until checksum/integrity enforcement is designed and tested. |
+| 13 | S5725 — Remote artifacts should not be used without integrity checks | `package.json:25` | Security Hotspot | UNAVAILABLE_FROM_CURRENT_ACCESS | UNAVAILABLE_FROM_CURRENT_ACCESS | install/build | TRUE_POSITIVE_FIX | Fixed: direct URL dependency removed. `contracts/audio-release-dependencies-v1.json` pins exact release identity + SHA-512; `install-verified-audio-dependencies.mjs` verifies bytes before any npm install and installs only verified local tarballs. |
+| 14 | S5725 — Remote artifacts should not be used without integrity checks | `package.json:26` | Security Hotspot | UNAVAILABLE_FROM_CURRENT_ACCESS | UNAVAILABLE_FROM_CURRENT_ACCESS | install/build | TRUE_POSITIVE_FIX | Fixed by the same verified local-tarball path; checksum mismatch, failed fetch and malformed manifest all fail before npm execution. |
 
 ## Root-cause fixes completed on the P10-2B branch
 
@@ -98,15 +98,25 @@ Rows 8–12 require the authenticated Sonar hotspot state to be set only after h
 
 ### Audio tarball integrity
 
-Rows 13–14 remain `REVIEW_REQUIRED`.
+Rows 13–14 are now `TRUE_POSITIVE_FIX` and implemented through a verified local-tarball bootstrap.
 
-The next bounded security design should decide between:
+Evidence:
 
-1. a lock/integrity-aware npm installation contract;
-2. a verified release-asset bootstrap that checks the producer's pinned SHA-256 before local package installation; or
-3. migration to a package registry/provenance path that supplies integrity metadata natively.
+- npm-observed SHA-512 values were captured on exact CI head `4a2c9d170951dd1389d51a34faafca33cbecaec8`;
+- pinned manifest: `contracts/audio-release-dependencies-v1.json`;
+- installer: `scripts/install-verified-audio-dependencies.mjs`;
+- direct GitHub tarball dependencies were removed from `package.json`;
+- checksum mismatch, failed fetch and malformed manifest abort before npm execution;
+- WebKit uses one npm reify operation for verified audio + exact `playwright@1.62.1` so no later no-save install can prune either dependency;
+- exact-head `461bb965eaa0855e7b852567c171fa6d402e932a`: CI #948 Node 18/20/22 PASS, 835/835 tests PASS;
+- exact-head retained WebKit PASS:
+  - APP-09B #334;
+  - P08-E4 #165;
+  - P10-1 workstation #89;
+  - P10-1 renderer qualification #84;
+  - P10-2 Triplet Unretiming #56.
 
-Any option must preserve the existing official `@st/score-audio-contracts` / `@st/score-audio-web` boundary and current audio admission tests.
+The official `@st/score-audio-contracts` / `@st/score-audio-web` boundary remains unchanged.
 
 ## Service truth
 
