@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  createProfessionalStandaloneScoreEditorControllerV1
-} from '../dist/packages/score-editor-browser-professional-v1/src/index.js';
+  createP10_3AProfessionalWorkstationStandaloneScoreEditorControllerV1
+} from '../dist/packages/score-editor-browser-professional-workstation-p10-3a-v1/src/index.js';
 
 const xml=`<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0">
@@ -23,8 +23,8 @@ const xml=`<?xml version="1.0" encoding="UTF-8"?>
 </score-partwise>`;
 
 const createController=async()=>{
-  const controller=createProfessionalStandaloneScoreEditorControllerV1();
-  await controller.base.openMusicXml(xml,{
+  const controller=createP10_3AProfessionalWorkstationStandaloneScoreEditorControllerV1();
+  await controller.openMusicXml(xml,{
     documentId:'doc:p10-3a-browser',
     revisionId:'rev:p10-3a-browser-1',
     title:'P10-3A Browser',
@@ -34,7 +34,7 @@ const createController=async()=>{
 };
 
 const selectSpan=controller=>{
-  const documentValue=controller.base.getDocument();
+  const documentValue=controller.getDocument();
   const events=documentValue.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events;
   const addresses=events.map(event=>
     documentValue.session.renderRequest.manifest.entries
@@ -43,33 +43,33 @@ const selectSpan=controller=>{
   assert.equal(addresses.length,2);
   assert.ok(addresses[0]);
   assert.ok(addresses[1]);
-  controller.selectEventSpan(addresses[0],addresses[1]);
+  controller.professional.selectEventSpan(addresses[0],addresses[1]);
 };
 
 test('P10-3A browser bridge adopts semitone transpose through validated snapshot boundary',async()=>{
   const controller=await createController();
   selectSpan(controller);
 
-  const result=controller.transposeSemitones(
+  const result=controller.transposeProfessionalRangeBySemitones(
     1,
     {nextRevisionId:'rev:p10-3a-browser-2'}
   );
 
   assert.equal(result.error,null);
-  assert.equal(controller.base.getDocument().session.history.past.length,1);
-  assert.equal(controller.getProfessionalSelection().anchor.revisionId,'rev:p10-3a-browser-2');
+  assert.equal(controller.getDocument().session.history.past.length,1);
+  assert.equal(controller.professional.getProfessionalSelection().anchor.revisionId,'rev:p10-3a-browser-2');
 });
 
 test('P10-3A browser bridge rejects out-of-range diatonic request without adoption',async()=>{
   const controller=await createController();
   selectSpan(controller);
-  const before=structuredClone(controller.base.getDocument());
+  const before=structuredClone(controller.getDocument());
 
-  const result=controller.transposeDiatonically(
+  const result=controller.transposeProfessionalRangeDiatonically(
     8,
     {nextRevisionId:'rev:p10-3a-browser-invalid'}
   );
 
   assert.equal(result.error?.code,'INVALID_DIATONIC_STEPS');
-  assert.deepEqual(controller.base.getDocument(),before);
+  assert.deepEqual(controller.getDocument(),before);
 });
