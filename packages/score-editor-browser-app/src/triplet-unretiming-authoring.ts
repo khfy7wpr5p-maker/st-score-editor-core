@@ -99,10 +99,12 @@ const currentTargets = (
 };
 
 export interface TripletUnretimingStandaloneScoreEditorControllerV1
-  extends Omit<TripletRetimingStandaloneScoreEditorController, 'profile'> {
+  extends Omit<TripletRetimingStandaloneScoreEditorController, 'profile' | 'mount' | 'unmount'> {
   readonly profile: typeof tripletUnretimingBrowserAppProfile;
   readonly getTripletUnretimingState: () => Readonly<TripletUnretimingBrowserState>;
   readonly removeTripletFromCapturedEvents: () => Readonly<ScoreEditorBrowserAppSnapshot>;
+  readonly mount: (root: HTMLElement) => void;
+  readonly unmount: () => void;
 }
 
 export const attachTripletUnretimingToBrowserControllerV1 = (
@@ -110,6 +112,8 @@ export const attachTripletUnretimingToBrowserControllerV1 = (
   options: TripletUnretimingAttachmentOptionsV1 = {}
 ): Readonly<TripletUnretimingStandaloneScoreEditorControllerV1> => {
   const revisionIdFactory = options.revisionIdFactory ?? browserRevisionId;
+  let root: HTMLElement | null = null;
+  let tripletGroupObserver: MutationObserver | null = null;
 
   const state = (): Readonly<TripletUnretimingBrowserState> => {
     const documentValue = base.getDocument();
@@ -147,10 +151,68 @@ export const attachTripletUnretimingToBrowserControllerV1 = (
     }
   };
 
+  const decorate = (): void => {
+    if (root === null) return;
+    const group = root.querySelector<HTMLElement>('[data-st-triplet-authoring]');
+    if (group === null) return;
+    const current = state();
+    let button = group.querySelector<HTMLButtonElement>('[data-st-triplet-unretiming]');
+    if (button === null) {
+      button = group.ownerDocument.createElement('button');
+      button.type = 'button';
+      button.textContent = 'Remove Triplet';
+      button.setAttribute('data-st-triplet-unretiming', TRIPLET_UNRETIMING_BROWSER_VERSION);
+      button.setAttribute('aria-label', 'Restore straight timing');
+      button.addEventListener('click', () => { controller.removeTripletFromCapturedEvents(); });
+      group.append(button);
+    }
+    button.disabled = !current.canRemoveTriplet;
+    button.title = current.canRemoveTriplet
+      ? 'Restore the three explicit Triplet events to their admitted straight timing.'
+      : current.admissionReason === null
+        ? 'Capture exactly three current Triplet events first.'
+        : `Triplet removal not admitted: ${current.admissionReason}`;
+  };
+
+  const observeTripletGroupLifecycle = (nextRoot: HTMLElement): void => {
+    tripletGroupObserver?.disconnect();
+    const Observer = nextRoot.ownerDocument.defaultView?.MutationObserver;
+    if (Observer === undefined) return;
+    tripletGroupObserver = new Observer(() => {
+      const group = nextRoot.querySelector<HTMLElement>('[data-st-triplet-authoring]');
+      if (group !== null && group.querySelector('[data-st-triplet-unretiming]') === null) {
+        decorate();
+      }
+    });
+    tripletGroupObserver.observe(nextRoot, { childList: true, subtree: true });
+  };
+
+  base.subscribe(() => { decorate(); });
+
   const controller: TripletUnretimingStandaloneScoreEditorControllerV1 = {
     ...base,
     profile: tripletUnretimingBrowserAppProfile,
     getTripletUnretimingState: state,
+    captureTripletEvent: () => {
+      const result = base.captureTripletEvent();
+      decorate();
+      return result;
+    },
+    clearTripletAuthoring: () => {
+      const result = base.clearTripletAuthoring();
+      decorate();
+      return result;
+    },
+    applyTripletToCapturedEvents: () => {
+      const result = base.applyTripletToCapturedEvents();
+      decorate();
+      return result;
+    },
+    applyRetimedTripletToCapturedEvents: () => {
+      const result = base.applyRetimedTripletToCapturedEvents();
+      decorate();
+      return result;
+    },
     removeTripletFromCapturedEvents: () => {
       const documentValue = base.getDocument();
       if (documentValue === null) {
@@ -171,7 +233,20 @@ export const attachTripletUnretimingToBrowserControllerV1 = (
       );
       const snapshot = base.adoptValidatedSnapshot(nextDocument);
       base.clearTripletAuthoring();
+      decorate();
       return snapshot;
+    },
+    mount: (nextRoot) => {
+      root = nextRoot;
+      base.mount(nextRoot);
+      observeTripletGroupLifecycle(nextRoot);
+      decorate();
+    },
+    unmount: () => {
+      tripletGroupObserver?.disconnect();
+      tripletGroupObserver = null;
+      root = null;
+      base.unmount();
     }
   };
 
