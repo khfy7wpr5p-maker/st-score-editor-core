@@ -25,10 +25,10 @@ const imported = importMusicXmlWithMeasureSemantics(xml, {
 });
 const score = imported.score;
 const voice = score.parts[0].staves[0].measures[0].voices[0];
-const voiceAddress = addressEntity(score, voice.id);
-assert.equal(voiceAddress.kind, 'voice');
 
 test('only the requested containing implicit gap is materialized when the voice has multiple gaps', () => {
+  const voiceAddress = addressEntity(score, voice.id);
+  assert.equal(voiceAddress.kind, 'voice');
   const position = createInsertionPosition(score, voiceAddress, { numerator: 3, denominator: 8 });
   const next = executeImplicitGapMaterialization(
     score,
