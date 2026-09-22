@@ -117,6 +117,16 @@ The read-only admission package and tests are already present on current main. F
 
 APP-11J proves bounded exact 3:2 Triplet -> supported straight-three timing and adjacent neutral-rest requirements without mutating score/notation or owning history/renderer authority. Historical PR #142 remains open as stacked metadata; that PR state is not the source of truth for code presence.
 
+### P10-2 — Bounded Triplet Removal / Unretiming Productization
+
+**BOUNDED IMPLEMENTATION PRESENT / OPTIONAL WORKSTATION / RELEASE GATES UNCHANGED.**
+
+P10-2 consumes fresh APP-11J evidence in a separate atomic mutation rather than adding mutation authority to APP-11J. The selected three event identities are preserved, Triplet-owned metadata is removed, and the exact admitted adjacent-rest action is applied: remove the rest when exactly consumed, or preserve its identity while shifting/shrinking it forward when larger.
+
+The mutation is routed through `EditorSessionV4`: one accepted Remove Triplet action creates one history revision; Undo restores the exact Triplet pair and Redo restores the exact straight pair. The browser command is composed only into an optional P10-2 professional workstation, preserving the qualified default standalone bundle and P10-1 artifact boundaries.
+
+Dedicated mobile WebKit covers straight -> Triplet -> Remove Triplet -> exact Undo/Redo, remount/re-capture and one-click/one-history behavior. This automated evidence is not a physical-device release PASS.
+
 ## Current architecture phase
 
 ```text
@@ -131,17 +141,21 @@ exact semantic target/range
 
 `ScoreDocumentV3 + NotationDocumentV4` remains canonical. Staff/measure navigation, multi-target capture, palette state, file/recovery state, renderer/viewport state, playback and export/print state remain noncanonical. Renderer coordinates never become authoring authority.
 
+## P10-0 — Architecture Reality Refresh
+
+P10-0 is complete. It aligned architecture, roadmap, productization and release-gate sources with the post-P09 mainline reality without changing runtime or release authority. This historical checkpoint remains part of the repository contract.
+
 ## Next development action
 
-**P10-0 — Architecture Reality Refresh.**
+**P10-2 closeout — exact-head qualification and whole-branch review.**
 
-Align README, architecture, roadmap, productization and stage/release documentation with the post-PR #191 mainline state. Keep this tranche documentation/test-only.
+The bounded inverse mutation, unified-history path, optional workstation surface and dedicated WebKit regression are implemented. Before merge, record fresh exact-head Node 18/20/22 and retained WebKit gates plus final review. Physical iPhone/Safari validation remains separate before any release/cutover claim.
 
-After P10-0, the next rhythm work is bounded canonical Triplet removal/unretiming mutation that consumes the existing APP-11J admission evidence, followed by session/browser productization with one accepted action = one EditorSessionV4 history revision and exact Undo.
+After this bounded tranche, broader P10-2 Advanced Rhythm & Relations work remains separately scoped; arbitrary tuplets, beam authoring and other relation semantics are not implied by this implementation.
 
 ## Still fail-closed / gated
 
-- canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission;
+- P10-2 physical iPhone/Safari validation before any release/cutover claim;
 - arbitrary tuplet ratios/cardinalities outside the bounded 3:2 profile;
 - automatic renderer-derived Triplet range inference;
 - arbitrary imported trailing MusicXML growth without pickup/non-controlling evidence;

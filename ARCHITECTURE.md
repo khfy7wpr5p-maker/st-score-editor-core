@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SSE-00–10, APP-00–10O, APP-11A–I, P09-A/B/C/D and Stage 07 are COMPLETE / MERGED; P09 is QUALIFIED. APP-11J read-only admission is present on main. The standalone physical device/browser release matrix remains open and is required before release.**
+Status: **SSE-00–10, APP-00–10O, APP-11A–I, P09-A/B/C/D, P10-0/P10-1 and Stage 07 are merged/qualified for their recorded scope. APP-11J read-only admission is present on main. P10-2 bounded Triplet removal/unretiming is implemented as an optional workstation capability; the standalone physical device/browser release matrix remains open and is required before release.**
 
 ## Canonical architecture
 
@@ -176,6 +176,23 @@ The read-only Triplet Removal / Unretiming admission foundation is already prese
 
 APP-11J remains analysis-only: canonical unretiming mutation authority is false, history authority is false and renderer-coordinate authority is false. Historical PR #142 remaining open is stale stacked PR metadata and must not be interpreted as evidence that the analyzer is absent from main.
 
+P10-2 consumes that read-only evidence without changing APP-11J's authority. The separate `editor-tuplet-unretiming-authoring-v4` package owns the bounded inverse mutation, `editor-session-tuplet-unretiming-v4` routes it through the unified history, and the browser exposure is an optional professional-workstation decorator rather than a default-app cutover.
+
+## P10-2 bounded Triplet removal / unretiming
+
+For one fresh APP-11J-admitted three-event 3:2 Triplet:
+
+- proposed event onsets/durations are copied from fresh admission evidence;
+- event/note identities and part/staff/frame/measure/Voice topology are preserved;
+- owned Triplet notation is removed atomically with timing;
+- `REMOVE_ADJACENT_REST` deletes exactly the admitted neutral rest;
+- `SHRINK_ADJACENT_REST_FORWARD` preserves the rest id and applies only the admitted onset/duration;
+- one accepted action creates one `EditorSessionV4` history revision;
+- Undo restores the exact Triplet pair and Redo restores the exact straight pair;
+- browser capture is explicit current-revision semantic evidence;
+- renderer/DOM coordinates remain non-authoritative;
+- the P10-2 workstation is optional and preserves the qualified P10-1/default artifact boundaries.
+
 ## Triplet retiming invariants
 
 For the admitted APP-11G/H/I profile:
@@ -198,7 +215,6 @@ For the admitted APP-11G/H/I profile:
 
 The following remain outside current production authority:
 
-- canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission;
 - arbitrary tuplet ratios/cardinalities beyond the bounded 3:2 profile;
 - automatic range inference from renderer layout;
 - independent retiming of dots/beams/existing tuplets/ties outside admitted atomic programs;
@@ -213,11 +229,15 @@ The following remain outside current production authority:
 - cloud/server revision authority;
 - public-write/production activation.
 
+## P10-0 — Architecture Reality Refresh
+
+P10-0 is complete. It aligned architecture, roadmap, productization and release-gate sources with the post-P09 mainline reality without changing runtime or release authority. This historical checkpoint remains part of the repository contract.
+
 ## Next architecture step
 
-**P10-0 — Architecture Reality Refresh.**
+**P10-2 closeout, then later Advanced Rhythm & Relations tranches.**
 
-P10-0 is documentation/test-only. It aligns architecture, roadmap, productization and release-gate sources with the post-PR #191 mainline reality while preserving all release/cutover safety gates. P10-2 will consume the existing APP-11J read-only admission when designing bounded canonical Triplet removal/unretiming mutation; it must not duplicate the analyzer.
+The bounded Triplet inverse now consumes APP-11J rather than duplicating it. Before merge it still requires fresh exact-head Node/WebKit qualification and whole-branch review. Physical iPhone/Safari validation remains a separate requirement before any P10-2 release/cutover claim. Later P10-2 rhythm/relations work may address broader tuplets, beams and other relation semantics only through separately specified fail-closed authorities.
 
 ## Automated validation contract
 
@@ -226,6 +246,7 @@ Before feature merge, exact-head validation includes:
 - Node 18 / 20 / 22 repository contract + build/test;
 - retained APP-10/11 mobile WebKit authoring regressions;
 - dedicated APP-11I straight-note Triplet retiming -> Undo regression;
+- dedicated P10-2 straight -> Triplet -> Remove Triplet -> Undo/Redo + remount duplicate-listener WebKit regression;
 - exact ST Score Rendering Layer checkout/build;
 - APP-09B renderer regression;
 - APP-09B controlled-layout rerender regression.

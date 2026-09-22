@@ -3,7 +3,7 @@
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
   "date": "2026-09-19",
-  "status": "P09_COMPLETE_MERGED_APP_11J_ANALYSIS_PRESENT_MAIN_P10_0_ACTIVE_FULL_DEVICE_MATRIX_OPEN",
+  "status": "P10_1_MERGED_P10_2_BOUNDED_UNRETIMING_IMPLEMENTED_FULL_DEVICE_MATRIX_OPEN",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "canonical_pair": {
     "score": "ScoreDocumentV3/3.0.0",
@@ -136,6 +136,23 @@
         "shrink_adjacent_rest_forward_when_larger"
       ],
       "canonical_mutation_exposed": false
+    },
+    "unretiming": {
+      "label": "Remove Triplet / Restore Straight Timing",
+      "source": "P10_2",
+      "status": "IMPLEMENTED_BOUNDED_OPTIONAL_WORKSTATION",
+      "admission": "APP_11J_MAIN",
+      "requires_exact_current_3_2_triplet": true,
+      "requires_exact_adjacent_neutral_rest": true,
+      "rest_actions": [
+        "remove_adjacent_rest_when_exactly_consumed",
+        "shrink_adjacent_rest_forward_when_larger"
+      ],
+      "canonical_mutation_exposed": true,
+      "one_user_edit_one_history_revision": true,
+      "exact_undo_redo": true,
+      "renderer_coordinate_authority": false,
+      "default_standalone_cutover": false
     }
   },
   "triplet_retiming_fail_closed": [
@@ -179,7 +196,11 @@
     "physical_device_pass_inferred_from_webkit": false,
     "app_11j_mainline_foundation_commit": "674187b920434d6d7d72330baba44c2692a64596",
     "historical_app_11j_exact_head_ci_run": 34043178547,
-    "historical_app_11j_exact_head": "b21ffd21b35075267022ba1e6645af6ac7bd136c"
+    "historical_app_11j_exact_head": "b21ffd21b35075267022ba1e6645af6ac7bd136c",
+    "p10_2_straight_triplet_straight_undo_redo_webkit": true,
+    "p10_2_remount_duplicate_listener_webkit": true,
+    "p10_2_optional_workstation_artifact_bounded": true,
+    "p10_2_physical_device_pass_claimed": false
   },
   "release_gate": {
     "manualDeviceValidationRequired": true,
@@ -202,15 +223,15 @@
     }
   },
   "next_development_action": {
-    "id": "P10-0",
-    "title": "Architecture Reality Refresh",
-    "mode": "documentation_reality_alignment",
+    "id": "P10-2-CLOSEOUT",
+    "title": "Bounded Triplet removal / unretiming exact-head qualification and review",
+    "mode": "qualification_before_merge",
     "production_code_change": false,
     "merge_or_release_authority_inferred": false
   },
   "remaining_gates": [
-    "triplet_removal_unretiming_canonical_mutation",
-    "triplet_unretiming_session_browser_productization",
+    "p10_2_physical_device_validation_before_release_claim",
+    "broader_p10_2_rhythm_relations",
     "arbitrary_tuplet_ratios_cardinalities",
     "imported_automatic_voice_or_measure_invention",
     "mxl_container_support",
@@ -219,5 +240,30 @@
     "cloud_server_revision_authority",
     "public_write_production_activation"
   ],
-  "seslitab_cutover_authorized": false
+  "seslitab_cutover_authorized": false,
+  "p10_2": {
+    "status": "BOUNDED_UNRETIMING_IMPLEMENTED",
+    "source_admission": "APP_11J_MAIN",
+    "canonical_mutation_package": "editor-tuplet-unretiming-authoring-v4",
+    "session_package": "editor-session-tuplet-unretiming-v4",
+    "app_package": "score-editor-app-tuplet-unretiming",
+    "browser_surface": "optional_professional_workstation_decorator",
+    "optional_artifact": "ST_SCORE_EDITOR_P10_2_PROFESSIONAL_WORKSTATION_BUNDLE",
+    "history_authority": "EditorSessionV4",
+    "one_user_edit_one_history_revision": true,
+    "exact_undo_redo": true,
+    "preserve_event_note_identity": true,
+    "adjacent_rest_actions": [
+      "remove_adjacent_rest_when_exactly_consumed",
+      "shrink_adjacent_rest_forward_when_larger"
+    ],
+    "default_standalone_cutover": false,
+    "default_standalone_budget_preserved": true,
+    "renderer_coordinate_authority": false,
+    "dom_authoring_authority": false,
+    "arbitrary_tuplet_support": false,
+    "production_release_authorized": false,
+    "seslitab_cutover_authorized": false,
+    "physical_device_validation_required_before_release_claim": true
+  }
 }

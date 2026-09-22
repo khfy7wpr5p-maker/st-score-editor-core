@@ -8,10 +8,18 @@ Security-first, renderer-independent semantic score-editing core for the standal
 - **APP-00–10O — COMPLETE / MERGED:** standalone document/runtime, unified V4 history, browser shell, local files/recovery, guarded renderer interaction, playback, export/print, Guitar/Piano starts, Voice 1–5, semantic Staff/measure navigation, note/chord authoring, articulations, ornaments and explicit accidentals.
 - **APP-11A–I — COMPLETE / MERGED:** safe duration/rest balancing, semantic multi-target selection, Tie, Slur, bounded Triplet metadata authoring, straight-three Triplet retiming admission, atomic retiming mutation and final session/browser product surface are merged.
 - **P09-A/B/C/D — COMPLETE / MERGED / QUALIFIED:** PR #191 merged at `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`; exact qualified P09-D head `636c17dc27b657d273cf2e4f630a2e7c11ffa8f6`.
-- **APP-11J — ANALYSIS FOUNDATION PRESENT ON MAIN:** read-only Triplet removal/unretiming admission from foundation commit `674187b920434d6d7d72330baba44c2692a64596` is present; canonical unretiming mutation is not exposed.
+- **APP-11J — ANALYSIS FOUNDATION PRESENT ON MAIN / P10-2 CONSUMER IMPLEMENTED:** APP-11J remains read-only admission. P10-2 consumes fresh APP-11J evidence in a separate bounded atomic Triplet removal/unretiming mutation, unified `EditorSessionV4` history path and optional professional-workstation surface. The qualified default standalone artifact is not cut over.
 - **Stage 07 — COMPLETE / MERGED:** exact current-revision semantic-to-render presentation locators are read-only.
 - **Standalone release gate — OPEN:** iPhone Safari P08/P09 device gate PASS is recorded for the tested professional/keyboard/renderer scope, but the full APP-09 G1–G10 multi-platform release matrix is still incomplete.
 - **SesliTab product cutover — NOT AUTHORIZED:** SesliTab is not an architectural dependency of ST Score Editor and is outside the current development scope.
+
+## P10-2 — Bounded Triplet Removal / Unretiming
+
+P10-2 adds a separate inverse path for exactly the APP-11J-admitted 3:2 profile. Three explicit current-revision Triplet events are restored to their supported straight written timing while preserving event/note identities. The exact adjacent neutral rest is either removed when fully consumed or shifted forward and shortened when larger than the required growth.
+
+The mutation is atomic across `ScoreDocumentV3 + NotationDocumentV4`, and one accepted **Remove Triplet** action creates exactly one `EditorSessionV4` history revision. Undo restores the exact Triplet pair; Redo restores the exact straight pair. The browser surface is an optional P10-2 professional-workstation decorator and does not alter the retained default `STScoreEditorApp` budget or authorize production/SesliTab cutover.
+
+Arbitrary tuplet ratios/cardinalities, renderer-derived range inference, selected cross-staff timing rewrite, and dot/beam/tie-aware unretiming remain outside this bounded authority.
 
 ## Canonical authority
 
