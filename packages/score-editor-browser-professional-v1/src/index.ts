@@ -12,6 +12,8 @@ import {
   commitProfessionalWorkstationFrameBarlinesV1,
   commitProfessionalWorkstationKeySignatureV1,
   commitProfessionalWorkstationOctaveTransposeV1,
+  commitProfessionalWorkstationSemitoneTransposeV1,
+  commitProfessionalWorkstationDiatonicTransposeV1,
   commitProfessionalWorkstationTimeSignatureV1,
   commitProfessionalWorkstationTopologyV1,
   createScoreEditorProfessionalWorkstationV1,
@@ -42,6 +44,7 @@ export type ScoreEditorBrowserProfessionalListenerV1 = (
 
 export type ProfessionalOctaveDeltaV1 = Parameters<typeof commitProfessionalWorkstationOctaveTransposeV1>[1];
 export type ProfessionalOctaveOptionsV1 = Parameters<typeof commitProfessionalWorkstationOctaveTransposeV1>[2];
+export type ProfessionalPitchTransposeOptionsV1 = Parameters<typeof commitProfessionalWorkstationSemitoneTransposeV1>[2];
 export type ProfessionalClearOptionsV1 = Parameters<typeof commitProfessionalWorkstationClearToRestV1>[1];
 export type ProfessionalStructureOptionsV1 = Parameters<typeof commitProfessionalWorkstationKeySignatureV1>[3];
 export type ProfessionalTimeSignatureOptionsV1 = Parameters<typeof commitProfessionalWorkstationTimeSignatureV1>[3];
@@ -65,6 +68,14 @@ export interface ScoreEditorBrowserProfessionalControllerV1 {
   readonly transposeOctaves: (
     octaveDelta: ProfessionalOctaveDeltaV1,
     options: ProfessionalOctaveOptionsV1
+  ) => Readonly<ScoreEditorBrowserProfessionalSnapshotV1>;
+  readonly transposeSemitones: (
+    delta: number,
+    options: ProfessionalPitchTransposeOptionsV1
+  ) => Readonly<ScoreEditorBrowserProfessionalSnapshotV1>;
+  readonly transposeDiatonically: (
+    steps: number,
+    options: ProfessionalPitchTransposeOptionsV1
   ) => Readonly<ScoreEditorBrowserProfessionalSnapshotV1>;
   readonly clearToRest: (
     options: ProfessionalClearOptionsV1
@@ -257,6 +268,12 @@ export const attachProfessionalWorkstationToBrowserControllerV1 = (
     ),
     transposeOctaves: (octaveDelta, options) => runCommit((workstation) =>
       commitProfessionalWorkstationOctaveTransposeV1(workstation, octaveDelta, options)
+    ),
+    transposeSemitones: (delta, options) => runCommit((workstation) =>
+      commitProfessionalWorkstationSemitoneTransposeV1(workstation, delta, options)
+    ),
+    transposeDiatonically: (steps, options) => runCommit((workstation) =>
+      commitProfessionalWorkstationDiatonicTransposeV1(workstation, steps, options)
     ),
     clearToRest: (options) => runCommit((workstation) =>
       commitProfessionalWorkstationClearToRestV1(workstation, options)
