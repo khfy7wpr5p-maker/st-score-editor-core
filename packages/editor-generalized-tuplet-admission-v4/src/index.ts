@@ -163,6 +163,17 @@ const noteIdsFor = (event: ScoreEvent): readonly string[] =>
 const hasCrossStaff = (notation: NotationDocumentV4, eventId: string): boolean =>
   notation.crossStaffPlacements.some(item => item.source.eventId === eventId);
 
+const neutralRestNotation = (notation: NotationDocumentV4, eventId: string): boolean => {
+  const value = notation.events.find(entry => entry.target.eventId === eventId)?.notation;
+  return value === undefined || (
+    value.dots === 0 &&
+    value.beams.length === 0 &&
+    value.tuplet === null &&
+    value.articulations.length === 0 &&
+    value.ornaments.length === 0
+  );
+};
+
 const tupletBoundaryReason = (
   notation: NotationDocumentV4,
   eventIds: readonly string[]
@@ -512,7 +523,7 @@ export const analyzeGeneralizedTupletToStraightV4 = (
     end: frozenRational(proposedGroupEnd)
   });
 
-  return result(score, profile, targets.map(target => target.eventId), {
+  const commonPlan = {
     currentTupletDuration: frozenRational(firstEvent.duration),
     restoredWrittenBase: frozenRational(restoredWrittenBase),
     currentGroupOnset: frozenRational(firstEvent.onset),
@@ -521,7 +532,65 @@ export const analyzeGeneralizedTupletToStraightV4 = (
     eventPlans,
     requiredGrowthInterval,
     nextEventId: nextEvent?.id ?? null,
-    nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset),
+    nextEventOnset: nextEvent === null ? null : frozenRational(nextEvent.onset)
+  } as const;
+
+  if (
+    nextEvent === null ||
+    nextEvent.kind !== 'rest' ||
+    !same(nextEvent.onset, currentGroupEnd) ||
+    !neutralRestNotation(notation, nextEvent.id) ||
+    hasCrossStaff(notation, nextEvent.id)
+  ) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      ...commonPlan,
+      admitted: false,
+      reason: 'BLOCKED_ADJACENT_REST_REQUIRED'
+    });
+  }
+
+  let nextEnd: Readonly<Rational>;
+  try {
+    nextEnd = endOf(nextEvent);
+  } catch {
+    return result(score, profile, targets.map(target => target.eventId), {
+      ...commonPlan,
+      admitted: false,
+      reason: 'BLOCKED_ARITHMETIC'
+    });
+  }
+
+  if (compare(nextEnd, proposedGroupEnd) < 0) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      ...commonPlan,
+      admitted: false,
+      reason: 'BLOCKED_ADJACENT_REST_INSUFFICIENT'
+    });
+  }
+
+  const removeRest = same(nextEnd, proposedGroupEnd);
+  const restPlan: Readonly<GeneralizedTupletRestPlanV4> = removeRest
+    ? Object.freeze({
+        action: 'REMOVE_ADJACENT_REST',
+        restEventId: nextEvent.id,
+        currentOnset: frozenRational(nextEvent.onset),
+        currentDuration: frozenRational(nextEvent.duration),
+        proposedOnset: null,
+        proposedDuration: null
+      })
+    : Object.freeze({
+        action: 'SHRINK_ADJACENT_REST_FORWARD',
+        restEventId: nextEvent.id,
+        currentOnset: frozenRational(nextEvent.onset),
+        currentDuration: frozenRational(nextEvent.duration),
+        proposedOnset: frozenRational(proposedGroupEnd),
+        proposedDuration: subtract(nextEnd, proposedGroupEnd)
+      });
+
+  return result(score, profile, targets.map(target => target.eventId), {
+    ...commonPlan,
+    restPlan,
+    balancePolicy: 'CONSUME_EXACT_ADJACENT_NEUTRAL_REST',
     admitted: true,
     reason: 'ADMITTED_4_TO_3_TO_STRAIGHT_FOUR'
   });
