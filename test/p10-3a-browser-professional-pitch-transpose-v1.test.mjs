@@ -57,7 +57,8 @@ test('P10-3A browser bridge adopts semitone transpose through validated snapshot
 
   assert.equal(result.error,null);
   assert.equal(controller.getDocument().session.history.past.length,1);
-  assert.equal(controller.professional.getProfessionalSelection().anchor.revisionId,'rev:p10-3a-browser-2');
+  assert.equal(controller.getDocument().session.history.present.score.revision.id,'rev:p10-3a-browser-2');
+  assert.equal(controller.professional.getProfessionalSelection(),null);
 });
 
 test('P10-3A browser bridge rejects out-of-range diatonic request without adoption',async()=>{
