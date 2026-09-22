@@ -8,11 +8,10 @@ on:
       - p05-physical-teacher-task2-preview-v1
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   webkit-preview:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -86,6 +85,8 @@ jobs:
         run: node scripts/app09b-webkit-controlled-layout-regression.mjs
 
   p05-paste-render:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
