@@ -337,8 +337,7 @@ export const analyzeGeneralizedTupletToStraightV4 = (
     end: frozenRational(proposedGroupEnd)
   });
 
-  const fourthIndex = voice.events.findIndex(event => event.id === fourthEvent.id);
-  const nextEvent = fourthIndex < 0 ? null : voice.events[fourthIndex + 1] ?? null;
+  const nextEvent = voice.events[fourthIndex + 1] ?? null;
 
   return result(score, profile, targets.map(target => target.eventId), {
     currentTupletDuration: frozenRational(firstEvent.duration),
