@@ -4,6 +4,14 @@ Status: **ANALYSIS FOUNDATION PRESENT ON MAIN / CANONICAL MUTATION NOT EXPOSED**
 
 APP-11J is an analysis-only foundation already present on current main. Foundation commit `674187b920434d6d7d72330baba44c2692a64596` is an ancestor of the P10 baseline main commit `9dfa253a55982a66b01b5eaa2f8df614b1e58e9b`. Historical PR #142 remains open as stacked metadata and is not the source of truth for code presence. APP-11J does not expose canonical score/notation mutation, browser authoring, session history mutation, release authority or SesliTab cutover.
 
+## P10-2 consumer reality
+
+APP-11J itself remains read-only and owns no mutation/history/browser authority. P10-2 now consumes a **fresh** APP-11J admission immediately before mutation through the separate `editor-tuplet-unretiming-authoring-v4` package.
+
+For the admitted bounded profile, P10-2 copies the proposed onsets/durations exactly, removes the three owned 3:2 Triplet metadata entries, and executes the APP-11J rest plan atomically. `EditorSessionV4` remains the sole history authority: one accepted Remove Triplet action creates one history revision, with exact Undo/Redo snapshots.
+
+Browser exposure is limited to an optional professional-workstation decorator using explicit current-revision semantic captures. This does not change APP-11J's analysis-only status, does not change the default standalone cutover state, and does not authorize arbitrary tuplets, production release or SesliTab cutover.
+
 ## Purpose
 
 Provide a bounded inverse admission for the APP-11G/H/I straight-three -> 3:2 Triplet path before any destructive Triplet Removal / Unretiming authoring is considered.
