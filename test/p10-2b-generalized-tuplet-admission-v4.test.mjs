@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 import { createScoreDocumentV3 } from '../dist/packages/score-model-v3/src/index.js';
 import { createNotationDocumentV4 } from '../dist/packages/notation-structure-v4/src/index.js';
-import { createNewScoreEditorAppDocument } from '../dist/packages/score-editor-app-document/src/index.js';
+import { createNewScoreEditorAppDocument, openMusicXmlScoreEditorAppDocument } from '../dist/packages/score-editor-app-document/src/index.js';
 import {
   analyzeGeneralizedTupletToStraightV4,
   FOUR_TO_THREE_TUPLET_PROFILE_V4
@@ -80,6 +80,45 @@ const targets=(score,...eventIds)=>eventIds.map(eventId=>{
   assert.equal(target.kind,'event');
   return target;
 });
+
+
+
+const importedFourToThreeMusicXml=`<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Part</part-name></score-part></part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>8</divisions>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>3</duration><voice>1</voice><type>eighth</type>
+        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
+        <notations><tuplet type="start" number="1"/></notations>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>3</duration><voice>1</voice><type>eighth</type>
+        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>3</duration><voice>1</voice><type>eighth</type>
+        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>3</duration><voice>1</voice><type>eighth</type>
+        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
+        <notations><tuplet type="stop" number="1"/></notations>
+      </note>
+      <note><rest/><duration>20</duration><voice>1</voice></note>
+    </measure>
+  </part>
+</score-partwise>`;
 
 const eighthFourToThree=(restDuration={numerator:1,denominator:8})=>[
   note('e1','n1',{numerator:0,denominator:1},{numerator:3,denominator:32},'C'),
@@ -545,3 +584,38 @@ test('P10-2B returns deeply frozen read-only admission evidence',()=>{
   assert.deepEqual(current.score,beforeScore);
   assert.deepEqual(current.notation,beforeNotation);
 });
+
+test('P10-2B admits imported MusicXML 4:3 timing without replacing event or note identity',async()=>{
+  const imported=await openMusicXmlScoreEditorAppDocument(importedFourToThreeMusicXml,{
+    documentId:'doc:p10-2b:musicxml',
+    revisionId:'rev:p10-2b:musicxml',
+    sha256Hex:async()=> 'c'.repeat(64)
+  });
+  const score=imported.session.history.present.score;
+  const notation=imported.session.history.present.notation;
+  const staff=score.parts[0].staves.find(item=>item.role==='standard');
+  assert.ok(staff);
+  const voice=staff.measures[0].voices[0];
+  const selected=voice.events.slice(0,4);
+  const beforeScore=structuredClone(score);
+  const beforeNotation=structuredClone(notation);
+  const beforeEventIds=selected.map(event=>event.id);
+  const beforeNoteIds=selected.map(event=>event.kind==='note'?event.note.id:null);
+
+  const result=analyzeGeneralizedTupletToStraightV4(
+    score,
+    notation,
+    selected.map(event=>addressEntityV3(score,event.id)),
+    FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+
+  assert.equal(result.admitted,true);
+  assert.deepEqual(result.targetEventIds,beforeEventIds);
+  assert.deepEqual(selected.map(event=>event.kind==='note'?event.note.id:null),beforeNoteIds);
+  assert.deepEqual(result.currentTupletDuration,{numerator:3,denominator:32});
+  assert.deepEqual(result.restoredWrittenBase,{numerator:1,denominator:8});
+  assert.equal(score.source.format,'musicxml');
+  assert.deepEqual(score,beforeScore);
+  assert.deepEqual(notation,beforeNotation);
+});
+
