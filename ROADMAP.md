@@ -179,9 +179,9 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next development action
 
-**P10-3A closeout — exact-head qualification, Sonar required check and whole-branch review.**
+**P10-3A closeout — implementation qualified; merge approval remains human-gated.**
 
-P10-3A keeps the qualified P10-1/P10-2 artifacts unchanged while adding a separate optional key-aware pitch-transpose composition. Before merge, record fresh exact-head Node 18/20/22, all retained WebKit gates, the dedicated P10-3A WebKit gate, required SonarCloud Code Analysis and final review. Physical iPhone/Safari validation remains separate before any release/cutover claim.
+P10-3A keeps the qualified P10-1/P10-2 artifacts unchanged while adding a separate optional key-aware pitch-transpose composition. Exact-head Node 18/20/22, all retained WebKit gates, the dedicated P10-3A WebKit gate and required SonarCloud Code Analysis have passed. Merge remains separately human-gated. Physical iPhone/Safari validation remains separate before any release/cutover claim.
 
 After this bounded tranche, broader Advanced Rhythm & Relations work remains separately scoped; generalized tuplet mutation, arbitrary ratios/cardinalities, beam authoring and other relation semantics are not implied by this implementation.
 
