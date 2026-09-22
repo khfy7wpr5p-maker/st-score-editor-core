@@ -325,6 +325,8 @@ try {
     return c.getDocument().session.history.past.length;
   });
 
+  await captureThree();
+
   const remountButton = page.locator('[data-st-triplet-unretiming="1.0.0"]');
   if (await remountButton.count() !== 1 || await remountButton.isDisabled()) {
     throw new Error(`P10-2 remount control mismatch: count=${await remountButton.count()} disabled=${await remountButton.isDisabled()}`);
