@@ -214,20 +214,60 @@ export const analyzeGeneralizedTupletToStraightV4 = (
   const notation = createNotationDocumentV4(score, notationInput);
   const profile = Object.freeze({ ...profileInput });
 
+  const targetEventIds = targetsInput.flatMap(target => {
+    const candidate = target as EventAddressV3 & { readonly eventId?: unknown };
+    return typeof candidate.eventId === 'string' ? [candidate.eventId] : [];
+  });
+
   if (targetsInput.length !== 4) {
-    return result(score, profile, targetsInput.map(target => target.eventId), {
+    return result(score, profile, targetEventIds, {
       admitted: false,
       reason: 'BLOCKED_WRONG_CARDINALITY'
     });
   }
 
-  const targets = targetsInput.map(target => {
-    const resolved = resolveSemanticAddressV3(score, target);
-    if (resolved.kind !== 'event') throw new Error('TARGET_KIND');
-    return Object.freeze({ ...target });
-  });
+  const targets: EventAddressV3[] = [];
+  for (const target of targetsInput) {
+    let resolved;
+    try {
+      resolved = resolveSemanticAddressV3(score, target);
+    } catch {
+      return result(score, profile, targetEventIds, {
+        admitted: false,
+        reason: 'BLOCKED_STALE_TARGET'
+      });
+    }
+    if (resolved.kind !== 'event') {
+      return result(score, profile, targetEventIds, {
+        admitted: false,
+        reason: 'BLOCKED_TARGET_KIND'
+      });
+    }
+    targets.push(Object.freeze({ ...target }));
+  }
+
+  if (new Set(targets.map(target => target.eventId)).size !== 4) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      admitted: false,
+      reason: 'BLOCKED_DUPLICATE_TARGET'
+    });
+  }
 
   const firstTarget = targets[0]!;
+  const samePath = targets.every(target =>
+    target.partId === firstTarget.partId &&
+    target.staffId === firstTarget.staffId &&
+    target.frameId === firstTarget.frameId &&
+    target.measureId === firstTarget.measureId &&
+    target.voiceId === firstTarget.voiceId
+  );
+  if (!samePath) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      admitted: false,
+      reason: 'BLOCKED_CROSS_SCOPE_TARGET'
+    });
+  }
+
   const part = score.parts.find(item => item.id === firstTarget.partId);
   const staff = part?.staves.find(item => item.id === firstTarget.staffId);
   const measure = staff?.measures.find(item =>
@@ -235,14 +275,29 @@ export const analyzeGeneralizedTupletToStraightV4 = (
   );
   const voice = measure?.voices.find(item => item.id === firstTarget.voiceId);
   if (part === undefined || staff === undefined || measure === undefined || voice === undefined) {
-    throw new Error('TARGET_PATH');
+    return result(score, profile, targets.map(target => target.eventId), {
+      admitted: false,
+      reason: 'BLOCKED_STALE_TARGET'
+    });
   }
 
-  const events = targets.map(target => {
-    const event = voice.events.find(item => item.id === target.eventId);
-    if (event === undefined) throw new Error('TARGET_EVENT');
-    return event;
-  });
+  const indices = targets.map(target => voice.events.findIndex(event => event.id === target.eventId));
+  const [firstIndex, secondIndex, thirdIndex, fourthIndex] = indices;
+  if (
+    firstIndex === undefined || secondIndex === undefined ||
+    thirdIndex === undefined || fourthIndex === undefined ||
+    firstIndex < 0 ||
+    secondIndex !== firstIndex + 1 ||
+    thirdIndex !== secondIndex + 1 ||
+    fourthIndex !== thirdIndex + 1
+  ) {
+    return result(score, profile, targets.map(target => target.eventId), {
+      admitted: false,
+      reason: 'BLOCKED_REORDERED_OR_NONCONSECUTIVE_TARGET'
+    });
+  }
+
+  const events = indices.map(index => voice.events[index]!);
   const firstEvent = events[0]!;
   const fourthEvent = events[3]!;
 
