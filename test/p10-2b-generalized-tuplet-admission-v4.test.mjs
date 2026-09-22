@@ -26,14 +26,17 @@ const fourToThree=(position,number=1)=>eventNotation({
 
 const state=({
   events,
-  eventNotationById={}
+  eventNotationById={},
+  preset='GUITAR_TREBLE',
+  mutateRaw=()=>{}
 })=>{
-  const document=createNewScoreEditorAppDocument({idFactory:ids(),preset:'GUITAR_TREBLE'});
+  const document=createNewScoreEditorAppDocument({idFactory:ids(),preset});
   const baseScore=document.session.history.present.score;
   const baseNotation=document.session.history.present.notation;
   const raw=structuredClone(baseScore);
   const sourceStaff=raw.parts[0].staves.find(staff=>staff.role==='standard');
   sourceStaff.measures[0].voices[0].events=events;
+  mutateRaw(raw);
   const score=createScoreDocumentV3(raw);
   const frames=baseNotation.frames.map(entry=>({
     target:addressEntityV3(score,entry.target.frameId),
@@ -124,4 +127,174 @@ test('P10-2B admits exact four-event 4:3 timing and returns immutable straight-f
   assert.equal(Object.isFrozen(result),true);
   assert.deepEqual(score,beforeScore);
   assert.deepEqual(notation,beforeNotation);
+});
+
+
+const analyze=(score,notation,ids=['e1','e2','e3','e4'])=>
+  analyzeGeneralizedTupletToStraightV4(
+    score,
+    notation,
+    targets(score,...ids),
+    FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+
+const validState=(overrides={})=>state({
+  events:eighthFourToThree(),
+  eventNotationById:fourToThreeNotationById(),
+  ...overrides
+});
+
+test('P10-2B fails closed for wrong cardinality, wrong target kind and duplicate targets',()=>{
+  const {score,notation}=validState();
+  const exact=targets(score,'e1','e2','e3','e4');
+
+  let result=analyzeGeneralizedTupletToStraightV4(
+    score,notation,exact.slice(0,3),FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_WRONG_CARDINALITY');
+
+  const partAddress=addressEntityV3(score,score.parts[0].id);
+  result=analyzeGeneralizedTupletToStraightV4(
+    score,notation,[partAddress,exact[1],exact[2],exact[3]],FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_TARGET_KIND');
+
+  result=analyzeGeneralizedTupletToStraightV4(
+    score,notation,[exact[0],exact[1],exact[1],exact[3]],FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_DUPLICATE_TARGET');
+});
+
+test('P10-2B never sorts reordered or nonconsecutive targets',()=>{
+  const {score,notation}=validState();
+
+  let result=analyzeGeneralizedTupletToStraightV4(
+    score,notation,targets(score,'e2','e1','e3','e4'),FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_REORDERED_OR_NONCONSECUTIVE_TARGET');
+
+  result=analyzeGeneralizedTupletToStraightV4(
+    score,notation,targets(score,'e1','e2','e4','r1'),FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_REORDERED_OR_NONCONSECUTIVE_TARGET');
+});
+
+test('P10-2B rejects stale current-revision targets without throwing',()=>{
+  const current=validState();
+  const stale=targets(current.score,'e1','e2','e3','e4');
+  const raw=structuredClone(current.score);
+  raw.revision={id:'p10-2b-new-revision',parentId:current.score.revision.id};
+  const nextScore=createScoreDocumentV3(raw);
+  const nextNotation=createNotationDocumentV4(nextScore,{
+    ...structuredClone(current.notation),
+    revisionId:nextScore.revision.id,
+    events:current.notation.events.map(entry=>({
+      target:addressEntityV3(nextScore,entry.target.eventId),
+      notation:entry.notation
+    })),
+    notes:[],
+    crossStaffPlacements:[]
+  });
+  const result=analyzeGeneralizedTupletToStraightV4(
+    nextScore,nextNotation,stale,FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_STALE_TARGET');
+});
+
+test('P10-2B rejects valid targets from another Voice, staff, frame/measure or part',()=>{
+  let current=validState({
+    mutateRaw:(raw)=>{
+      const measure=raw.parts[0].staves.find(staff=>staff.role==='standard').measures[0];
+      const foreign=structuredClone(measure.voices[0]);
+      foreign.id='foreign-voice';
+      foreign.ordinal=2;
+      foreign.events=[note('foreign-voice-event','foreign-voice-note',{numerator:0,denominator:1},{numerator:1,denominator:1},'G')];
+      measure.voices.push(foreign);
+    }
+  });
+  let result=analyzeGeneralizedTupletToStraightV4(
+    current.score,current.notation,
+    [...targets(current.score,'e1','e2','e3'),addressEntityV3(current.score,'foreign-voice-event')],
+    FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.reason,'BLOCKED_CROSS_SCOPE_TARGET');
+
+  current=validState({
+    preset:'PIANO_GRAND_STAFF',
+    mutateRaw:(raw)=>{
+      const staves=raw.parts[0].staves.filter(staff=>staff.role==='standard');
+      staves[1].measures[0].voices[0].events=[note('foreign-staff-event','foreign-staff-note',{numerator:0,denominator:1},{numerator:1,denominator:1},'A')];
+    }
+  });
+  result=analyzeGeneralizedTupletToStraightV4(
+    current.score,current.notation,
+    [...targets(current.score,'e1','e2','e3'),addressEntityV3(current.score,'foreign-staff-event')],
+    FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.reason,'BLOCKED_CROSS_SCOPE_TARGET');
+
+  current=validState({
+    mutateRaw:(raw)=>{
+      const frame=structuredClone(raw.measureFrames[0]);
+      frame.id='foreign-frame';
+      frame.ordinal=2;
+      frame.displayNumber='2';
+      raw.measureFrames.push(frame);
+      for(const staff of raw.parts[0].staves.filter(item=>item.role==='standard')){
+        const measure=structuredClone(staff.measures[0]);
+        measure.id=`${staff.id}-foreign-measure`;
+        measure.frameId=frame.id;
+        measure.voices=measure.voices.map((voice,index)=>({
+          ...voice,
+          id:`${voice.id}-foreign-${index}`,
+          events:[note('foreign-frame-event','foreign-frame-note',{numerator:0,denominator:1},{numerator:1,denominator:1},'B')]
+        }));
+        staff.measures.push(measure);
+      }
+    }
+  });
+  result=analyzeGeneralizedTupletToStraightV4(
+    current.score,current.notation,
+    [...targets(current.score,'e1','e2','e3'),addressEntityV3(current.score,'foreign-frame-event')],
+    FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.reason,'BLOCKED_CROSS_SCOPE_TARGET');
+
+  current=validState({
+    mutateRaw:(raw)=>{
+      const source=raw.parts[0];
+      const foreign=structuredClone(source);
+      foreign.id='foreign-part';
+      foreign.ordinal=2;
+      foreign.name='Foreign';
+      foreign.instrument={...foreign.instrument,id:'foreign-instrument',name:'Foreign'};
+      foreign.staves=foreign.staves.map((staff,staffIndex)=>({
+        ...staff,
+        id:`foreign-staff-${staffIndex+1}`,
+        ordinal:staffIndex+1,
+        measures:staff.measures.map((measure,measureIndex)=>({
+          ...measure,
+          id:`foreign-measure-${staffIndex+1}-${measureIndex+1}`,
+          voices:measure.voices.map((voice,voiceIndex)=>({
+            ...voice,
+            id:`foreign-voice-${staffIndex+1}-${measureIndex+1}-${voiceIndex+1}`,
+            events:[note('foreign-part-event','foreign-part-note',{numerator:0,denominator:1},{numerator:1,denominator:1},'C')]
+          }))
+        }))
+      }));
+      raw.parts.push(foreign);
+    }
+  });
+  result=analyzeGeneralizedTupletToStraightV4(
+    current.score,current.notation,
+    [...targets(current.score,'e1','e2','e3'),addressEntityV3(current.score,'foreign-part-event')],
+    FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(result.reason,'BLOCKED_CROSS_SCOPE_TARGET');
 });
