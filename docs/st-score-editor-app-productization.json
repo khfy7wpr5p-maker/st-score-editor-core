@@ -289,5 +289,34 @@
     "default_standalone_cutover": false,
     "production_release_authorized": false,
     "seslitab_cutover_authorized": false
+  },
+  "p10_3a": {
+    "status": "PROFESSIONAL_PITCH_TRANSPOSE_IMPLEMENTED_QUALIFIED",
+    "package": "editor-professional-pitch-transpose-v1",
+    "session_package": "editor-session-professional-pitch-transpose-v1",
+    "workstation_adapter": "score-editor-professional-pitch-transpose-workstation-v1",
+    "browser_composition": "score-editor-browser-professional-workstation-p10-3a-v1",
+    "optional_artifact": "ST_SCORE_EDITOR_P10_3A_PROFESSIONAL_WORKSTATION_BUNDLE",
+    "selection_profiles": [
+      "EVENT_SPAN",
+      "EVENT_SET"
+    ],
+    "semitone_max_abs": 12,
+    "diatonic_max_abs": 7,
+    "key_aware_spelling": true,
+    "atomic_pitch_accidental_metadata": true,
+    "tie_relation_closure": false,
+    "grace_relation_closure": false,
+    "history_authority": "EditorHistoryV4",
+    "one_user_edit_one_history_revision": true,
+    "exact_undo_redo": true,
+    "renderer_coordinate_authority": false,
+    "dom_authoring_authority": false,
+    "p10_1_qualified_artifact_preserved": true,
+    "p10_2_qualified_artifact_preserved": true,
+    "production_default": false,
+    "production_release_authorized": false,
+    "seslitab_cutover_authorized": false,
+    "physical_device_validation_required_before_release_claim": true
   }
 }

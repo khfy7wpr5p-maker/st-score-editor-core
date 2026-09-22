@@ -73,6 +73,14 @@ For contiguous spans, the established P02 teacher admission remains authoritativ
 
 `ScoreDocumentV3 + NotationDocumentV4` remain canonical. Professional selection is noncanonical interaction state. Candidate authoring has no history authority; the session adapter commits the direct-child candidate through `EditorHistoryV4`, producing one unified history step.
 
+## P10-3A continuation — key-aware professional pitch transpose
+
+P10-3A now extends this same semantic range substrate without changing P08-B octave-transpose authority. A separate `editor-professional-pitch-transpose-v1` engine supports key-aware semitone `±1..±12` and diatonic `±1..±7` operations over both `EVENT_SPAN` and `EVENT_SET`.
+
+The engine resolves effective key signature staff-locally, preserves exact selected membership, updates canonical pitch and explicit accidental metadata atomically, and commits only through `EditorHistoryV4`. Tie relation closure remains **fail-closed** and grace relation closure remains **fail-closed**. Renderer geometry and DOM order remain non-authoritative.
+
+The browser/product surface is deliberately an optional P10-3A composition so the previously qualified P10-1/P10-2 artifacts remain unchanged.
+
 ## Next P08-B work
 
-The next bulk-edit layer should add professional semitone/diatonic transpose and bounded delete/replace behavior over the same `EVENT_SPAN` / `EVENT_SET` selection contracts. Those operations must preserve the same one-action/one-history-revision rule and add relation closure only where it can be proven safe.
+Professional semitone/diatonic transpose is now implemented in P10-3A. The next separate bulk-edit tranche may address bounded delete/replace behavior over the same `EVENT_SPAN` / `EVENT_SET` contracts; relation closure must still be added only where it can be proven safe.

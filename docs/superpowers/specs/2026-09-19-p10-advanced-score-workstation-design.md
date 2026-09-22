@@ -185,16 +185,17 @@ Every timing-changing program must preserve exact rational timing and use read-o
 
 Expand P08 semantic range infrastructure into deeper professional operations.
 
-Candidate capabilities:
+P10-3A is the first implemented tranche: bounded **key-aware** semitone (`±1..±12`) and diatonic (`±1..±7`) transpose over existing semantic `EVENT_SPAN` / `EVENT_SET` selections. It uses a separate optional composition so the qualified P10-1 and P10-2 workstation artifacts remain preserved.
+
+Remaining candidate capabilities:
 
 - multi-measure copy/paste;
-- diatonic/semitone bulk transpose;
 - range delete/replace profiles;
 - duplication;
 - controlled rhythmic transforms;
 - multi-target articulation/dynamic/text authoring.
 
-Renderer layout may help presentation, but target membership/order must remain semantic.
+Renderer layout may help presentation, but target membership/order must remain semantic. P10-3A tie/grace relation closure remains fail-closed until separately admitted.
 
 ### P10-4 — Score Structure and Instrument Management
 
