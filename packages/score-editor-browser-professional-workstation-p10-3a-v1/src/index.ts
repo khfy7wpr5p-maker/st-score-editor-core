@@ -246,13 +246,13 @@ export const createP10_3AProfessionalWorkstationStandaloneScoreEditorControllerV
     ...base,
     profile: p10_3aProfessionalWorkstationBrowserAppProfile,
     getP10_3APitchTransposeState: state,
-    transposeProfessionalRangeBySemitones: (delta, transposeOptions) => run((workstation) =>
+    transposeProfessionalRangeBySemitones: (delta: number, transposeOptions?: ProfessionalPitchTransposeOptionsV1) => run((workstation) =>
       commitProfessionalPitchWorkstationSemitoneTransposeV1(workstation, delta, nextOptions(transposeOptions))
     ),
-    transposeProfessionalRangeDiatonically: (steps, transposeOptions) => run((workstation) =>
+    transposeProfessionalRangeDiatonically: (steps: number, transposeOptions?: ProfessionalPitchTransposeOptionsV1) => run((workstation) =>
       commitProfessionalPitchWorkstationDiatonicTransposeV1(workstation, steps, nextOptions(transposeOptions))
     ),
-    mount: (nextRoot) => {
+    mount: (nextRoot: HTMLElement) => {
       if (disposed) throw Object.assign(new Error('P10-3A controller is disposed.'), { code: 'CONTROLLER_DISPOSED' });
       base.mount(nextRoot);
       root = nextRoot;
