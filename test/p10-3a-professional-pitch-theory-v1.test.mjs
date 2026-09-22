@@ -51,7 +51,7 @@ test('P10-3A enforces diatonic interval and spelling bounds', () => {
     error => error instanceof PitchTheoryV1Error && error.code === 'INVALID_DIATONIC_STEPS'
   );
   assert.throws(
-    () => transposeDiatonicPitchV1({ step:'F', alter:2, octave:4 }, 7, 1),
+    () => transposeDiatonicPitchV1({ step:'C', alter:2, octave:4 }, 1, 3),
     error => error instanceof PitchTheoryV1Error && error.code === 'SPELLING_UNREPRESENTABLE'
   );
 });
@@ -67,7 +67,7 @@ test('P10-3A semitone transpose uses deterministic key-aware spelling', () => {
   );
   assert.deepEqual(
     transposeSemitonePitchV1({ step:'E', alter:0, octave:4 }, 1, 1),
-    { step:'F', alter:1, octave:4 }
+    { step:'F', alter:0, octave:4 }
   );
   assert.deepEqual(
     transposeSemitonePitchV1({ step:'A', alter:0, octave:4 }, -1, 1),
