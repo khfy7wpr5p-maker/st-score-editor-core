@@ -24,6 +24,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Install admitted build dependency
         run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Install verified Audio Engine dependencies
+        run: npm run install:verified-audio
       - name: Validate repository contracts
         run: npm run validate
       - name: Build and test
