@@ -14,12 +14,6 @@ import {
 import type { TeacherOctaveDeltaV4 } from '../../editor-teacher-octave-transpose-admission-v4/src/index.js';
 import type { TeacherOctaveTransposeAuthoringV4Options } from '../../editor-teacher-octave-transpose-authoring-v4/src/index.js';
 import { commitSessionProfessionalOctaveTransposeV1 } from '../../editor-session-professional-octave-transpose-v1/src/index.js';
-import {
-  analyzeProfessionalDiatonicTransposeV1,
-  analyzeProfessionalSemitoneTransposeV1,
-  type ProfessionalPitchTransposeOptionsV1
-} from '../../editor-professional-pitch-transpose-v1/src/index.js';
-import { commitSessionProfessionalPitchTransposeV1 } from '../../editor-session-professional-pitch-transpose-v1/src/index.js';
 import { analyzeProfessionalClearToRestV1 } from '../../editor-professional-clear-to-rest-v1/src/index.js';
 import type { ProfessionalClearToRestOptionsV1 } from '../../editor-professional-clear-to-rest-v1/src/index.js';
 import { commitSessionProfessionalClearToRestV1 } from '../../editor-session-professional-clear-to-rest-v1/src/index.js';
@@ -130,50 +124,6 @@ export const commitProfessionalWorkstationOctaveTransposeV1 = (
     octaveDelta
   );
   const result = commitSessionProfessionalOctaveTransposeV1(
-    workstation.document.session,
-    selection,
-    admission,
-    options
-  );
-  return state(appWithSession(workstation.document, result.session), result.professionalSelection);
-};
-
-export const commitProfessionalWorkstationSemitoneTransposeV1 = (
-  workstation: ScoreEditorProfessionalWorkstationV1,
-  semitoneDelta: number,
-  options: ProfessionalPitchTransposeOptionsV1
-): Readonly<ScoreEditorProfessionalWorkstationV1> => {
-  const selection = selected(workstation);
-  const current = workstation.document.session.history.present;
-  const admission = analyzeProfessionalSemitoneTransposeV1(
-    current.score,
-    current.notation,
-    selection,
-    semitoneDelta
-  );
-  const result = commitSessionProfessionalPitchTransposeV1(
-    workstation.document.session,
-    selection,
-    admission,
-    options
-  );
-  return state(appWithSession(workstation.document, result.session), result.professionalSelection);
-};
-
-export const commitProfessionalWorkstationDiatonicTransposeV1 = (
-  workstation: ScoreEditorProfessionalWorkstationV1,
-  diatonicSteps: number,
-  options: ProfessionalPitchTransposeOptionsV1
-): Readonly<ScoreEditorProfessionalWorkstationV1> => {
-  const selection = selected(workstation);
-  const current = workstation.document.session.history.present;
-  const admission = analyzeProfessionalDiatonicTransposeV1(
-    current.score,
-    current.notation,
-    selection,
-    diatonicSteps
-  );
-  const result = commitSessionProfessionalPitchTransposeV1(
     workstation.document.session,
     selection,
     admission,
