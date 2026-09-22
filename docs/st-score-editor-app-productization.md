@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10O + APP-11A–I + P09-A/B/C/D COMPLETE / MERGED / P09 QUALIFIED / APP-11J ANALYSIS PRESENT ON MAIN / FULL RELEASE MATRIX OPEN**
+Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / FULL RELEASE MATRIX OPEN**
 
 Date: 2026-09-19
 
@@ -132,7 +132,17 @@ Dedicated mobile WebKit verifies straight eighths -> canonical `1/12 + 1/12 + 1/
 
 Foundation commit `674187b920434d6d7d72330baba44c2692a64596` is already an ancestor of the P10 baseline main commit. The read-only admission package and regression tests are present on main. Historical PR #142 remaining open is stacked metadata and is not code-presence authority.
 
-APP-11J keeps canonical mutation authority, history authority and renderer-coordinate authority false. The later bounded mutation/productization stage must consume this evidence rather than recreate it.
+APP-11J keeps canonical mutation authority, history authority and renderer-coordinate authority false. P10-2 consumes this evidence rather than recreating it.
+
+### P10-2 — bounded Triplet removal / unretiming
+
+**IMPLEMENTED AS AN OPTIONAL PROFESSIONAL-WORKSTATION SURFACE; DEFAULT/RELEASE CUTOVER FALSE.**
+
+The separate P10-2 authoring package atomically restores one fresh APP-11J-admitted exact 3:2 Triplet to its supported straight timing, removes only owned Triplet metadata and applies the exact admitted adjacent neutral-rest plan. Event/note identities and existing part/staff/frame/measure/Voice topology are preserved.
+
+The session/app wrappers commit one accepted action through `EditorSessionV4`. Exact Undo restores the prior Triplet score+notation pair; Redo restores the straight pair. The visible **Remove Triplet** / **Restore straight timing** control is composed into an optional P10-2 workstation decorator. It does not change the `tuplet.triplet` keypad action, replace the qualified default standalone global or authorize production/SesliTab cutover.
+
+Automated mobile WebKit covers the visible control, straight -> Triplet -> straight round trip, exact Undo/Redo, remount/re-capture and duplicate-listener history behavior.
 
 ## Product authority boundaries
 
@@ -140,7 +150,6 @@ The browser is allowed to present and invoke only already-admitted semantic oper
 
 Current fail-closed boundaries include:
 
-- canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission;
 - arbitrary tuplet ratios/cardinalities outside the bounded 3:2 profile;
 - renderer-derived Triplet range inference;
 - selected cross-staff Triplet retiming;
@@ -177,6 +186,6 @@ Automated WebKit success remains regression evidence only; the iPhone Safari P08
 
 ## Next bounded development action
 
-**P10-0 — Architecture Reality Refresh.**
+**P10-2 closeout — exact-head qualification and review.**
 
-P10-0 aligns documentation and machine-readable productization state with current main while leaving runtime behavior unchanged. Subsequent P10 stages require separate architectural specs. The next Triplet-removal mutation work must consume the APP-11J analysis already present on main.
+Before merge, the current bounded implementation still requires fresh exact-head CI/retained WebKit evidence and whole-branch review. Physical iPhone/Safari evidence is separately required before any release/cutover claim. Later arbitrary tuplets, beams and broader rhythm/relation semantics remain separate architectural tranches.
