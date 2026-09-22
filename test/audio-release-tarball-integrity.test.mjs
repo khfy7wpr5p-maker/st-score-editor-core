@@ -172,16 +172,61 @@ test('all current Editor Core CI and retained WebKit workflows install verified 
     }
 
     if (!workflow.endsWith('ci.yml')) {
-      const ordered = source.match(
-        /npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1\.62\.1\n\s*npm run install:verified-audio/g
-      ) ?? [];
+      const combined = source.match(/npm run install:verified-audio -- --with-playwright/g) ?? [];
       const expected = workflow.endsWith('app09b-preview-webkit.yml') ? 2 : 1;
       assert.equal(
-        ordered.length,
+        combined.length,
         expected,
-        workflow + ' must install verified audio after the final npm/Playwright install so npm cannot prune it'
+        workflow + ' must install verified audio and pinned Playwright in one npm reify operation'
+      );
+      assert.doesNotMatch(
+        source,
+        /npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1\.62\.1/,
+        workflow + ' must not run a second no-save npm install that can prune verified audio'
       );
     }
+  }
+});
+
+test('verified installer can include pinned Playwright in the same npm operation', async () => {
+  const {
+    installVerifiedAudioDependencies,
+    sha512Integrity
+  } = await import('../scripts/install-verified-audio-dependencies.mjs');
+
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'stse-audio-playwright-'));
+  const bytes = Buffer.from('verified package');
+  const calls = [];
+
+  try {
+    await installVerifiedAudioDependencies({
+      manifest: {
+        contract: 'ST_SCORE_EDITOR_VERIFIED_AUDIO_DEPENDENCIES',
+        version: '1.0.0',
+        repository: 'khfy7wpr5p-maker/st-score-audio-engine',
+        release: 'v0.1.2',
+        releaseCommit: '26117ae90f213e208e06fb5c084fc0fad9f4ca86',
+        packages: [{
+          name: '@st/score-audio-contracts',
+          version: '0.1.0',
+          fileName: 'st-score-audio-contracts-0.1.0.tgz',
+          url: 'https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.2/st-score-audio-contracts-0.1.0.tgz',
+          integrity: sha512Integrity(bytes)
+        }]
+      },
+      includePlaywright: true,
+      tempRoot: tmp,
+      npmExecPath: '/trusted/npm-cli.js',
+      fetcher: async () => ({ ok: true, status: 200, arrayBuffer: async () => bytes }),
+      execFileImpl: async (executable, args) => { calls.push({ executable, args }); }
+    });
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].executable, process.execPath);
+    assert.equal(calls[0].args.includes('playwright@1.62.1'), true);
+    assert.equal(calls[0].args.filter(arg => arg === 'playwright@1.62.1').length, 1);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
   }
 });
 
