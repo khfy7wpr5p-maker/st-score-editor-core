@@ -26,44 +26,51 @@ export interface ProfessionalPitchTransposeSessionResultV1 {
   readonly historyAuthority: 'EditorHistoryV4';
 }
 
+const committedSession = (
+  previous: EditorSessionStateV4,
+  history: ReturnType<typeof commitEditorHistoryV4>,
+  selection: ProfessionalSelectionV1
+): Readonly<EditorSessionStateV4> => Object.freeze({
+  version: EDITOR_SESSION_V4_VERSION,
+  history,
+  selection: professionalSelectionActiveTargetV1(selection),
+  renderRequest: createRendererRequestV4WithProfile(
+    history.present.score,
+    history.present.notation,
+    previous.renderRequest.renderer
+  ),
+  status: Object.freeze({
+    code: 'PROFESSIONAL_PITCH_TRANSPOSE_EDIT_COMMITTED',
+    message: 'Professional pitch transpose committed atomically in unified V4 history.'
+  })
+});
+
 export const commitSessionProfessionalPitchTransposeV1 = (
   session: EditorSessionStateV4,
   selection: ProfessionalSelectionV1,
   admission: ProfessionalPitchTransposeAdmissionV1,
   options: ProfessionalPitchTransposeOptionsV1
 ): Readonly<ProfessionalPitchTransposeSessionResultV1> => {
-  const current = session.history.present;
-  const result = executeProfessionalPitchTransposeV1(
-    current.score,
-    current.notation,
+  const present = session.history.present;
+  const authored = executeProfessionalPitchTransposeV1(
+    present.score,
+    present.notation,
     selection,
     admission,
     options
   );
-  const history = commitEditorHistoryV4(session.history, result.score, result.notation);
-  const activeSelection = professionalSelectionActiveTargetV1(result.selection);
-
-  const nextSession: Readonly<EditorSessionStateV4> = Object.freeze({
-    version: EDITOR_SESSION_V4_VERSION,
-    history,
-    selection: activeSelection,
-    renderRequest: createRendererRequestV4WithProfile(
-      history.present.score,
-      history.present.notation,
-      session.renderRequest.renderer
-    ),
-    status: Object.freeze({
-      code: 'PROFESSIONAL_PITCH_TRANSPOSE_EDIT_COMMITTED',
-      message: 'Professional pitch transpose committed atomically in unified V4 history.'
-    })
-  });
+  const history = commitEditorHistoryV4(
+    session.history,
+    authored.score,
+    authored.notation
+  );
 
   return Object.freeze({
     version: EDITOR_SESSION_PROFESSIONAL_PITCH_TRANSPOSE_V1_VERSION,
-    session: nextSession,
-    professionalSelection: result.selection,
-    changedEventIds: result.changedEventIds,
-    changedNoteIds: result.changedNoteIds,
+    session: committedSession(session, history, authored.selection),
+    professionalSelection: authored.selection,
+    changedEventIds: authored.changedEventIds,
+    changedNoteIds: authored.changedNoteIds,
     historyCommitCount: 1 as const,
     historyAuthority: 'EditorHistoryV4' as const
   });
