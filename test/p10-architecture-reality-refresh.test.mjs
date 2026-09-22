@@ -97,3 +97,35 @@ test('P10-0 stage docs preserve history while exposing the current scoped device
   assert.match(app11j, /674187b920434d6d7d72330baba44c2692a64596/);
   assert.match(app11j, /canonical.*mutation.*(?:not exposed|false)/is);
 });
+
+test('P10-2B docs record read-only 4:3 admission without generalized mutation authority', async () => {
+  const [architecture, roadmap, productizationMd, productizationJsonText, p10b] = await Promise.all([
+    readRoot('ARCHITECTURE.md'),
+    readRoot('ROADMAP.md'),
+    readRoot('docs/st-score-editor-app-productization.md'),
+    readRoot('docs/st-score-editor-app-productization.json'),
+    readRoot('docs/p10-2b-generalized-tuplet-admission.md')
+  ]);
+  const productization = JSON.parse(productizationJsonText);
+
+  for (const source of [architecture, roadmap, productizationMd, p10b]) {
+    assert.match(source, /P10-2B/i);
+    assert.match(source, /4:3/);
+    assert.match(source, /read-only/i);
+    assert.match(source, /generalized.*mutation.*(?:not authorized|unauthorized|false|not implemented)/is);
+  }
+
+  assert.equal(productization.p10_2b.status, 'READ_ONLY_4_3_ADMISSION_IMPLEMENTED_QUALIFICATION_PENDING');
+  assert.equal(productization.p10_2b.profile.actual_notes, 4);
+  assert.equal(productization.p10_2b.profile.normal_notes, 3);
+  assert.equal(productization.p10_2b.profile.target_cardinality, 4);
+  assert.equal(productization.p10_2b.canonical_mutation_authority, false);
+  assert.equal(productization.p10_2b.history_mutation_authority, false);
+  assert.equal(productization.p10_2b.renderer_coordinate_authority, false);
+  assert.equal(productization.p10_2b.imported_musicxml_identity_preserved, true);
+  assert.equal(productization.p10_2b.arbitrary_tuplet_support, false);
+  assert.equal(productization.p10_2b.sonar_live_triage_status, 'PENDING_LIVE_ISSUE_DETAILS');
+  assert.equal(productization.release_gate.standaloneReleaseGatePassed, false);
+  assert.equal(productization.seslitab_cutover_authorized, false);
+});
+
