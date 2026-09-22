@@ -229,6 +229,10 @@ The following remain outside current production authority:
 - cloud/server revision authority;
 - public-write/production activation.
 
+## P10-0 — Architecture Reality Refresh
+
+P10-0 is complete. It aligned architecture, roadmap, productization and release-gate sources with the post-P09 mainline reality without changing runtime or release authority. This historical checkpoint remains part of the repository contract.
+
 ## Next architecture step
 
 **P10-2 closeout, then later Advanced Rhythm & Relations tranches.**
