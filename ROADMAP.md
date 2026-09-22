@@ -127,6 +127,16 @@ The mutation is routed through `EditorSessionV4`: one accepted Remove Triplet ac
 
 Dedicated mobile WebKit covers straight -> Triplet -> Remove Triplet -> exact Undo/Redo, remount/re-capture and one-click/one-history behavior. This automated evidence is not a physical-device release PASS.
 
+### P10-2B — Generalized Tuplet Admission Foundation
+
+**READ-ONLY 4:3 ADMISSION IMPLEMENTED / QUALIFICATION PENDING / GENERALIZED MUTATION NOT AUTHORIZED.**
+
+P10-2B introduces a separate read-only analyzer for exactly four current-revision events carrying one exact 4:3 tuplet range. It preserves canonical event/note identity, uses exact rational timing, proves adjacent neutral-rest capacity, and fails closed for unsupported timing/notation coupling.
+
+The implementation does not mutate `ScoreDocumentV3 + NotationDocumentV4`, does not own `EditorSessionV4` history, does not use renderer geometry as timing authority and does not widen APP-11J/P10-2 mutation semantics. Imported MusicXML 4:3 identity is covered by regression evidence.
+
+**Generalized tuplet mutation is not authorized.** Broader ratios/cardinalities, generalized browser authoring and release/public-write/SesliTab cutover remain separate future decisions. Sonar live issue-detail triage remains pending; no Quality Gate PASS is claimed.
+
 ## Current architecture phase
 
 ```text
@@ -147,16 +157,16 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next development action
 
-**P10-2 closeout — exact-head qualification and whole-branch review.**
+**P10-2B closeout — exact-head qualification, Sonar live triage and whole-branch review.**
 
-The bounded inverse mutation, unified-history path, optional workstation surface and dedicated WebKit regression are implemented. Before merge, record fresh exact-head Node 18/20/22 and retained WebKit gates plus final review. Physical iPhone/Safari validation remains separate before any release/cutover claim.
+The bounded 3:2 inverse mutation remains unchanged, while P10-2B adds a separate read-only 4:3 admission analyzer. Before merge, record fresh exact-head Node 18/20/22 and retained WebKit gates, live Sonar status and final review. Physical iPhone/Safari validation remains separate before any release/cutover claim.
 
-After this bounded tranche, broader P10-2 Advanced Rhythm & Relations work remains separately scoped; arbitrary tuplets, beam authoring and other relation semantics are not implied by this implementation.
+After this bounded tranche, broader Advanced Rhythm & Relations work remains separately scoped; generalized tuplet mutation, arbitrary ratios/cardinalities, beam authoring and other relation semantics are not implied by this implementation.
 
 ## Still fail-closed / gated
 
 - P10-2 physical iPhone/Safari validation before any release/cutover claim;
-- arbitrary tuplet ratios/cardinalities outside the bounded 3:2 profile;
+- generalized tuplet mutation and arbitrary ratios/cardinalities beyond the bounded 3:2 mutation path and read-only 4:3 admission;
 - automatic renderer-derived Triplet range inference;
 - arbitrary imported trailing MusicXML growth without pickup/non-controlling evidence;
 - independent retiming of dot/beam/tuplet/tie-coupled events outside admitted atomic programs;
