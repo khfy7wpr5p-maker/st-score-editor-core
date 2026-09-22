@@ -130,6 +130,31 @@ try {
         score: d.session.history.present.score,
         notation: d.session.history.present.notation
       }),
+      straightMusical: JSON.stringify({
+        parts: d.session.history.present.score.parts,
+        frames: d.session.history.present.notation.frames.map(entry => entry.notation),
+        measures: d.session.history.present.notation.measures.map(entry => entry.notation),
+        events: d.session.history.present.notation.events.map(entry => ({
+          eventId: entry.target.eventId,
+          notation: entry.notation
+        })),
+        notes: d.session.history.present.notation.notes.map(entry => ({
+          noteId: entry.target.noteId,
+          notation: entry.notation
+        })),
+        graceEvents: d.session.history.present.notation.graceEvents.map(entry => ({
+          graceEventId: entry.target.graceEventId,
+          notation: entry.notation
+        })),
+        graceNotes: d.session.history.present.notation.graceNotes.map(entry => ({
+          graceNoteId: entry.target.graceNoteId,
+          notation: entry.notation
+        })),
+        crossStaffPlacements: d.session.history.present.notation.crossStaffPlacements.map(item => ({
+          eventId: item.source.eventId,
+          displayStaffId: item.displayStaffId
+        }))
+      }),
       addresses: notes.map(eventAddress)
     };
   });
@@ -227,13 +252,38 @@ try {
         score: d.session.history.present.score,
         notation: d.session.history.present.notation
       }),
+      musical: JSON.stringify({
+        parts: d.session.history.present.score.parts,
+        frames: d.session.history.present.notation.frames.map(entry => entry.notation),
+        measures: d.session.history.present.notation.measures.map(entry => entry.notation),
+        events: d.session.history.present.notation.events.map(entry => ({
+          eventId: entry.target.eventId,
+          notation: entry.notation
+        })),
+        notes: d.session.history.present.notation.notes.map(entry => ({
+          noteId: entry.target.noteId,
+          notation: entry.notation
+        })),
+        graceEvents: d.session.history.present.notation.graceEvents.map(entry => ({
+          graceEventId: entry.target.graceEventId,
+          notation: entry.notation
+        })),
+        graceNotes: d.session.history.present.notation.graceNotes.map(entry => ({
+          graceNoteId: entry.target.graceNoteId,
+          notation: entry.notation
+        })),
+        crossStaffPlacements: d.session.history.present.notation.crossStaffPlacements.map(item => ({
+          eventId: item.source.eventId,
+          displayStaffId: item.displayStaffId
+        }))
+      }),
       past: d.session.history.past.length,
       status: d.session.status.code,
       captured: c.getTripletAuthoringState().capturedEventIds
     };
   });
   if (
-    removed.canonical !== setup.straightCanonical ||
+    removed.musical !== setup.straightMusical ||
     removed.past !== triplet.past + 1 ||
     removed.status !== 'TRIPLET_UNRETIMING_COMMITTED' ||
     removed.captured.length !== 0
@@ -280,14 +330,38 @@ try {
     throw new Error(`P10-2 remount control mismatch: count=${await remountButton.count()} disabled=${await remountButton.isDisabled()}`);
   }
   await remountButton.click();
-  const afterRemount = await page.evaluate(() => ({
-    past: globalThis.STScoreEditorP10_2WorkstationController.getDocument().session.history.past.length,
-    canonical: JSON.stringify({
-      score: globalThis.STScoreEditorP10_2WorkstationController.getDocument().session.history.present.score,
-      notation: globalThis.STScoreEditorP10_2WorkstationController.getDocument().session.history.present.notation
-    })
-  }));
-  if (afterRemount.past !== beforeRemount + 1 || afterRemount.canonical !== removed.canonical) {
+  const afterRemount = await page.evaluate(() => {
+    const d = globalThis.STScoreEditorP10_2WorkstationController.getDocument();
+    return {
+      past: d.session.history.past.length,
+      musical: JSON.stringify({
+        parts: d.session.history.present.score.parts,
+        frames: d.session.history.present.notation.frames.map(entry => entry.notation),
+        measures: d.session.history.present.notation.measures.map(entry => entry.notation),
+        events: d.session.history.present.notation.events.map(entry => ({
+          eventId: entry.target.eventId,
+          notation: entry.notation
+        })),
+        notes: d.session.history.present.notation.notes.map(entry => ({
+          noteId: entry.target.noteId,
+          notation: entry.notation
+        })),
+        graceEvents: d.session.history.present.notation.graceEvents.map(entry => ({
+          graceEventId: entry.target.graceEventId,
+          notation: entry.notation
+        })),
+        graceNotes: d.session.history.present.notation.graceNotes.map(entry => ({
+          graceNoteId: entry.target.graceNoteId,
+          notation: entry.notation
+        })),
+        crossStaffPlacements: d.session.history.present.notation.crossStaffPlacements.map(item => ({
+          eventId: item.source.eventId,
+          displayStaffId: item.displayStaffId
+        }))
+      })
+    };
+  });
+  if (afterRemount.past !== beforeRemount + 1 || afterRemount.musical !== removed.musical) {
     throw new Error(`P10-2 remount duplicate-listener mismatch ${JSON.stringify({ beforeRemount, afterRemount })}`);
   }
 
