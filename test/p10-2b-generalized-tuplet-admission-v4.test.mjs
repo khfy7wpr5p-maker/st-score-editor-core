@@ -191,13 +191,24 @@ test('P10-2B rejects stale current-revision targets without throwing',()=>{
   raw.revision={id:'p10-2b-new-revision',parentId:current.score.revision.id};
   const nextScore=createScoreDocumentV3(raw);
   const nextNotation=createNotationDocumentV4(nextScore,{
-    ...structuredClone(current.notation),
+    contractVersion:'4.0.0',
+    documentId:nextScore.id,
     revisionId:nextScore.revision.id,
+    frames:current.notation.frames.map(entry=>({
+      target:addressEntityV3(nextScore,entry.target.frameId),
+      notation:entry.notation
+    })),
+    measures:current.notation.measures.map(entry=>({
+      target:addressEntityV3(nextScore,entry.target.measureId),
+      notation:entry.notation
+    })),
     events:current.notation.events.map(entry=>({
       target:addressEntityV3(nextScore,entry.target.eventId),
       notation:entry.notation
     })),
     notes:[],
+    graceEvents:[],
+    graceNotes:[],
     crossStaffPlacements:[]
   });
   const result=analyzeGeneralizedTupletToStraightV4(
