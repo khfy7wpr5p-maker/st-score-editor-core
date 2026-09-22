@@ -193,6 +193,25 @@ For one fresh APP-11J-admitted three-event 3:2 Triplet:
 - renderer/DOM coordinates remain non-authoritative;
 - the P10-2 workstation is optional and preserves the qualified P10-1/default artifact boundaries.
 
+## P10-2B — Read-only generalized 4:3 tuplet admission
+
+P10-2B adds a separate `editor-generalized-tuplet-admission-v4` analyzer rather than widening APP-11J or the P10-2 mutation package.
+
+The admitted profile is intentionally narrow:
+
+- exactly four explicit current-revision event targets;
+- one part/staff/frame/measure/Voice and exact consecutive order;
+- equal contiguous current durations;
+- exact `4:3` tuplet metadata with start / middle / middle / stop boundaries;
+- exact rational restoration to a supported straight written base;
+- adjacent neutral-rest capacity proved without topology invention;
+- dots, beams, ties, selected cross-staff targets, malformed/nested tuplets, unsupported written bases and arithmetic overflow fail closed;
+- slurs do not block because event/note identity is preserved.
+
+The analyzer is **read-only**. Canonical mutation authority is false, history mutation authority is false and renderer-coordinate authority is false. Imported MusicXML 4:3 material is admitted only when the canonical V3/V4 pair already satisfies the exact profile; regression evidence preserves imported event/note identities.
+
+**Generalized tuplet mutation is not authorized.** P10-2 remains the only bounded inverse mutation surface and remains limited to its existing 3:2 profile. SonarQube Cloud live issue-detail triage is still pending because the current execution environment cannot read the 14 live finding rows; no Sonar PASS is claimed.
+
 ## Triplet retiming invariants
 
 For the admitted APP-11G/H/I profile:
@@ -215,7 +234,7 @@ For the admitted APP-11G/H/I profile:
 
 The following remain outside current production authority:
 
-- arbitrary tuplet ratios/cardinalities beyond the bounded 3:2 profile;
+- generalized tuplet mutation and arbitrary ratios/cardinalities beyond the existing bounded 3:2 mutation path and read-only 4:3 admission;
 - automatic range inference from renderer layout;
 - independent retiming of dots/beams/existing tuplets/ties outside admitted atomic programs;
 - selected cross-staff Triplet retiming;
@@ -235,9 +254,9 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next architecture step
 
-**P10-2 closeout, then later Advanced Rhythm & Relations tranches.**
+**P10-2B exact-head qualification and Sonar triage, then later Advanced Rhythm & Relations tranches.**
 
-The bounded Triplet inverse now consumes APP-11J rather than duplicating it. Before merge it still requires fresh exact-head Node/WebKit qualification and whole-branch review. Physical iPhone/Safari validation remains a separate requirement before any P10-2 release/cutover claim. Later P10-2 rhythm/relations work may address broader tuplets, beams and other relation semantics only through separately specified fail-closed authorities.
+The bounded Triplet inverse still consumes APP-11J rather than duplicating it. P10-2B now adds read-only 4:3 admission on a separate package, but generalized mutation remains unauthorized. Before merge P10-2B still requires fresh exact-head Node/WebKit qualification, truthful Sonar status and whole-branch review. Physical iPhone/Safari validation remains a separate requirement before any release/cutover claim. Later rhythm/relations work may address broader tuplets, beams and other relation semantics only through separately specified fail-closed authorities.
 
 ## Automated validation contract
 
