@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 test('MusicXML v2 importer uses Number.NaN instead of the global NaN alias', async () => {
   const source = await readFile('packages/musicxml-v2/src/importer.ts', 'utf8');
-  assert.doesNotMatch(source, /\bNaN\b(?!\s*\.)/);
+  assert.doesNotMatch(source, /(?<!\.)\bNaN\b/);
 });
 
 test('implicit-gap middle regression keeps assertions inside test cases', async () => {
