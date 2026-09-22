@@ -15,6 +15,8 @@ const pitch=(step='C',alter=0,octave=4)=>({step,alter,octave});
 const note=(id,noteId,onset,duration,step='C')=>({id,kind:'note',onset,duration,note:{id:noteId,pitch:pitch(step)}});
 const rest=(id,onset,duration)=>({id,kind:'rest',onset,duration});
 const eventNotation=(overrides={})=>({dots:0,beams:[],tuplet:null,articulations:[],ornaments:[],...overrides});
+const noteNotation=(overrides={})=>({accidental:null,ties:[],slurs:[],...overrides});
+const tupletNotation=(actualNotes,normalNotes,marks)=>eventNotation({tuplet:{actualNotes,normalNotes,marks}});
 
 const fourToThree=(position,number=1)=>eventNotation({
   tuplet:{
@@ -27,7 +29,9 @@ const fourToThree=(position,number=1)=>eventNotation({
 const state=({
   events,
   eventNotationById={},
+  noteNotationById={},
   preset='GUITAR_TREBLE',
+  crossStaffPlacements=[],
   mutateRaw=()=>{}
 })=>{
   const document=createNewScoreEditorAppDocument({idFactory:ids(),preset});
@@ -49,6 +53,13 @@ const state=({
   const eventsNotation=Object.entries(eventNotationById).map(([eventId,notation])=>({
     target:addressEntityV3(score,eventId),notation
   }));
+  const notesNotation=Object.entries(noteNotationById).map(([noteId,notation])=>({
+    target:addressEntityV3(score,noteId),notation
+  }));
+  const placements=crossStaffPlacements.map(({eventId,displayStaffIndex})=>{
+    const standard=score.parts[0].staves.filter(staff=>staff.role==='standard');
+    return {source:addressEntityV3(score,eventId),displayStaffId:standard[displayStaffIndex].id};
+  });
   const notation=createNotationDocumentV4(score,{
     contractVersion:'4.0.0',
     documentId:score.id,
@@ -56,10 +67,10 @@ const state=({
     frames,
     measures,
     events:eventsNotation,
-    notes:[],
+    notes:notesNotation,
     graceEvents:[],
     graceNotes:[],
-    crossStaffPlacements:[]
+    crossStaffPlacements:placements
   });
   return {score,notation};
 };
@@ -308,4 +319,130 @@ test('P10-2B rejects valid targets from another Voice, staff, frame/measure or p
     FOUR_TO_THREE_TUPLET_PROFILE_V4
   );
   assert.equal(result.reason,'BLOCKED_CROSS_SCOPE_TARGET');
+});
+
+
+test('P10-2B admits only exact 4:3 notation and distinguishes malformed versus overlapping boundaries',()=>{
+  let current=validState({
+    eventNotationById:{
+      e1:tupletNotation(5,4,[{number:1,type:'start'}]),
+      e2:tupletNotation(5,4,[]),
+      e3:tupletNotation(5,4,[]),
+      e4:tupletNotation(5,4,[{number:1,type:'stop'}])
+    }
+  });
+  let result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_TUPLET_PROFILE_UNSUPPORTED');
+
+  current=validState({
+    eventNotationById:{
+      e1:tupletNotation(4,3,[{number:1,type:'start'}]),
+      e2:tupletNotation(4,3,[]),
+      e3:tupletNotation(4,3,[]),
+      e4:tupletNotation(4,3,[{number:2,type:'stop'}])
+    }
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_TUPLET_BOUNDARY_INVALID');
+
+  current=validState({
+    eventNotationById:{
+      e1:tupletNotation(4,3,[{number:1,type:'start'},{number:2,type:'start'}]),
+      e2:tupletNotation(4,3,[]),
+      e3:tupletNotation(4,3,[]),
+      e4:tupletNotation(4,3,[{number:1,type:'stop'}])
+    }
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_NESTED_OR_OVERLAPPING_TUPLET');
+});
+
+test('P10-2B rejects invalid current occupancy and unsupported restored written bases',()=>{
+  let events=eighthFourToThree();
+  events=[
+    events[0],
+    {...events[1],onset:{numerator:1,denominator:8}},
+    events[2],
+    events[3],
+    events[4]
+  ];
+  let current=validState({events});
+  let result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_CURRENT_TIMING_INVALID');
+
+  events=[
+    note('e1','n1',{numerator:0,denominator:1},{numerator:3,denominator:40},'C'),
+    note('e2','n2',{numerator:3,denominator:40},{numerator:3,denominator:40},'D'),
+    note('e3','n3',{numerator:3,denominator:20},{numerator:3,denominator:40},'E'),
+    note('e4','n4',{numerator:9,denominator:40},{numerator:3,denominator:40},'F'),
+    rest('r1',{numerator:3,denominator:10},{numerator:1,denominator:10})
+  ];
+  current=validState({events});
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_WRITTEN_BASE_UNSUPPORTED');
+});
+
+test('P10-2B converts bounded rational overflow into BLOCKED_ARITHMETIC',()=>{
+  const max=Number.MAX_SAFE_INTEGER;
+  const events=[
+    note('e1','n1',{numerator:0,denominator:1},{numerator:1,denominator:max},'C'),
+    note('e2','n2',{numerator:1,denominator:max},{numerator:1,denominator:max},'D'),
+    note('e3','n3',{numerator:2,denominator:max},{numerator:1,denominator:max},'E'),
+    note('e4','n4',{numerator:3,denominator:max},{numerator:1,denominator:max},'F'),
+    rest('r1',{numerator:4,denominator:max},{numerator:1,denominator:max})
+  ];
+  const current=validState({events});
+  const result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_ARITHMETIC');
+});
+
+test('P10-2B fails closed on dots, beams and ties while allowing slurs',()=>{
+  let current=validState({
+    eventNotationById:{
+      ...fourToThreeNotationById(),
+      e1:eventNotation({...fourToThree('start'),dots:1})
+    }
+  });
+  let result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_TIMING_COUPLED_DOTS');
+  assert.deepEqual(result.couplingReasons,['dots:e1']);
+
+  current=validState({
+    eventNotationById:{
+      ...fourToThreeNotationById(),
+      e2:eventNotation({...fourToThree('middle'),beams:[{number:1,value:'continue'}]})
+    }
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_TIMING_COUPLED_BEAMS');
+  assert.deepEqual(result.couplingReasons,['beams:e2']);
+
+  current=validState({
+    noteNotationById:{n3:noteNotation({ties:[{number:1,type:'start'}]})}
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_TIMING_COUPLED_TIES');
+  assert.deepEqual(result.couplingReasons,['tie:n3']);
+
+  current=validState({
+    noteNotationById:{
+      n1:noteNotation({slurs:[{number:1,type:'start'}]}),
+      n4:noteNotation({slurs:[{number:1,type:'stop'}]})
+    }
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,true);
+  assert.deepEqual(result.couplingReasons,[]);
+});
+
+test('P10-2B rejects selected cross-staff 4:3 timing',()=>{
+  const current=validState({
+    preset:'PIANO_GRAND_STAFF',
+    crossStaffPlacements:[{eventId:'e4',displayStaffIndex:1}]
+  });
+  const result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_CROSS_STAFF_TARGET');
 });
