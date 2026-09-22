@@ -19,12 +19,13 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
-      - name: Install Editor Core dependencies and verified audio with pinned Playwright
+      - name: Install exact Editor Core dependencies and verified audio with pinned Playwright
         run: |
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock \
+            saxes@6.0.0 xmlchars@2.2.0 esbuild@0.28.2 typescript@6.0.3
           npm run install:verified-audio -- --with-playwright
       - name: Install pinned WebKit browser
-        run: npx playwright install --with-deps webkit
+        run: node node_modules/playwright/cli.js install --with-deps webkit
       - name: Build bounded P10-3A professional workstation artifact
         run: |
           npm run build:browser:professional-workstation
