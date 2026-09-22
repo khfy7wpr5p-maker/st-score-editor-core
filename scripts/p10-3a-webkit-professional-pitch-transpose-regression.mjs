@@ -132,10 +132,10 @@ try {
   if (!setup.ok) throw new Error(`P10-3A import setup mismatch ${JSON.stringify(setup)}`);
 
   const controls = [
-    'transpose-down-semitone',
-    'transpose-up-semitone',
-    'transpose-down-step',
-    'transpose-up-step'
+    'transpose-down-semitone-mobile',
+    'transpose-up-semitone-mobile',
+    'transpose-down-step-mobile',
+    'transpose-up-step-mobile'
   ];
   for (const action of controls) {
     const button = page.locator(`[data-st-p10-3a-pitch-control="${action}"]`);
@@ -182,7 +182,7 @@ try {
     }
   }
 
-  await page.locator('[data-st-p10-3a-pitch-control="transpose-up-semitone"]').click();
+  await page.locator('[data-st-p10-3a-pitch-control="transpose-up-semitone-mobile"]').click();
 
   const semitone = await page.evaluate(({ noteIds }) => {
     const c = globalThis.STScoreEditorP10_3AWorkstationController;
@@ -232,7 +232,7 @@ try {
   }
 
   await captureRange();
-  await page.locator('[data-st-p10-3a-pitch-control="transpose-up-step"]').click();
+  await page.locator('[data-st-p10-3a-pitch-control="transpose-up-step-mobile"]').click();
 
   const diatonic = await page.evaluate(() => {
     const c = globalThis.STScoreEditorP10_3AWorkstationController;
