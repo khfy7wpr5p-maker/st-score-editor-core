@@ -141,6 +141,10 @@ exact semantic target/range
 
 `ScoreDocumentV3 + NotationDocumentV4` remains canonical. Staff/measure navigation, multi-target capture, palette state, file/recovery state, renderer/viewport state, playback and export/print state remain noncanonical. Renderer coordinates never become authoring authority.
 
+## P10-0 — Architecture Reality Refresh
+
+P10-0 is complete. It aligned architecture, roadmap, productization and release-gate sources with the post-P09 mainline reality without changing runtime or release authority. This historical checkpoint remains part of the repository contract.
+
 ## Next development action
 
 **P10-2 closeout — exact-head qualification and whole-branch review.**
