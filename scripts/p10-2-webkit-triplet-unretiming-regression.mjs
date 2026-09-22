@@ -18,7 +18,7 @@ const server = createServer(async (request, response) => {
     const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://127.0.0.1').pathname);
     const file = path.resolve(
       browserRoot,
-      pathname.replace(/^\\/+/, '') || 'st-score-editor-p10-2-workstation.html'
+      (pathname.startsWith('/') ? pathname.slice(1) : pathname) || 'st-score-editor-p10-2-workstation.html'
     );
     if (file !== browserRoot && !file.startsWith(`${browserRoot}${path.sep}`)) {
       throw new Error('escaped browser root');
