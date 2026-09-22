@@ -116,24 +116,29 @@ const samePitch = (left: Pitch, right: Pitch): boolean =>
   left.step === right.step && left.alter === right.alter && left.octave === right.octave;
 const freezePitch = (pitch: Pitch): Readonly<Pitch> => Object.freeze({ ...pitch });
 
-const selectionFacts = (selection: ProfessionalSelectionV1): unknown =>
+const selectionFingerprint = (selection: ProfessionalSelectionV1): string => {
+  const endpoints = selection.kind === 'EVENT_SPAN'
+    ? [selection.anchor.eventId, selection.focus.eventId, selection.direction]
+    : [selection.primary.eventId];
+  return JSON.stringify([
+    selection.version,
+    selection.kind,
+    selection.scope,
+    endpoints,
+    selection.targets.map(({ eventId }) => eventId)
+  ]);
+};
+
+const recreateSelection = (
+  score: ScoreDocumentV3,
+  selection: ProfessionalSelectionV1
+): Readonly<ProfessionalSelectionV1> =>
   selection.kind === 'EVENT_SPAN'
-    ? {
-        version: selection.version,
-        kind: selection.kind,
-        anchorEventId: selection.anchor.eventId,
-        focusEventId: selection.focus.eventId,
-        direction: selection.direction,
-        scope: selection.scope,
-        targetEventIds: selection.targets.map(target => target.eventId)
-      }
-    : {
-        version: selection.version,
-        kind: selection.kind,
-        primaryEventId: selection.primary.eventId,
-        scope: selection.scope,
-        targetEventIds: selection.targets.map(target => target.eventId)
-      };
+    ? createEventSpanProfessionalSelectionV1(score, selection.anchor, selection.focus)
+    : createEventSetProfessionalSelectionV1(score, [
+        selection.primary,
+        ...selection.targets.filter(({ eventId }) => eventId !== selection.primary.eventId)
+      ]);
 
 const requireCurrentSelection = (
   score: ScoreDocumentV3,
@@ -141,15 +146,7 @@ const requireCurrentSelection = (
 ): Readonly<ProfessionalSelectionV1> => {
   let current: Readonly<ProfessionalSelectionV1>;
   try {
-    if (selection.kind === 'EVENT_SPAN') {
-      current = createEventSpanProfessionalSelectionV1(score, selection.anchor, selection.focus);
-    } else {
-      const explicit = [
-        selection.primary,
-        ...selection.targets.filter(target => target.eventId !== selection.primary.eventId)
-      ];
-      current = createEventSetProfessionalSelectionV1(score, explicit);
-    }
+    current = recreateSelection(score, selection);
   } catch (error) {
     throw new ProfessionalPitchTransposeV1Error(
       'Professional pitch-transpose selection no longer resolves against the current revision.',
@@ -157,7 +154,7 @@ const requireCurrentSelection = (
       { cause: error instanceof Error ? error.message : String(error) }
     );
   }
-  if (!sameJson(selectionFacts(current), selectionFacts(selection))) {
+  if (selectionFingerprint(current) !== selectionFingerprint(selection)) {
     throw new ProfessionalPitchTransposeV1Error(
       'Professional pitch-transpose selection facts changed or were tampered with.',
       'SELECTION_STALE_OR_TAMPERED'
@@ -375,35 +372,44 @@ const assertFreshRevision = (score: ScoreDocumentV3, nextRevisionId: string): vo
   }
 };
 
+const ADDRESS_ID_FIELD = Object.freeze({
+  document: 'documentId',
+  'measure-frame': 'frameId',
+  part: 'partId',
+  staff: 'staffId',
+  measure: 'measureId',
+  voice: 'voiceId',
+  event: 'eventId',
+  note: 'noteId',
+  'grace-group': 'graceGroupId',
+  'grace-event': 'graceEventId',
+  'grace-note': 'graceNoteId'
+} satisfies Record<SemanticAddressV3['kind'], string>);
+
 const targetId = (address: SemanticAddressV3): string => {
-  switch (address.kind) {
-    case 'document': return address.documentId;
-    case 'measure-frame': return address.frameId;
-    case 'part': return address.partId;
-    case 'staff': return address.staffId;
-    case 'measure': return address.measureId;
-    case 'voice': return address.voiceId;
-    case 'event': return address.eventId;
-    case 'note': return address.noteId;
-    case 'grace-group': return address.graceGroupId;
-    case 'grace-event': return address.graceEventId;
-    case 'grace-note': return address.graceNoteId;
+  const field = ADDRESS_ID_FIELD[address.kind];
+  const value = (address as unknown as Record<string, unknown>)[field];
+  if (typeof value !== 'string') {
+    throw new ProfessionalPitchTransposeV1Error(
+      'Professional pitch transpose encountered an invalid semantic target identity.',
+      'NOTATION_RESULT_INVALID',
+      { targetKind: address.kind, field }
+    );
   }
+  return value;
 };
 
-const rebind = (
-  score: ScoreDocumentV3,
-  address: SemanticAddressV3
-): SemanticAddressV3 => {
+const rebind = (score: ScoreDocumentV3, address: SemanticAddressV3): SemanticAddressV3 => {
+  const id = targetId(address);
   try {
-    const rebound = addressEntityV3(score, targetId(address));
-    if (rebound.kind !== address.kind) throw new Error('semantic kind changed');
-    return rebound;
+    const candidate = addressEntityV3(score, id);
+    if (candidate.kind !== address.kind) throw new Error('semantic kind changed');
+    return candidate;
   } catch (error) {
     throw new ProfessionalPitchTransposeV1Error(
       'Professional pitch transpose would orphan existing notation.',
       'NOTATION_RESULT_INVALID',
-      { targetId: targetId(address), targetKind: address.kind, cause: error instanceof Error ? error.message : String(error) }
+      { targetId: id, targetKind: address.kind, cause: error instanceof Error ? error.message : String(error) }
     );
   }
 };
@@ -447,45 +453,45 @@ const mutateScore = (
   const changedEvents = new Set<string>();
   const raw = structuredClone(score) as ScoreDocumentV3;
 
-  for (const part of raw.parts) for (const staff of part.staves) {
-    if (staff.role === 'tablature-linked') continue;
-    for (const measure of staff.measures) for (const voice of measure.voices) {
-      (voice as { events: readonly ScoreEvent[] }).events = voice.events.map((event): ScoreEvent => {
-        if (event.kind === 'rest') return event;
-        if (event.kind === 'note') {
-          const plan = plans.get(event.note.id);
-          if (plan === undefined) return event;
-          if (plan.eventId !== event.id || !samePitch(event.note.pitch, plan.sourcePitch)) {
-            throw new ProfessionalPitchTransposeV1Error(
-              'Professional pitch-transpose note plan no longer matches source pitch/path.',
-              'TARGET_PLAN_INVALID',
-              { eventId: event.id, noteId: event.note.id }
-            );
-          }
-          seen.add(event.note.id);
-          changedEvents.add(event.id);
-          return { ...event, note: { ...event.note, pitch: { ...plan.targetPitch } } };
-        }
+  const rewriteAtom = <T extends { readonly id: string; readonly pitch: Pitch }>(
+    eventId: string,
+    atom: T
+  ): T => {
+    const plan = plans.get(atom.id);
+    if (plan === undefined) return atom;
+    if (plan.eventId !== eventId || !samePitch(atom.pitch, plan.sourcePitch)) {
+      throw new ProfessionalPitchTransposeV1Error(
+        'Professional pitch-transpose target plan no longer matches source pitch/path.',
+        'TARGET_PLAN_INVALID',
+        { eventId, noteId: atom.id }
+      );
+    }
+    seen.add(atom.id);
+    return { ...atom, pitch: { ...plan.targetPitch } };
+  };
 
-        let changed = false;
-        const notes = event.notes.map(note => {
-          const plan = plans.get(note.id);
-          if (plan === undefined) return note;
-          if (plan.eventId !== event.id || !samePitch(note.pitch, plan.sourcePitch)) {
-            throw new ProfessionalPitchTransposeV1Error(
-              'Professional pitch-transpose chord plan no longer matches source pitch/path.',
-              'TARGET_PLAN_INVALID',
-              { eventId: event.id, noteId: note.id }
-            );
-          }
-          seen.add(note.id);
-          changed = true;
-          return { ...note, pitch: { ...plan.targetPitch } };
-        });
-        if (!changed) return event;
-        changedEvents.add(event.id);
-        return { ...event, notes };
-      });
+  const rewriteEvent = (event: ScoreEvent): ScoreEvent => {
+    if (event.kind === 'rest') return event;
+    if (event.kind === 'note') {
+      const note = rewriteAtom(event.id, event.note);
+      if (note === event.note) return event;
+      changedEvents.add(event.id);
+      return { ...event, note };
+    }
+    const notes = event.notes.map(note => rewriteAtom(event.id, note));
+    if (notes.every((note, index) => note === event.notes[index])) return event;
+    changedEvents.add(event.id);
+    return { ...event, notes };
+  };
+
+  for (const part of raw.parts) {
+    for (const staff of part.staves) {
+      if (staff.role === 'tablature-linked') continue;
+      for (const measure of staff.measures) {
+        for (const voice of measure.voices) {
+          (voice as { events: readonly ScoreEvent[] }).events = voice.events.map(rewriteEvent);
+        }
+      }
     }
   }
 
@@ -549,38 +555,30 @@ const buildNotation = (
     }));
   }
 
+  const rebindEntries = <T extends { readonly target: SemanticAddressV3 }>(
+    entries: readonly T[]
+  ): T[] => entries.map(entry => ({
+    ...entry,
+    target: rebind(score, entry.target)
+  }) as T);
+
   try {
     return createNotationDocumentV4(score, {
       contractVersion: '4.0.0',
       documentId: score.id,
       revisionId: score.revision.id,
-      frames: base.frames.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      measures: base.measures.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      events: base.events.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
+      frames: rebindEntries(base.frames),
+      measures: rebindEntries(base.measures),
+      events: rebindEntries(base.events),
       notes: [...noteMap].map(([id, notation]) => ({
         target: noteAddress(score, id),
         notation
       })),
-      graceEvents: base.graceEvents.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      graceNotes: base.graceNotes.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
+      graceEvents: rebindEntries(base.graceEvents),
+      graceNotes: rebindEntries(base.graceNotes),
       crossStaffPlacements: base.crossStaffPlacements.map(entry => ({
-        source: rebind(score, entry.source) as EventAddressV3,
-        displayStaffId: entry.displayStaffId
+        ...entry,
+        source: rebind(score, entry.source) as EventAddressV3
       }))
     });
   } catch (error) {
