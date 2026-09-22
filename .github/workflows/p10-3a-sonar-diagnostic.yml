@@ -45,3 +45,10 @@ jobs:
             --data-urlencode 'qualifiers=FIL' \
             --data-urlencode 'ps=500' \
             | jq -c '.components[] | {path, measures}'
+      - name: Read SonarCloud duplication blocks
+        run: |
+          curl --fail --silent --show-error --get \
+            'https://sonarcloud.io/api/duplications/show' \
+            --data-urlencode 'key=khfy7wpr5p-maker_st-score-editor-core:packages/editor-professional-pitch-transpose-v1/src/index.ts' \
+            --data-urlencode 'pullRequest=197' \
+            | jq -c '.duplications'
