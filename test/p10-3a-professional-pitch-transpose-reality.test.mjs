@@ -23,7 +23,7 @@ test('P10-3A repository reality reports bounded optional pitch transpose without
   assert.match(p08,/grace.*fail.closed/i);
   assert.match(design,/optional.*composition/i);
 
-  assert.equal(json.p10_3a.status,'PROFESSIONAL_PITCH_TRANSPOSE_IMPLEMENTED_QUALIFICATION_PENDING');
+  assert.equal(json.p10_3a.status,'PROFESSIONAL_PITCH_TRANSPOSE_IMPLEMENTED_QUALIFIED');
   assert.equal(json.p10_3a.package,'editor-professional-pitch-transpose-v1');
   assert.equal(json.p10_3a.session_package,'editor-session-professional-pitch-transpose-v1');
   assert.equal(json.p10_3a.workstation_adapter,'score-editor-professional-pitch-transpose-workstation-v1');
