@@ -446,3 +446,101 @@ test('P10-2B rejects selected cross-staff 4:3 timing',()=>{
   assert.equal(result.admitted,false);
   assert.equal(result.reason,'BLOCKED_CROSS_STAFF_TARGET');
 });
+
+
+test('P10-2B plans exact adjacent-rest removal and forward shrink without mutation',()=>{
+  let current=validState();
+  const beforeScore=structuredClone(current.score);
+  const beforeNotation=structuredClone(current.notation);
+  let result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,true);
+  assert.deepEqual(result.restPlan,{
+    action:'REMOVE_ADJACENT_REST',
+    restEventId:'r1',
+    currentOnset:{numerator:3,denominator:8},
+    currentDuration:{numerator:1,denominator:8},
+    proposedOnset:null,
+    proposedDuration:null
+  });
+  assert.equal(result.balancePolicy,'CONSUME_EXACT_ADJACENT_NEUTRAL_REST');
+  assert.deepEqual(current.score,beforeScore);
+  assert.deepEqual(current.notation,beforeNotation);
+
+  current=validState({events:eighthFourToThree({numerator:3,denominator:8})});
+  result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,true);
+  assert.deepEqual(result.restPlan,{
+    action:'SHRINK_ADJACENT_REST_FORWARD',
+    restEventId:'r1',
+    currentOnset:{numerator:3,denominator:8},
+    currentDuration:{numerator:3,denominator:8},
+    proposedOnset:{numerator:1,denominator:2},
+    proposedDuration:{numerator:1,denominator:4}
+  });
+});
+
+test('P10-2B requires one exact adjacent neutral same-Voice rest',()=>{
+  let current=validState({events:eighthFourToThree().slice(0,4)});
+  let result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_ADJACENT_REST_REQUIRED');
+
+  current=validState({
+    events:[
+      ...eighthFourToThree().slice(0,4),
+      note('r1','n5',{numerator:3,denominator:8},{numerator:1,denominator:8},'G')
+    ]
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_ADJACENT_REST_REQUIRED');
+
+  current=validState({
+    events:[
+      ...eighthFourToThree().slice(0,4),
+      rest('r1',{numerator:7,denominator:16},{numerator:1,denominator:8})
+    ]
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_ADJACENT_REST_REQUIRED');
+
+  current=validState({
+    eventNotationById:{
+      ...fourToThreeNotationById(),
+      r1:eventNotation({articulations:[{kind:'staccato',placement:'auto',direction:null}]})
+    }
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_ADJACENT_REST_REQUIRED');
+
+  current=validState({
+    preset:'PIANO_GRAND_STAFF',
+    crossStaffPlacements:[{eventId:'r1',displayStaffIndex:1}]
+  });
+  result=analyze(current.score,current.notation);
+  assert.equal(result.reason,'BLOCKED_ADJACENT_REST_REQUIRED');
+});
+
+test('P10-2B rejects insufficient adjacent-rest capacity',()=>{
+  const current=validState({events:eighthFourToThree({numerator:1,denominator:16})});
+  const result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,false);
+  assert.equal(result.reason,'BLOCKED_ADJACENT_REST_INSUFFICIENT');
+  assert.deepEqual(result.requiredGrowthInterval?.duration,{numerator:1,denominator:8});
+});
+
+test('P10-2B returns deeply frozen read-only admission evidence',()=>{
+  const current=validState();
+  const beforeScore=structuredClone(current.score);
+  const beforeNotation=structuredClone(current.notation);
+  const result=analyze(current.score,current.notation);
+  assert.equal(result.admitted,true);
+  assert.equal(Object.isFrozen(result),true);
+  assert.equal(Object.isFrozen(result.profile),true);
+  assert.equal(Object.isFrozen(result.targetEventIds),true);
+  assert.equal(Object.isFrozen(result.eventPlans),true);
+  assert.equal(Object.isFrozen(result.eventPlans[0]),true);
+  assert.equal(Object.isFrozen(result.requiredGrowthInterval),true);
+  assert.equal(Object.isFrozen(result.restPlan),true);
+  assert.deepEqual(current.score,beforeScore);
+  assert.deepEqual(current.notation,beforeNotation);
+});
