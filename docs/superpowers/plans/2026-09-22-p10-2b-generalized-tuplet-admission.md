@@ -193,7 +193,7 @@ Use this exact structure:
 
 Project: khfy7wpr5p-maker_st-score-editor-core
 Analysis mode: Automatic Analysis
-Observed Quality Gate: <copy exact live service value>
+Observed Quality Gate: Not computed
 Observed open security findings: 14
 
 | # | Rule/key | Severity | File:line | Type | New/overall | Scope | Classification | Rationale |
@@ -216,7 +216,7 @@ List only REVIEW_REQUIRED rows.
 Record the exact Sonar Quality Gate value observed during this task. CI success is not a substitute.
 ```
 
-Replace the angle-bracket service value with the exact live value before saving; the final document must contain no angle-bracket placeholders.
+If the live service value differs from the handoff baseline `Not computed`, replace that line with the exact live value before saving.
 
 - [ ] **Step 5: Verify all 14 rows are present and no unsupported PASS claim exists**
 
@@ -849,77 +849,42 @@ If the production file did not change, stage only the test file.
 
 ---
 
-### Task 7: Fix only Sonar findings classified TRUE_POSITIVE_FIX
+### Task 7: Enforce the Sonar true-positive gate before continuing
 
 **Files:**
-- Modify only files named in `docs/p10-2b-sonar-security-triage.md` rows classified `TRUE_POSITIVE_FIX`.
-- Add one focused regression test per true-positive mechanism where technically applicable.
-- Modify `docs/p10-2b-sonar-security-triage.md` only to record the tested fix and current service status.
+- Read: `docs/p10-2b-sonar-security-triage.md`
+- No product file is modified by this task.
 
 **Interfaces:**
 - Consumes: Task 1 live classifications.
-- Produces: minimal security fixes with regression evidence; no global suppression.
+- Produces: a deterministic decision whether this admission plan may continue unchanged or must pause for a concrete security-fix plan.
 
-- [ ] **Step 1: For each TRUE_POSITIVE_FIX, reproduce the unsafe mechanism with a failing test**
+- [ ] **Step 1: Count live TRUE_POSITIVE_FIX rows**
 
-Before production code, add the smallest test that proves the exact unsafe behavior.
-
-Examples of acceptable test shape:
-
-```js
-test('rejects an unsafe unbounded filename before filesystem use',()=>{
-  assert.throws(
-    ()=>targetApi('../escape.musicxml'),
-    error=>error?.code==='INVALID_FILE_NAME'
-  );
-});
-```
-
-or:
-
-```js
-test('escapes untrusted text before emitting HTML',()=>{
-  assert.doesNotMatch(renderUntrusted('<img src=x onerror=1>'),/<img/);
-});
-```
-
-Use the live Sonar finding's actual mechanism; do not copy these examples unless they match the flagged code.
-
-- [ ] **Step 2: Run each focused test and verify RED**
-
-Use `npm run build` followed by the exact `node --test --test-name-pattern=...` command for that test.
-
-Expected: FAIL because the flagged unsafe behavior still exists.
-
-- [ ] **Step 3: Make the smallest root-cause fix**
-
-Preserve:
-- current-revision checks;
-- bounded filename/file handling;
-- fail-closed validation;
-- no hidden network authority;
-- no weakened schema/notation validation.
-
-Do not add `//NOSONAR`, global rule exclusions, or repository-wide suppression.
-
-- [ ] **Step 4: Verify focused GREEN and full-suite GREEN**
+Run:
 
 ```bash
-npm run build
-node --test <focused-test-file>
-npm test
+node - <<'NODE'
+const fs=require('node:fs');
+const s=fs.readFileSync('docs/p10-2b-sonar-security-triage.md','utf8');
+const rows=s.split('\n').filter(line=>/^\| [0-9]+ \|/.test(line));
+const truePositives=rows.filter(line=>line.includes('| TRUE_POSITIVE_FIX |'));
+console.log(JSON.stringify({rows:rows.length,truePositives:truePositives.length},null,2));
+if(rows.length!==14) process.exitCode=2;
+NODE
 ```
 
-- [ ] **Step 5: Commit each independent security fix separately**
+Expected: `rows` is 14.
 
-```bash
-git add <exact-source-files> <exact-test-files> docs/p10-2b-sonar-security-triage.md
-git commit -m "fix(security): <short root-cause description>"
-```
+- [ ] **Step 2: Branch on verified evidence, never on assumptions**
 
-The commit message description must name the mechanism, not the Sonar grade.
+If `truePositives` is 0, record in the triage report that no production security fix is required by the current live classification and continue to Task 8.
 
-If Task 1 contains zero `TRUE_POSITIVE_FIX` rows, record that fact in the triage report and make no production security commit.
+If `truePositives` is greater than 0, stop this plan before further product/docs qualification work. Use the concrete rows already recorded in `docs/p10-2b-sonar-security-triage.md` to create a separate bounded security-fix plan whose file paths, regression tests, and root causes are literal and known. Implement those fixes through RED -> GREEN TDD, re-run Sonar, then resume this plan only after that security-fix work is verified.
+
+- [ ] **Step 3: Do not change Sonar status merely to unblock this plan**
+
+No `//NOSONAR`, global exclusion, rule disablement, scanner duplication, or token path is allowed as a substitute for root-cause work.
 
 ---
 
