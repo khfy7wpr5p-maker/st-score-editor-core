@@ -447,9 +447,9 @@ git commit -m "feat(P10-3A): add key-aware pitch theory kernel"
   - Task 1 theory helpers
 - Produces:
   - `ProfessionalPitchTransposeAdmissionV1`
-  - `analyzeProfessionalSemitoneTransposeV1(...)`
-  - `analyzeProfessionalDiatonicTransposeV1(...)`
-  - `executeProfessionalPitchTransposeV1(...)`
+  - `analyzeProfessionalSemitoneTransposeV1(score, notation, selection, delta)`
+  - `analyzeProfessionalDiatonicTransposeV1(score, notation, selection, steps)`
+  - `executeProfessionalPitchTransposeV1(score, notation, selection, admission, options)`
   - `ProfessionalPitchTransposeV1Error`
 
 Define the stable public admission shape:
@@ -754,8 +754,18 @@ test('P10-3A rejects a tampered admission before candidate mutation', () => {
 
 test('P10-3A preserves unselected canonical content exactly', () => {
   const before = snapshotUnselected(score, notation, ['event-2','event-4']);
-  const result = executeProfessionalPitchTransposeV1(...);
-  assert.deepEqual(snapshotUnselected(result.score, result.notation, ['event-2','event-4']), before);
+  const admission = analyzeProfessionalSemitoneTransposeV1(score, notation, selection, 1);
+  const result = executeProfessionalPitchTransposeV1(
+    score,
+    notation,
+    selection,
+    admission,
+    { nextRevisionId:'rev:p10-3a-unselected-2' }
+  );
+  assert.deepEqual(
+    snapshotUnselected(result.score, result.notation, ['event-2','event-4']),
+    before
+  );
 });
 ```
 
@@ -790,7 +800,7 @@ git commit -m "feat(P10-3A): add professional pitch transpose engine"
   - `ProfessionalPitchTransposeOptionsV1`
   - `EditorSessionStateV4`
 - Produces:
-  - `commitSessionProfessionalPitchTransposeV1(...)`
+  - `commitSessionProfessionalPitchTransposeV1(session, selection, admission, options)`
   - `ProfessionalPitchTransposeSessionResultV1`
 
 - [ ] **Step 1: Write RED one-history-step Undo/Redo test**
@@ -928,9 +938,9 @@ git commit -m "feat(P10-3A): commit pitch transpose through unified history"
   - Task 2 analyzers
   - Task 3 session commit
 - Produces:
-  - `commitProfessionalWorkstationSemitoneTransposeV1(...)`
-  - `commitProfessionalWorkstationDiatonicTransposeV1(...)`
-  - Browser controller methods `transposeSemitones(...)` and `transposeDiatonically(...)`
+  - `commitProfessionalWorkstationSemitoneTransposeV1(workstation, semitoneDelta, options)`
+  - `commitProfessionalWorkstationDiatonicTransposeV1(workstation, diatonicSteps, options)`
+  - Browser controller methods `transposeSemitones(delta, options)` and `transposeDiatonically(steps, options)`
 
 - [ ] **Step 1: Add RED workstation tests**
 
@@ -1067,7 +1077,18 @@ readonly transposeDiatonically: (
 ) => Readonly<ScoreEditorBrowserProfessionalSnapshotV1>;
 ```
 
-Implement both through `runCommit(...)`; do not add local pitch logic.
+Implement exactly through the existing commit boundary:
+
+```ts
+transposeSemitones: (delta, options) => runCommit((workstation) =>
+  commitProfessionalWorkstationSemitoneTransposeV1(workstation, delta, options)
+),
+transposeDiatonically: (steps, options) => runCommit((workstation) =>
+  commitProfessionalWorkstationDiatonicTransposeV1(workstation, steps, options)
+),
+```
+
+Do not add local pitch logic.
 
 - [ ] **Step 6: Run workstation + browser suites GREEN**
 
@@ -1177,7 +1198,6 @@ const transposeSemitones = (delta: number): Readonly<ScoreEditorBrowserAppSnapsh
     return result.base;
   }
   professional.clearProfessionalSelection();
-  base.clearTeacherRange();
   return result.base;
 });
 
@@ -1192,12 +1212,11 @@ const transposeDiatonically = (steps: number): Readonly<ScoreEditorBrowserAppSna
     return result.base;
   }
   professional.clearProfessionalSelection();
-  base.clearTeacherRange();
   return result.base;
 });
 ```
 
-If the base controller does not expose `clearTeacherRange()` under that exact name, reuse the same proven post-commit range-clear mechanism already used by `clearToRest` / octave transpose; do not invent a second transient range store.
+Do not add a second teacher-range clearing API. The existing mobile teacher range is revision-bound and is already cleared when the validated professional result is adopted by the base controller; the existing P08-E2 Clear/octave tests prove that behavior. The new tests must assert the same post-adoption state for semitone and diatonic edits.
 
 - [ ] **Step 5: Add the four buttons through existing `addButton` helper**
 
