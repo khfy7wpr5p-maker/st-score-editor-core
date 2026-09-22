@@ -170,5 +170,17 @@ test('all current Editor Core CI and retained WebKit workflows install verified 
       assert.ok(editorCoreInstallCount >= 1);
       assert.ok(verifiedCount >= 1, workflow + ' must verify audio before build/test');
     }
+
+    if (!workflow.endsWith('ci.yml')) {
+      const ordered = source.match(
+        /npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1\.62\.1\n\s*npm run install:verified-audio/g
+      ) ?? [];
+      const expected = workflow.endsWith('app09b-preview-webkit.yml') ? 2 : 1;
+      assert.equal(
+        ordered.length,
+        expected,
+        workflow + ' must install verified audio after the final npm/Playwright install so npm cannot prune it'
+      );
+    }
   }
 });
