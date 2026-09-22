@@ -1,0 +1,37 @@
+name: P10-3A Sonar Annotation Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  read-sonar-annotations:
+    permissions:
+      contents: read
+      checks: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read SonarCloud check annotations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          check_id=""
+          for attempt in {1..30}; do
+            checks="$(gh api -H "Accept: application/vnd.github+json" "/repos/$REPOSITORY/commits/$HEAD_SHA/check-runs")"
+            check_id="$(printf '%s' "$checks" | jq -r '.check_runs[] | select(.name == "SonarCloud Code Analysis" and .status == "completed") | .id' | head -n 1)"
+            if [ -n "$check_id" ]; then
+              break
+            fi
+            sleep 5
+          done
+          if [ -z "$check_id" ]; then
+            echo "SONAR_CHECK_NOT_COMPLETED"
+            exit 1
+          fi
+          echo "SONAR_CHECK_ID=$check_id"
+          gh api -H "Accept: application/vnd.github+json" "/repos/$REPOSITORY/check-runs/$check_id/annotations" \
+            --jq '.[] | {path, start_line, end_line, annotation_level, title, message, raw_details}'
