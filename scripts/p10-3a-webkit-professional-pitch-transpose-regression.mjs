@@ -1,33 +1,36 @@
 import { createServer } from 'node:http';
-import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { webkit } from 'playwright';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const browserRoot = path.join(repoRoot, 'dist', 'browser');
-const types = new Map([
-  ['.html', 'text/html; charset=utf-8'],
-  ['.js', 'text/javascript; charset=utf-8'],
-  ['.json', 'application/json; charset=utf-8']
+const defaultRoute = '/st-score-editor-p10-3a-workstation.html';
+const allowedAssets = new Map([
+  [defaultRoute, Object.freeze({
+    file: path.join(browserRoot, 'st-score-editor-p10-3a-workstation.html'),
+    contentType: 'text/html; charset=utf-8'
+  })],
+  ['/st-score-editor-p10-3a-workstation.js', Object.freeze({
+    file: path.join(browserRoot, 'st-score-editor-p10-3a-workstation.js'),
+    contentType: 'text/javascript; charset=utf-8'
+  })]
 ]);
 
 const server = createServer(async (request, response) => {
+  const requestPath = (request.url ?? '/').split('?', 1)[0];
+  const route = requestPath === '/' ? defaultRoute : requestPath;
+  const asset = allowedAssets.get(route);
+  if (asset === undefined) {
+    response.writeHead(404).end('not found');
+    return;
+  }
   try {
-    const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://127.0.0.1').pathname);
-    const file = path.resolve(
-      browserRoot,
-      (pathname.startsWith('/') ? pathname.slice(1) : pathname) || 'st-score-editor-p10-3a-workstation.html'
-    );
-    if (file !== browserRoot && !file.startsWith(`${browserRoot}${path.sep}`)) {
-      throw new Error('escaped browser root');
-    }
-    const info = await stat(file);
-    if (!info.isFile()) throw new Error('not a file');
-    response.setHeader('Content-Type', types.get(path.extname(file)) ?? 'application/octet-stream');
+    const bytes = await readFile(asset.file);
+    response.setHeader('Content-Type', asset.contentType);
     response.setHeader('Cache-Control', 'no-store');
-    createReadStream(file).pipe(response);
+    response.end(bytes);
   } catch {
     response.writeHead(404).end('not found');
   }
