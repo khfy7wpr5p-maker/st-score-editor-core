@@ -1,6 +1,6 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / P10-3A PITCH TRANSPOSE IMPLEMENTED, QUALIFICATION PENDING / FULL RELEASE MATRIX OPEN**
+Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / P10-3A PITCH TRANSPOSE IMPLEMENTED + QUALIFIED / FULL RELEASE MATRIX OPEN**
 
 Date: 2026-09-19
 
@@ -34,7 +34,7 @@ The standalone editor product now includes bounded Guitar/Piano starts, Voice 1�
 
 ## P10-3A — Professional key-aware pitch transpose
 
-**IMPLEMENTED ON AN OPTIONAL P10-3A PROFESSIONAL WORKSTATION COMPOSITION; EXACT-HEAD QUALIFICATION PENDING.**
+**IMPLEMENTED + QUALIFIED ON AN OPTIONAL P10-3A PROFESSIONAL WORKSTATION COMPOSITION.**
 
 P10-3A adds key-aware professional pitch transpose over the existing semantic `EVENT_SPAN` and `EVENT_SET` selection contracts. The bounded public engine supports semitone intervals `±1..±12` and diatonic intervals `±1..±7`. Canonical `Pitch(step, alter, octave)` and explicit accidental-display metadata are updated atomically, while REST content and unselected events remain unchanged.
 
@@ -54,7 +54,7 @@ P10-1 qualified workstation
 
 Key-signature context is resolved staff-locally and inherited from the nearest earlier explicit key signature, defaulting to C major when none exists. Enharmonic spelling is deterministic and key-aware. Tie relation closure and grace relation closure remain **fail-closed**; no silent relation repair is authorized.
 
-The P10-3A browser surface exposes `−½`, `+½`, `−Step` and `+Step` presentation-only controls. Renderer coordinates and DOM order never determine target membership. The bounded P10-3A artifact remains optional, production-default false, production-release unauthorized and SesliTab-cutover unauthorized.
+The P10-3A browser surface exposes `−½`, `+½`, `−Step` and `+Step` presentation-only controls. Renderer coordinates and DOM order never determine target membership. Exact-head Node 18/20/22, retained WebKit, dedicated P10-3A WebKit and SonarCloud Quality Gate qualification completed successfully. The bounded P10-3A artifact remains optional, production-default false, production-release unauthorized and SesliTab-cutover unauthorized.
 
 ## P09 Fast Entry / Keyboard Workstation
 
