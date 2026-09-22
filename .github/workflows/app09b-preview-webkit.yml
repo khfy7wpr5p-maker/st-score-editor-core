@@ -24,8 +24,8 @@ jobs:
       - name: Install Editor Core dependencies and regression Playwright
         run: |
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm run install:verified-audio
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+          npm run install:verified-audio
       - name: Install pinned WebKit browser
         run: npx playwright install --with-deps webkit
       - name: Build Editor Core browser artifacts
@@ -100,8 +100,8 @@ jobs:
       - name: Install Editor Core dependencies and regression Playwright
         run: |
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm run install:verified-audio
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1.62.1
+          npm run install:verified-audio
       - name: Install pinned WebKit browser
         run: npx playwright install --with-deps webkit
       - name: Build Editor Core browser artifacts
