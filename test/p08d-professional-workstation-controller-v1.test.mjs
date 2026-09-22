@@ -13,14 +13,16 @@ import {
   commitProfessionalWorkstationFrameBarlinesV1,
   commitProfessionalWorkstationKeySignatureV1,
   commitProfessionalWorkstationOctaveTransposeV1,
-  commitProfessionalWorkstationSemitoneTransposeV1,
-  commitProfessionalWorkstationDiatonicTransposeV1,
   commitProfessionalWorkstationTimeSignatureV1,
   commitProfessionalWorkstationTopologyV1,
   createScoreEditorProfessionalWorkstationV1,
   navigateProfessionalWorkstationHistoryV1,
   selectProfessionalEventSpanV1
 } from '../dist/packages/score-editor-professional-workstation-v1/src/index.js';
+import {
+  commitProfessionalPitchWorkstationSemitoneTransposeV1,
+  commitProfessionalPitchWorkstationDiatonicTransposeV1
+} from '../dist/packages/score-editor-professional-pitch-transpose-workstation-v1/src/index.js';
 
 const q = (numerator, denominator) => ({ numerator, denominator });
 const scoreFixture = () => createScoreDocumentV3({
@@ -166,7 +168,7 @@ test('P10-3A workstation exposes semitone and diatonic edits over the same profe
   let workstation = createScoreEditorProfessionalWorkstationV1(appDocument());
 
   assert.throws(
-    () => commitProfessionalWorkstationSemitoneTransposeV1(
+    () => commitProfessionalPitchWorkstationSemitoneTransposeV1(
       workstation, 1, { nextRevisionId: 'p10-3a-missing-selection' }
     ),
     error => error instanceof ProfessionalWorkstationV1Error && error.code === 'SELECTION_REQUIRED'
@@ -178,7 +180,7 @@ test('P10-3A workstation exposes semitone and diatonic edits over the same profe
     eventAddress(workstation, 'event-2')
   );
 
-  workstation = commitProfessionalWorkstationSemitoneTransposeV1(
+  workstation = commitProfessionalPitchWorkstationSemitoneTransposeV1(
     workstation,
     1,
     { nextRevisionId: 'p10-3a-workstation-2' }
@@ -187,7 +189,7 @@ test('P10-3A workstation exposes semitone and diatonic edits over the same profe
   assert.equal(workstation.professionalSelection.anchor.revisionId, 'p10-3a-workstation-2');
   assert.equal(workstation.document.session.history.past.length, 1);
 
-  workstation = commitProfessionalWorkstationDiatonicTransposeV1(
+  workstation = commitProfessionalPitchWorkstationDiatonicTransposeV1(
     workstation,
     1,
     { nextRevisionId: 'p10-3a-workstation-3' }
