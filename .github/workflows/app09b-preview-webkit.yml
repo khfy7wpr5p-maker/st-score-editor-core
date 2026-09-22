@@ -12,7 +12,7 @@ jobs:
   webkit-preview:
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout Editor Core
@@ -87,7 +87,7 @@ jobs:
   p05-paste-render:
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout Editor Core
