@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { build } from 'esbuild';
 
-const OUT_DIR = 'dist/browser';
+const OUT_DIR = process.env.ST_SCORE_EDITOR_P10_3A_OUT_DIR ?? 'dist/browser';
 const ARTIFACT = 'st-score-editor-p10-3a-workstation.js';
 const MANIFEST_FILE = 'st-score-editor-p10-3a-workstation.manifest.json';
 const ENTRY_HTML = 'st-score-editor-p10-3a-workstation.html';
