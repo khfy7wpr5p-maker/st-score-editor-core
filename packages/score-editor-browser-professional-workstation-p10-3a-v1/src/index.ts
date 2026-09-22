@@ -242,7 +242,7 @@ export const createP10_3AProfessionalWorkstationStandaloneScoreEditorControllerV
     if (!disposed) decoratePitchControls();
   });
 
-  const controller: P10_3AProfessionalWorkstationStandaloneScoreEditorControllerV1 = {
+  const controller = {
     ...base,
     profile: p10_3aProfessionalWorkstationBrowserAppProfile,
     getP10_3APitchTransposeState: state,
