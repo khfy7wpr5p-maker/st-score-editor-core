@@ -144,13 +144,29 @@ The session/app wrappers commit one accepted action through `EditorSessionV4`. E
 
 Automated mobile WebKit covers the visible control, straight -> Triplet -> straight round trip, exact Undo/Redo, remount/re-capture and duplicate-listener history behavior.
 
+### P10-2B — read-only generalized 4:3 tuplet admission
+
+**IMPLEMENTED AS ANALYSIS-ONLY CAPABILITY; QUALIFICATION PENDING; GENERALIZED MUTATION NOT AUTHORIZED.**
+
+The separate `editor-generalized-tuplet-admission-v4` package analyzes exactly four current-revision events representing one exact 4:3 tuplet. It returns immutable straight-four timing/rest-capacity evidence while preserving event/note identity and existing part/staff/frame/measure/Voice topology.
+
+This capability is **read-only**:
+
+- canonical mutation authority: false;
+- history mutation authority: false;
+- renderer-coordinate authority: false;
+- browser/public-write authority: false;
+- generalized tuplet mutation: not authorized.
+
+The first imported MusicXML regression preserves imported event/note ids while admitting exact 4:3 timing. Arbitrary ratios/cardinalities and generalized mutation remain outside current product authority. SonarQube Cloud live issue-detail triage is pending; this document does not claim a Sonar Quality Gate PASS.
+
 ## Product authority boundaries
 
 The browser is allowed to present and invoke only already-admitted semantic operations. It may not infer canonical targets/timing from renderer geometry.
 
 Current fail-closed boundaries include:
 
-- arbitrary tuplet ratios/cardinalities outside the bounded 3:2 profile;
+- generalized tuplet mutation and arbitrary ratios/cardinalities beyond the bounded 3:2 mutation path and read-only 4:3 admission;
 - renderer-derived Triplet range inference;
 - selected cross-staff Triplet retiming;
 - independent retiming of dots/beams/existing tuplets/ties outside admitted atomic programs;
@@ -186,6 +202,6 @@ Automated WebKit success remains regression evidence only; the iPhone Safari P08
 
 ## Next bounded development action
 
-**P10-2 closeout — exact-head qualification and review.**
+**P10-2B closeout — exact-head qualification, Sonar live triage and review.**
 
-Before merge, the current bounded implementation still requires fresh exact-head CI/retained WebKit evidence and whole-branch review. Physical iPhone/Safari evidence is separately required before any release/cutover claim. Later arbitrary tuplets, beams and broader rhythm/relation semantics remain separate architectural tranches.
+Before merge, the current branch still requires fresh exact-head CI/retained WebKit evidence, live Sonar status and whole-branch review. Physical iPhone/Safari evidence is separately required before any release/cutover claim. Generalized tuplet mutation is not authorized; broader tuplets, beams and rhythm/relation semantics remain separate architectural tranches.
