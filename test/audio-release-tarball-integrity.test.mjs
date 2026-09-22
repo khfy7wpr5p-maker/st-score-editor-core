@@ -184,3 +184,67 @@ test('all current Editor Core CI and retained WebKit workflows install verified 
     }
   }
 });
+
+test('verified installer rejects failed download before npm execution', async () => {
+  const { installVerifiedAudioDependencies, sha512Integrity } =
+    await import('../scripts/install-verified-audio-dependencies.mjs');
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'stse-audio-fetch-'));
+  let npmCalls = 0;
+
+  try {
+    await assert.rejects(
+      installVerifiedAudioDependencies({
+        manifest: {
+          contract: 'ST_SCORE_EDITOR_VERIFIED_AUDIO_DEPENDENCIES',
+          version: '1.0.0',
+          repository: 'khfy7wpr5p-maker/st-score-audio-engine',
+          release: 'v0.1.2',
+          releaseCommit: '26117ae90f213e208e06fb5c084fc0fad9f4ca86',
+          packages: [{
+            name: '@st/score-audio-contracts',
+            version: '0.1.0',
+            fileName: 'st-score-audio-contracts-0.1.0.tgz',
+            url: 'https://github.com/khfy7wpr5p-maker/st-score-audio-engine/releases/download/v0.1.2/st-score-audio-contracts-0.1.0.tgz',
+            integrity: sha512Integrity(Buffer.from('expected'))
+          }]
+        },
+        tempRoot: tmp,
+        npmExecPath: '/trusted/npm-cli.js',
+        fetcher: async () => ({ ok: false, status: 503 }),
+        execFileImpl: async () => { npmCalls += 1; }
+      }),
+      /AUDIO_DEPENDENCY_FETCH_FAILED/
+    );
+    assert.equal(npmCalls, 0);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('verified installer rejects malformed manifest before fetch or npm execution', async () => {
+  const { installVerifiedAudioDependencies } =
+    await import('../scripts/install-verified-audio-dependencies.mjs');
+  let fetchCalls = 0;
+  let npmCalls = 0;
+
+  await assert.rejects(
+    installVerifiedAudioDependencies({
+      manifest: {
+        contract: 'WRONG',
+        version: '1.0.0',
+        repository: 'khfy7wpr5p-maker/st-score-audio-engine',
+        release: 'v0.1.2',
+        releaseCommit: '26117ae90f213e208e06fb5c084fc0fad9f4ca86',
+        packages: []
+      },
+      npmExecPath: '/trusted/npm-cli.js',
+      fetcher: async () => { fetchCalls += 1; },
+      execFileImpl: async () => { npmCalls += 1; }
+    }),
+    /AUDIO_DEPENDENCY_MANIFEST_INVALID/
+  );
+
+  assert.equal(fetchCalls, 0);
+  assert.equal(npmCalls, 0);
+});
+
