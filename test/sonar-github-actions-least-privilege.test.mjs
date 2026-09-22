@@ -37,6 +37,11 @@ test('Sonar GitHub Actions least-privilege rule is enforced at each job', async 
       /^permissions:\n  contents: read$/m,
       workflow.path + ' must not grant read permissions at workflow scope'
     );
+    assert.doesNotMatch(
+      source,
+      /runs-on:\s*ubuntu-latest/,
+      workflow.path + ' must pin the Ubuntu runner label'
+    );
 
     for (const job of workflow.jobs) {
       const block = jobBlock(source, job);
