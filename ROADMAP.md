@@ -137,6 +137,28 @@ The implementation does not mutate `ScoreDocumentV3 + NotationDocumentV4`, does 
 
 **Generalized tuplet mutation is not authorized.** Broader ratios/cardinalities, generalized browser authoring and release/public-write/SesliTab cutover remain separate future decisions. Sonar live issue-detail triage remains pending; no Quality Gate PASS is claimed.
 
+### P10-3A — Professional key-aware pitch transpose
+
+**IMPLEMENTED ON OPTIONAL WORKSTATION COMPOSITION / EXACT-HEAD QUALIFICATION PENDING / RELEASE GATES UNCHANGED.**
+
+P10-3A extends the P08 semantic professional range model with deterministic key-aware pitch editing:
+
+- semitone transpose: `±1..±12`;
+- diatonic transpose: `±1..±7`;
+- `EVENT_SPAN` and discontiguous `EVENT_SET`;
+- NOTE and all CHORD tones; selected REST events remain unchanged;
+- staff-local effective key-signature inheritance;
+- atomic canonical pitch + accidental-display metadata;
+- one accepted action = one `EditorHistoryV4` revision with exact Undo/Redo;
+- tie relation closure: fail-closed;
+- grace relation closure: fail-closed;
+- renderer-coordinate authority: false;
+- DOM authoring authority: false.
+
+A bundle-budget ruling keeps the qualified P10-1 and P10-2 artifacts unchanged. P10-3A ships as a separate optional composition and artifact rather than widening those qualified bundles. The four visible range actions are `−½`, `+½`, `−Step` and `+Step`.
+
+Dedicated mobile WebKit proves key-aware semitone/diatonic behavior, accidental metadata, semantic-range enablement, 44px touch targets and exact Undo on the optional P10-3A artifact. This automated evidence is not a physical-device release PASS.
+
 ## Current architecture phase
 
 ```text
@@ -157,9 +179,9 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next development action
 
-**P10-2B closeout — exact-head qualification, Sonar live triage and whole-branch review.**
+**P10-3A closeout — exact-head qualification, Sonar required check and whole-branch review.**
 
-The bounded 3:2 inverse mutation remains unchanged, while P10-2B adds a separate read-only 4:3 admission analyzer. Before merge, record fresh exact-head Node 18/20/22 and retained WebKit gates, live Sonar status and final review. Physical iPhone/Safari validation remains separate before any release/cutover claim.
+P10-3A keeps the qualified P10-1/P10-2 artifacts unchanged while adding a separate optional key-aware pitch-transpose composition. Before merge, record fresh exact-head Node 18/20/22, all retained WebKit gates, the dedicated P10-3A WebKit gate, required SonarCloud Code Analysis and final review. Physical iPhone/Safari validation remains separate before any release/cutover claim.
 
 After this bounded tranche, broader Advanced Rhythm & Relations work remains separately scoped; generalized tuplet mutation, arbitrary ratios/cardinalities, beam authoring and other relation semantics are not implied by this implementation.
 
