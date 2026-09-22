@@ -512,12 +512,13 @@ test('P10-2B requires one exact adjacent neutral same-Voice rest',()=>{
   result=analyze(current.score,current.notation);
   assert.equal(result.reason,'BLOCKED_ADJACENT_REST_REQUIRED');
 
-  current=validState({
-    preset:'PIANO_GRAND_STAFF',
-    crossStaffPlacements:[{eventId:'r1',displayStaffIndex:1}]
-  });
-  result=analyze(current.score,current.notation);
-  assert.equal(result.reason,'BLOCKED_ADJACENT_REST_REQUIRED');
+  assert.throws(
+    ()=>validState({
+      preset:'PIANO_GRAND_STAFF',
+      crossStaffPlacements:[{eventId:'r1',displayStaffIndex:1}]
+    }),
+    error=>error?.code==='INVALID_CROSS_STAFF_SOURCE'
+  );
 });
 
 test('P10-2B rejects insufficient adjacent-rest capacity',()=>{
