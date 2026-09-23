@@ -1,3 +1,5 @@
+import { webcrypto } from 'node:crypto';
+
 import { addressEntityV3 } from '../../dist/packages/addressing-v3/src/index.js';
 import { createScoreDocumentV3 } from '../../dist/packages/score-model-v3/src/index.js';
 import {
@@ -11,6 +13,10 @@ import {
   createProfessionalRangeCopySnapshotV1,
   planProfessionalRangeReplaceIdentitiesV1
 } from '../../dist/packages/editor-professional-range-replace-v1/src/index.js';
+
+if (globalThis.crypto === undefined) {
+  globalThis.crypto=webcrypto;
+}
 
 export const q = (numerator, denominator) => ({ numerator, denominator });
 export const pitch = (step='C', alter=0, octave=4) => ({ step, alter, octave });
@@ -146,4 +152,3 @@ export const prepareRangeReplaceFacts = ({
       );
   return {score,notation,source,destination,snapshot,admission,identityPlan};
 };
-
