@@ -371,6 +371,11 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
     }
   };
 
+  const unsubscribeProfessional = base.professional.subscribe(() => {
+    if (disposed) return;
+    decorate();
+  });
+
   const unsubscribeBase = base.subscribe((snapshot) => {
     if (disposed) return;
     const documentValue = base.getDocument();
@@ -413,6 +418,7 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
       root = null;
       clearClipboard();
       lastError = null;
+      unsubscribeProfessional();
       unsubscribeBase();
       base.disposeP10_3APitchControls();
     }
