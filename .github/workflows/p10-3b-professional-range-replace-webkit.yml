@@ -10,6 +10,18 @@ jobs:
   p10-3b-professional-range-replace-webkit:
     permissions:
       contents: read
-    uses: ./.github/workflows/reusable-professional-webkit-stage.yml
-    with:
-      stage: p10-3b
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Editor Core
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Setup Editor WebKit
+        uses: ./.github/actions/setup-editor-webkit
+      - name: Build retained and bounded P10-3B professional workstation artifact
+        run: |
+          npm run build:browser:professional-workstation
+          node scripts/build-p10-2-professional-workstation-browser.mjs
+          node scripts/build-p10-3a-professional-workstation-browser.mjs
+          node scripts/build-p10-3b-professional-workstation-browser.mjs
+      - name: Run P10-3B Professional Range Replace WebKit regression
+        run: node scripts/p10-3b-webkit-professional-range-replace-regression.mjs
