@@ -10,6 +10,16 @@ jobs:
   p10-2-triplet-unretiming-webkit:
     permissions:
       contents: read
-    uses: ./.github/workflows/reusable-professional-webkit-stage.yml
-    with:
-      stage: p10-2
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Editor Core
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Setup Editor WebKit
+        uses: ./.github/actions/setup-editor-webkit
+      - name: Build bounded P10-2 professional workstation artifact
+        run: |
+          npm run build:browser:professional-workstation
+          node scripts/build-p10-2-professional-workstation-browser.mjs
+      - name: Run P10-2 Triplet Unretiming WebKit regression
+        run: node scripts/p10-2-webkit-triplet-unretiming-regression.mjs
