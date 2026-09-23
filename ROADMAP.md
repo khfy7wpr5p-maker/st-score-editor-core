@@ -169,7 +169,7 @@ P10-3B adds one bounded professional `EVENT_SPAN` Copy -> Replace workflow:
 - source and destination must be disjoint and canonically contiguous;
 - exact rational source/destination duration extent must match;
 - event cardinality may change when exact extent is equal;
-- replacement event/note identities are fresh deterministic identities; source IDs and removed destination IDs are never reused;
+- replacement uses fresh deterministic event/note identities; source IDs and removed destination IDs are never reused;
 - NOTE, CHORD and REST content plus supported local notation are copied;
 - beam, tuplet, tie, slur, grace-group, cross-staff, spanning tremolo and wavy-line relation coupling fail closed;
 - relation remapping is not authorized;
