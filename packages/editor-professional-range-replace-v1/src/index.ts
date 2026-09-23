@@ -732,6 +732,23 @@ const replacementPlannedId = (
   `${score.id}|${score.revision.id}|${destination.targets[0]!.eventId}|${destination.targets.at(-1)!.eventId}|${nextRevisionId}|${discriminator}`
 )}`;
 
+const reserveReplacementIdentity = (
+  id: string,
+  occupied: ReadonlySet<string>,
+  planned: Set<string>,
+  sourceDetails: Readonly<Record<string, string>>
+): string => {
+  if (occupied.has(id) || planned.has(id)) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Deterministic professional replacement identity collides with canonical or planned identity.',
+      'ID_COLLISION',
+      { id, ...sourceDetails }
+    );
+  }
+  planned.add(id);
+  return id;
+};
+
 export const planProfessionalRangeReplaceIdentitiesV1 = (
   scoreInput: ScoreDocumentV3,
   notationInput: NotationDocumentV4,
@@ -790,38 +807,32 @@ export const planProfessionalRangeReplaceIdentitiesV1 = (
   const planned = new Set<string>();
   let noteIdentityCount = 0;
   const events = sourceEvents.map((event, eventIndex) => {
-    const destinationEventId = replacementPlannedId(
-      'replace-event',
-      score,
-      destination,
-      nextRevisionId,
-      `event|${eventIndex}|${event.sourceEventId}`
-    );
-    if (occupied.has(destinationEventId) || planned.has(destinationEventId)) {
-      throw new ProfessionalRangeReplaceV1Error(
-        'Deterministic professional replacement event identity collides with canonical or planned identity.',
-        'ID_COLLISION',
-        { id: destinationEventId, sourceEventId: event.sourceEventId }
-      );
-    }
-    planned.add(destinationEventId);
-
-    const notes = event.notes.map((note, noteIndex) => {
-      const destinationNoteId = replacementPlannedId(
-        'replace-note',
+    const destinationEventId = reserveReplacementIdentity(
+      replacementPlannedId(
+        'replace-event',
         score,
         destination,
         nextRevisionId,
-        `note|${eventIndex}|${noteIndex}|${note.sourceNoteId}`
+        `event|${eventIndex}|${event.sourceEventId}`
+      ),
+      occupied,
+      planned,
+      { sourceEventId: event.sourceEventId }
+    );
+
+    const notes = event.notes.map((note, noteIndex) => {
+      const destinationNoteId = reserveReplacementIdentity(
+        replacementPlannedId(
+          'replace-note',
+          score,
+          destination,
+          nextRevisionId,
+          `note|${eventIndex}|${noteIndex}|${note.sourceNoteId}`
+        ),
+        occupied,
+        planned,
+        { sourceNoteId: note.sourceNoteId }
       );
-      if (occupied.has(destinationNoteId) || planned.has(destinationNoteId)) {
-        throw new ProfessionalRangeReplaceV1Error(
-          'Deterministic professional replacement note identity collides with canonical or planned identity.',
-          'ID_COLLISION',
-          { id: destinationNoteId, sourceNoteId: note.sourceNoteId }
-        );
-      }
-      planned.add(destinationNoteId);
       noteIdentityCount += 1;
       return Object.freeze({ sourceNoteId: note.sourceNoteId, destinationNoteId });
     });
