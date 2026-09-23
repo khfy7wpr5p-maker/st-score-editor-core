@@ -1,7 +1,7 @@
 import { buildBoundedWorkstationArtifact } from './lib/build-bounded-workstation-artifact.mjs';
 
 await buildBoundedWorkstationArtifact({
-  stageLabel: 'P10-3B workstation measurement',
+  stageLabel: 'P10-3B workstation',
   outDir: process.env.ST_SCORE_EDITOR_P10_3B_OUT_DIR ?? 'dist/browser',
   entryPoint: 'packages/score-editor-browser-professional-workstation-p10-3b-v1/src/global-entry.ts',
   artifact: 'st-score-editor-p10-3b-workstation.js',
@@ -9,8 +9,8 @@ await buildBoundedWorkstationArtifact({
   entryHtml: 'st-score-editor-p10-3b-workstation.html',
   globalName: 'STScoreEditorP10_3BWorkstation',
   controllerGlobalName: 'STScoreEditorP10_3BWorkstationController',
-  maxBytes: 1_048_576,
-  budgetRevision: 'MEASUREMENT_ONLY_NOT_QUALIFIED',
+  maxBytes: 675_840,
+  budgetRevision: 'P10-3B-RANGE-REPLACE-1',
   retainedBudgets: Object.freeze({
     p10_1Workstation: Object.freeze({
       file: 'st-score-editor-professional-workstation.manifest.json',
