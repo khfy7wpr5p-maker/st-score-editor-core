@@ -1,12 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { webcrypto } from 'node:crypto';
 
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
-import { createScoreDocumentV3 } from '../dist/packages/score-model-v3/src/index.js';
 import { createNotationDocumentV4, emptyNotationDocumentV4 } from '../dist/packages/notation-structure-v4/src/index.js';
 import { createEditorSessionV4 } from '../dist/packages/editor-session-controller-v4/src/index.js';
-import { createMeasureFrameAuthoringStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/measure-frame-authoring.js';
 import {
   createScoreEditorProfessionalWorkstationV1,
   selectProfessionalEventSpanV1,
@@ -16,42 +13,13 @@ import {
   copyProfessionalRangeForReplaceV1,
   commitProfessionalRangeReplaceWorkstationV1
 } from '../dist/packages/score-editor-professional-range-replace-workstation-v1/src/index.js';
-
-if (globalThis.crypto === undefined || typeof globalThis.crypto.randomUUID !== 'function') {
-  Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
-}
-
-const q=(numerator,denominator)=>({numerator,denominator});
-const pitch=(step='C',alter=0,octave=4)=>({step,alter,octave});
-const note=(id,noteId,onset,duration,step='C')=>({
-  id,kind:'note',onset,duration,note:{id:noteId,pitch:pitch(step)}
-});
-const rest=(id,onset,duration)=>({id,kind:'rest',onset,duration});
-const chord=(id,onset,duration,defs)=>({
-  id,kind:'chord',onset,duration,
-  notes:defs.map(([noteId,step])=>({id:noteId,pitch:pitch(step)}))
-});
-
-const fixture=()=>{
-  const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
-  controller.newDocument({preset:'GUITAR_TREBLE'});
-  const raw=structuredClone(controller.getDocument().session.history.present.score);
-  raw.revision={id:'p10-3b-workstation-rev-1',parentId:'p10-3b-workstation-parent'};
-  const staff=raw.parts[0].staves.find(item=>item.role==='standard');
-  staff.measures[0].voices[0].events=[
-    note('src-a','src-na',q(0,1),q(1,8),'C'),
-    chord('src-b',q(1,8),q(1,8),[['src-nb1','E'],['src-nb2','G']]),
-    note('dst-a','dst-na',q(1,4),q(1,16),'A'),
-    rest('dst-b',q(5,16),q(1,16)),
-    chord('dst-c',q(3,8),q(1,16),[['dst-nc1','C'],['dst-nc2','E']]),
-    note('dst-d','dst-nd',q(7,16),q(1,16),'B'),
-    note('tail','tail-note',q(1,2),q(1,2),'F')
-  ];
-  return createScoreDocumentV3(raw);
-};
+import { createCompactRangeReplaceScore } from './helpers/p10-3b-fixtures.mjs';
 
 const workstationFixture=()=>{
-  const score=fixture();
+  const score=createCompactRangeReplaceScore({
+    revisionId:'p10-3b-workstation-rev-1',
+    parentId:'p10-3b-workstation-parent'
+  });
   const notation=createNotationDocumentV4(score,emptyNotationDocumentV4(score));
   const session=createEditorSessionV4(score,notation);
   const document=Object.freeze({
