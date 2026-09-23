@@ -1,4 +1,8 @@
 import { buildBoundedWorkstationArtifact } from './lib/build-bounded-workstation-artifact.mjs';
+import {
+  professionalWorkstationManifestCapabilities,
+  retainedProfessionalWorkstationBudgets
+} from './lib/professional-workstation-stage-config.mjs';
 
 await buildBoundedWorkstationArtifact({
   stageLabel: 'P10-2 workstation',
@@ -11,34 +15,14 @@ await buildBoundedWorkstationArtifact({
   controllerGlobalName: 'STScoreEditorP10_2WorkstationController',
   maxBytes: 624_640,
   budgetRevision: 'P10-2-UNRETIMING-1',
-  retainedBudgets: Object.freeze({
-    p10_1Workstation: Object.freeze({
-      file: 'st-score-editor-professional-workstation.manifest.json',
-      maxBytes: 604_160,
-      revision: 'P10-1-COMPOSITION-1'
-    })
-  }),
+  retainedBudgets: retainedProfessionalWorkstationBudgets('p10_1Workstation'),
   contract: 'ST_SCORE_EDITOR_P10_2_PROFESSIONAL_WORKSTATION_BUNDLE',
   artifactClass: 'optional-p10-2-professional-workstation-composition',
   title: 'ST Score Editor P10-2 Workstation Qualification',
   rootId: 'st-score-editor-p10-2-workstation-root',
-  manifestCapabilities: Object.freeze({
+  manifestCapabilities: professionalWorkstationManifestCapabilities({
     p10_1QualifiedBasePreserved: true,
     tripletUnretimingBundled: true,
-    canonicalAuthority: false,
-    historyAuthority: 'EditorHistoryV4',
-    semanticTargetAuthority: 'SemanticAddressV3-current-revision',
-    rendererIntegrated: true,
-    audioHostIntegrated: true,
-    audioEngineBundled: false,
-    externalAudioRuntimeRequired: true,
-    rendererCoordinateAuthority: false,
-    domAuthoringAuthority: false,
-    productionDefault: false,
-    replacesP10_1Artifact: false,
-    productionReleaseAuthorized: false,
-    seslitabCutoverAuthorized: false,
-    physicalDeviceValidationRequired: true,
-    physicalDeviceValidationPassed: false
+    replacesP10_1Artifact: false
   })
 });

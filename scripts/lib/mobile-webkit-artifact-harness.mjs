@@ -1,7 +1,6 @@
-import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { webkit } from 'playwright';
 
 const browserRoot = path.join(
@@ -10,47 +9,18 @@ const browserRoot = path.join(
   'browser'
 );
 
-const mime = Object.freeze({
-  html: 'text/html; charset=utf-8',
-  js: 'text/javascript; charset=utf-8'
-});
-
 export const openMobileWebKitArtifact = async ({
   htmlFile,
   scriptFile,
-  portErrorCode
+  portErrorCode: _unusedPortErrorCode
 }) => {
-  const routes = new Map([
-    ['/', { file: htmlFile, type: mime.html }],
-    [`/${htmlFile}`, { file: htmlFile, type: mime.html }],
-    [`/${scriptFile}`, { file: scriptFile, type: mime.js }]
+  const htmlPath = path.join(browserRoot, htmlFile);
+  const scriptPath = path.join(browserRoot, scriptFile);
+
+  await Promise.all([
+    readFile(htmlPath),
+    readFile(scriptPath)
   ]);
-
-  const server = createServer((request, response) => {
-    const pathname = (request.url ?? '/').split('?', 1)[0];
-    const asset = routes.get(pathname);
-    if (asset === undefined) {
-      response.writeHead(404).end('not found');
-      return;
-    }
-    readFile(path.join(browserRoot, asset.file))
-      .then(bytes => {
-        response.setHeader('Content-Type', asset.type);
-        response.setHeader('Cache-Control', 'no-store');
-        response.end(bytes);
-      })
-      .catch(() => response.writeHead(404).end('not found'));
-  });
-
-  await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', resolve);
-  });
-  const address = server.address();
-  if (address === null || typeof address === 'string') {
-    server.close();
-    throw new Error(portErrorCode);
-  }
 
   let browser;
   try {
@@ -67,21 +37,21 @@ export const openMobileWebKitArtifact = async ({
       if (message.type() === 'error') errors.push(message.text());
     });
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(`http://127.0.0.1:${address.port}/${htmlFile}`, {
+
+    await page.goto(pathToFileURL(htmlPath).href, {
       waitUntil: 'load',
       timeout: 30000
     });
+
     return Object.freeze({
       page,
       errors,
       close: async () => {
         await browser.close();
-        await new Promise(resolve => server.close(resolve));
       }
     });
   } catch (error) {
     if (browser !== undefined) await browser.close();
-    await new Promise(resolve => server.close(resolve));
     throw error;
   }
 };
