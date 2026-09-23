@@ -1,11 +1,15 @@
 import {
+  addressEntityV3,
   resolveSemanticAddressV3,
-  type EventAddressV3
+  type EventAddressV3,
+  type SemanticAddressV3
 } from '../../addressing-v3/src/index.js';
 import {
   createNotationDocumentV4,
   type NotationDocumentV4
 } from '../../notation-structure-v4/src/index.js';
+import type { EventNotationV2 } from '../../notation-structure-v2/src/index.js';
+import type { NoteNotation } from '../../notation-structure/src/index.js';
 import {
   createScoreDocumentV3,
   type ScoreDocumentV3
@@ -73,6 +77,11 @@ export type ProfessionalRangeReplaceV1ErrorCode =
   | 'NOTATION_STALE_OR_INVALID'
   | 'INVALID_REVISION_ID'
   | 'ADMISSION_STALE_OR_TAMPERED'
+  | 'IDENTITY_PLAN_STALE_OR_INVALID'
+  | 'TARGET_PLAN_INVALID'
+  | 'RESULT_INVALID'
+  | 'NOTATION_RESULT_INVALID'
+  | 'RESULT_SELECTION_INVALID'
   | 'ID_COLLISION';
 
 export class ProfessionalRangeReplaceV1Error extends Error {
@@ -838,6 +847,509 @@ export const planProfessionalRangeReplaceIdentitiesV1 = (
     relationIdentityCount: 0 as const,
     identityAllocationPerformed: false as const,
     canonicalMutationAuthority: false as const,
+    historyMutationAuthority: false as const
+  });
+};
+
+export interface ProfessionalRangeReplaceResultV1 {
+  readonly version: typeof EDITOR_PROFESSIONAL_RANGE_REPLACE_V1_VERSION;
+  readonly score: Readonly<ScoreDocumentV3>;
+  readonly notation: Readonly<NotationDocumentV4>;
+  readonly selection: Readonly<EventSpanProfessionalSelectionV1>;
+  readonly admission: Readonly<ProfessionalRangeReplaceAdmissionV1>;
+  readonly identityPlan: Readonly<ProfessionalRangeReplaceIdentityPlanV1>;
+  readonly insertedEventIds: readonly string[];
+  readonly insertedNoteIds: readonly string[];
+  readonly removedDestinationEventIds: readonly string[];
+  readonly removedDestinationNoteIds: readonly string[];
+  readonly historyMutationAuthority: false;
+}
+
+const sameJson = (left: unknown, right: unknown): boolean =>
+  JSON.stringify(left) === JSON.stringify(right);
+
+const semanticTargetId = (address: SemanticAddressV3): string => {
+  switch (address.kind) {
+    case 'document': return address.documentId;
+    case 'measure-frame': return address.frameId;
+    case 'part': return address.partId;
+    case 'staff': return address.staffId;
+    case 'measure': return address.measureId;
+    case 'voice': return address.voiceId;
+    case 'event': return address.eventId;
+    case 'note': return address.noteId;
+    case 'grace-group': return address.graceGroupId;
+    case 'grace-event': return address.graceEventId;
+    case 'grace-note': return address.graceNoteId;
+  }
+};
+
+const rebindReplaceAddress = (
+  score: ScoreDocumentV3,
+  address: SemanticAddressV3
+): SemanticAddressV3 => {
+  const id = semanticTargetId(address);
+  const rebound = addressEntityV3(score, id);
+  if (rebound.kind !== address.kind) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement changed semantic target kind while rebinding notation.',
+      'NOTATION_RESULT_INVALID',
+      { id, expectedKind: address.kind, observedKind: rebound.kind }
+    );
+  }
+  return rebound;
+};
+
+const revalidateCopySnapshot = (
+  score: ScoreDocumentV3,
+  notation: NotationDocumentV4,
+  snapshot: TeacherCopySnapshotV4
+): Readonly<TeacherCopySnapshotV4> => {
+  let start: SemanticAddressV3;
+  let stop: SemanticAddressV3;
+  try {
+    start = addressEntityV3(score, snapshot.sourceStartEventId);
+    stop = addressEntityV3(score, snapshot.sourceStopEventId);
+  } catch (error) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement source snapshot no longer resolves.',
+      'ADMISSION_STALE_OR_TAMPERED',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+  if (start.kind !== 'event' || stop.kind !== 'event') {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement source snapshot endpoints are not normal events.',
+      'ADMISSION_STALE_OR_TAMPERED'
+    );
+  }
+  let current: Readonly<TeacherCopySnapshotV4>;
+  try {
+    current = createTeacherCopySnapshotV4(
+      score,
+      notation,
+      createTeacherEventSpanSelectionV4(score, start, stop)
+    );
+  } catch (error) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement source snapshot no longer revalidates.',
+      error instanceof TeacherCopySnapshotV4Error &&
+        (error.code === 'RELATION_COUPLED_SOURCE' || error.code === 'GRACE_COUPLED_SOURCE')
+        ? 'SOURCE_RELATION_UNSUPPORTED'
+        : 'ADMISSION_STALE_OR_TAMPERED',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+  if (!sameJson(current, snapshot)) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement source snapshot facts changed or were tampered with.',
+      'ADMISSION_STALE_OR_TAMPERED'
+    );
+  }
+  return current;
+};
+
+const buildReplacementEvent = (
+  source: TeacherCopyEventSnapshotV4,
+  identities: ProfessionalRangeReplaceEventIdentityPlanV1,
+  destinationStart: Rational
+): ScoreEvent => {
+  if (
+    source.sourceEventId !== identities.sourceEventId ||
+    source.notes.length !== identities.notes.length
+  ) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement source content no longer matches the identity plan.',
+      'IDENTITY_PLAN_STALE_OR_INVALID',
+      { sourceEventId: source.sourceEventId }
+    );
+  }
+  const onset = add(destinationStart, source.onsetFromSegmentOrigin, 'DESTINATION_TIMING_INVALID');
+  const duration = Object.freeze({ ...source.duration });
+  if (source.kind === 'rest') {
+    if (source.notes.length !== 0) {
+      throw new ProfessionalRangeReplaceV1Error(
+        'Professional range replacement rest snapshot unexpectedly carries notes.',
+        'ADMISSION_STALE_OR_TAMPERED',
+        { sourceEventId: source.sourceEventId }
+      );
+    }
+    return Object.freeze({
+      id: identities.destinationEventId,
+      kind: 'rest' as const,
+      onset,
+      duration
+    });
+  }
+  if (source.kind === 'note') {
+    const sourceNote = source.notes[0];
+    const plannedNote = identities.notes[0];
+    if (
+      sourceNote === undefined ||
+      plannedNote === undefined ||
+      sourceNote.sourceNoteId !== plannedNote.sourceNoteId
+    ) {
+      throw new ProfessionalRangeReplaceV1Error(
+        'Professional range replacement note identity mapping is invalid.',
+        'IDENTITY_PLAN_STALE_OR_INVALID',
+        { sourceEventId: source.sourceEventId }
+      );
+    }
+    return Object.freeze({
+      id: identities.destinationEventId,
+      kind: 'note' as const,
+      onset,
+      duration,
+      note: Object.freeze({
+        id: plannedNote.destinationNoteId,
+        pitch: Object.freeze({ ...sourceNote.pitch })
+      })
+    });
+  }
+  if (source.notes.length < 2) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement chord snapshot contains too few notes.',
+      'ADMISSION_STALE_OR_TAMPERED',
+      { sourceEventId: source.sourceEventId }
+    );
+  }
+  return Object.freeze({
+    id: identities.destinationEventId,
+    kind: 'chord' as const,
+    onset,
+    duration,
+    notes: Object.freeze(source.notes.map((sourceNote, noteIndex) => {
+      const plannedNote = identities.notes[noteIndex];
+      if (plannedNote === undefined || sourceNote.sourceNoteId !== plannedNote.sourceNoteId) {
+        throw new ProfessionalRangeReplaceV1Error(
+          'Professional range replacement chord identity mapping is invalid.',
+          'IDENTITY_PLAN_STALE_OR_INVALID',
+          { sourceEventId: source.sourceEventId, sourceNoteId: sourceNote.sourceNoteId }
+        );
+      }
+      return Object.freeze({
+        id: plannedNote.destinationNoteId,
+        pitch: Object.freeze({ ...sourceNote.pitch })
+      });
+    }))
+  });
+};
+
+const mutateReplacementScore = (
+  score: ScoreDocumentV3,
+  snapshot: TeacherCopySnapshotV4,
+  destination: EventSpanProfessionalSelectionV1,
+  admission: ProfessionalRangeReplaceAdmissionV1,
+  identityPlan: ProfessionalRangeReplaceIdentityPlanV1
+): Readonly<ScoreDocumentV3> => {
+  const raw = structuredClone(score) as ScoreDocumentV3;
+  const firstTarget = destination.targets[0];
+  if (firstTarget === undefined) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement destination target list is empty.',
+      'TARGET_PLAN_INVALID'
+    );
+  }
+  const part = raw.parts.find(item => item.id === firstTarget.partId);
+  const staff = part?.staves.find(item => item.id === firstTarget.staffId);
+  if (staff === undefined || staff.role === 'tablature-linked') {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement destination staff no longer resolves.',
+      'TARGET_PLAN_INVALID'
+    );
+  }
+  const measure = staff.measures.find(item =>
+    item.id === firstTarget.measureId && item.frameId === firstTarget.frameId
+  );
+  const voice = measure?.voices.find(item => item.id === firstTarget.voiceId);
+  if (voice === undefined) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement destination Voice no longer resolves.',
+      'TARGET_PLAN_INVALID'
+    );
+  }
+
+  const expectedIds = admission.destinationEventIds;
+  const startIndex = voice.events.findIndex(event => event.id === expectedIds[0]);
+  if (startIndex < 0) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement destination start no longer exists.',
+      'TARGET_PLAN_INVALID'
+    );
+  }
+  const observedIds = voice.events
+    .slice(startIndex, startIndex + expectedIds.length)
+    .map(event => event.id);
+  if (!sameJson(observedIds, expectedIds)) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement destination slice changed before mutation.',
+      'TARGET_PLAN_INVALID',
+      { expectedIds, observedIds }
+    );
+  }
+  if (
+    identityPlan.destinationStartEventId !== expectedIds[0] ||
+    identityPlan.destinationStopEventId !== expectedIds.at(-1)
+  ) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement identity plan targets a different destination slice.',
+      'IDENTITY_PLAN_STALE_OR_INVALID'
+    );
+  }
+
+  const sourceEvents = snapshot.segments[0]?.events;
+  if (sourceEvents === undefined || sourceEvents.length !== identityPlan.events.length) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement source and identity event counts diverged.',
+      'IDENTITY_PLAN_STALE_OR_INVALID'
+    );
+  }
+  const inserted = sourceEvents.map((source, index) =>
+    buildReplacementEvent(
+      source,
+      identityPlan.events[index]!,
+      admission.destinationStart
+    )
+  );
+
+  (voice.events as ScoreEvent[]).splice(startIndex, expectedIds.length, ...inserted);
+  (raw as { revision: { id: string; parentId: string | null } }).revision = {
+    id: identityPlan.nextRevisionId,
+    parentId: score.revision.id
+  };
+
+  try {
+    return createScoreDocumentV3(raw);
+  } catch (error) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement score candidate failed canonical validation.',
+      'RESULT_INVALID',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+};
+
+const buildReplacementNotation = (
+  resultScore: ScoreDocumentV3,
+  base: NotationDocumentV4,
+  snapshot: TeacherCopySnapshotV4,
+  admission: ProfessionalRangeReplaceAdmissionV1,
+  identityPlan: ProfessionalRangeReplaceIdentityPlanV1
+): Readonly<NotationDocumentV4> => {
+  const removedEvents = new Set(admission.destinationEventIds);
+  const removedNotes = new Set(admission.destinationRemovedNoteIds);
+
+  const eventEntries = base.events
+    .filter(entry => !removedEvents.has(entry.target.eventId))
+    .map(entry => ({
+      target: rebindReplaceAddress(resultScore, entry.target) as EventAddressV3,
+      notation: entry.notation
+    }));
+  const noteEntries = base.notes
+    .filter(entry => !removedNotes.has(entry.target.noteId))
+    .map(entry => ({
+      target: rebindReplaceAddress(resultScore, entry.target) as typeof entry.target,
+      notation: entry.notation
+    }));
+
+  const sourceEvents = snapshot.segments[0]?.events;
+  if (sourceEvents === undefined || sourceEvents.length !== identityPlan.events.length) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement notation source and identity counts diverged.',
+      'IDENTITY_PLAN_STALE_OR_INVALID'
+    );
+  }
+
+  sourceEvents.forEach((source, eventIndex) => {
+    const plan = identityPlan.events[eventIndex]!;
+    if (source.notation !== null) {
+      eventEntries.push({
+        target: addressEntityV3(resultScore, plan.destinationEventId) as EventAddressV3,
+        notation: structuredClone(source.notation) as EventNotationV2
+      });
+    }
+    source.notes.forEach((sourceNote, noteIndex) => {
+      if (sourceNote.notation === null) return;
+      const plannedNote = plan.notes[noteIndex];
+      if (plannedNote === undefined || plannedNote.sourceNoteId !== sourceNote.sourceNoteId) {
+        throw new ProfessionalRangeReplaceV1Error(
+          'Professional range replacement note notation identity plan diverged.',
+          'IDENTITY_PLAN_STALE_OR_INVALID'
+        );
+      }
+      const target = addressEntityV3(resultScore, plannedNote.destinationNoteId);
+      if (target.kind !== 'note') {
+        throw new ProfessionalRangeReplaceV1Error(
+          'Professional range replacement planned note identity did not resolve as a note.',
+          'NOTATION_RESULT_INVALID',
+          { noteId: plannedNote.destinationNoteId }
+        );
+      }
+      noteEntries.push({
+        target,
+        notation: structuredClone(sourceNote.notation) as NoteNotation
+      });
+    });
+  });
+
+  const rebindEntries = <T extends { readonly target: SemanticAddressV3; readonly notation: unknown }>(
+    entries: readonly T[]
+  ): T[] => entries.map(entry => ({
+    ...entry,
+    target: rebindReplaceAddress(resultScore, entry.target)
+  }) as T);
+
+  try {
+    return createNotationDocumentV4(resultScore, {
+      contractVersion: '4.0.0',
+      documentId: resultScore.id,
+      revisionId: resultScore.revision.id,
+      frames: rebindEntries(base.frames),
+      measures: rebindEntries(base.measures),
+      events: eventEntries,
+      notes: noteEntries,
+      graceEvents: rebindEntries(base.graceEvents),
+      graceNotes: rebindEntries(base.graceNotes),
+      crossStaffPlacements: base.crossStaffPlacements.map(entry => ({
+        source: rebindReplaceAddress(resultScore, entry.source) as EventAddressV3,
+        displayStaffId: entry.displayStaffId
+      }))
+    });
+  } catch (error) {
+    if (error instanceof ProfessionalRangeReplaceV1Error) throw error;
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement notation candidate failed canonical validation.',
+      'NOTATION_RESULT_INVALID',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+};
+
+const resultReplacementSelection = (
+  score: ScoreDocumentV3,
+  insertedEventIds: readonly string[],
+  direction: 'FORWARD' | 'BACKWARD'
+): Readonly<EventSpanProfessionalSelectionV1> => {
+  const firstId = insertedEventIds[0];
+  const lastId = insertedEventIds.at(-1);
+  if (firstId === undefined || lastId === undefined) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement result contains no inserted events.',
+      'RESULT_SELECTION_INVALID'
+    );
+  }
+  try {
+    const first = addressEntityV3(score, firstId);
+    const last = addressEntityV3(score, lastId);
+    if (first.kind !== 'event' || last.kind !== 'event') throw new Error('inserted ids are not events');
+    return direction === 'FORWARD'
+      ? createEventSpanProfessionalSelectionV1(score, first, last)
+      : createEventSpanProfessionalSelectionV1(score, last, first);
+  } catch (error) {
+    if (error instanceof ProfessionalRangeReplaceV1Error) throw error;
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement result selection could not be constructed.',
+      'RESULT_SELECTION_INVALID',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+};
+
+export const executeProfessionalRangeReplaceV1 = (
+  scoreInput: ScoreDocumentV3,
+  notationInput: NotationDocumentV4,
+  snapshotInput: TeacherCopySnapshotV4,
+  destinationInput: EventSpanProfessionalSelectionV1,
+  admissionInput: ProfessionalRangeReplaceAdmissionV1,
+  identityPlanInput: ProfessionalRangeReplaceIdentityPlanV1
+): Readonly<ProfessionalRangeReplaceResultV1> => {
+  const score = createScoreDocumentV3(scoreInput);
+  let notation: Readonly<NotationDocumentV4>;
+  try {
+    notation = createNotationDocumentV4(score, notationInput);
+  } catch (error) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement source notation is stale or invalid.',
+      'NOTATION_STALE_OR_INVALID',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+
+  const snapshot = revalidateCopySnapshot(score, notation, snapshotInput);
+
+  let admission: Readonly<ProfessionalRangeReplaceAdmissionV1>;
+  try {
+    admission = analyzeProfessionalRangeReplaceV1(score, notation, snapshot, destinationInput);
+  } catch (error) {
+    if (error instanceof ProfessionalRangeReplaceV1Error &&
+        error.code === 'SOURCE_RELATION_UNSUPPORTED') throw error;
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement admission no longer revalidates.',
+      'ADMISSION_STALE_OR_TAMPERED',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+  if (!sameJson(admission, admissionInput)) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement admission facts changed before mutation.',
+      'ADMISSION_STALE_OR_TAMPERED'
+    );
+  }
+
+  let identityPlan: Readonly<ProfessionalRangeReplaceIdentityPlanV1>;
+  try {
+    identityPlan = planProfessionalRangeReplaceIdentitiesV1(
+      score,
+      notation,
+      snapshot,
+      destinationInput,
+      admission,
+      identityPlanInput.nextRevisionId
+    );
+  } catch (error) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement identity plan no longer revalidates.',
+      'IDENTITY_PLAN_STALE_OR_INVALID',
+      { cause: error instanceof Error ? error.message : String(error) }
+    );
+  }
+  if (!sameJson(identityPlan, identityPlanInput)) {
+    throw new ProfessionalRangeReplaceV1Error(
+      'Professional range replacement identity plan facts changed before mutation.',
+      'IDENTITY_PLAN_STALE_OR_INVALID'
+    );
+  }
+
+  const destination = currentEventSpan(score, destinationInput);
+  const resultScore = mutateReplacementScore(score, snapshot, destination, admission, identityPlan);
+  const resultNotation = buildReplacementNotation(
+    resultScore,
+    notation,
+    snapshot,
+    admission,
+    identityPlan
+  );
+  const insertedEventIds = Object.freeze(identityPlan.events.map(item => item.destinationEventId));
+  const insertedNoteIds = Object.freeze(
+    identityPlan.events.flatMap(item => item.notes.map(note => note.destinationNoteId))
+  );
+  const selection = resultReplacementSelection(
+    resultScore,
+    insertedEventIds,
+    admission.destinationDirection
+  );
+
+  return Object.freeze({
+    version: EDITOR_PROFESSIONAL_RANGE_REPLACE_V1_VERSION,
+    score: resultScore,
+    notation: resultNotation,
+    selection,
+    admission,
+    identityPlan,
+    insertedEventIds,
+    insertedNoteIds,
+    removedDestinationEventIds: Object.freeze([...admission.destinationEventIds]),
+    removedDestinationNoteIds: Object.freeze([...admission.destinationRemovedNoteIds]),
     historyMutationAuthority: false as const
   });
 };
