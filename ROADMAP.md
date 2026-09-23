@@ -159,6 +159,29 @@ A bundle-budget ruling keeps the qualified P10-1 and P10-2 artifacts unchanged. 
 
 Dedicated mobile WebKit proves key-aware semitone/diatonic behavior, accidental metadata, semantic-range enablement, 44px touch targets and exact Undo on the optional P10-3A artifact. This automated evidence is not a physical-device release PASS.
 
+### P10-3B — Professional range Copy / Replace
+
+**IMPLEMENTED ON OPTIONAL P10-3B COMPOSITION / EXACT-HEAD QUALIFICATION PENDING / RELEASE GATES UNCHANGED.**
+
+P10-3B adds one bounded professional `EVENT_SPAN` Copy -> Replace workflow:
+
+- source and destination must remain in the same single measure, part, staff and Voice;
+- source and destination must be disjoint and canonically contiguous;
+- exact rational source/destination duration extent must match;
+- event cardinality may change when exact extent is equal;
+- replacement uses fresh deterministic event/note identities; source IDs and removed destination IDs are never reused;
+- NOTE, CHORD and REST content plus supported local notation are copied;
+- beam, tuplet, tie, slur, grace-group, cross-staff, spanning tremolo and wavy-line relation coupling fail closed;
+- relation remapping is not authorized;
+- Teacher Copy snapshot infrastructure is reused while Teacher Paste semantics remain unchanged;
+- Delete remains Clear-to-REST rather than structural time deletion;
+- one accepted Replace = one `EditorHistoryV4` revision with exact Undo/Redo;
+- renderer coordinates and DOM/SVG order have no authoring authority.
+
+P10-3B is a separate optional composition over the qualified P10-3A layer. P10-1/P10-2/P10-3A artifact budgets remain unchanged. The P10-3B artifact measures **670,198 bytes** under the frozen **675,840-byte** `P10-3B-RANGE-REPLACE-1` budget. Dedicated mobile WebKit regression is implemented and passing on the current implementation line, but automated WebKit is not physical-device evidence.
+
+Production-default, production-release and SesliTab-cutover authority remain false.
+
 ## Current architecture phase
 
 ```text
@@ -179,7 +202,7 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next development action
 
-**P10-3A closeout — implementation qualified; merge approval remains human-gated.**
+**P10-3B closeout — exact-head qualification, Sonar service gate and whole-branch review; merge approval remains human-gated.**
 
 P10-3A keeps the qualified P10-1/P10-2 artifacts unchanged while adding a separate optional key-aware pitch-transpose composition. Exact-head Node 18/20/22, all retained WebKit gates, the dedicated P10-3A WebKit gate and required SonarCloud Code Analysis have passed. Merge remains separately human-gated. Physical iPhone/Safari validation remains separate before any release/cutover claim.
 
