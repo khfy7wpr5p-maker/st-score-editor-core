@@ -41,6 +41,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "=== PR 201 SONAR ISSUES ==="
+          curl -fsSL --retry 3 \
+            "https://sonarcloud.io/api/issues/search?componentKeys=khfy7wpr5p-maker_st-score-editor-core&pullRequest=201&issueStatuses=OPEN%2CCONFIRMED&sinceLeakPeriod=true&ps=100" \
+            | python3 -m json.tool
+          echo "=== MAIN SONAR ISSUES ==="
           curl -fsSL --retry 3 \
             "https://sonarcloud.io/api/issues/search?componentKeys=khfy7wpr5p-maker_st-score-editor-core&branch=main&issueStatuses=OPEN%2CCONFIRMED&sinceLeakPeriod=true&ps=100" \
             | python3 -m json.tool
