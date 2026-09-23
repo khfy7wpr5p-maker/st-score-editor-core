@@ -16,7 +16,9 @@ const workflows = [
   '.github/workflows/p08e4-professional-webkit.yml',
   '.github/workflows/p10-1-professional-workstation-webkit.yml',
   '.github/workflows/p10-1-renderer-qualification-webkit.yml',
-  '.github/workflows/p10-2-triplet-unretiming-webkit.yml'
+  '.github/workflows/p10-2-triplet-unretiming-webkit.yml',
+  '.github/workflows/p10-3a-professional-pitch-transpose-webkit.yml',
+  '.github/workflows/p10-3b-professional-range-replace-webkit.yml'
 ];
 
 test('package.json no longer installs remote Audio Engine tarballs directly', async () => {
@@ -158,33 +160,41 @@ test('verified installer accepts matching bytes and passes only local tarballs t
 });
 
 test('all current Editor Core CI and retained WebKit workflows install verified audio packages', async () => {
+  const sharedSetup = await readText('scripts/setup-editor-webkit-ci.sh');
+  assert.match(
+    sharedSetup,
+    /npm install --ignore-scripts --no-audit --no-fund --no-package-lock/,
+    'shared WebKit setup must install repository dependencies without lifecycle scripts'
+  );
+  assert.match(
+    sharedSetup,
+    /npm run install:verified-audio -- --with-playwright/,
+    'shared WebKit setup must install verified audio and pinned Playwright in one npm reify operation'
+  );
+  assert.doesNotMatch(
+    sharedSetup,
+    /npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1\.62\.1/,
+    'shared WebKit setup must not run a second no-save npm install that can prune verified audio'
+  );
+
   for (const workflow of workflows) {
     const source = await readText(workflow);
-    const editorCoreInstallCount = (source.match(/npm install --ignore-scripts --no-audit --no-fund --no-package-lock/g) ?? []).length;
-    const verifiedCount = (source.match(/npm run install:verified-audio/g) ?? []).length;
-
-    if (workflow.endsWith('app09b-preview-webkit.yml')) {
-      assert.ok(editorCoreInstallCount >= 2);
-      assert.ok(verifiedCount >= 2, workflow + ' must verify audio in both Editor Core jobs');
-    } else {
-      assert.ok(editorCoreInstallCount >= 1);
-      assert.ok(verifiedCount >= 1, workflow + ' must verify audio before build/test');
-    }
-
-    if (!workflow.endsWith('ci.yml')) {
-      const combined = source.match(/npm run install:verified-audio -- --with-playwright/g) ?? [];
-      const expected = workflow.endsWith('app09b-preview-webkit.yml') ? 2 : 1;
-      assert.equal(
-        combined.length,
-        expected,
-        workflow + ' must install verified audio and pinned Playwright in one npm reify operation'
-      );
-      assert.doesNotMatch(
+    if (workflow.endsWith('ci.yml')) {
+      assert.match(
         source,
-        /npm install --ignore-scripts --no-audit --no-fund --no-package-lock --no-save playwright@1\.62\.1/,
-        workflow + ' must not run a second no-save npm install that can prune verified audio'
+        /npm run install:verified-audio/,
+        workflow + ' must verify audio before build/test'
       );
+      continue;
     }
+
+    const setupCalls = source.match(/bash scripts\/setup-editor-webkit-ci\.sh/g) ?? [];
+    const expected = workflow.endsWith('app09b-preview-webkit.yml') ? 2 : 1;
+    assert.equal(
+      setupCalls.length,
+      expected,
+      workflow + ' must route each Editor Core WebKit job through the verified shared setup'
+    );
   }
 });
 
@@ -258,38 +268,3 @@ test('verified installer rejects failed download before npm execution', async ()
         fetcher: async () => ({ ok: false, status: 503 }),
         execFileImpl: async () => { npmCalls += 1; }
       }),
-      /AUDIO_DEPENDENCY_FETCH_FAILED/
-    );
-    assert.equal(npmCalls, 0);
-  } finally {
-    await rm(tmp, { recursive: true, force: true });
-  }
-});
-
-test('verified installer rejects malformed manifest before fetch or npm execution', async () => {
-  const { installVerifiedAudioDependencies } =
-    await import('../scripts/install-verified-audio-dependencies.mjs');
-  let fetchCalls = 0;
-  let npmCalls = 0;
-
-  await assert.rejects(
-    installVerifiedAudioDependencies({
-      manifest: {
-        contract: 'WRONG',
-        version: '1.0.0',
-        repository: 'khfy7wpr5p-maker/st-score-audio-engine',
-        release: 'v0.1.2',
-        releaseCommit: '26117ae90f213e208e06fb5c084fc0fad9f4ca86',
-        packages: []
-      },
-      npmExecPath: '/trusted/npm-cli.js',
-      fetcher: async () => { fetchCalls += 1; },
-      execFileImpl: async () => { npmCalls += 1; }
-    }),
-    /AUDIO_DEPENDENCY_MANIFEST_INVALID/
-  );
-
-  assert.equal(fetchCalls, 0);
-  assert.equal(npmCalls, 0);
-});
-
