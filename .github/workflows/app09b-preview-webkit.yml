@@ -17,16 +17,8 @@ jobs:
     steps:
       - name: Checkout Editor Core
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: "22"
-      - name: Install Editor Core dependencies and regression Playwright
-        run: |
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm run install:verified-audio -- --with-playwright
-      - name: Install pinned WebKit browser
-        run: npx playwright install --with-deps webkit
+      - name: Setup Editor WebKit
+        uses: ./.github/actions/setup-editor-webkit
       - name: Build Editor Core browser artifacts
         run: npm run build:browser
       - name: Build isolated P09-D keyboard workstation qualification artifact
@@ -92,16 +84,8 @@ jobs:
     steps:
       - name: Checkout Editor Core
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: "22"
-      - name: Install Editor Core dependencies and regression Playwright
-        run: |
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm run install:verified-audio -- --with-playwright
-      - name: Install pinned WebKit browser
-        run: npx playwright install --with-deps webkit
+      - name: Setup Editor WebKit
+        uses: ./.github/actions/setup-editor-webkit
       - name: Build Editor Core browser artifacts
         run: npm run build:browser
       - name: Checkout exact SRL generic-event revision
