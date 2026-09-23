@@ -46,6 +46,12 @@ export const span = (score, start, stop) => createEventSpanProfessionalSelection
   addressEntityV3(score, stop)
 );
 
+const requireStandardStaff = score => {
+  const staff=score.parts[0]?.staves.find(item=>item.role==='standard');
+  if (staff === undefined) throw new Error('P10_3B_STANDARD_STAFF_FIXTURE_MISSING');
+  return staff;
+};
+
 export const createCompactRangeReplaceScore = ({
   revisionId,
   parentId,
@@ -55,7 +61,7 @@ export const createCompactRangeReplaceScore = ({
   controller.newDocument({preset});
   const raw=structuredClone(controller.getDocument().session.history.present.score);
   raw.revision={id:revisionId,parentId};
-  const staff=raw.parts[0].staves.find(item=>item.role==='standard');
+  const staff=requireStandardStaff(raw);
   staff.measures[0].voices[0].events=[
     note('src-a','src-na',q(0,1),q(1,8),'C'),
     chord('src-b',q(1,8),q(1,8),[['src-nb1','E'],['src-nb2','G']]),
@@ -74,7 +80,7 @@ export const createIdentityRangeReplaceScore = () => {
   controller.appendMeasure();
   const raw=structuredClone(controller.getDocument().session.history.present.score);
   raw.revision={id:'p10-3b-id-rev-1',parentId:'p10-3b-id-parent'};
-  const staff=raw.parts[0].staves.find(item=>item.role==='standard');
+  const staff=requireStandardStaff(raw);
   staff.measures[0].voices[0].events=[
     note('src-a','src-na',q(0,1),q(1,4),'C'),
     chord('src-b',q(1,4),q(1,4),[['src-nb1','E'],['src-nb2','G']]),
