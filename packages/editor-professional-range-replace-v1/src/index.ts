@@ -986,75 +986,72 @@ const buildReplacementEvent = (
       { sourceEventId: source.sourceEventId }
     );
   }
-  const onset = add(destinationStart, source.onsetFromSegmentOrigin, 'DESTINATION_TIMING_INVALID');
-  const duration = Object.freeze({ ...source.duration });
-  if (source.kind === 'rest') {
-    if (source.notes.length !== 0) {
-      throw new ProfessionalRangeReplaceV1Error(
-        'Professional range replacement rest snapshot unexpectedly carries notes.',
-        'ADMISSION_STALE_OR_TAMPERED',
-        { sourceEventId: source.sourceEventId }
-      );
-    }
-    return Object.freeze({
-      id: identities.destinationEventId,
-      kind: 'rest' as const,
-      onset,
-      duration
-    });
-  }
-  if (source.kind === 'note') {
-    const sourceNote = source.notes[0];
-    const plannedNote = identities.notes[0];
-    if (
-      sourceNote === undefined ||
-      plannedNote === undefined ||
-      sourceNote.sourceNoteId !== plannedNote.sourceNoteId
-    ) {
-      throw new ProfessionalRangeReplaceV1Error(
-        'Professional range replacement note identity mapping is invalid.',
-        'IDENTITY_PLAN_STALE_OR_INVALID',
-        { sourceEventId: source.sourceEventId }
-      );
-    }
-    return Object.freeze({
-      id: identities.destinationEventId,
-      kind: 'note' as const,
-      onset,
-      duration,
-      note: Object.freeze({
-        id: plannedNote.destinationNoteId,
-        pitch: Object.freeze({ ...sourceNote.pitch })
-      })
-    });
-  }
-  if (source.notes.length < 2) {
-    throw new ProfessionalRangeReplaceV1Error(
-      'Professional range replacement chord snapshot contains too few notes.',
-      'ADMISSION_STALE_OR_TAMPERED',
-      { sourceEventId: source.sourceEventId }
-    );
-  }
-  return Object.freeze({
+
+  const common = Object.freeze({
     id: identities.destinationEventId,
-    kind: 'chord' as const,
-    onset,
-    duration,
-    notes: Object.freeze(source.notes.map((sourceNote, noteIndex) => {
-      const plannedNote = identities.notes[noteIndex];
-      if (plannedNote === undefined || sourceNote.sourceNoteId !== plannedNote.sourceNoteId) {
+    onset: add(destinationStart, source.onsetFromSegmentOrigin, 'DESTINATION_TIMING_INVALID'),
+    duration: Object.freeze({ ...source.duration })
+  });
+
+  switch (source.kind) {
+    case 'rest': {
+      if (source.notes.length !== 0) {
         throw new ProfessionalRangeReplaceV1Error(
-          'Professional range replacement chord identity mapping is invalid.',
+          'Professional range replacement rest snapshot unexpectedly carries notes.',
+          'ADMISSION_STALE_OR_TAMPERED',
+          { sourceEventId: source.sourceEventId }
+        );
+      }
+      return Object.freeze({ ...common, kind: 'rest' as const });
+    }
+    case 'note': {
+      const sourceNote = source.notes[0];
+      const plannedNote = identities.notes[0];
+      if (
+        sourceNote === undefined ||
+        plannedNote === undefined ||
+        sourceNote.sourceNoteId !== plannedNote.sourceNoteId
+      ) {
+        throw new ProfessionalRangeReplaceV1Error(
+          'Professional range replacement note identity mapping is invalid.',
           'IDENTITY_PLAN_STALE_OR_INVALID',
-          { sourceEventId: source.sourceEventId, sourceNoteId: sourceNote.sourceNoteId }
+          { sourceEventId: source.sourceEventId }
         );
       }
       return Object.freeze({
-        id: plannedNote.destinationNoteId,
-        pitch: Object.freeze({ ...sourceNote.pitch })
+        ...common,
+        kind: 'note' as const,
+        note: Object.freeze({
+          id: plannedNote.destinationNoteId,
+          pitch: Object.freeze({ ...sourceNote.pitch })
+        })
       });
-    }))
-  });
+    }
+    case 'chord': {
+      if (source.notes.length < 2) {
+        throw new ProfessionalRangeReplaceV1Error(
+          'Professional range replacement chord snapshot contains too few notes.',
+          'ADMISSION_STALE_OR_TAMPERED',
+          { sourceEventId: source.sourceEventId }
+        );
+      }
+      const notes = source.notes.map((sourceNote, noteIndex) => {
+        const plannedNote = identities.notes[noteIndex];
+        if (plannedNote === undefined || plannedNote.sourceNoteId !== sourceNote.sourceNoteId) {
+          throw new ProfessionalRangeReplaceV1Error(
+            'Professional range replacement chord identity mapping is invalid.',
+            'IDENTITY_PLAN_STALE_OR_INVALID',
+            { sourceEventId: source.sourceEventId, sourceNoteId: sourceNote.sourceNoteId }
+          );
+        }
+        return Object.freeze({
+          id: plannedNote.destinationNoteId,
+          pitch: Object.freeze({ ...sourceNote.pitch })
+        });
+      });
+      return Object.freeze({ ...common, kind: 'chord' as const, notes: Object.freeze(notes) });
+    }
+  }
 };
 
 const mutateReplacementScore = (
@@ -1135,10 +1132,12 @@ const mutateReplacementScore = (
   );
 
   (voice.events as ScoreEvent[]).splice(startIndex, expectedIds.length, ...inserted);
-  (raw as { revision: { id: string; parentId: string | null } }).revision = {
-    id: identityPlan.nextRevisionId,
-    parentId: score.revision.id
-  };
+  Object.assign(raw, {
+    revision: Object.freeze({
+      id: identityPlan.nextRevisionId,
+      parentId: score.revision.id
+    })
+  });
 
   try {
     return createScoreDocumentV3(raw);
@@ -1182,17 +1181,19 @@ const buildReplacementNotation = (
     );
   }
 
-  sourceEvents.forEach((source, eventIndex) => {
+  const copiedEventEntries = sourceEvents.flatMap((source, eventIndex) => {
+    if (source.notation === null) return [];
     const plan = identityPlan.events[eventIndex]!;
-    if (source.notation !== null) {
-      eventEntries.push({
-        target: addressEntityV3(resultScore, plan.destinationEventId) as EventAddressV3,
-        notation: structuredClone(source.notation) as EventNotationV2
-      });
-    }
-    source.notes.forEach((sourceNote, noteIndex) => {
-      if (sourceNote.notation === null) return;
-      const plannedNote = plan.notes[noteIndex];
+    return [{
+      target: addressEntityV3(resultScore, plan.destinationEventId) as EventAddressV3,
+      notation: structuredClone(source.notation) as EventNotationV2
+    }];
+  });
+
+  const copiedNoteEntries = sourceEvents.flatMap((source, eventIndex) =>
+    source.notes.flatMap((sourceNote, noteIndex) => {
+      if (sourceNote.notation === null) return [];
+      const plannedNote = identityPlan.events[eventIndex]?.notes[noteIndex];
       if (plannedNote === undefined || plannedNote.sourceNoteId !== sourceNote.sourceNoteId) {
         throw new ProfessionalRangeReplaceV1Error(
           'Professional range replacement note notation identity plan diverged.',
@@ -1207,12 +1208,15 @@ const buildReplacementNotation = (
           { noteId: plannedNote.destinationNoteId }
         );
       }
-      noteEntries.push({
+      return [{
         target,
         notation: structuredClone(sourceNote.notation) as NoteNotation
-      });
-    });
-  });
+      }];
+    })
+  );
+
+  eventEntries.push(...copiedEventEntries);
+  noteEntries.push(...copiedNoteEntries);
 
   const rebindEntries = <T extends { readonly target: SemanticAddressV3; readonly notation: unknown }>(
     entries: readonly T[]
