@@ -45,12 +45,4 @@ jobs:
           echo "=== MAIN DUPLICATION CANDIDATES ==="
           curl -fsSL --retry 3 \
             "https://sonarcloud.io/api/measures/component_tree?component=khfy7wpr5p-maker_st-score-editor-core&branch=main&metricKeys=duplicated_lines,duplicated_lines_density,new_lines&qualifiers=FIL&ps=500" \
-            | python3 -c 'import json,sys; d=json.load(sys.stdin); rows=[]; 
-for c in d.get("components",[]):
- m={}
- for x in c.get("measures",[]):
-  p=(x.get("periods") or [{}])[0]
-  m[x["metric"]]=float(p.get("value",x.get("value",0)) or 0)
- if m.get("duplicated_lines",0)>0 or m.get("new_lines",0)>0:
-  rows.append({"path":c.get("path"),**m})
-print(json.dumps(sorted(rows,key=lambda r:(-r.get("new_lines",0),-r.get("duplicated_lines",0)))[:200],indent=2))'
+            | python3 -m json.tool
