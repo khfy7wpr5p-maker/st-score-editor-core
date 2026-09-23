@@ -101,17 +101,21 @@ export class ProfessionalRangeReplaceV1Error extends Error {
   }
 }
 
-const gcd = (left: bigint, right: bigint): bigint => {
-  let a = left < 0n ? -left : left;
-  let b = right < 0n ? -right : right;
-  while (b !== 0n) [a, b] = [b, a % b];
-  return a === 0n ? 1n : a;
+type ReplaceTimingErrorCode = 'SOURCE_TIMING_INVALID' | 'DESTINATION_TIMING_INVALID';
+
+const absBigInt = (value: bigint): bigint => value < 0n ? -value : value;
+
+const exactGcd = (left: bigint, right: bigint): bigint => {
+  const a = absBigInt(left);
+  const b = absBigInt(right);
+  if (b === 0n) return a === 0n ? 1n : a;
+  return exactGcd(b, a % b);
 };
 
-const rational = (
+const exactFraction = (
   numerator: bigint,
   denominator: bigint,
-  code: 'SOURCE_TIMING_INVALID' | 'DESTINATION_TIMING_INVALID'
+  code: ReplaceTimingErrorCode
 ): Readonly<Rational> => {
   if (numerator < 0n || denominator <= 0n) {
     throw new ProfessionalRangeReplaceV1Error(
@@ -119,53 +123,67 @@ const rational = (
       code
     );
   }
-  const divisor = gcd(numerator, denominator);
-  const n = numerator / divisor;
-  const d = denominator / divisor;
-  const max = BigInt(Number.MAX_SAFE_INTEGER);
-  if (n > max || d > max) {
+  const divisor = exactGcd(numerator, denominator);
+  const reduced = Object.freeze({
+    numerator: numerator / divisor,
+    denominator: denominator / divisor
+  });
+  const safeLimit = BigInt(Number.MAX_SAFE_INTEGER);
+  if (reduced.numerator > safeLimit || reduced.denominator > safeLimit) {
     throw new ProfessionalRangeReplaceV1Error(
       'Professional range replace timing exceeded exact safe-integer range.',
       code
     );
   }
-  return Object.freeze({ numerator: Number(n), denominator: Number(d) });
+  return Object.freeze({
+    numerator: Number(reduced.numerator),
+    denominator: Number(reduced.denominator)
+  });
+};
+
+const exactBinary = (
+  left: Rational,
+  right: Rational,
+  operation: 'ADD' | 'SUBTRACT',
+  code: ReplaceTimingErrorCode
+): Readonly<Rational> => {
+  const leftScaled = BigInt(left.numerator) * BigInt(right.denominator);
+  const rightScaled = BigInt(right.numerator) * BigInt(left.denominator);
+  return exactFraction(
+    operation === 'ADD' ? leftScaled + rightScaled : leftScaled - rightScaled,
+    BigInt(left.denominator) * BigInt(right.denominator),
+    code
+  );
 };
 
 const add = (
   left: Rational,
   right: Rational,
-  code: 'SOURCE_TIMING_INVALID' | 'DESTINATION_TIMING_INVALID'
-): Readonly<Rational> => rational(
-  BigInt(left.numerator) * BigInt(right.denominator) +
-    BigInt(right.numerator) * BigInt(left.denominator),
-  BigInt(left.denominator) * BigInt(right.denominator),
-  code
-);
+  code: ReplaceTimingErrorCode
+): Readonly<Rational> => exactBinary(left, right, 'ADD', code);
 
 const subtract = (
   left: Rational,
   right: Rational,
-  code: 'SOURCE_TIMING_INVALID' | 'DESTINATION_TIMING_INVALID'
-): Readonly<Rational> => rational(
-  BigInt(left.numerator) * BigInt(right.denominator) -
-    BigInt(right.numerator) * BigInt(left.denominator),
-  BigInt(left.denominator) * BigInt(right.denominator),
-  code
-);
+  code: ReplaceTimingErrorCode
+): Readonly<Rational> => exactBinary(left, right, 'SUBTRACT', code);
 
 const compare = (left: Rational, right: Rational): number => {
-  const l = BigInt(left.numerator) * BigInt(right.denominator);
-  const r = BigInt(right.numerator) * BigInt(left.denominator);
-  return l < r ? -1 : l > r ? 1 : 0;
+  const difference =
+    BigInt(left.numerator) * BigInt(right.denominator) -
+    BigInt(right.numerator) * BigInt(left.denominator);
+  return difference === 0n ? 0 : difference < 0n ? -1 : 1;
 };
 
-const validRational = (value: Rational, allowZero: boolean): boolean =>
-  Number.isSafeInteger(value.numerator) &&
-  Number.isSafeInteger(value.denominator) &&
-  value.denominator > 0 &&
-  (allowZero ? value.numerator >= 0 : value.numerator > 0) &&
-  gcd(BigInt(value.numerator), BigInt(value.denominator)) === 1n;
+const validRational = (value: Rational, allowZero: boolean): boolean => {
+  if (
+    !Number.isSafeInteger(value.numerator) ||
+    !Number.isSafeInteger(value.denominator) ||
+    value.denominator <= 0 ||
+    (allowZero ? value.numerator < 0 : value.numerator <= 0)
+  ) return false;
+  return exactGcd(BigInt(value.numerator), BigInt(value.denominator)) === 1n;
+};
 
 const ZERO: Readonly<Rational> = Object.freeze({ numerator: 0, denominator: 1 });
 
@@ -656,35 +674,30 @@ const MASK_64 = (1n << 64n) - 1n;
 const FNV_OFFSET_64 = 14695981039346656037n;
 const FNV_PRIME_64 = 1099511628211n;
 
-type IdentityRecord = Record<string, unknown>;
-const identityRecord = (value: unknown): value is IdentityRecord =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
 const allCanonicalIds = (score: ScoreDocumentV3): ReadonlySet<string> => {
   const ids = new Set<string>();
-  const visit = (value: unknown): void => {
+  const pending: unknown[] = [score];
+  while (pending.length > 0) {
+    const value = pending.pop();
     if (Array.isArray(value)) {
-      value.forEach(visit);
-      return;
+      pending.push(...value);
+      continue;
     }
-    if (!identityRecord(value)) return;
-    for (const [key, item] of Object.entries(value)) {
-      if (key === 'id' && typeof item === 'string') ids.add(item);
-      visit(item);
+    if (value === null || typeof value !== 'object') continue;
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      if (key === 'id' && typeof nested === 'string') ids.add(nested);
+      if (nested !== null && typeof nested === 'object') pending.push(nested);
     }
-  };
-  visit(score);
+  }
   return ids;
 };
 
-const fnv1a64 = (value: string): string => {
-  let hash = FNV_OFFSET_64;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= BigInt(value.charCodeAt(index));
-    hash = (hash * FNV_PRIME_64) & MASK_64;
-  }
-  return hash.toString(16).padStart(16, '0');
-};
+const fnv1a64 = (value: string): string =>
+  value.split('').reduce(
+    (hash, character) =>
+      ((hash ^ BigInt(character.charCodeAt(0))) * FNV_PRIME_64) & MASK_64,
+    FNV_OFFSET_64
+  ).toString(16).padStart(16, '0');
 
 const assertFreshReplaceRevision = (score: ScoreDocumentV3, nextRevisionId: string): void => {
   if (
@@ -869,19 +882,17 @@ const sameJson = (left: unknown, right: unknown): boolean =>
   JSON.stringify(left) === JSON.stringify(right);
 
 const semanticTargetId = (address: SemanticAddressV3): string => {
-  switch (address.kind) {
-    case 'document': return address.documentId;
-    case 'measure-frame': return address.frameId;
-    case 'part': return address.partId;
-    case 'staff': return address.staffId;
-    case 'measure': return address.measureId;
-    case 'voice': return address.voiceId;
-    case 'event': return address.eventId;
-    case 'note': return address.noteId;
-    case 'grace-group': return address.graceGroupId;
-    case 'grace-event': return address.graceEventId;
-    case 'grace-note': return address.graceNoteId;
-  }
+  if ('graceNoteId' in address) return address.graceNoteId;
+  if ('graceEventId' in address) return address.graceEventId;
+  if ('graceGroupId' in address) return address.graceGroupId;
+  if ('noteId' in address) return address.noteId;
+  if ('eventId' in address) return address.eventId;
+  if ('voiceId' in address) return address.voiceId;
+  if ('measureId' in address) return address.measureId;
+  if ('staffId' in address) return address.staffId;
+  if ('partId' in address) return address.partId;
+  if ('frameId' in address) return address.frameId;
+  return address.documentId;
 };
 
 const rebindReplaceAddress = (
