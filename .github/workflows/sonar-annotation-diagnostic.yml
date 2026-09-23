@@ -1,0 +1,50 @@
+name: Sonar Annotation Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  checks: read
+
+jobs:
+  sonar-annotation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Read Sonar check annotation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            checks="$(curl -fsSL \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100")"
+
+            sonar_id="$(CHECKS="$checks" python3 - <<'PY'
+import json, os
+data=json.loads(os.environ["CHECKS"])
+runs=[r for r in data.get("check_runs",[]) if r.get("name")=="SonarCloud Code Analysis"]
+if runs:
+    print(runs[0]["id"])
+PY
+)"
+
+            if [ -n "$sonar_id" ]; then
+              curl -fsSL \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/$REPO/check-runs/$sonar_id/annotations?per_page=100"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Sonar check-run was not found for head $HEAD_SHA" >&2
+          exit 1
