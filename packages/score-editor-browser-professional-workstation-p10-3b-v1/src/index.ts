@@ -90,9 +90,9 @@ const P10_3B_USER_MESSAGES: Readonly<Record<string, string>> = Object.freeze({
 const errorInfo = (
   error: unknown
 ): Readonly<{ readonly code: string; readonly message: string }> => {
-  const record = error !== null && typeof error === 'object'
+  const record: Record<string, unknown> = error !== null && typeof error === 'object'
     ? error as Record<string, unknown>
-    : Object.freeze({});
+    : {};
   const code = [record.code, record.name].find(
     candidate => typeof candidate === 'string' && candidate.length > 0
   );
@@ -158,17 +158,15 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
     const documentValue = base.getDocument();
     if (documentValue === null) return null;
     const score = documentValue.session.history.present.score;
-    const endpoints = [range.rangeStartEventId, range.rangeStopEventId].map(eventId => {
-      const address = addressEntityV3(score, eventId);
-      if (address.kind !== 'event') {
-        throw Object.assign(new Error('Professional range endpoint is not a current event.'), {
-          code: 'RANGE_TARGET_INVALID'
-        });
-      }
-      return address;
-    }) as readonly [EventAddressV3, EventAddressV3];
+    const start = addressEntityV3(score, range.rangeStartEventId);
+    const stop = addressEntityV3(score, range.rangeStopEventId);
+    if (start.kind !== 'event' || stop.kind !== 'event') {
+      throw Object.assign(new Error('Professional range endpoint is not a current event.'), {
+        code: 'RANGE_TARGET_INVALID'
+      });
+    }
 
-    return createEventSpanProfessionalSelectionV1(score, endpoints[0], endpoints[1]);
+    return createEventSpanProfessionalSelectionV1(score, start, stop);
   };
 
   const withCurrentWorkstation = <T>(
