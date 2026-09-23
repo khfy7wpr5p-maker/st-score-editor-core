@@ -52,6 +52,14 @@ const requireStandardStaff = score => {
   return staff;
 };
 
+const requireVoice = (staff, measureIndex) => {
+  const voice=staff.measures[measureIndex]?.voices[0];
+  if (voice === undefined) {
+    throw new Error(`P10_3B_VOICE_FIXTURE_MISSING:${measureIndex}`);
+  }
+  return voice;
+};
+
 export const createCompactRangeReplaceScore = ({
   revisionId,
   parentId,
@@ -62,7 +70,7 @@ export const createCompactRangeReplaceScore = ({
   const raw=structuredClone(controller.getDocument().session.history.present.score);
   raw.revision={id:revisionId,parentId};
   const staff=requireStandardStaff(raw);
-  staff.measures[0].voices[0].events=[
+  requireVoice(staff,0).events=[
     note('src-a','src-na',q(0,1),q(1,8),'C'),
     chord('src-b',q(1,8),q(1,8),[['src-nb1','E'],['src-nb2','G']]),
     note('dst-a','dst-na',q(1,4),q(1,16),'A'),
@@ -81,7 +89,7 @@ export const createIdentityRangeReplaceScore = () => {
   const raw=structuredClone(controller.getDocument().session.history.present.score);
   raw.revision={id:'p10-3b-id-rev-1',parentId:'p10-3b-id-parent'};
   const staff=requireStandardStaff(raw);
-  staff.measures[0].voices[0].events=[
+  requireVoice(staff,0).events=[
     note('src-a','src-na',q(0,1),q(1,4),'C'),
     chord('src-b',q(1,4),q(1,4),[['src-nb1','E'],['src-nb2','G']]),
     note('dst-a','dst-na',q(1,2),q(1,8),'A'),
@@ -89,7 +97,7 @@ export const createIdentityRangeReplaceScore = () => {
     chord('dst-c',q(3,4),q(1,8),[['dst-nc1','C'],['dst-nc2','E']]),
     note('dst-d','dst-nd',q(7,8),q(1,8),'B')
   ];
-  staff.measures[1].voices[0].events=[
+  requireVoice(staff,1).events=[
     note('m2-a','m2-na',q(0,1),q(1,2),'D'),
     note('m2-b','m2-nb',q(1,2),q(1,2),'F')
   ];
