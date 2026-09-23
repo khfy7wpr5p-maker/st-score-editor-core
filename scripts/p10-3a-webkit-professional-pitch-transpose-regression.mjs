@@ -1,66 +1,13 @@
-import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { webkit } from 'playwright';
+import { openMobileWebKitArtifact } from './lib/mobile-webkit-artifact-harness.mjs';
 
-const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const browserRoot = path.join(repoRoot, 'dist', 'browser');
-const defaultRoute = '/st-score-editor-p10-3a-workstation.html';
-const allowedAssets = new Map([
-  [defaultRoute, Object.freeze({
-    file: path.join(browserRoot, 'st-score-editor-p10-3a-workstation.html'),
-    contentType: 'text/html; charset=utf-8'
-  })],
-  ['/st-score-editor-p10-3a-workstation.js', Object.freeze({
-    file: path.join(browserRoot, 'st-score-editor-p10-3a-workstation.js'),
-    contentType: 'text/javascript; charset=utf-8'
-  })]
-]);
-
-const server = createServer(async (request, response) => {
-  const requestPath = (request.url ?? '/').split('?', 1)[0];
-  const route = requestPath === '/' ? defaultRoute : requestPath;
-  const asset = allowedAssets.get(route);
-  if (asset === undefined) {
-    response.writeHead(404).end('not found');
-    return;
-  }
-  try {
-    const bytes = await readFile(asset.file);
-    response.setHeader('Content-Type', asset.contentType);
-    response.setHeader('Cache-Control', 'no-store');
-    response.end(bytes);
-  } catch {
-    response.writeHead(404).end('not found');
-  }
+const harness = await openMobileWebKitArtifact({
+  htmlFile: 'st-score-editor-p10-3a-workstation.html',
+  scriptFile: 'st-score-editor-p10-3a-workstation.js',
+  portErrorCode: 'P10_3A_WEBKIT_SERVER_PORT_MISSING'
 });
+const { page, errors } = harness;
 
-await new Promise((resolve, reject) => {
-  server.once('error', reject);
-  server.listen(0, '127.0.0.1', resolve);
-});
-const address = server.address();
-if (address === null || typeof address === 'string') throw new Error('P10_3A_WEBKIT_SERVER_PORT_MISSING');
-
-let browser;
 try {
-  browser = await webkit.launch({ headless: true });
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 3,
-    hasTouch: true,
-    isMobile: true
-  });
-  const page = await context.newPage();
-  const errors = [];
-  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-  page.on('pageerror', error => errors.push(error.message));
-
-  await page.goto(
-    `http://127.0.0.1:${address.port}/st-score-editor-p10-3a-workstation.html`,
-    { waitUntil: 'load', timeout: 30000 }
-  );
   await page.waitForFunction(() =>
     Boolean(globalThis.STScoreEditorP10_3AWorkstationController?.getP10_3APitchTransposeState)
   );
@@ -271,6 +218,5 @@ try {
 
   console.log('P10-3A Professional Pitch Transpose WebKit regression: PASS');
 } finally {
-  if (browser) await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  await harness.close();
 }
