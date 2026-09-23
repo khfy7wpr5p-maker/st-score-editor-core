@@ -78,29 +78,32 @@ export type P10_3BProfessionalWorkstationStandaloneScoreEditorControllerV1 =
     readonly disposeP10_3BRangeReplaceControls: () => void;
   };
 
+const P10_3B_USER_MESSAGES: Readonly<Record<string, string>> = Object.freeze({
+  SELECTION_KIND_UNSUPPORTED: 'Replace için kesintisiz bir aralık seçin.',
+  CLIPBOARD_STALE: 'Nota değiştiği için kopyalanan aralık artık güncel değil. Yeniden kopyalayın.',
+  REPLACE_EXTENT_MISMATCH: 'Kaynak ve hedef aralığın toplam süresi aynı olmalıdır.',
+  SOURCE_DESTINATION_OVERLAP: 'Kaynak ve hedef aralık birbiriyle çakışamaz.',
+  SOURCE_RELATION_UNSUPPORTED: 'Kaynak aralık güvenli şekilde taşınamayan bağlı nota işaretleri içeriyor.',
+  DESTINATION_RELATION_UNSUPPORTED: 'Hedef aralık güvenli şekilde değiştirilemeyen bağlı nota işaretleri içeriyor.'
+});
+
 const errorInfo = (
   error: unknown
 ): Readonly<{ readonly code: string; readonly message: string }> => {
-  const value = error !== null && typeof error === 'object'
-    ? error as { readonly code?: unknown; readonly message?: unknown; readonly name?: unknown }
-    : null;
-  const code = typeof value?.code === 'string' && value.code.length > 0
-    ? value.code
-    : typeof value?.name === 'string' && value.name.length > 0
-      ? value.name
-      : 'PROFESSIONAL_RANGE_REPLACE_FAILED';
-  const technical = typeof value?.message === 'string' && value.message.length > 0
-    ? value.message
+  const record = error !== null && typeof error === 'object'
+    ? error as Record<string, unknown>
+    : Object.freeze({});
+  const code = [record.code, record.name].find(
+    candidate => typeof candidate === 'string' && candidate.length > 0
+  );
+  const normalizedCode = typeof code === 'string' ? code : 'PROFESSIONAL_RANGE_REPLACE_FAILED';
+  const fallback = typeof record.message === 'string' && record.message.length > 0
+    ? record.message
     : 'Professional range replacement failed.';
-  const messages: Readonly<Record<string, string>> = Object.freeze({
-    SELECTION_KIND_UNSUPPORTED: 'Replace için kesintisiz bir aralık seçin.',
-    CLIPBOARD_STALE: 'Nota değiştiği için kopyalanan aralık artık güncel değil. Yeniden kopyalayın.',
-    REPLACE_EXTENT_MISMATCH: 'Kaynak ve hedef aralığın toplam süresi aynı olmalıdır.',
-    SOURCE_DESTINATION_OVERLAP: 'Kaynak ve hedef aralık birbiriyle çakışamaz.',
-    SOURCE_RELATION_UNSUPPORTED: 'Kaynak aralık güvenli şekilde taşınamayan bağlı nota işaretleri içeriyor.',
-    DESTINATION_RELATION_UNSUPPORTED: 'Hedef aralık güvenli şekilde değiştirilemeyen bağlı nota işaretleri içeriyor.'
+  return Object.freeze({
+    code: normalizedCode,
+    message: P10_3B_USER_MESSAGES[normalizedCode] ?? fallback
   });
-  return Object.freeze({ code, message: messages[code] ?? technical });
 };
 
 const browserRevisionId = (): string => {
@@ -112,23 +115,6 @@ const browserRevisionId = (): string => {
     );
   }
   return `p10-3b:${cryptoValue.randomUUID()}`;
-};
-
-const eventAddressById = (
-  controller: P10_3AProfessionalWorkstationStandaloneScoreEditorControllerV1,
-  eventId: string
-): EventAddressV3 => {
-  const documentValue = controller.getDocument();
-  if (documentValue === null) {
-    throw Object.assign(new Error('No active score document.'), { code: 'NO_DOCUMENT' });
-  }
-  const address = addressEntityV3(documentValue.session.history.present.score, eventId);
-  if (address.kind !== 'event') {
-    throw Object.assign(new Error('Professional range endpoint is not a current event.'), {
-      code: 'RANGE_TARGET_INVALID'
-    });
-  }
-  return address;
 };
 
 export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV1 = (
@@ -168,27 +154,36 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
       range.rangeStartEventId === null ||
       range.rangeStopEventId === null
     ) return null;
+
     const documentValue = base.getDocument();
     if (documentValue === null) return null;
-    return createEventSpanProfessionalSelectionV1(
-      documentValue.session.history.present.score,
-      eventAddressById(base, range.rangeStartEventId),
-      eventAddressById(base, range.rangeStopEventId)
-    );
+    const score = documentValue.session.history.present.score;
+    const endpoints = [range.rangeStartEventId, range.rangeStopEventId].map(eventId => {
+      const address = addressEntityV3(score, eventId);
+      if (address.kind !== 'event') {
+        throw Object.assign(new Error('Professional range endpoint is not a current event.'), {
+          code: 'RANGE_TARGET_INVALID'
+        });
+      }
+      return address;
+    }) as readonly [EventAddressV3, EventAddressV3];
+
+    return createEventSpanProfessionalSelectionV1(score, endpoints[0], endpoints[1]);
   };
 
-  const currentWorkstation = (
-    selection: ProfessionalSelectionV1
-  ): Readonly<ScoreEditorProfessionalWorkstationV1> => {
+  const withCurrentWorkstation = <T>(
+    selection: ProfessionalSelectionV1,
+    operation: (workstation: Readonly<ScoreEditorProfessionalWorkstationV1>) => T
+  ): T => {
     const documentValue = base.getDocument();
     if (documentValue === null) {
       throw Object.assign(new Error('No active score document.'), { code: 'NO_DOCUMENT' });
     }
-    return Object.freeze({
+    return operation(Object.freeze({
       version: SCORE_EDITOR_PROFESSIONAL_WORKSTATION_V1_VERSION,
       document: documentValue,
       professionalSelection: selection
-    });
+    }));
   };
 
   const state = (): Readonly<P10_3BRangeReplaceStateV1> => {
@@ -224,7 +219,7 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
       if (selection === null) {
         throw Object.assign(new Error('Önce bir nota aralığı seçin.'), { code: 'RANGE_NOT_READY' });
       }
-      const next = copyProfessionalRangeForReplaceV1(currentWorkstation(selection));
+      const next = withCurrentWorkstation(selection, copyProfessionalRangeForReplaceV1);
       clipboard = next;
       clipboardState = 'CURRENT';
       lastError = null;
@@ -260,10 +255,12 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
         });
       }
 
-      const result = commitProfessionalRangeReplaceWorkstationV1(
-        currentWorkstation(selection),
-        clipboard,
-        nextOptions(provided)
+      const result = withCurrentWorkstation(selection, workstation =>
+        commitProfessionalRangeReplaceWorkstationV1(
+          workstation,
+          clipboard!,
+          nextOptions(provided)
+        )
       );
       const adopted = base.adoptValidatedSnapshot(result.document);
       if (adopted.error !== null) {
@@ -291,23 +288,41 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
     }
   };
 
-  const addButton = (
-    owner: Document,
+  const appendControlSet = (
     parent: HTMLElement,
-    action: string,
-    label: string,
-    ariaLabel: string,
-    disabled: boolean,
-    handler: () => void
+    mobile: boolean,
+    current: Readonly<P10_3BRangeReplaceStateV1>
   ): void => {
-    const button = owner.createElement('button');
-    button.type = 'button';
-    button.textContent = label;
-    button.setAttribute('aria-label', ariaLabel);
-    button.setAttribute('data-st-p10-3b-range-replace-control', action);
-    button.disabled = disabled;
-    button.addEventListener('click', handler);
-    parent.append(button);
+    const suffix = mobile ? '-mobile' : '';
+    const controls = [
+      {
+        action: `copy-range${suffix}`,
+        label: mobile ? 'Copy' : 'Copy Range',
+        aria: 'Copy professional range for replacement',
+        disabled: !current.canCopyForReplace,
+        run: () => controller.copyProfessionalRangeForReplace()
+      },
+      {
+        action: `replace-range${suffix}`,
+        label: 'Replace',
+        aria: 'Replace professional range from copied range',
+        disabled: !current.canAttemptReplace,
+        run: () => controller.replaceProfessionalRange()
+      }
+    ] as const;
+
+    for (const control of controls) {
+      const button = parent.ownerDocument.createElement('button');
+      Object.assign(button, {
+        type: 'button',
+        textContent: control.label,
+        disabled: control.disabled
+      });
+      button.setAttribute('aria-label', control.aria);
+      button.dataset.stP10_3bRangeReplaceControl = control.action;
+      button.addEventListener('click', control.run);
+      parent.append(button);
+    }
   };
 
   const decorate = (): void => {
@@ -315,60 +330,32 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
     const app = root.querySelector<HTMLElement>('[data-st-score-editor-app]');
     if (app === null) return;
     app.querySelectorAll('[data-st-p10-3b-range-replace-control]').forEach(node => node.remove());
+
     if (app.querySelector('[data-st-p10-3b-range-replace-style]') === null) {
       const style = app.ownerDocument.createElement('style');
-      style.setAttribute(
-        'data-st-p10-3b-range-replace-style',
-        P10_3B_PROFESSIONAL_WORKSTATION_V1_VERSION
-      );
+      style.dataset.stP10_3bRangeReplaceStyle = P10_3B_PROFESSIONAL_WORKSTATION_V1_VERSION;
       style.textContent = P10_3B_RANGE_REPLACE_CONTROL_STYLE;
       app.append(style);
     }
 
     const current = state();
-    const owner = app.ownerDocument;
-    const toolbar = app.querySelector<HTMLElement>('[data-st-professional-range-toolbar]');
-    if (toolbar !== null) {
-      addButton(
-        owner, toolbar, 'copy-range', 'Copy Range',
-        'Copy professional range for replacement',
-        !current.canCopyForReplace,
-        () => { controller.copyProfessionalRangeForReplace(); }
-      );
-      addButton(
-        owner, toolbar, 'replace-range', 'Replace',
-        'Replace professional range from copied range',
-        !current.canAttemptReplace,
-        () => { controller.replaceProfessionalRange(); }
-      );
-    }
+    const surfaces = [
+      app.querySelector<HTMLElement>('[data-st-professional-range-toolbar]'),
+      app.querySelector<HTMLElement>('[data-st-mobile-teacher-toolbar]')
+    ] as const;
+    surfaces.forEach((surface, index) => {
+      if (surface !== null) appendControlSet(surface, index === 1, current);
+    });
 
-    const mobile = app.querySelector<HTMLElement>('[data-st-mobile-teacher-toolbar]');
-    if (mobile !== null) {
-      addButton(
-        owner, mobile, 'copy-range-mobile', 'Copy',
-        'Copy professional range for replacement',
-        !current.canCopyForReplace,
-        () => { controller.copyProfessionalRangeForReplace(); }
-      );
-      addButton(
-        owner, mobile, 'replace-range-mobile', 'Replace',
-        'Replace professional range from copied range',
-        !current.canAttemptReplace,
-        () => { controller.replaceProfessionalRange(); }
-      );
+    if (lastError === null) return;
+    const status = app.querySelector<HTMLElement>('.stse-status');
+    const codeNode = status?.querySelector<HTMLElement>('strong') ?? null;
+    const messageNode = status?.querySelector<HTMLElement>('.stse-status-message') ?? null;
+    if (codeNode !== null) {
+      codeNode.textContent = lastError.code;
+      codeNode.classList.add('stse-error');
     }
-
-    if (lastError !== null) {
-      const status = app.querySelector<HTMLElement>('.stse-status');
-      const statusCode = status?.querySelector<HTMLElement>('strong') ?? null;
-      const statusMessage = status?.querySelector<HTMLElement>('.stse-status-message') ?? null;
-      if (statusCode !== null) {
-        statusCode.textContent = lastError.code;
-        statusCode.classList.add('stse-error');
-      }
-      if (statusMessage !== null) statusMessage.textContent = lastError.message;
-    }
+    if (messageNode !== null) messageNode.textContent = lastError.message;
   };
 
   const unsubscribeProfessional = base.professional.subscribe(() => {
