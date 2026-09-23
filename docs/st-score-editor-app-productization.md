@@ -1,8 +1,8 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / P10-3A PITCH TRANSPOSE IMPLEMENTED + QUALIFIED / FULL RELEASE MATRIX OPEN**
+Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / P10-3A PITCH TRANSPOSE IMPLEMENTED + QUALIFIED / P10-3B RANGE REPLACE IMPLEMENTED ON OPTIONAL COMPOSITION, EXACT-HEAD QUALIFICATION PENDING / FULL RELEASE MATRIX OPEN**
 
-Date: 2026-09-19
+Date: 2026-09-23
 
 ## Product decision
 
@@ -55,6 +55,20 @@ P10-1 qualified workstation
 Key-signature context is resolved staff-locally and inherited from the nearest earlier explicit key signature, defaulting to C major when none exists. Enharmonic spelling is deterministic and key-aware. Tie relation closure and grace relation closure remain **fail-closed**; no silent relation repair is authorized.
 
 The P10-3A browser surface exposes `−½`, `+½`, `−Step` and `+Step` presentation-only controls. Renderer coordinates and DOM order never determine target membership. Exact-head Node 18/20/22, retained WebKit, dedicated P10-3A WebKit and SonarCloud Quality Gate qualification completed successfully. The bounded P10-3A artifact remains optional, production-default false, production-release unauthorized and SesliTab-cutover unauthorized.
+
+## P10-3B — Professional range Copy / Replace
+
+**IMPLEMENTED ON OPTIONAL P10-3B PROFESSIONAL WORKSTATION COMPOSITION / EXACT-HEAD QUALIFICATION PENDING.**
+
+P10-3B adds bounded professional range replacement over the current-revision semantic `EVENT_SPAN` contract. The user selects one source span, invokes **Copy Range**, selects one destination span in the same exact measure/part/staff/Voice, then invokes **Replace**. Source and destination must have exactly equal rational time extent; event cardinality may differ. No stretch, compression, later-event shift, cross-measure replacement, cross-scope replacement or renderer-derived target inference is authorized.
+
+The source snapshot reuses `TeacherCopySnapshotV4`. Replace is **not Teacher Paste**: existing Teacher Paste semantics remain unchanged and continue to target their bounded neutral-REST workflow. P10-3B removes admitted destination events/local notation and inserts source-derived NOTE/CHORD/REST content with fresh deterministic destination event/note identities. Delete semantics remain **Clear-to-REST**, not structural time deletion.
+
+Safe local notation may be cloned, while beam, tuplet, tie, slur, grace-group, cross-staff, spanning tremolo and wavy-line coupling remain fail-closed; relation remapping is not authorized. `ScoreDocumentV3 + NotationDocumentV4` remains canonical. One accepted Replace creates one `EditorHistoryV4` revision; exact Undo/Redo restores the recorded canonical pair, and Redo reuses the committed generated identities rather than rerunning Replace.
+
+The optional P10-3B composition preserves the qualified P10-1, P10-2 and P10-3A artifacts rather than widening them. Its measured bundle is **670,198 bytes** under the frozen **675,840-byte** `P10-3B-RANGE-REPLACE-1` budget. Dedicated mobile WebKit regression covers semantic Copy -> Replace, 44px touch controls, exact Undo/Redo, stale clipboard behavior and mismatch no-side-effect behavior. Automated WebKit is regression evidence and is **not physical-device validation**.
+
+The P10-3B artifact remains optional, `productionDefault=false`, production-release unauthorized and SesliTab-cutover unauthorized. Physical-device validation remains required separately.
 
 ## P09 Fast Entry / Keyboard Workstation
 
