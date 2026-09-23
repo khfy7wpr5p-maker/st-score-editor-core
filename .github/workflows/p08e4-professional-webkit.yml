@@ -10,6 +10,14 @@ jobs:
   professional-webkit:
     permissions:
       contents: read
-    uses: ./.github/workflows/reusable-professional-webkit-stage.yml
-    with:
-      stage: p08-e4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Editor Core
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Setup Editor WebKit
+        uses: ./.github/actions/setup-editor-webkit
+      - name: Build independently bounded professional browser artifact
+        run: npm run build:browser:professional
+      - name: Run P08-E4 professional artifact WebKit regression
+        run: node scripts/p08e4-webkit-professional-artifact-regression.mjs
