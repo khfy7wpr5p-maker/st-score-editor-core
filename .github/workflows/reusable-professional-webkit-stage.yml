@@ -1,0 +1,93 @@
+name: Reusable professional WebKit stage
+
+on:
+  workflow_call:
+    inputs:
+      stage:
+        required: true
+        type: string
+
+jobs:
+  stage:
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Editor Core
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Install exact Editor Core dependencies and verified audio with pinned Playwright
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock             saxes@6.0.0 xmlchars@2.2.0 esbuild@0.28.2 typescript@6.0.3
+          npm run install:verified-audio -- --with-playwright
+      - name: Install pinned WebKit browser
+        run: node node_modules/playwright/cli.js install --with-deps webkit
+
+      - name: Build P08-E4 professional artifact
+        if: inputs.stage == 'p08-e4'
+        run: npm run build:browser:professional
+      - name: Run P08-E4 professional artifact WebKit regression
+        if: inputs.stage == 'p08-e4'
+        run: node scripts/p08e4-webkit-professional-artifact-regression.mjs
+
+      - name: Build P10-1 professional workstation artifact
+        if: inputs.stage == 'p10-1' || inputs.stage == 'p10-1-renderer'
+        run: npm run build:browser:professional-workstation
+      - name: Run P10-1 professional workstation WebKit regression
+        if: inputs.stage == 'p10-1'
+        run: node scripts/p10-1-webkit-professional-workstation-regression.mjs
+
+      - name: Checkout exact ST Score Rendering Layer revision
+        if: inputs.stage == 'p10-1-renderer'
+        run: |
+          git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
+          cd "$RUNNER_TEMP/st-score-rendering-layer"
+          git checkout --detach 70c21ad73c0b2e9c71e415cc3272a10673df9d60
+      - name: Build exact renderer runtime
+        if: inputs.stage == 'p10-1-renderer'
+        run: |
+          cd "$RUNNER_TEMP/st-score-rendering-layer"
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          ST_SCORE_RENDERER_SOURCE_REVISION=70c21ad73c0b2e9c71e415cc3272a10673df9d60 npm run export:workstation-runtime
+      - name: Assemble P10-1 renderer-attached qualification preview
+        if: inputs.stage == 'p10-1-renderer'
+        env:
+          ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
+        run: node scripts/assemble-p10-1-professional-workstation-renderer-preview.mjs
+      - name: Run P10-1 renderer qualification WebKit
+        if: inputs.stage == 'p10-1-renderer'
+        run: node scripts/p10-1-webkit-renderer-preview-regression.mjs
+
+      - name: Build P10-2 professional workstation artifact
+        if: inputs.stage == 'p10-2'
+        run: |
+          npm run build:browser:professional-workstation
+          node scripts/build-p10-2-professional-workstation-browser.mjs
+      - name: Run P10-2 Triplet Unretiming WebKit regression
+        if: inputs.stage == 'p10-2'
+        run: node scripts/p10-2-webkit-triplet-unretiming-regression.mjs
+
+      - name: Build P10-3A professional workstation artifact
+        if: inputs.stage == 'p10-3a'
+        run: |
+          npm run build:browser:professional-workstation
+          node scripts/build-p10-2-professional-workstation-browser.mjs
+          node scripts/build-p10-3a-professional-workstation-browser.mjs
+      - name: Run P10-3A Professional Pitch Transpose WebKit regression
+        if: inputs.stage == 'p10-3a'
+        run: node scripts/p10-3a-webkit-professional-pitch-transpose-regression.mjs
+
+      - name: Build P10-3B professional workstation artifact
+        if: inputs.stage == 'p10-3b'
+        run: |
+          npm run build:browser:professional-workstation
+          node scripts/build-p10-2-professional-workstation-browser.mjs
+          node scripts/build-p10-3a-professional-workstation-browser.mjs
+          node scripts/build-p10-3b-professional-workstation-browser.mjs
+      - name: Run P10-3B Professional Range Replace WebKit regression
+        if: inputs.stage == 'p10-3b'
+        run: node scripts/p10-3b-webkit-professional-range-replace-regression.mjs
