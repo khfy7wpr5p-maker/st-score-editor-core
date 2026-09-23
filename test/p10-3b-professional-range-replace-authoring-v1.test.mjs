@@ -1,67 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { webcrypto } from 'node:crypto';
 
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
-import { createScoreDocumentV3 } from '../dist/packages/score-model-v3/src/index.js';
 import {
   createNotationDocumentV4,
   emptyNotationDocumentV4
 } from '../dist/packages/notation-structure-v4/src/index.js';
-import { createMeasureFrameAuthoringStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/measure-frame-authoring.js';
-import { createEventSpanProfessionalSelectionV1 } from '../dist/packages/editor-professional-selection-v1/src/index.js';
 import {
   ProfessionalRangeReplaceV1Error,
-  analyzeProfessionalRangeReplaceV1,
-  createProfessionalRangeCopySnapshotV1,
-  executeProfessionalRangeReplaceV1,
-  planProfessionalRangeReplaceIdentitiesV1
+  executeProfessionalRangeReplaceV1
 } from '../dist/packages/editor-professional-range-replace-v1/src/index.js';
+import {
+  createCompactRangeReplaceScore,
+  eventNotation,
+  noteNotation,
+  prepareRangeReplaceFacts,
+  q
+} from './helpers/p10-3b-fixtures.mjs';
 
-if (globalThis.crypto === undefined || typeof globalThis.crypto.randomUUID !== 'function') {
-  Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
-}
-
-const q=(numerator,denominator)=>({numerator,denominator});
-const pitch=(step='C',alter=0,octave=4)=>({step,alter,octave});
-const note=(id,noteId,onset,duration,step='C')=>({
-  id,kind:'note',onset,duration,note:{id:noteId,pitch:pitch(step)}
+const fixture=()=>createCompactRangeReplaceScore({
+  revisionId:'p10-3b-author-rev-1',
+  parentId:'p10-3b-author-parent'
 });
-const rest=(id,onset,duration)=>({id,kind:'rest',onset,duration});
-const chord=(id,onset,duration,defs)=>({
-  id,kind:'chord',onset,duration,
-  notes:defs.map(([noteId,step,alter=0,octave=4])=>({id:noteId,pitch:pitch(step,alter,octave)}))
-});
-const eventNotation=(overrides={})=>({
-  dots:0,beams:[],tuplet:null,articulations:[],ornaments:[],...overrides
-});
-const noteNotation=(overrides={})=>({
-  accidental:null,ties:[],slurs:[],...overrides
-});
-
-const fixture=()=>{
-  const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
-  controller.newDocument({preset:'GUITAR_TREBLE'});
-  const raw=structuredClone(controller.getDocument().session.history.present.score);
-  raw.revision={id:'p10-3b-author-rev-1',parentId:'p10-3b-author-parent'};
-  const staff=raw.parts[0].staves.find(item=>item.role==='standard');
-  staff.measures[0].voices[0].events=[
-    note('src-a','src-na',q(0,1),q(1,8),'C'),
-    chord('src-b',q(1,8),q(1,8),[['src-nb1','E'],['src-nb2','G']]),
-    note('dst-a','dst-na',q(1,4),q(1,16),'A'),
-    rest('dst-b',q(5,16),q(1,16)),
-    chord('dst-c',q(3,8),q(1,16),[['dst-nc1','C'],['dst-nc2','E']]),
-    note('dst-d','dst-nd',q(7,16),q(1,16),'B'),
-    note('tail','tail-note',q(1,2),q(1,2),'F')
-  ];
-  return createScoreDocumentV3(raw);
-};
-
-const span=(score,start,stop)=>createEventSpanProfessionalSelectionV1(
-  score,
-  addressEntityV3(score,start),
-  addressEntityV3(score,stop)
-);
 
 const notationFixture=score=>{
   const empty=emptyNotationDocumentV4(score);
@@ -127,16 +87,12 @@ const notationFixture=score=>{
 
 const prepared=(score=fixture(),backward=false)=>{
   const notation=notationFixture(score);
-  const source=span(score,'src-a','src-b');
-  const destination=backward
-    ? span(score,'dst-d','dst-a')
-    : span(score,'dst-a','dst-d');
-  const snapshot=createProfessionalRangeCopySnapshotV1(score,notation,source);
-  const admission=analyzeProfessionalRangeReplaceV1(score,notation,snapshot,destination);
-  const identityPlan=planProfessionalRangeReplaceIdentitiesV1(
-    score,notation,snapshot,destination,admission,'p10-3b-author-rev-2'
-  );
-  return {score,notation,source,destination,snapshot,admission,identityPlan};
+  return prepareRangeReplaceFacts({
+    score,
+    notation,
+    nextRevisionId:'p10-3b-author-rev-2',
+    backward
+  });
 };
 
 const eventMap=score=>{
