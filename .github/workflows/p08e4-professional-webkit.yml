@@ -19,12 +19,8 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
-      - name: Install Editor Core dependencies and pinned Playwright
-        run: |
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm run install:verified-audio -- --with-playwright
-      - name: Install pinned WebKit browser
-        run: npx playwright install --with-deps webkit
+      - name: Setup Editor WebKit dependencies
+        run: bash scripts/setup-editor-webkit-ci.sh
       - name: Build independently bounded professional browser artifact
         run: npm run build:browser:professional
       - name: Run P08-E4 professional artifact WebKit regression

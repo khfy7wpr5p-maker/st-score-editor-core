@@ -12,6 +12,26 @@ const workflows = [
     jobs: ['professional-webkit']
   },
   {
+    path: '.github/workflows/p10-1-professional-workstation-webkit.yml',
+    jobs: ['professional-workstation-webkit']
+  },
+  {
+    path: '.github/workflows/p10-1-renderer-qualification-webkit.yml',
+    jobs: ['renderer-qualification-webkit']
+  },
+  {
+    path: '.github/workflows/p10-2-triplet-unretiming-webkit.yml',
+    jobs: ['p10-2-triplet-unretiming-webkit']
+  },
+  {
+    path: '.github/workflows/p10-3a-professional-pitch-transpose-webkit.yml',
+    jobs: ['p10-3a-professional-pitch-transpose-webkit']
+  },
+  {
+    path: '.github/workflows/p10-3b-professional-range-replace-webkit.yml',
+    jobs: ['p10-3b-professional-range-replace-webkit']
+  },
+  {
     path: '.github/workflows/ci.yml',
     jobs: ['core']
   }

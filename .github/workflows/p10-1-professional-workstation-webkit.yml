@@ -6,12 +6,11 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   professional-workstation-webkit:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout Editor Core
@@ -20,12 +19,8 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
-      - name: Install Editor Core dependencies and pinned Playwright
-        run: |
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
-          npm run install:verified-audio -- --with-playwright
-      - name: Install pinned WebKit browser
-        run: npx playwright install --with-deps webkit
+      - name: Setup Editor WebKit dependencies
+        run: bash scripts/setup-editor-webkit-ci.sh
       - name: Build bounded P10-1 professional workstation artifact
         run: npm run build:browser:professional-workstation
       - name: Run P10-1 professional workstation WebKit regression
