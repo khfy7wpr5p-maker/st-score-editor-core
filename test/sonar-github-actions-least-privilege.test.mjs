@@ -32,10 +32,6 @@ const workflows = [
     jobs: ['p10-3b-professional-range-replace-webkit']
   },
   {
-    path: '.github/workflows/reusable-professional-webkit-stage.yml',
-    jobs: ['stage']
-  },
-  {
     path: '.github/workflows/ci.yml',
     jobs: ['core']
   }
