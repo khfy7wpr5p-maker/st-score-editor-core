@@ -319,7 +319,7 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
         disabled: control.disabled
       });
       button.setAttribute('aria-label', control.aria);
-      button.dataset.stP10_3bRangeReplaceControl = control.action;
+      button.setAttribute('data-st-p10-3b-range-replace-control', control.action);
       button.addEventListener('click', control.run);
       parent.append(button);
     }
@@ -333,7 +333,7 @@ export const createP10_3BProfessionalWorkstationStandaloneScoreEditorControllerV
 
     if (app.querySelector('[data-st-p10-3b-range-replace-style]') === null) {
       const style = app.ownerDocument.createElement('style');
-      style.dataset.stP10_3bRangeReplaceStyle = P10_3B_PROFESSIONAL_WORKSTATION_V1_VERSION;
+      style.setAttribute('data-st-p10-3b-range-replace-style', P10_3B_PROFESSIONAL_WORKSTATION_V1_VERSION);
       style.textContent = P10_3B_RANGE_REPLACE_CONTROL_STYLE;
       app.append(style);
     }
