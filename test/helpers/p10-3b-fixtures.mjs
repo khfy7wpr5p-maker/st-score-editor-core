@@ -1,22 +1,16 @@
-import { webcrypto } from 'node:crypto';
-
 import { addressEntityV3 } from '../../dist/packages/addressing-v3/src/index.js';
 import { createScoreDocumentV3 } from '../../dist/packages/score-model-v3/src/index.js';
 import {
   createNotationDocumentV4,
   emptyNotationDocumentV4
 } from '../../dist/packages/notation-structure-v4/src/index.js';
-import { createMeasureFrameAuthoringStandaloneScoreEditorController } from '../../dist/packages/score-editor-browser-app/src/measure-frame-authoring.js';
+import { createNewScoreEditorAppDocument } from '../../dist/packages/score-editor-app-document/src/index.js';
 import { createEventSpanProfessionalSelectionV1 } from '../../dist/packages/editor-professional-selection-v1/src/index.js';
 import {
   analyzeProfessionalRangeReplaceV1,
   createProfessionalRangeCopySnapshotV1,
   planProfessionalRangeReplaceIdentitiesV1
 } from '../../dist/packages/editor-professional-range-replace-v1/src/index.js';
-
-if (globalThis.crypto === undefined) {
-  globalThis.crypto=webcrypto;
-}
 
 export const q = (numerator, denominator) => ({ numerator, denominator });
 export const pitch = (step='C', alter=0, octave=4) => ({ step, alter, octave });
@@ -38,6 +32,17 @@ export const noteNotation = (overrides={}) => ({
   accidental:null, ties:[], slurs:[], ...overrides
 });
 
+const fixtureIds = prefix => {
+  let value=0;
+  return () => `${prefix}-${++value}`;
+};
+
+const baseScore = (preset, prefix) =>
+  createNewScoreEditorAppDocument({
+    preset,
+    idFactory:fixtureIds(prefix)
+  }).session.history.present.score;
+
 export const span = (score, start, stop) => createEventSpanProfessionalSelectionV1(
   score,
   addressEntityV3(score, start),
@@ -58,20 +63,12 @@ const requireVoice = (staff, measureIndex) => {
   return voice;
 };
 
-const requireDocumentScore = controller => {
-  const document=controller.getDocument();
-  if (document === null) throw new Error('P10_3B_DOCUMENT_FIXTURE_MISSING');
-  return document.session.history.present.score;
-};
-
 export const createCompactRangeReplaceScore = ({
   revisionId,
   parentId,
   preset='GUITAR_TREBLE'
 }) => {
-  const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
-  controller.newDocument({preset});
-  const raw=structuredClone(requireDocumentScore(controller));
+  const raw=structuredClone(baseScore(preset,'p10-3b-compact'));
   raw.revision={id:revisionId,parentId};
   const staff=requireStandardStaff(raw);
   requireVoice(staff,0).events=[
@@ -87,10 +84,7 @@ export const createCompactRangeReplaceScore = ({
 };
 
 export const createIdentityRangeReplaceScore = () => {
-  const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
-  controller.newDocument({preset:'GUITAR_TREBLE'});
-  controller.appendMeasure();
-  const raw=structuredClone(requireDocumentScore(controller));
+  const raw=structuredClone(baseScore('GUITAR_TREBLE','p10-3b-identity'));
   raw.revision={id:'p10-3b-id-rev-1',parentId:'p10-3b-id-parent'};
   const staff=requireStandardStaff(raw);
   requireVoice(staff,0).events=[
@@ -101,10 +95,29 @@ export const createIdentityRangeReplaceScore = () => {
     chord('dst-c',q(3,4),q(1,8),[['dst-nc1','C'],['dst-nc2','E']]),
     note('dst-d','dst-nd',q(7,8),q(1,8),'B')
   ];
-  requireVoice(staff,1).events=[
-    note('m2-a','m2-na',q(0,1),q(1,2),'D'),
-    note('m2-b','m2-nb',q(1,2),q(1,2),'F')
-  ];
+
+  const frame=structuredClone(raw.measureFrames[0]);
+  if (frame === undefined) throw new Error('P10_3B_FRAME_FIXTURE_MISSING');
+  frame.id='p10-3b-frame-2';
+  frame.ordinal=2;
+  frame.displayNumber='2';
+  raw.measureFrames.push(frame);
+
+  const measure=structuredClone(staff.measures[0]);
+  if (measure === undefined) throw new Error('P10_3B_MEASURE_FIXTURE_MISSING');
+  measure.id='p10-3b-measure-2';
+  measure.frameId=frame.id;
+  measure.voices=measure.voices.map((voice,index)=>({
+    ...voice,
+    id:`p10-3b-m2-voice-${index + 1}`,
+    events:[
+      note('m2-a','m2-na',q(0,1),q(1,2),'D'),
+      note('m2-b','m2-nb',q(1,2),q(1,2),'F')
+    ],
+    graceGroups:[]
+  }));
+  staff.measures.push(measure);
+
   return createScoreDocumentV3(raw);
 };
 
