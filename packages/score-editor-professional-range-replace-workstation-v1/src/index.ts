@@ -36,15 +36,14 @@ const requiredSelection = (
 const appWithSession = (
   document: ScoreEditorAppDocument,
   session: Readonly<EditorSessionStateV4>
-): Readonly<ScoreEditorAppDocument> => Object.freeze({
-  version: document.version,
-  title: document.title,
-  origin: document.origin,
-  session,
-  savedRevisionId: document.savedRevisionId,
-  dirty: document.savedRevisionId === null
-    || session.history.present.score.revision.id !== document.savedRevisionId
-});
+): Readonly<ScoreEditorAppDocument> => {
+  const currentRevisionId = session.history.present.score.revision.id;
+  return Object.freeze({
+    ...document,
+    session,
+    dirty: document.savedRevisionId === null || document.savedRevisionId !== currentRevisionId
+  });
+};
 
 const workstationState = (
   document: ScoreEditorAppDocument,
