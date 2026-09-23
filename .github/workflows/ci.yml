@@ -38,3 +38,7 @@ jobs:
           curl -fsSL --retry 3 \
             "https://sonarcloud.io/api/issues/search?componentKeys=khfy7wpr5p-maker_st-score-editor-core&branch=main&issueStatuses=OPEN%2CCONFIRMED&sinceLeakPeriod=true&ps=100" \
             | python3 -m json.tool
+          echo "=== MAIN NEW-CODE DUPLICATION BY FILE ==="
+          curl -fsSL --retry 3 \
+            "https://sonarcloud.io/api/measures/component_tree?component=khfy7wpr5p-maker_st-score-editor-core&branch=main&metricKeys=new_duplicated_lines_density,new_duplicated_lines&qualifiers=FIL&ps=500" \
+            | python3 -m json.tool
