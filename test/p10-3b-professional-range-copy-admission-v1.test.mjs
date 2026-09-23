@@ -18,27 +18,19 @@ import {
   analyzeProfessionalRangeReplaceV1,
   createProfessionalRangeCopySnapshotV1
 } from '../dist/packages/editor-professional-range-replace-v1/src/index.js';
+import {
+  chord,
+  eventNotation,
+  note,
+  noteNotation,
+  pitch,
+  q,
+  rest
+} from './helpers/p10-3b-fixtures.mjs';
 
 if (globalThis.crypto === undefined || typeof globalThis.crypto.randomUUID !== 'function') {
   Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
 }
-
-const q=(numerator,denominator)=>({numerator,denominator});
-const pitch=(step='C',alter=0,octave=4)=>({step,alter,octave});
-const note=(id,noteId,onset,duration,step='C')=>({
-  id,kind:'note',onset,duration,note:{id:noteId,pitch:pitch(step)}
-});
-const rest=(id,onset,duration)=>({id,kind:'rest',onset,duration});
-const chord=(id,onset,duration,defs)=>({
-  id,kind:'chord',onset,duration,
-  notes:defs.map(([noteId,step,alter=0,octave=4])=>({id:noteId,pitch:pitch(step,alter,octave)}))
-});
-const eventNotation=(overrides={})=>({
-  dots:0,beams:[],tuplet:null,articulations:[],ornaments:[],...overrides
-});
-const noteNotation=(overrides={})=>({
-  accidental:null,ties:[],slurs:[],...overrides
-});
 
 const fixture=({sourceGap=false,destinationGap=false,graceDestination=false}={})=>{
   const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
