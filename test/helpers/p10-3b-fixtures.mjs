@@ -58,6 +58,12 @@ const requireVoice = (staff, measureIndex) => {
   return voice;
 };
 
+const requireDocumentScore = controller => {
+  const document=controller.getDocument();
+  if (document === null) throw new Error('P10_3B_DOCUMENT_FIXTURE_MISSING');
+  return document.session.history.present.score;
+};
+
 export const createCompactRangeReplaceScore = ({
   revisionId,
   parentId,
@@ -65,7 +71,7 @@ export const createCompactRangeReplaceScore = ({
 }) => {
   const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
   controller.newDocument({preset});
-  const raw=structuredClone(controller.getDocument().session.history.present.score);
+  const raw=structuredClone(requireDocumentScore(controller));
   raw.revision={id:revisionId,parentId};
   const staff=requireStandardStaff(raw);
   requireVoice(staff,0).events=[
@@ -84,7 +90,7 @@ export const createIdentityRangeReplaceScore = () => {
   const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
   controller.newDocument({preset:'GUITAR_TREBLE'});
   controller.appendMeasure();
-  const raw=structuredClone(controller.getDocument().session.history.present.score);
+  const raw=structuredClone(requireDocumentScore(controller));
   raw.revision={id:'p10-3b-id-rev-1',parentId:'p10-3b-id-parent'};
   const staff=requireStandardStaff(raw);
   requireVoice(staff,0).events=[
