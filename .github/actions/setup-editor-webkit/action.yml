@@ -1,0 +1,18 @@
+name: Setup Editor WebKit
+description: Install pinned Editor Core build dependencies, verified audio, and WebKit.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: "22"
+    - name: Install Editor Core dependencies and verified audio with pinned Playwright
+      shell: bash
+      run: |
+        npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+        npm run install:verified-audio -- --with-playwright
+    - name: Install pinned WebKit browser
+      shell: bash
+      run: node node_modules/playwright/cli.js install --with-deps webkit
