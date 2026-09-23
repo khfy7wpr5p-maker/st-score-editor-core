@@ -197,7 +197,7 @@ test('P10-3B extent-mismatch Replace fails with zero canonical/history side effe
   const controller=await createController();
   selectSpan(controller,0,1);
   controller.copyProfessionalRangeForReplace();
-  selectSpan(controller,2,2);
+  selectSpan(controller,2,3);
 
   const before=JSON.stringify(controller.getDocument());
   const result=controller.replaceProfessionalRange({nextRevisionId:'rev:p10-3b-browser-invalid'});
