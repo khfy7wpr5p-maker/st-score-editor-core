@@ -15,8 +15,12 @@ jobs:
     steps:
       - name: Checkout Editor Core
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Setup Editor WebKit
-        uses: ./.github/actions/setup-editor-webkit
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Setup Editor WebKit dependencies
+        run: bash scripts/setup-editor-webkit-ci.sh
       - name: Build bounded P10-1 professional workstation artifact
         run: npm run build:browser:professional-workstation
       - name: Run P10-1 professional workstation WebKit regression
