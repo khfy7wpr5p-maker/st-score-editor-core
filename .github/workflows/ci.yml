@@ -30,17 +30,19 @@ jobs:
         run: npm run validate
       - name: Build and test
         run: npm test
-      - name: Diagnose main Sonar issues
-        if: ${{ matrix.node == 20 }}
+
+  sonar-diagnostic:
+    name: Sonar main diagnostic
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Read main Sonar duplication candidates
         shell: bash
         run: |
           set -euo pipefail
           curl -fsSL --retry 3 \
             "https://sonarcloud.io/api/issues/search?componentKeys=khfy7wpr5p-maker_st-score-editor-core&branch=main&issueStatuses=OPEN%2CCONFIRMED&sinceLeakPeriod=true&ps=100" \
-            | python3 -m json.tool
-          echo "=== MAIN NEW-CODE PERIOD ==="
-          curl -fsSL --retry 3 \
-            "https://sonarcloud.io/api/new_code_periods/show?project=khfy7wpr5p-maker_st-score-editor-core&branch=main" \
             | python3 -m json.tool
           echo "=== MAIN DUPLICATION CANDIDATES ==="
           curl -fsSL --retry 3 \
