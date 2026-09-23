@@ -1,63 +1,13 @@
-import { createServer } from 'node:http';
-import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { webkit } from 'playwright';
+import { openMobileWebKitArtifact } from './lib/mobile-webkit-artifact-harness.mjs';
 
-const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const browserRoot = path.join(repoRoot, 'dist', 'browser');
-const types = new Map([
-  ['.html', 'text/html; charset=utf-8'],
-  ['.js', 'text/javascript; charset=utf-8'],
-  ['.json', 'application/json; charset=utf-8']
-]);
-
-const server = createServer(async (request, response) => {
-  try {
-    const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://127.0.0.1').pathname);
-    const file = path.resolve(
-      browserRoot,
-      (pathname.startsWith('/') ? pathname.slice(1) : pathname) || 'st-score-editor-p10-2-workstation.html'
-    );
-    if (file !== browserRoot && !file.startsWith(`${browserRoot}${path.sep}`)) {
-      throw new Error('escaped browser root');
-    }
-    const info = await stat(file);
-    if (!info.isFile()) throw new Error('not a file');
-    response.setHeader('Content-Type', types.get(path.extname(file)) ?? 'application/octet-stream');
-    response.setHeader('Cache-Control', 'no-store');
-    createReadStream(file).pipe(response);
-  } catch {
-    response.writeHead(404).end('not found');
-  }
+const harness = await openMobileWebKitArtifact({
+  htmlFile: 'st-score-editor-p10-2-workstation.html',
+  scriptFile: 'st-score-editor-p10-2-workstation.js',
+  portErrorCode: 'P10_2_WEBKIT_SERVER_PORT_MISSING'
 });
+const { page, errors } = harness;
 
-await new Promise((resolve, reject) => {
-  server.once('error', reject);
-  server.listen(0, '127.0.0.1', resolve);
-});
-const address = server.address();
-if (address === null || typeof address === 'string') throw new Error('P10_2_WEBKIT_SERVER_PORT_MISSING');
-
-let browser;
 try {
-  browser = await webkit.launch({ headless: true });
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 3,
-    hasTouch: true,
-    isMobile: true
-  });
-  const page = await context.newPage();
-  const errors = [];
-  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-  page.on('pageerror', error => errors.push(error.message));
-
-  await page.goto(
-    `http://127.0.0.1:${address.port}/st-score-editor-p10-2-workstation.html`,
-    { waitUntil: 'load', timeout: 30000 }
-  );
   await page.waitForFunction(() =>
     Boolean(globalThis.STScoreEditorP10_2WorkstationController?.getTripletUnretimingState)
   );
@@ -370,6 +320,5 @@ try {
   if (errors.length !== 0) throw new Error(`P10-2 browser console errors ${JSON.stringify(errors)}`);
   console.log('P10-2 Triplet Unretiming WebKit regression: PASS');
 } finally {
-  if (browser) await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  await harness.close();
 }

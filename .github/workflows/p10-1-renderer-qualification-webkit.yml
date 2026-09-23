@@ -24,18 +24,20 @@ jobs:
       - name: Build bounded P10-1 workstation artifacts
         run: npm run build:browser:professional-workstation
       - name: Checkout exact ST Score Rendering Layer revision
-        run: |
-          git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
-          cd "$RUNNER_TEMP/st-score-rendering-layer"
-          git checkout --detach 70c21ad73c0b2e9c71e415cc3272a10673df9d60
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: khfy7wpr5p-maker/st-score-rendering-layer
+          ref: 70c21ad73c0b2e9c71e415cc3272a10673df9d60
+          path: st-score-rendering-layer
+          persist-credentials: false
       - name: Build exact renderer runtime
         run: |
-          cd "$RUNNER_TEMP/st-score-rendering-layer"
+          cd "$GITHUB_WORKSPACE/st-score-rendering-layer"
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
           ST_SCORE_RENDERER_SOURCE_REVISION=70c21ad73c0b2e9c71e415cc3272a10673df9d60 npm run export:workstation-runtime
       - name: Assemble P10-1 renderer-attached qualification preview
         env:
-          ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
+          ST_SCORE_RENDERER_RUNTIME_DIR: ${{ github.workspace }}/st-score-rendering-layer/dist/workstation-runtime
         run: node scripts/assemble-p10-1-professional-workstation-renderer-preview.mjs
       - name: Run P10-1 renderer qualification WebKit
         run: node scripts/p10-1-webkit-renderer-preview-regression.mjs
