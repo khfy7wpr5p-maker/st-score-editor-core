@@ -1,70 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { webcrypto } from 'node:crypto';
 
-import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 import { createScoreDocumentV3 } from '../dist/packages/score-model-v3/src/index.js';
-import { emptyNotationDocumentV4 } from '../dist/packages/notation-structure-v4/src/index.js';
-import { createMeasureFrameAuthoringStandaloneScoreEditorController } from '../dist/packages/score-editor-browser-app/src/measure-frame-authoring.js';
-import { createEventSpanProfessionalSelectionV1 } from '../dist/packages/editor-professional-selection-v1/src/index.js';
 import {
   ProfessionalRangeReplaceV1Error,
-  analyzeProfessionalRangeReplaceV1,
-  createProfessionalRangeCopySnapshotV1,
   planProfessionalRangeReplaceIdentitiesV1
 } from '../dist/packages/editor-professional-range-replace-v1/src/index.js';
+import {
+  createIdentityRangeReplaceScore,
+  prepareRangeReplaceFacts
+} from './helpers/p10-3b-fixtures.mjs';
 
-if (globalThis.crypto === undefined || typeof globalThis.crypto.randomUUID !== 'function') {
-  Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
-}
-
-const q=(numerator,denominator)=>({numerator,denominator});
-const pitch=(step='C',alter=0,octave=4)=>({step,alter,octave});
-const note=(id,noteId,onset,duration,step='C')=>({
-  id,kind:'note',onset,duration,note:{id:noteId,pitch:pitch(step)}
-});
-const rest=(id,onset,duration)=>({id,kind:'rest',onset,duration});
-const chord=(id,onset,duration,defs)=>({
-  id,kind:'chord',onset,duration,
-  notes:defs.map(([noteId,step])=>({id:noteId,pitch:pitch(step)}))
-});
-
-const fixture=()=>{
-  const controller=createMeasureFrameAuthoringStandaloneScoreEditorController();
-  controller.newDocument({preset:'GUITAR_TREBLE'});
-  controller.appendMeasure();
-  const raw=structuredClone(controller.getDocument().session.history.present.score);
-  raw.revision={id:'p10-3b-id-rev-1',parentId:'p10-3b-id-parent'};
-  const staff=raw.parts[0].staves.find(item=>item.role==='standard');
-  staff.measures[0].voices[0].events=[
-    note('src-a','src-na',q(0,1),q(1,4),'C'),
-    chord('src-b',q(1,4),q(1,4),[['src-nb1','E'],['src-nb2','G']]),
-    note('dst-a','dst-na',q(1,2),q(1,8),'A'),
-    rest('dst-b',q(5,8),q(1,8)),
-    chord('dst-c',q(3,4),q(1,8),[['dst-nc1','C'],['dst-nc2','E']]),
-    note('dst-d','dst-nd',q(7,8),q(1,8),'B')
-  ];
-  staff.measures[1].voices[0].events=[
-    note('m2-a','m2-na',q(0,1),q(1,2),'D'),
-    note('m2-b','m2-nb',q(1,2),q(1,2),'F')
-  ];
-  return createScoreDocumentV3(raw);
-};
-
-const span=(score,start,stop)=>createEventSpanProfessionalSelectionV1(
-  score,
-  addressEntityV3(score,start),
-  addressEntityV3(score,stop)
-);
-
-const facts=score=>{
-  const notation=emptyNotationDocumentV4(score);
-  const source=span(score,'src-a','src-b');
-  const destination=span(score,'dst-a','dst-d');
-  const snapshot=createProfessionalRangeCopySnapshotV1(score,notation,source);
-  const admission=analyzeProfessionalRangeReplaceV1(score,notation,snapshot,destination);
-  return {notation,source,destination,snapshot,admission};
-};
+const fixture=createIdentityRangeReplaceScore;
+const facts=score=>prepareRangeReplaceFacts({score});
 
 test('P10-3B identity plan allocates deterministic fresh event and note identities for 2-to-4 replacement',()=>{
   const score=fixture();
