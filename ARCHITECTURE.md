@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SSE-00–10, APP-00–10O, APP-11A–I, P09-A/B/C/D, P10-0/P10-1 and Stage 07 are merged/qualified for their recorded scope. APP-11J read-only admission is present on main. P10-2 bounded Triplet removal/unretiming is implemented as an optional workstation capability; the standalone physical device/browser release matrix remains open and is required before release.**
+Status: **SSE-00–10, APP-00–10O, APP-11A–I, P09-A/B/C/D, P10-0/P10-1 and Stage 07 are merged/qualified for their recorded scope. APP-11J read-only admission is present on main. P10-2 bounded Triplet removal/unretiming and P10-3B professional range replacement are optional workstation capabilities; P10-3B exact-head qualification remains pending and the standalone physical device/browser release matrix remains open.**
 
 ## Canonical architecture
 
@@ -212,6 +212,28 @@ The analyzer is **read-only**. Canonical mutation authority is false, history mu
 
 **Generalized tuplet mutation is not authorized.** P10-2 remains the only bounded inverse mutation surface and remains limited to its existing 3:2 profile. SonarQube Cloud live issue-detail triage is still pending because the current execution environment cannot read the 14 live finding rows; no Sonar PASS is claimed.
 
+## P10-3B — Professional range replacement architecture
+
+P10-3B preserves the canonical authority chain:
+
+```text
+current-revision Professional EVENT_SPAN
+        -> TeacherCopySnapshotV4 source snapshot
+        -> ProfessionalRangeReplaceAdmissionV1
+        -> deterministic fresh replacement identity plan
+        -> atomic ScoreDocumentV3 + NotationDocumentV4 candidate
+        -> EditorHistoryV4 one accepted Replace / one history revision
+        -> fresh replacement EVENT_SPAN presentation selection
+```
+
+Only contiguous `EVENT_SPAN` replacement is admitted. Source and destination are one exact measure and one part/staff/Voice scope, are disjoint, and must have exactly equal rational time extent. Event count may differ. No stretch/compress, later-event shift, structural time deletion, cross-measure replacement or topology invention is authorized.
+
+Replace is not Teacher Paste; Teacher Paste semantics are unchanged. Delete remains Clear-to-REST. Replacement events and notes use fresh deterministic destination identities, while the source remains unchanged and removed destination identities are not reused.
+
+Local accidental/dot/articulation/simple-ornament/single-note-tremolo metadata can be cloned to fresh identities. Beam, tuplet, tie, slur, grace-group, cross-staff, spanning tremolo and wavy-line coupling fails closed; relation remapping is outside this tranche. Renderer DOM/SVG geometry and coordinates remain non-authoritative.
+
+The browser layer is an optional P10-3B composition over P10-3A. Clipboard state is noncanonical (`EMPTY | CURRENT | STALE`), exact-revision-bound and never stored in history. Automated mobile WebKit validates this composition but does not constitute physical-device release evidence.
+
 ## Triplet retiming invariants
 
 For the admitted APP-11G/H/I profile:
@@ -254,7 +276,7 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next architecture step
 
-**P10-2B exact-head qualification and Sonar triage, then later Advanced Rhythm & Relations tranches.**
+**P10-3B exact-head qualification and Sonar/whole-branch closeout, then later Advanced Rhythm & Relations tranches.**
 
 The bounded Triplet inverse still consumes APP-11J rather than duplicating it. P10-2B now adds read-only 4:3 admission on a separate package, but generalized mutation remains unauthorized. Before merge P10-2B still requires fresh exact-head Node/WebKit qualification, truthful Sonar status and whole-branch review. Physical iPhone/Safari validation remains a separate requirement before any release/cutover claim. Later rhythm/relations work may address broader tuplets, beams and other relation semantics only through separately specified fail-closed authorities.
 
