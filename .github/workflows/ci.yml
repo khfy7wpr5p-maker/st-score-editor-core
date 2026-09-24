@@ -39,3 +39,16 @@ jobs:
           curl -fsSL --retry 3             "https://sonarcloud.io/api/issues/search?componentKeys=khfy7wpr5p-maker_st-score-editor-core&branch=main&issueStatuses=OPEN%2CCONFIRMED&sinceLeakPeriod=true&ps=100"             | python3 -m json.tool
           echo "=== DUPLICATION BY FILE ==="
           curl -fsSL --retry 3             "https://sonarcloud.io/api/measures/component_tree?component=khfy7wpr5p-maker_st-score-editor-core&branch=main&metricKeys=new_duplicated_lines_density,new_duplicated_lines&qualifiers=FIL&ps=500"             | python3 -m json.tool
+          echo "=== RENDERER LOCK GZIP BASE64 ==="
+          renderer_tmp="$(mktemp -d)"
+          git clone --quiet https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$renderer_tmp/repo"
+          cd "$renderer_tmp/repo"
+          git checkout --quiet --detach 70c21ad73c0b2e9c71e415cc3272a10673df9d60
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          python3 - <<'PY'
+import base64, gzip, pathlib
+data=pathlib.Path("package-lock.json").read_bytes()
+print(base64.b64encode(gzip.compress(data, compresslevel=9)).decode("ascii"))
+PY
+          cd "$GITHUB_WORKSPACE"
+          rm -rf "$renderer_tmp"
