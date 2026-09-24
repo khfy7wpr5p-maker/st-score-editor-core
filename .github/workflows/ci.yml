@@ -45,10 +45,6 @@ jobs:
           cd "$renderer_tmp/repo"
           git checkout --quiet --detach 70c21ad73c0b2e9c71e415cc3272a10673df9d60
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          python3 - <<'PY'
-import base64, gzip, pathlib
-data=pathlib.Path("package-lock.json").read_bytes()
-print(base64.b64encode(gzip.compress(data, compresslevel=9)).decode("ascii"))
-PY
+          python3 -c 'import base64,gzip,pathlib; data=pathlib.Path("package-lock.json").read_bytes(); print(base64.b64encode(gzip.compress(data,compresslevel=9)).decode("ascii"))'
           cd "$GITHUB_WORKSPACE"
           rm -rf "$renderer_tmp"
