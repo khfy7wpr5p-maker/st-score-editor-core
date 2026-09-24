@@ -32,8 +32,9 @@ jobs:
           persist-credentials: false
       - name: Build exact renderer runtime
         run: |
+          gzip -dc "$GITHUB_WORKSPACE/scripts/renderer-runtime-lock/st-score-rendering-layer-70c21ad73c0b2e9c71e415cc3272a10673df9d60.package-lock.json.gz" > "$GITHUB_WORKSPACE/st-score-rendering-layer/package-lock.json"
           cd "$GITHUB_WORKSPACE/st-score-rendering-layer"
-          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm ci --ignore-scripts --no-audit --no-fund
           ST_SCORE_RENDERER_SOURCE_REVISION=70c21ad73c0b2e9c71e415cc3272a10673df9d60 npm run export:workstation-runtime
       - name: Assemble P10-1 renderer-attached qualification preview
         env:

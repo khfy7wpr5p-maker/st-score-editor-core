@@ -1,4 +1,10 @@
 import { openMobileWebKitArtifact } from './lib/mobile-webkit-artifact-harness.mjs';
+import {
+  clickHistoryAndReadSnapshot,
+  openMusicXmlLocalFile,
+  readControllerSnapshot,
+  selectEventById
+} from './lib/professional-webkit-controller-state.mjs';
 
 const harness = await openMobileWebKitArtifact({
   htmlFile: 'st-score-editor-p10-2-workstation.html',
@@ -6,6 +12,18 @@ const harness = await openMobileWebKitArtifact({
   portErrorCode: 'P10_2_WEBKIT_SERVER_PORT_MISSING'
 });
 const { page, errors } = harness;
+
+const CONTROLLER = 'STScoreEditorP10_2WorkstationController';
+const tripletXml = `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+<part-list><score-part id="P1"><part-name>Part</part-name></score-part></part-list>
+<part id="P1"><measure number="1">
+<attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>
+<note><pitch><step>C</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>eighth</type></note>
+<note><pitch><step>D</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>eighth</type></note>
+<note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>eighth</type></note>
+<note><rest/><duration>10</duration><voice>1</voice></note>
+</measure></part></score-partwise>`;
 
 try {
   await page.waitForFunction(() =>
@@ -31,95 +49,48 @@ try {
     throw new Error(`P10-2 bootstrap mismatch ${JSON.stringify(boot)}`);
   }
 
-  const setup = await page.evaluate(async () => {
-    const c = globalThis.STScoreEditorP10_2WorkstationController;
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<score-partwise version="4.0">
-<part-list><score-part id="P1"><part-name>Part</part-name></score-part></part-list>
-<part id="P1"><measure number="1">
-<attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>
-<note><pitch><step>C</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>eighth</type></note>
-<note><pitch><step>D</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>eighth</type></note>
-<note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>eighth</type></note>
-<note><rest/><duration>10</duration><voice>1</voice></note>
-</measure></part></score-partwise>`;
-    await c.openLocalFile({
-      name: 'p10-2-webkit.musicxml',
-      size: new TextEncoder().encode(xml).byteLength,
-      type: 'application/vnd.recordare.musicxml+xml',
-      text: async () => xml
-    });
+  await openMusicXmlLocalFile(
+    page,
+    CONTROLLER,
+    tripletXml,
+    'p10-2-webkit.musicxml'
+  );
+  const setupDetails = await page.evaluate(({ controllerGlobal }) => {
+    const c = globalThis[controllerGlobal];
+    if (c === undefined || c === null) throw new Error('P10_2_CONTROLLER_MISSING');
     const d = c.getDocument();
     const score = d.session.history.present.score;
     const part = score.parts[0];
     const staff = part.staves.find(item => item.role === 'standard');
+    if (staff === undefined) return { ok: false, reason: 'STAFF_MISSING' };
     const measure = staff.measures[0];
-    const voice = measure.voices[0];
+    const voice = measure?.voices[0];
+    if (voice === undefined) return { ok: false, reason: 'VOICE_MISSING' };
     const notes = voice.events.filter(event => event.kind === 'note');
     const rest = voice.events.find(event => event.kind === 'rest');
-    if (notes.length !== 3 || rest === undefined) {
-      return { ok: false, notes: notes.length, hasRest: rest !== undefined };
-    }
-    const eventAddress = event => ({
-      contractVersion: '3.0.0',
-      kind: 'event',
-      documentId: score.id,
-      revisionId: score.revision.id,
-      partId: part.id,
-      staffId: staff.id,
-      frameId: measure.frameId,
-      measureId: measure.id,
-      voiceId: voice.id,
-      eventId: event.id
-    });
     return {
-      ok: true,
-      past: d.session.history.past.length,
-      ids: notes.map(event => event.id),
-      straightCanonical: JSON.stringify({
-        score: d.session.history.present.score,
-        notation: d.session.history.present.notation
-      }),
-      straightMusical: JSON.stringify({
-        parts: d.session.history.present.score.parts,
-        frames: d.session.history.present.notation.frames.map(entry => entry.notation),
-        measures: d.session.history.present.notation.measures.map(entry => entry.notation),
-        events: d.session.history.present.notation.events.map(entry => ({
-          eventId: entry.target.eventId,
-          notation: entry.notation
-        })),
-        notes: d.session.history.present.notation.notes.map(entry => ({
-          noteId: entry.target.noteId,
-          notation: entry.notation
-        })),
-        graceEvents: d.session.history.present.notation.graceEvents.map(entry => ({
-          graceEventId: entry.target.graceEventId,
-          notation: entry.notation
-        })),
-        graceNotes: d.session.history.present.notation.graceNotes.map(entry => ({
-          graceNoteId: entry.target.graceNoteId,
-          notation: entry.notation
-        })),
-        crossStaffPlacements: d.session.history.present.notation.crossStaffPlacements.map(item => ({
-          eventId: item.source.eventId,
-          displayStaffId: item.displayStaffId
-        }))
-      }),
-      addresses: notes.map(eventAddress)
+      ok: notes.length === 3 && rest !== undefined,
+      notes: notes.length,
+      hasRest: rest !== undefined,
+      ids: notes.map(event => event.id)
     };
-  });
+  }, { controllerGlobal: CONTROLLER });
+  const straight = await readControllerSnapshot(page, CONTROLLER);
+  const setup = {
+    ...setupDetails,
+    past: straight.past,
+    straightMusical: straight.musical
+  };
   if (!setup.ok) throw new Error(`P10-2 import setup mismatch ${JSON.stringify(setup)}`);
 
   const captureThree = async () => {
     for (let index = 0; index < 3; index += 1) {
-      await page.evaluate(({ eventId }) => {
-        const c = globalThis.STScoreEditorP10_2WorkstationController;
-        const d = c.getDocument();
-        const address = d.session.renderRequest.manifest.entries
-          .find(entry => entry.address.kind === 'event' && entry.address.eventId === eventId)?.address;
-        if (!address) throw new Error(`P10_2_CAPTURE_ADDRESS_MISSING:${eventId}`);
-        c.select(address);
-      }, { eventId: setup.ids[index] });
+      await selectEventById(
+        page,
+        CONTROLLER,
+        setup.ids[index],
+        'P10_2_CAPTURE_ADDRESS_MISSING'
+      );
       const capture = page.getByRole('button', {
         name: 'Capture selected event as next triplet member',
         exact: true
@@ -150,18 +121,7 @@ try {
   if (await retimeButton.isDisabled()) throw new Error('P10-2 forward retiming button unexpectedly disabled');
   await retimeButton.click();
 
-  const triplet = await page.evaluate(() => {
-    const c = globalThis.STScoreEditorP10_2WorkstationController;
-    const d = c.getDocument();
-    return {
-      canonical: JSON.stringify({
-        score: d.session.history.present.score,
-        notation: d.session.history.present.notation
-      }),
-      past: d.session.history.past.length,
-      status: d.session.status.code
-    };
-  });
+  const triplet = await readControllerSnapshot(page, CONTROLLER);
   if (triplet.past !== setup.past + 1 || triplet.status !== 'TRIPLET_RETIMING_COMMITTED') {
     throw new Error(`P10-2 forward apply mismatch ${JSON.stringify(triplet)}`);
   }
@@ -194,44 +154,12 @@ try {
 
   await removeButton.click();
 
-  const removed = await page.evaluate(() => {
-    const c = globalThis.STScoreEditorP10_2WorkstationController;
-    const d = c.getDocument();
-    return {
-      canonical: JSON.stringify({
-        score: d.session.history.present.score,
-        notation: d.session.history.present.notation
-      }),
-      musical: JSON.stringify({
-        parts: d.session.history.present.score.parts,
-        frames: d.session.history.present.notation.frames.map(entry => entry.notation),
-        measures: d.session.history.present.notation.measures.map(entry => entry.notation),
-        events: d.session.history.present.notation.events.map(entry => ({
-          eventId: entry.target.eventId,
-          notation: entry.notation
-        })),
-        notes: d.session.history.present.notation.notes.map(entry => ({
-          noteId: entry.target.noteId,
-          notation: entry.notation
-        })),
-        graceEvents: d.session.history.present.notation.graceEvents.map(entry => ({
-          graceEventId: entry.target.graceEventId,
-          notation: entry.notation
-        })),
-        graceNotes: d.session.history.present.notation.graceNotes.map(entry => ({
-          graceNoteId: entry.target.graceNoteId,
-          notation: entry.notation
-        })),
-        crossStaffPlacements: d.session.history.present.notation.crossStaffPlacements.map(item => ({
-          eventId: item.source.eventId,
-          displayStaffId: item.displayStaffId
-        }))
-      }),
-      past: d.session.history.past.length,
-      status: d.session.status.code,
-      captured: c.getTripletAuthoringState().capturedEventIds
-    };
-  });
+  const removedState = await readControllerSnapshot(page, CONTROLLER);
+  const removedCaptured = await page.evaluate(({ controllerGlobal }) => {
+    const controller = globalThis[controllerGlobal];
+    return controller.getTripletAuthoringState().capturedEventIds;
+  }, { controllerGlobal: CONTROLLER });
+  const removed = { ...removedState, captured: removedCaptured };
   if (
     removed.musical !== setup.straightMusical ||
     removed.past !== triplet.past + 1 ||
@@ -241,26 +169,12 @@ try {
     throw new Error(`P10-2 remove mismatch ${JSON.stringify(removed)}`);
   }
 
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  const undone = await page.evaluate(() => {
-    const d = globalThis.STScoreEditorP10_2WorkstationController.getDocument();
-    return {
-      canonical: JSON.stringify({ score: d.session.history.present.score, notation: d.session.history.present.notation }),
-      past: d.session.history.past.length
-    };
-  });
+  const undone = await clickHistoryAndReadSnapshot(page, CONTROLLER, 'Undo');
   if (undone.canonical !== triplet.canonical || undone.past !== triplet.past) {
     throw new Error(`P10-2 Undo mismatch ${JSON.stringify(undone)}`);
   }
 
-  await page.getByRole('button', { name: 'Redo', exact: true }).click();
-  const redone = await page.evaluate(() => {
-    const d = globalThis.STScoreEditorP10_2WorkstationController.getDocument();
-    return {
-      canonical: JSON.stringify({ score: d.session.history.present.score, notation: d.session.history.present.notation }),
-      past: d.session.history.past.length
-    };
-  });
+  const redone = await clickHistoryAndReadSnapshot(page, CONTROLLER, 'Redo');
   if (redone.canonical !== removed.canonical || redone.past !== removed.past) {
     throw new Error(`P10-2 Redo mismatch ${JSON.stringify(redone)}`);
   }
@@ -282,37 +196,7 @@ try {
     throw new Error(`P10-2 remount control mismatch: count=${await remountButton.count()} disabled=${await remountButton.isDisabled()}`);
   }
   await remountButton.click();
-  const afterRemount = await page.evaluate(() => {
-    const d = globalThis.STScoreEditorP10_2WorkstationController.getDocument();
-    return {
-      past: d.session.history.past.length,
-      musical: JSON.stringify({
-        parts: d.session.history.present.score.parts,
-        frames: d.session.history.present.notation.frames.map(entry => entry.notation),
-        measures: d.session.history.present.notation.measures.map(entry => entry.notation),
-        events: d.session.history.present.notation.events.map(entry => ({
-          eventId: entry.target.eventId,
-          notation: entry.notation
-        })),
-        notes: d.session.history.present.notation.notes.map(entry => ({
-          noteId: entry.target.noteId,
-          notation: entry.notation
-        })),
-        graceEvents: d.session.history.present.notation.graceEvents.map(entry => ({
-          graceEventId: entry.target.graceEventId,
-          notation: entry.notation
-        })),
-        graceNotes: d.session.history.present.notation.graceNotes.map(entry => ({
-          graceNoteId: entry.target.graceNoteId,
-          notation: entry.notation
-        })),
-        crossStaffPlacements: d.session.history.present.notation.crossStaffPlacements.map(item => ({
-          eventId: item.source.eventId,
-          displayStaffId: item.displayStaffId
-        }))
-      })
-    };
-  });
+  const afterRemount = await readControllerSnapshot(page, CONTROLLER);
   if (afterRemount.past !== beforeRemount + 1 || afterRemount.musical !== removed.musical) {
     throw new Error(`P10-2 remount duplicate-listener mismatch ${JSON.stringify({ beforeRemount, afterRemount })}`);
   }
