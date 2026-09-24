@@ -1,18 +1,13 @@
-const resolveController = (name) => {
-  const value = globalThis[name];
-  if (value === undefined || value === null) {
-    throw new Error(`WEBKIT_CONTROLLER_MISSING:${name}`);
-  }
-  return value;
-};
-
 export const openMusicXmlLocalFile = async (
   page,
   controllerGlobal,
   xml,
   fileName
 ) => page.evaluate(async ({ controllerGlobal, xml, fileName }) => {
-  const controller = resolveController(controllerGlobal);
+  const controller = globalThis[controllerGlobal];
+  if (controller === undefined || controller === null) {
+    throw new Error(`WEBKIT_CONTROLLER_MISSING:${controllerGlobal}`);
+  }
   await controller.openLocalFile({
     name: fileName,
     size: new Blob([xml]).size,
@@ -27,7 +22,10 @@ export const selectEventById = async (
   eventId,
   missingCode
 ) => page.evaluate(({ controllerGlobal, eventId, missingCode }) => {
-  const controller = resolveController(controllerGlobal);
+  const controller = globalThis[controllerGlobal];
+  if (controller === undefined || controller === null) {
+    throw new Error(`WEBKIT_CONTROLLER_MISSING:${controllerGlobal}`);
+  }
   const documentValue = controller.getDocument();
   let target = null;
   for (const entry of documentValue.session.renderRequest.manifest.entries) {
@@ -45,7 +43,10 @@ export const readControllerSnapshot = async (
   page,
   controllerGlobal
 ) => page.evaluate(({ controllerGlobal }) => {
-  const controller = resolveController(controllerGlobal);
+  const controller = globalThis[controllerGlobal];
+  if (controller === undefined || controller === null) {
+    throw new Error(`WEBKIT_CONTROLLER_MISSING:${controllerGlobal}`);
+  }
   const documentValue = controller.getDocument();
   const { session } = documentValue;
   const present = session.history.present;
