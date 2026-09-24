@@ -80,7 +80,7 @@ export const readControllerSnapshot = async (
 
   return {
     canonical: JSON.stringify(Object.fromEntries(
-      ['score', 'notation'].map(key => [key, present[key])
+      ['score', 'notation'].map(key => [key, present[key]])
     )),
     musical: JSON.stringify(musical),
     past: session.history.past.length,
