@@ -1,8 +1,8 @@
 # ST Score Editor App — Productization Program
 
-Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1 MERGED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / P10-2 BOUNDED UNRETIMING IMPLEMENTED / P10-3A PITCH TRANSPOSE IMPLEMENTED + QUALIFIED / P10-3B RANGE REPLACE IMPLEMENTED ON OPTIONAL COMPOSITION, EXACT-HEAD QUALIFICATION PENDING / FULL RELEASE MATRIX OPEN**
+Status: **ACTIVE / APP-00–10O + APP-11A–I + P09 + P10-0/P10-1/P10-2/P10-2B/P10-3A/P10-3B MERGED + QUALIFIED FOR RECORDED SCOPE / APP-11J ANALYSIS PRESENT ON MAIN / GENERALIZED 4:3 MUTATION NOT AUTHORIZED / FULL RELEASE MATRIX OPEN**
 
-Date: 2026-09-23
+Date: 2026-09-26
 
 ## Product decision
 
@@ -58,7 +58,7 @@ The P10-3A browser surface exposes `−½`, `+½`, `−Step` and `+Step` present
 
 ## P10-3B — Professional range Copy / Replace
 
-**IMPLEMENTED ON OPTIONAL P10-3B PROFESSIONAL WORKSTATION COMPOSITION / EXACT-HEAD QUALIFICATION PENDING.**
+**MERGED + QUALIFIED ON OPTIONAL P10-3B PROFESSIONAL WORKSTATION COMPOSITION.**
 
 P10-3B adds bounded professional range replacement over the current-revision semantic `EVENT_SPAN` contract. The user selects one source span, invokes **Copy Range**, selects one destination span in the same exact measure/part/staff/Voice, then invokes **Replace**. Source and destination must have exactly equal rational time extent; event cardinality may differ. No stretch, compression, later-event shift, cross-measure replacement, cross-scope replacement or renderer-derived target inference is authorized.
 
@@ -68,7 +68,7 @@ Safe local notation may be cloned, while beam, tuplet, tie, slur, grace-group, c
 
 The optional P10-3B composition preserves the qualified P10-1, P10-2 and P10-3A artifacts rather than widening them. Its measured bundle is **670,198 bytes** under the frozen **675,840-byte** `P10-3B-RANGE-REPLACE-1` budget. Dedicated mobile WebKit regression covers semantic Copy -> Replace, 44px touch controls, exact Undo/Redo, stale clipboard behavior and mismatch no-side-effect behavior. Automated WebKit is regression evidence and is **not physical-device validation**.
 
-The P10-3B artifact remains optional, `productionDefault=false`, production-release unauthorized and SesliTab-cutover unauthorized. Physical-device validation remains required separately.
+PR #198 merged P10-3B at `26c7b803659d6064cfd7890fbd13d256f553235d`. PR #202 exact head `534ba3526d0d12976b24c4c853c073aa9d74c1b6` then passed Sonar Quality Gate with zero new issues/security hotspots and retained Node 18/20/22 plus P10-3B/P10-3A/P10-2/P10-1/P08-E4/APP-09B WebKit gates. The P10-3B artifact remains optional, `productionDefault=false`, production-release unauthorized and SesliTab-cutover unauthorized. Physical-device validation remains required separately.
 
 ## P09 Fast Entry / Keyboard Workstation
 
@@ -184,7 +184,7 @@ Automated mobile WebKit covers the visible control, straight -> Triplet -> strai
 
 ### P10-2B — read-only generalized 4:3 tuplet admission
 
-**IMPLEMENTED AS ANALYSIS-ONLY CAPABILITY; QUALIFICATION PENDING; GENERALIZED MUTATION NOT AUTHORIZED.**
+**MERGED + QUALIFIED AS ANALYSIS-ONLY CAPABILITY; GENERALIZED MUTATION NOT AUTHORIZED.**
 
 The separate `editor-generalized-tuplet-admission-v4` package analyzes exactly four current-revision events representing one exact 4:3 tuplet. It returns immutable straight-four timing/rest-capacity evidence while preserving event/note identity and existing part/staff/frame/measure/Voice topology.
 
@@ -240,6 +240,6 @@ Automated WebKit success remains regression evidence only; the iPhone Safari P08
 
 ## Next bounded development action
 
-**P10-2B closeout — exact-head qualification, Sonar live triage and review.**
+**P10-4A — Score Structure & Instrument Management inventory/design gate.**
 
-Before merge, the current branch still requires fresh exact-head CI/retained WebKit evidence, live Sonar status and whole-branch review. Physical iPhone/Safari evidence is separately required before any release/cutover claim. Generalized tuplet mutation is not authorized; broader tuplets, beams and rhythm/relation semantics remain separate architectural tranches.
+The next product step is read-only capability inventory plus a written deterministic topology contract. Staff/part structure or instrument mutation is not authorized until the spec and implementation plan are separately approved. Physical release qualification, generalized 4:3 mutation and broader professional range operations remain independent gated work.
