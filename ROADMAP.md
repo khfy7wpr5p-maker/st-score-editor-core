@@ -129,17 +129,17 @@ Dedicated mobile WebKit covers straight -> Triplet -> Remove Triplet -> exact Un
 
 ### P10-2B — Generalized Tuplet Admission Foundation
 
-**READ-ONLY 4:3 ADMISSION IMPLEMENTED / QUALIFICATION PENDING / GENERALIZED MUTATION NOT AUTHORIZED.**
+**READ-ONLY 4:3 ADMISSION MERGED + QUALIFIED / GENERALIZED MUTATION NOT AUTHORIZED.**
 
 P10-2B introduces a separate read-only analyzer for exactly four current-revision events carrying one exact 4:3 tuplet range. It preserves canonical event/note identity, uses exact rational timing, proves adjacent neutral-rest capacity, and fails closed for unsupported timing/notation coupling.
 
 The implementation does not mutate `ScoreDocumentV3 + NotationDocumentV4`, does not own `EditorSessionV4` history, does not use renderer geometry as timing authority and does not widen APP-11J/P10-2 mutation semantics. Imported MusicXML 4:3 identity is covered by regression evidence.
 
-**Generalized tuplet mutation is not authorized.** Broader ratios/cardinalities, generalized browser authoring and release/public-write/SesliTab cutover remain separate future decisions. Sonar live issue-detail triage remains pending; no Quality Gate PASS is claimed.
+**Generalized tuplet mutation is not authorized.** Broader ratios/cardinalities, generalized browser authoring and release/public-write/SesliTab cutover remain separate future decisions. PR #195 merged P10-2B at `9705f2ffd2024371a1878d4204ef7b84a033df06`; the later PR #202 mainline qualification established Sonar Quality Gate PASS for the retained branch state.
 
 ### P10-3A — Professional key-aware pitch transpose
 
-**IMPLEMENTED ON OPTIONAL WORKSTATION COMPOSITION / EXACT-HEAD QUALIFICATION PENDING / RELEASE GATES UNCHANGED.**
+**MERGED + QUALIFIED ON OPTIONAL WORKSTATION COMPOSITION / RELEASE GATES UNCHANGED.**
 
 P10-3A extends the P08 semantic professional range model with deterministic key-aware pitch editing:
 
@@ -161,7 +161,7 @@ Dedicated mobile WebKit proves key-aware semitone/diatonic behavior, accidental 
 
 ### P10-3B — Professional range Copy / Replace
 
-**IMPLEMENTED ON OPTIONAL P10-3B COMPOSITION / EXACT-HEAD QUALIFICATION PENDING / RELEASE GATES UNCHANGED.**
+**MERGED + QUALIFIED ON OPTIONAL P10-3B COMPOSITION / RELEASE GATES UNCHANGED.**
 
 P10-3B adds one bounded professional `EVENT_SPAN` Copy -> Replace workflow:
 
@@ -180,7 +180,7 @@ P10-3B adds one bounded professional `EVENT_SPAN` Copy -> Replace workflow:
 
 P10-3B is a separate optional composition over the qualified P10-3A layer. P10-1/P10-2/P10-3A artifact budgets remain unchanged. The P10-3B artifact measures **670,198 bytes** under the frozen **675,840-byte** `P10-3B-RANGE-REPLACE-1` budget. Dedicated mobile WebKit regression is implemented and passing on the current implementation line, but automated WebKit is not physical-device evidence.
 
-Production-default, production-release and SesliTab-cutover authority remain false.
+PR #198 merged P10-3B at `26c7b803659d6064cfd7890fbd13d256f553235d`. PR #202 exact head `534ba3526d0d12976b24c4c853c073aa9d74c1b6` then passed Sonar Quality Gate, Node 18/20/22 and retained P10-3B/P10-3A/P10-2/P10-1/P08-E4/APP-09B WebKit gates. Production-default, production-release and SesliTab-cutover authority remain false.
 
 ## Current architecture phase
 
@@ -202,11 +202,11 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next development action
 
-**P10-3B closeout — exact-head qualification, Sonar service gate and whole-branch review; merge approval remains human-gated.**
+**P10-4A — Score Structure & Instrument Management inventory/design gate.**
 
-P10-3A keeps the qualified P10-1/P10-2 artifacts unchanged while adding a separate optional key-aware pitch-transpose composition. Exact-head Node 18/20/22, all retained WebKit gates, the dedicated P10-3A WebKit gate and required SonarCloud Code Analysis have passed. Merge remains separately human-gated. Physical iPhone/Safari validation remains separate before any release/cutover claim.
+Start with read-only repository inventory and a written topology contract covering staff/part add-remove-reorder, instrument assignment, stable semantic identity, deterministic history behavior and MusicXML/renderer boundaries. Production-code structure mutation begins only after the written spec and implementation plan are separately approved.
 
-After this bounded tranche, broader Advanced Rhythm & Relations work remains separately scoped; generalized tuplet mutation, arbitrary ratios/cardinalities, beam authoring and other relation semantics are not implied by this implementation.
+Parallel backlog remains explicit rather than implied: P10-2 generalized 4:3 mutation design, broader P10-3 range operations, physical APP-09 G1–G10 qualification, and stale legacy PR/issue reconciliation.
 
 ## Still fail-closed / gated
 
