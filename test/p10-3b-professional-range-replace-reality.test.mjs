@@ -28,7 +28,10 @@ test('P10-3B repository reality reports bounded optional professional range repl
   assert.match(architecture,/EditorHistoryV4|EditorSessionV4/i);
   assert.match(design,/EVENT_SET.*outside|EVENT_SET.*not/i);
 
-  assert.equal(json.p10_3b.status,'PROFESSIONAL_RANGE_REPLACE_IMPLEMENTED_QUALIFICATION_PENDING');
+  const expectedP10_3bStatus = Object.hasOwn(json.p10_3b, 'merge_commit')
+    ? 'PROFESSIONAL_RANGE_REPLACE_MERGED_QUALIFIED'
+    : 'PROFESSIONAL_RANGE_REPLACE_IMPLEMENTED_QUALIFICATION_PENDING';
+  assert.equal(json.p10_3b.status, expectedP10_3bStatus);
   assert.equal(json.p10_3b.package,'editor-professional-range-replace-v1');
   assert.equal(json.p10_3b.session_package,'editor-session-professional-range-replace-v1');
   assert.equal(json.p10_3b.workstation_adapter,'score-editor-professional-range-replace-workstation-v1');
