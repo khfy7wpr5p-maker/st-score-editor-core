@@ -2,8 +2,8 @@
   "schema_version": "2.4.0",
   "document_type": "st_score_editor_app_productization_program",
   "project": "ST Score Editor App",
-  "date": "2026-09-23",
-  "status": "P10_1_MERGED_P10_2_BOUNDED_UNRETIMING_IMPLEMENTED_FULL_DEVICE_MATRIX_OPEN",
+  "date": "2026-09-26",
+  "status": "P10_3B_MERGED_QUALIFIED_P10_4A_DESIGN_NEXT_FULL_DEVICE_MATRIX_OPEN",
   "primary_product_target": "ST_SCORE_EDITOR_APP",
   "canonical_pair": {
     "score": "ScoreDocumentV3/3.0.0",
@@ -223,9 +223,9 @@
     }
   },
   "next_development_action": {
-    "id": "P10-2-CLOSEOUT",
-    "title": "Bounded Triplet removal / unretiming exact-head qualification and review",
-    "mode": "qualification_before_merge",
+    "id": "P10-4A-DESIGN",
+    "title": "Score Structure and Instrument Management inventory/design gate",
+    "mode": "read_only_inventory_and_written_design_before_implementation",
     "production_code_change": false,
     "merge_or_release_authority_inferred": false
   },
@@ -267,7 +267,7 @@
     "physical_device_validation_required_before_release_claim": true
   },
   "p10_2b": {
-    "status": "READ_ONLY_4_3_ADMISSION_IMPLEMENTED_QUALIFICATION_PENDING",
+    "status": "READ_ONLY_4_3_ADMISSION_MERGED_QUALIFIED",
     "package": "editor-generalized-tuplet-admission-v4",
     "profile": {
       "actual_notes": 4,
@@ -288,7 +288,9 @@
     "sonar_quality_gate_pass_claimed": false,
     "default_standalone_cutover": false,
     "production_release_authorized": false,
-    "seslitab_cutover_authorized": false
+    "seslitab_cutover_authorized": false,
+    "main_merge_commit": "9705f2ffd2024371a1878d4204ef7b84a033df06",
+    "mainline_quality_gate_evidence": "PR_202_EXACT_HEAD_534ba3526d0d12976b24c4c853c073aa9d74c1b6"
   },
   "p10_3a": {
     "status": "PROFESSIONAL_PITCH_TRANSPOSE_IMPLEMENTED_QUALIFIED",
@@ -320,7 +322,7 @@
     "physical_device_validation_required_before_release_claim": true
   },
   "p10_3b": {
-    "status": "PROFESSIONAL_RANGE_REPLACE_IMPLEMENTED_QUALIFICATION_PENDING",
+    "status": "PROFESSIONAL_RANGE_REPLACE_MERGED_QUALIFIED",
     "package": "editor-professional-range-replace-v1",
     "session_package": "editor-session-professional-range-replace-v1",
     "workstation_adapter": "score-editor-professional-range-replace-workstation-v1",
@@ -364,6 +366,28 @@
     "physical_device_validation_passed": false,
     "production_default": false,
     "production_release_authorized": false,
-    "seslitab_cutover_authorized": false
+    "seslitab_cutover_authorized": false,
+    "merge_commit": "26c7b803659d6064cfd7890fbd13d256f553235d",
+    "mainline_quality_gate_evidence": "PR_202_EXACT_HEAD_534ba3526d0d12976b24c4c853c073aa9d74c1b6",
+    "sonar_quality_gate_passed": true
+  },
+  "mainline_reality_sync": {
+    "date": "2026-09-26",
+    "main_head": "f068b253ba03ef5c2ed7d7e60f7a8d499d466e0b",
+    "quality_gate_pr": 202,
+    "quality_gate_exact_head": "534ba3526d0d12976b24c4c853c073aa9d74c1b6",
+    "sonar_quality_gate": "PASS",
+    "sonar_new_issues": 0,
+    "sonar_security_hotspots": 0,
+    "sonar_pr_duplication_percent": 0,
+    "retained_webkit_gates": [
+      "P10-3B Professional Range Replace",
+      "P10-3A Professional Pitch Transpose",
+      "P10-2 Triplet Unretiming",
+      "P10-1 renderer qualification",
+      "P10-1 professional workstation",
+      "P08-E4 professional artifact",
+      "APP-09B preview regression"
+    ]
   }
 }
