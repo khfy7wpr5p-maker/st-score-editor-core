@@ -115,7 +115,10 @@ test('P10-2B docs record read-only 4:3 admission without generalized mutation au
     assert.match(source, /generalized.*mutation.*(?:not authorized|unauthorized|false|not implemented)/is);
   }
 
-  assert.equal(productization.p10_2b.status, 'READ_ONLY_4_3_ADMISSION_IMPLEMENTED_QUALIFICATION_PENDING');
+  const expectedP10_2bStatus = Object.hasOwn(productization.p10_2b, 'main_merge_commit')
+    ? 'READ_ONLY_4_3_ADMISSION_MERGED_QUALIFIED'
+    : 'READ_ONLY_4_3_ADMISSION_IMPLEMENTED_QUALIFICATION_PENDING';
+  assert.equal(productization.p10_2b.status, expectedP10_2bStatus);
   assert.equal(productization.p10_2b.profile.actual_notes, 4);
   assert.equal(productization.p10_2b.profile.normal_notes, 3);
   assert.equal(productization.p10_2b.profile.target_cardinality, 4);
