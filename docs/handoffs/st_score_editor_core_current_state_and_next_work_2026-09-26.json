@@ -1,0 +1,92 @@
+{
+  "document_type": "st_score_editor_core_current_state_and_next_work_handoff",
+  "schema_version": "1.0.0",
+  "date": "2026-09-26",
+  "repository": {
+    "full_name": "khfy7wpr5p-maker/st-score-editor-core",
+    "default_branch": "main",
+    "current_main_head": "f068b253ba03ef5c2ed7d7e60f7a8d499d466e0b",
+    "evidence_pr": 202,
+    "evidence_exact_head": "534ba3526d0d12976b24c4c853c073aa9d74c1b6"
+  },
+  "verified_reality": {
+    "p10_2b": "MERGED_QUALIFIED_READ_ONLY_4_3_ADMISSION",
+    "p10_3a": "MERGED_QUALIFIED_OPTIONAL_PITCH_TRANSPOSE",
+    "p10_3b": "MERGED_QUALIFIED_OPTIONAL_RANGE_REPLACE",
+    "sonar": {
+      "quality_gate": "PASS",
+      "new_issues": 0,
+      "security_hotspots": 0,
+      "pr_duplication_percent": 0
+    },
+    "release": {
+      "standalone_release_gate_passed": false,
+      "seslitab_cutover_authorized": false,
+      "full_physical_matrix_complete": false
+    }
+  },
+  "next_work_queue": [
+    {
+      "priority": "P1",
+      "id": "P10-4A-DESIGN",
+      "title": "Score Structure & Instrument Management inventory/design",
+      "mode": "READ_ONLY_FIRST",
+      "scope": [
+        "inventory existing staff/part/measure topology mutation authorities",
+        "define deterministic add/remove/reorder staff and part contracts",
+        "define instrument-assignment identity and transposition boundaries",
+        "define one-user-action/one-history-revision semantics",
+        "define MusicXML import/export and renderer projection boundaries",
+        "produce written spec and implementation plan before production code"
+      ]
+    },
+    {
+      "priority": "P1",
+      "id": "P10-2C-DESIGN",
+      "title": "Generalized 4:3 tuplet mutation design",
+      "mode": "SEPARATE_EXPLICIT_ADMISSION_TO_MUTATION_CONTRACT",
+      "note": "P10-2B is read-only; generalized mutation remains unauthorized."
+    },
+    {
+      "priority": "P1",
+      "id": "RELEASE-MATRIX",
+      "title": "Complete APP-09 G1–G10 physical-device/browser qualification",
+      "targets": [
+        "Android Chrome",
+        "Windows Edge",
+        "Windows Chrome",
+        "Windows Firefox"
+      ],
+      "secondary": [
+        "iPad Safari"
+      ],
+      "note": "Automated WebKit cannot substitute for physical-device evidence."
+    },
+    {
+      "priority": "P2",
+      "id": "P10-3C-CANDIDATES",
+      "title": "Remaining professional range editing candidates",
+      "candidates": [
+        "multi-measure copy/paste",
+        "duplication",
+        "controlled rhythmic transforms",
+        "multi-target notation authoring"
+      ]
+    },
+    {
+      "priority": "P2",
+      "id": "GITHUB-METADATA-RECONCILIATION",
+      "title": "Reconcile stale stacked PRs/issues",
+      "note": "Historical open PR/issue metadata must not be treated as current code-presence or qualification authority."
+    }
+  ],
+  "architecture_invariants": [
+    "ScoreDocumentV3 + NotationDocumentV4 remain canonical.",
+    "EditorSessionV4 / EditorHistoryV4 remain the sole history authority.",
+    "SemanticAddressV3 remains exact current-revision semantic identity.",
+    "Renderer DOM/SVG geometry never becomes authoring authority.",
+    "One accepted semantic edit creates one unified history revision unless a separately versioned transaction contract says otherwise.",
+    "Unsupported topology/timing transformations fail closed.",
+    "Production release, public-write and SesliTab cutover require separate human authority."
+  ]
+}
