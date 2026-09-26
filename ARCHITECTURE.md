@@ -1,6 +1,6 @@
 # ST Score Editor Core — Architecture
 
-Status: **SSE-00–10, APP-00–10O, APP-11A–I, P09-A/B/C/D, P10-0/P10-1 and Stage 07 are merged/qualified for their recorded scope. APP-11J read-only admission is present on main. P10-2 bounded Triplet removal/unretiming and P10-3B professional range replacement are optional workstation capabilities; P10-3B exact-head qualification remains pending and the standalone physical device/browser release matrix remains open.**
+Status: **SSE-00–10, APP-00–10O, APP-11A–I, P09-A/B/C/D, P10-0/P10-1/P10-2/P10-2B/P10-3A/P10-3B and Stage 07 are merged/qualified for their recorded scope. APP-11J remains read-only admission. P10-2B remains read-only 4:3 admission and does not authorize generalized mutation. The standalone physical device/browser release matrix remains open.**
 
 ## Canonical architecture
 
@@ -210,7 +210,7 @@ The admitted profile is intentionally narrow:
 
 The analyzer is **read-only**. Canonical mutation authority is false, history mutation authority is false and renderer-coordinate authority is false. Imported MusicXML 4:3 material is admitted only when the canonical V3/V4 pair already satisfies the exact profile; regression evidence preserves imported event/note identities.
 
-**Generalized tuplet mutation is not authorized.** P10-2 remains the only bounded inverse mutation surface and remains limited to its existing 3:2 profile. SonarQube Cloud live issue-detail triage is still pending because the current execution environment cannot read the 14 live finding rows; no Sonar PASS is claimed.
+**Generalized tuplet mutation is not authorized.** P10-2 remains the only bounded inverse mutation surface and remains limited to its existing 3:2 profile. P10-2B itself is merged and qualified as read-only analysis. The later PR #202 exact head `534ba3526d0d12976b24c4c853c073aa9d74c1b6` established the current mainline Sonar Quality Gate PASS with zero new issues, zero security hotspots and 0.0% PR duplication.
 
 ## P10-3B — Professional range replacement architecture
 
@@ -232,7 +232,7 @@ Replace is not Teacher Paste; Teacher Paste semantics are unchanged. Delete rema
 
 Local accidental/dot/articulation/simple-ornament/single-note-tremolo metadata can be cloned to fresh identities. Beam, tuplet, tie, slur, grace-group, cross-staff, spanning tremolo and wavy-line coupling fails closed; relation remapping is outside this tranche. Renderer DOM/SVG geometry and coordinates remain non-authoritative.
 
-The browser layer is an optional P10-3B composition over P10-3A. Clipboard state is noncanonical (`EMPTY | CURRENT | STALE`), exact-revision-bound and never stored in history. Automated mobile WebKit validates this composition but does not constitute physical-device release evidence.
+The browser layer is an optional P10-3B composition over P10-3A. Clipboard state is noncanonical (`EMPTY | CURRENT | STALE`), exact-revision-bound and never stored in history. PR #198 merged P10-3B at `26c7b803659d6064cfd7890fbd13d256f553235d`; PR #202 subsequently qualified the retained P10-3B gate together with Sonar and the retained professional WebKit chain. Automated mobile WebKit validates this composition but does not constitute physical-device release evidence.
 
 ## Triplet retiming invariants
 
@@ -276,9 +276,9 @@ P10-0 is complete. It aligned architecture, roadmap, productization and release-
 
 ## Next architecture step
 
-**P10-3B exact-head qualification and Sonar/whole-branch closeout, then later Advanced Rhythm & Relations tranches.**
+**P10-4A — Score Structure & Instrument Management inventory/design.**
 
-The bounded Triplet inverse still consumes APP-11J rather than duplicating it. P10-2B now adds read-only 4:3 admission on a separate package, but generalized mutation remains unauthorized. Before merge P10-2B still requires fresh exact-head Node/WebKit qualification, truthful Sonar status and whole-branch review. Physical iPhone/Safari validation remains a separate requirement before any release/cutover claim. Later rhythm/relations work may address broader tuplets, beams and other relation semantics only through separately specified fail-closed authorities.
+P10-3B is merged and the mainline retained quality chain is green on PR #202. The next architecture gate is read-only inventory and a written deterministic topology contract for staff/part add-remove-reorder and instrument assignment before any structural mutation is implemented. Generalized 4:3 tuplet mutation, beams/grace timing programs, physical release validation and wider P10-3 range operations remain separate explicitly scoped workstreams.
 
 ## Automated validation contract
 
@@ -288,6 +288,8 @@ Before feature merge, exact-head validation includes:
 - retained APP-10/11 mobile WebKit authoring regressions;
 - dedicated APP-11I straight-note Triplet retiming -> Undo regression;
 - dedicated P10-2 straight -> Triplet -> Remove Triplet -> Undo/Redo + remount duplicate-listener WebKit regression;
+- retained P10-3A professional pitch-transpose WebKit regression;
+- retained P10-3B professional range-replace WebKit regression;
 - exact ST Score Rendering Layer checkout/build;
 - APP-09B renderer regression;
 - APP-09B controlled-layout rerender regression.
