@@ -20,14 +20,13 @@ const path = (parts: readonly string[]): string => parts.join('/');
 
 export type MusicXmlCompatibilityCode = 0 | 1 | 2;
 
-export const musicXmlCompatibilityElementCode = (
-  parts: readonly string[],
+export const musicXmlCompatibilityElementCodeAt = (
+  p: string,
   name: string,
   uri: string
 ): MusicXmlCompatibilityCode => {
   if (uri !== '') return 2;
   if (has(E, name)) return 0;
-  const p = path(parts);
   if (
     (p === 'score-partwise' && (name === 'identification' || name === 'defaults')) ||
     (p === 'score-partwise/part-list/score-part' && (name === 'part-abbreviation' || name === 'score-instrument' || name === 'midi-instrument')) ||
@@ -37,15 +36,14 @@ export const musicXmlCompatibilityElementCode = (
   return 2;
 };
 
-export const musicXmlCompatibilityAttributeCode = (
-  parts: readonly string[],
+export const musicXmlCompatibilityAttributeCodeAt = (
+  p: string,
   element: string,
   attribute: string,
   uri: string
 ): MusicXmlCompatibilityCode => {
   if (uri !== '') return 2;
   if (has(A, `${element}@${attribute}`)) return 0;
-  const p = path(parts);
   if (
     (p === 'score-partwise/part' && element === 'measure' && attribute === 'width') ||
     (p === 'score-partwise/part/measure' && element === 'note' && attribute === 'default-x') ||
@@ -54,6 +52,19 @@ export const musicXmlCompatibilityAttributeCode = (
   ) return 1;
   return 2;
 };
+
+export const musicXmlCompatibilityElementCode = (
+  parts: readonly string[],
+  name: string,
+  uri: string
+): MusicXmlCompatibilityCode => musicXmlCompatibilityElementCodeAt(path(parts), name, uri);
+
+export const musicXmlCompatibilityAttributeCode = (
+  parts: readonly string[],
+  element: string,
+  attribute: string,
+  uri: string
+): MusicXmlCompatibilityCode => musicXmlCompatibilityAttributeCodeAt(path(parts), element, attribute, uri);
 
 const CLASSES: readonly MusicXmlCompatibilityClass[] = [
   'SEMANTIC_REQUIRED',
