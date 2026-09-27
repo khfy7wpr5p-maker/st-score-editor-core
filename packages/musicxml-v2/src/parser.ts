@@ -35,8 +35,8 @@ type MutableDiagnostic = {
 const TEXT_ONLY = '|part-name|divisions|fifths|beats|beat-type|sign|line|clef-octave-change|duration|voice|staff|step|alter|octave|type|accidental|beam|actual-notes|normal-notes|bar-style|accidental-mark|tremolo|';
 const EMPTY = '|rest|chord|dot|tie|tied|slur|tuplet|repeat|grace|accent|strong-accent|staccato|tenuto|detached-legato|staccatissimo|spiccato|scoop|plop|doit|falloff|breath-mark|caesura|stress|unstress|soft-accent|trill-mark|turn|delayed-turn|inverted-turn|delayed-inverted-turn|vertical-turn|inverted-vertical-turn|shake|mordent|inverted-mordent|schleifer|haydn|wavy-line|';
 const has = (set: string, value: string): boolean => set.includes(`|${value}|`);
-const LIMIT = 'XML structural resource limit exceeded.';
-const INVALID = 'XML is not well formed.';
+const LIMIT = 'XML limit.';
+const INVALID = 'Invalid XML.';
 
 const deepFreeze = <T>(value: T): Readonly<T> => {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -60,9 +60,9 @@ export const parseMusicXmlV2Tree = (
 ): ParsedMusicXmlV2Result => {
   const runtime = createMusicXmlProcessingRuntime(options);
   const normalized = normalizeMusicXmlInput(input, runtime);
-  runtime.checkpoint('musicxml-v2:parse:start');
+  runtime.checkpoint('m2:s');
 
-  const parser = new SaxesParser({ xmlns:true, position:true });
+  const parser = new SaxesParser({ xmlns:true });
   const nodes: MutableNode[] = [], parts: string[] = [], diagnostics: MutableDiagnostic[] = [];
   let root: MutableNode | null = null;
   let skip = 0, leafName = '', leafText = '', elements = 0, attributes = 0, textBytes = 0, truncated = false;
@@ -70,13 +70,13 @@ export const parseMusicXmlV2Tree = (
   const record = (element: string, attribute: string | null, pathClass: string): void => {
     const existing = diagnostics.find(item => item.element === element && item.attribute === attribute && item.pathClass === pathClass);
     if (existing !== undefined) existing.count++;
-    else if (diagnostics.length < 64) diagnostics.push({classification:'IGNORABLE_PRESENTATION_METADATA',element,attribute,pathClass,reason:'reviewed',count:1});
+    else if (diagnostics.length < 64) diagnostics.push({classification:'IGNORABLE_PRESENTATION_METADATA',element,attribute,pathClass,reason:'',count:1});
     else truncated = true;
   };
 
   parser.on('error', error => { throw error; });
   parser.on('opentag', tag => {
-    runtime.checkpoint('musicxml-v2:open');
+    runtime.checkpoint('m2:o');
     const depth = parts.length + 1;
     if (depth > runtime.limits.maxDepth) throw new MusicXmlError(LIMIT,'XML_DEPTH_LIMIT_EXCEEDED',{limit:runtime.limits.maxDepth,observed:depth});
     if (++elements > runtime.limits.maxElements) throw new MusicXmlError(LIMIT,'XML_ELEMENT_LIMIT_EXCEEDED',{limit:runtime.limits.maxElements,observed:elements});
@@ -147,7 +147,7 @@ export const parseMusicXmlV2Tree = (
   });
 
   const append = (text: string): void => {
-    runtime.checkpoint('musicxml-v2:text');
+    runtime.checkpoint('m2:t');
     textBytes += new TextEncoder().encode(text).byteLength;
     if (textBytes > runtime.limits.maxTextBytes) throw new MusicXmlError(LIMIT,'XML_TEXT_LIMIT_EXCEEDED',{limit:runtime.limits.maxTextBytes,observed:textBytes});
     if (skip > 0) return;
@@ -185,7 +185,7 @@ export const parseMusicXmlV2Tree = (
   try { parser.write(normalized.xml).close(); }
   catch (error) { if (error instanceof MusicXmlError) throw error; throw new MusicXmlError(INVALID,'INVALID_XML'); }
 
-  runtime.checkpoint('musicxml-v2:parse:complete');
+  runtime.checkpoint('m2:c');
   if (root === null || nodes.length !== 0 || parts.length !== 0 || skip !== 0 || leafName !== '') throw new MusicXmlError(INVALID,'INVALID_XML');
 
   return deepFreeze({
