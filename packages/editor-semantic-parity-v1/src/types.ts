@@ -143,3 +143,11 @@ export type EditorSemanticProjectionResultV1 =
       status: 'UNSUPPORTED';
       diagnostics: readonly EditorSemanticParityDiagnosticV1[];
     }>;
+
+
+export type EditorSemanticComparisonStatusV1 = 'PASS' | 'MISMATCH' | 'UNSUPPORTED';
+
+export interface EditorSemanticComparisonReportV1 {
+  readonly status: EditorSemanticComparisonStatusV1;
+  readonly diagnostics: readonly EditorSemanticParityDiagnosticV1[];
+}

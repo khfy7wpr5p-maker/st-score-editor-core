@@ -229,6 +229,9 @@ export const analyzeSemanticParityMusicXmlProfileV1 = (
     if (attr(measure, 'non-controlling') !== undefined) {
       return unsupported('Non-controlling measures are outside the SEM-04 comparison profile.');
     }
+    if (attr(measure, 'implicit') === 'yes') {
+      return unsupported('Implicit/pickup measures are outside the SEM-04 full-measure comparison profile.');
+    }
   }
 
   const divisionsNodes = descendants(root, 'divisions');

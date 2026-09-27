@@ -29,3 +29,10 @@ export type {
   EditorSemanticRationalV1,
   EditorSemanticTimeSignatureV1
 } from './types.js';
+
+export { compareEditorSemanticsV1 } from './comparison.js';
+
+export type {
+  EditorSemanticComparisonReportV1,
+  EditorSemanticComparisonStatusV1
+} from './types.js';
