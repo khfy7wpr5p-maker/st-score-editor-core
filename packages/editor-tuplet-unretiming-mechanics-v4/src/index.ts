@@ -198,8 +198,12 @@ export const applyTupletUnretimingMechanicsV4 = (
     );
   }
 
-  const firstAddress = addressEntityV3(score, plan.targetEventIds[0]!);
-  if (firstAddress.kind !== 'event') {
+  let firstAddress: EventAddressV3;
+  try {
+    const addressed = addressEntityV3(score, plan.targetEventIds[0]!);
+    if (addressed.kind !== 'event') throw new Error('TARGET_KIND_CHANGED');
+    firstAddress = addressed;
+  } catch {
     throw options.error(
       `First ${options.label} target disappeared.`,
       'TARGET_PATH_INVALID'
