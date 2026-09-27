@@ -51,6 +51,14 @@ export const isFreshRevisionIdV4 = (
   nextRevisionId !== score.revision.id &&
   nextRevisionId !== score.revision.parentId;
 
+export const assertFreshRevisionIdV4 = (
+  score: ScoreDocumentV3,
+  nextRevisionId: string,
+  error: () => Error
+): void => {
+  if (!isFreshRevisionIdV4(score, nextRevisionId)) throw error();
+};
+
 export const freezeEventAddressTargetsV4 = (
   targets: readonly unknown[]
 ): readonly EventAddressV3[] =>
