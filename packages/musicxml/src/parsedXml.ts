@@ -162,13 +162,17 @@ export const parseMusicXmlTree = (
     if (elementCode === 2) unsupported({ element: name, uri });
 
     if (elementCode === 1) {
-      for (const attribute of attributes) {
-        const code = musicXmlCompatibilityAttributeCodeAt(parentPath, name, attribute.name, attribute.uri);
-        if (code === 2) unsupported({ element: name, attribute: attribute.name, uri: attribute.uri });
+      if (name === 'stem') {
+        for (const attribute of attributes) {
+          if (musicXmlCompatibilityAttributeCodeAt(parentPath, name, attribute.name, attribute.uri) !== 1) {
+            unsupported({ element: name, attribute: attribute.name, uri: attribute.uri });
+          }
+        }
+        ignoredLeaf = name;
+      } else {
+        skipDepth = 1;
       }
       path.push(name);
-      if (name === 'stem') ignoredLeaf = name;
-      else skipDepth = 1;
       return;
     }
 
