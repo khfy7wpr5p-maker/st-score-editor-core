@@ -12,6 +12,24 @@ import {
 } from '../../notation-structure-v4/src/index.js';
 import type { EventNotationV2 } from '../../notation-structure-v2/src/index.js';
 
+export class TupletAuthoringErrorBaseV4<Code extends string> extends Error {
+  readonly code: Code;
+  readonly details: Readonly<Record<string, unknown>>;
+
+  constructor(
+    name: string,
+    message: string,
+    code: Code,
+    details: Record<string, unknown> = {}
+  ) {
+    super(message);
+    this.name = name;
+    this.code = code;
+    this.details = Object.freeze({ ...details });
+    Object.freeze(this);
+  }
+}
+
 type ExactRecordV4 = Record<string, unknown>;
 const STABLE_ID_V4 = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
