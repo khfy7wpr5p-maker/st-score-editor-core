@@ -100,7 +100,7 @@ assert.equal(result.score.revision.id,'p10-2c-straight');
 assert.equal(result.score.revision.parentId,score.revision.id);
 assert.deepEqual(
   result.score.parts[0].staves[0].measures[0].voices[0].events.map(e=>e.id),
-  ['e1','e2','e3']
+  ['e1','e2','e3','e4']
 );
 assert.deepEqual(
   result.score.parts[0].staves[0].measures[0].voices[0].events.map(e=>e.duration),
@@ -108,7 +108,7 @@ assert.deepEqual(
 );
 ```
 
-Correct the event-ID assertion for the exact fixture: after consuming `r1`, the Voice contains `e1,e2,e3,e4`; no selected event disappears. Assert exact straight onsets `0,1/8,1/4,3/8`.
+Assert exact straight onsets `0,1/8,1/4,3/8`; no selected event disappears.
 
 Also assert:
 
