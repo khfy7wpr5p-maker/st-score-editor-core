@@ -11,7 +11,11 @@ import {
   analyzeTripletToStraightThreeUnretimingV4,
   type TupletUnretimingAdmissionV4
 } from '../../editor-tuplet-unretiming-admission-v4/src/index.js';
-import { applyTupletUnretimingMechanicsV4 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
+import {
+  applyTupletUnretimingMechanicsV4,
+  isExactRecordV4,
+  isFreshRevisionIdV4
+} from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
 export const TUPLET_UNRETIMING_AUTHORING_V4_VERSION = '1.0.0' as const;
 
@@ -57,19 +61,9 @@ export class TupletUnretimingAuthoringV4Error extends Error {
   }
 }
 
-type RecordValue = Record<string, unknown>;
-const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
-
-const isRecord = (value: unknown): value is RecordValue =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const exact = (value: unknown, keys: readonly string[]): value is RecordValue =>
-  isRecord(value) &&
-  JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
-
 const parseIntent = (raw: unknown): Readonly<UnretimingTripletToStraightThreeIntentV4> => {
   if (
-    !exact(raw, ['version', 'type', 'targets']) ||
+    !isExactRecordV4(raw, ['version', 'type', 'targets']) ||
     raw.version !== TUPLET_UNRETIMING_AUTHORING_V4_VERSION ||
     raw.type !== 'UNRETIMING_TRIPLET_TO_STRAIGHT_THREE' ||
     !Array.isArray(raw.targets) ||
@@ -90,11 +84,7 @@ const parseIntent = (raw: unknown): Readonly<UnretimingTripletToStraightThreeInt
 };
 
 const assertRevision = (score: ScoreDocumentV3, nextRevisionId: string): void => {
-  if (
-    !ID.test(nextRevisionId) ||
-    nextRevisionId === score.revision.id ||
-    nextRevisionId === score.revision.parentId
-  ) {
+  if (!isFreshRevisionIdV4(score, nextRevisionId)) {
     throw new TupletUnretimingAuthoringV4Error(
       'A fresh stable next revision id is required.',
       'INVALID_REVISION_ID'
