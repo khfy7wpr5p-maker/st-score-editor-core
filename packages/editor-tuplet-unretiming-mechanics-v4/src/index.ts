@@ -12,6 +12,26 @@ import {
 } from '../../notation-structure-v4/src/index.js';
 import type { EventNotationV2 } from '../../notation-structure-v2/src/index.js';
 
+type ExactRecordV4 = Record<string, unknown>;
+const STABLE_ID_V4 = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+
+export const isExactRecordV4 = (
+  value: unknown,
+  keys: readonly string[]
+): value is ExactRecordV4 =>
+  value !== null &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
+
+export const isFreshRevisionIdV4 = (
+  score: ScoreDocumentV3,
+  nextRevisionId: string
+): boolean =>
+  STABLE_ID_V4.test(nextRevisionId) &&
+  nextRevisionId !== score.revision.id &&
+  nextRevisionId !== score.revision.parentId;
+
 type MechanicsErrorCodeV4 = 'TARGET_PATH_INVALID' | 'RESULT_INVALID';
 type MechanicsErrorFactoryV4 = (
   message: string,
