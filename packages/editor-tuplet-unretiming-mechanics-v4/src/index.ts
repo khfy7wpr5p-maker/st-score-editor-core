@@ -108,7 +108,11 @@ const TARGET_ID_FIELD_BY_KIND = Object.freeze({
 
 const targetId = (address: SemanticAddressV3): string => {
   const field = TARGET_ID_FIELD_BY_KIND[address.kind];
-  return (address as unknown as Record<string, string>)[field]!;
+  const value = Reflect.get(address, field);
+  if (typeof value !== 'string') {
+    throw new Error('SEMANTIC_TARGET_ID_MISSING');
+  }
+  return value;
 };
 
 const rebind = (
