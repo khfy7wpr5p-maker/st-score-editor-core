@@ -1,6 +1,7 @@
 import { createScoreDocumentV3, type ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
 import {
   addressEntityV3,
+  SEMANTIC_ADDRESS_V3_VERSION,
   type EventAddressV3
 } from '../../addressing-v3/src/index.js';
 import {
@@ -51,6 +52,32 @@ const exact = (value: unknown, keys: readonly string[]): value is RecordValue =>
   isRecord(value) &&
   JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
 
+const EVENT_ADDRESS_KEYS = [
+  'contractVersion',
+  'kind',
+  'documentId',
+  'revisionId',
+  'partId',
+  'staffId',
+  'frameId',
+  'measureId',
+  'voiceId',
+  'eventId'
+] as const;
+
+const isEventAddressRecord = (value: unknown): value is EventAddressV3 =>
+  exact(value, EVENT_ADDRESS_KEYS) &&
+  value.contractVersion === SEMANTIC_ADDRESS_V3_VERSION &&
+  value.kind === 'event' &&
+  typeof value.documentId === 'string' &&
+  typeof value.revisionId === 'string' &&
+  typeof value.partId === 'string' &&
+  typeof value.staffId === 'string' &&
+  typeof value.frameId === 'string' &&
+  typeof value.measureId === 'string' &&
+  typeof value.voiceId === 'string' &&
+  typeof value.eventId === 'string';
+
 const parseIntent = (raw: unknown): Readonly<UnretimingFourToThreeToStraightFourIntentV4> => {
   if (
     !exact(raw, ['version', 'type', 'targets']) ||
@@ -58,7 +85,7 @@ const parseIntent = (raw: unknown): Readonly<UnretimingFourToThreeToStraightFour
     raw.type !== 'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR' ||
     !Array.isArray(raw.targets) ||
     raw.targets.length !== 4 ||
-    !raw.targets.every(isRecord)
+    !raw.targets.every(isEventAddressRecord)
   ) {
     throw new FourToThreeTupletUnretimingAuthoringV4Error(
       'Exact 4:3 unretiming intent is invalid.',
