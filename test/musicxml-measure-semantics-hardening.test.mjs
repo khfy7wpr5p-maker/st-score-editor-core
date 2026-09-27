@@ -58,7 +58,8 @@ test('P-MXML-REF-01 measure-semantics importer tolerates reviewed presentation m
     );
 
   const accepted = importMusicXmlWithMeasureSemantics(compatible, { source: sourceFor(compatible) });
-  assert.deepEqual(accepted.measureSemantics.measures[0]?.timeSignature, { beats: 4, beatType: 4 });
+  assert.deepEqual(accepted.measureSemantics.measures[0]?.declaredTimeSignature, { beats: 4, beatType: 4 });
+  assert.deepEqual(accepted.measureSemantics.measures[0]?.effectiveTimeSignature, { beats: 4, beatType: 4 });
 
   const unsupported = baseline.replace(
     '<measure number="1">',
