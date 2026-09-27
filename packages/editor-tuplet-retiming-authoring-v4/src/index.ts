@@ -2,8 +2,7 @@ import { createScoreDocumentV3, type ScoreDocumentV3 } from '../../score-model-v
 import type { Rational, ScoreEvent } from '../../score-model/src/index.js';
 import {
   addressEntityV3,
-  type EventAddressV3,
-  type SemanticAddressV3
+  type EventAddressV3
 } from '../../addressing-v3/src/index.js';
 import {
   createNotationDocumentV4,
@@ -15,6 +14,10 @@ import {
   type TupletRetimingAdmissionV4
 } from '../../editor-tuplet-retiming-admission-v4/src/index.js';
 import { analyzeEventDurationMutationV4 } from '../../editor-rhythm-timing-v4/src/index.js';
+import {
+  buildTupletNotationDocumentV4,
+  eventNotationForTupletV4
+} from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
 export const TUPLET_RETIMING_AUTHORING_V4_VERSION = '1.0.0' as const;
 
@@ -150,45 +153,6 @@ const assertRevision = (score: ScoreDocumentV3, nextRevisionId: string): void =>
   }
 };
 
-const targetId = (address: SemanticAddressV3): string => {
-  switch (address.kind) {
-    case 'document': return address.documentId;
-    case 'measure-frame': return address.frameId;
-    case 'part': return address.partId;
-    case 'staff': return address.staffId;
-    case 'measure': return address.measureId;
-    case 'voice': return address.voiceId;
-    case 'event': return address.eventId;
-    case 'note': return address.noteId;
-    case 'grace-group': return address.graceGroupId;
-    case 'grace-event': return address.graceEventId;
-    case 'grace-note': return address.graceNoteId;
-  }
-};
-
-const rebind = (score: ScoreDocumentV3, address: SemanticAddressV3): SemanticAddressV3 => {
-  const rebound = addressEntityV3(score, targetId(address));
-  if (rebound.kind !== address.kind) {
-    throw new TupletRetimingAuthoringV4Error(
-      'Tuplet retiming changed semantic target kind.',
-      'RESULT_INVALID',
-      { expected: address.kind, observed: rebound.kind }
-    );
-  }
-  return rebound;
-};
-
-const defaultEventNotation = (): EventNotationV2 => ({
-  dots: 0,
-  beams: [],
-  tuplet: null,
-  articulations: [],
-  ornaments: []
-});
-
-const eventNotationFor = (notation: NotationDocumentV4, eventId: string): EventNotationV2 =>
-  notation.events.find(entry => entry.target.eventId === eventId)?.notation ?? defaultEventNotation();
-
 const neutralRestNotation = (notation: NotationDocumentV4, eventId: string): boolean => {
   const value = notation.events.find(entry => entry.target.eventId === eventId)?.notation;
   return value === undefined || (
@@ -259,54 +223,12 @@ const tupletNotation = (
   }
 });
 
-const buildNotation = (
-  score: ScoreDocumentV3,
-  base: NotationDocumentV4,
-  eventMap: ReadonlyMap<string, EventNotationV2>
-): Readonly<NotationDocumentV4> => {
-  try {
-    return createNotationDocumentV4(score, {
-      contractVersion: '4.0.0',
-      documentId: score.id,
-      revisionId: score.revision.id,
-      frames: base.frames.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      measures: base.measures.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      events: [...eventMap].map(([eventId, value]) => ({
-        target: addressEntityV3(score, eventId) as EventAddressV3,
-        notation: value
-      })),
-      notes: base.notes.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      graceEvents: base.graceEvents.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      graceNotes: base.graceNotes.map(entry => ({
-        target: rebind(score, entry.target) as typeof entry.target,
-        notation: entry.notation
-      })),
-      crossStaffPlacements: base.crossStaffPlacements.map(item => ({
-        source: rebind(score, item.source) as EventAddressV3,
-        displayStaffId: item.displayStaffId
-      }))
-    });
-  } catch (error) {
-    if (error instanceof TupletRetimingAuthoringV4Error) throw error;
-    throw new TupletRetimingAuthoringV4Error(
-      'Tuplet retiming notation candidate failed validation.',
-      'RESULT_INVALID',
-      { cause: error instanceof Error ? error.message : String(error) }
-    );
-  }
-};
+const mechanicsError = (
+  message: string,
+  code: 'TARGET_PATH_INVALID' | 'RESULT_INVALID',
+  details: Record<string, unknown> = {}
+): TupletRetimingAuthoringV4Error =>
+  new TupletRetimingAuthoringV4Error(message, code, details);
 
 const mutate = (
   score: ScoreDocumentV3,
@@ -389,7 +311,7 @@ const mutate = (
   const eventMap = new Map(notation.events.map(entry => [entry.target.eventId, entry.notation] as const));
   const positions = ['start', 'middle', 'stop'] as const;
   admission.targetEventIds.forEach((eventId, index) => {
-    eventMap.set(eventId, tupletNotation(eventNotationFor(notation, eventId), positions[index]!));
+    eventMap.set(eventId, tupletNotation(eventNotationForTupletV4(notation, eventId), positions[index]!));
   });
 
   (voice as { events: readonly ScoreEvent[] }).events = events;
@@ -408,7 +330,16 @@ const mutate = (
       { cause: error instanceof Error ? error.message : String(error) }
     );
   }
-  const nextNotation = buildNotation(nextScore, notation, eventMap);
+  const nextNotation = buildTupletNotationDocumentV4(
+    nextScore,
+    notation,
+    eventMap,
+    {
+      expectedTargetCount: 3,
+      label: 'Tuplet retiming',
+      error: mechanicsError
+    }
+  );
 
   const postTarget = addressEntityV3(nextScore, thirdEvent.id);
   if (postTarget.kind !== 'event') {
