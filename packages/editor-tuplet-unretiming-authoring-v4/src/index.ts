@@ -14,8 +14,7 @@ import {
 import {
   applyTupletUnretimingMechanicsV4,
   assertFreshRevisionIdV4,
-  freezeEventAddressTargetsV4,
-  isExactRecordV4,
+  parseTupletIntentEnvelopeV4,
   TupletAuthoringErrorBaseV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
@@ -57,27 +56,6 @@ export class TupletUnretimingAuthoringV4Error
   }
 }
 
-const parseIntent = (raw: unknown): Readonly<UnretimingTripletToStraightThreeIntentV4> => {
-  if (
-    !isExactRecordV4(raw, ['version', 'type', 'targets']) ||
-    raw.version !== TUPLET_UNRETIMING_AUTHORING_V4_VERSION ||
-    raw.type !== 'UNRETIMING_TRIPLET_TO_STRAIGHT_THREE' ||
-    !Array.isArray(raw.targets) ||
-    raw.targets.length !== 3
-  ) {
-    throw new TupletUnretimingAuthoringV4Error(
-      'Triplet unretiming intent is invalid.',
-      'INVALID_INTENT'
-    );
-  }
-  return Object.freeze({
-    version: TUPLET_UNRETIMING_AUTHORING_V4_VERSION,
-    type: 'UNRETIMING_TRIPLET_TO_STRAIGHT_THREE',
-    targets: freezeEventAddressTargetsV4(raw.targets)
-  });
-};
-
-
 const mechanicsError = (
   message: string,
   code: 'TARGET_PATH_INVALID' | 'RESULT_INVALID',
@@ -111,7 +89,16 @@ export const executeTripletToStraightThreeUnretimingV4 = (
 ): Readonly<TupletUnretimingAuthoringV4Result> => {
   const score = createScoreDocumentV3(scoreInput);
   const notation = createNotationDocumentV4(score, notationInput);
-  const intent = parseIntent(rawIntent);
+  const intent = parseTupletIntentEnvelopeV4(
+    rawIntent,
+    TUPLET_UNRETIMING_AUTHORING_V4_VERSION,
+    'UNRETIMING_TRIPLET_TO_STRAIGHT_THREE',
+    3,
+    () => new TupletUnretimingAuthoringV4Error(
+      'Triplet unretiming intent is invalid.',
+      'INVALID_INTENT'
+    )
+  );
   assertFreshRevisionIdV4(
     score,
     options.nextRevisionId,
