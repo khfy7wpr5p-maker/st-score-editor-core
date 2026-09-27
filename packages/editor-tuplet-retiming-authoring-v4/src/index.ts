@@ -15,11 +15,11 @@ import {
 } from '../../editor-tuplet-retiming-admission-v4/src/index.js';
 import { analyzeEventDurationMutationV4 } from '../../editor-rhythm-timing-v4/src/index.js';
 import {
+  assertFreshRevisionIdV4,
   buildTupletNotationDocumentV4,
   eventNotationForTupletV4,
   freezeEventAddressTargetsV4,
   isExactRecordV4,
-  isFreshRevisionIdV4,
   TupletAuthoringErrorBaseV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
@@ -136,14 +136,6 @@ const parseIntent = (raw: unknown): Readonly<RetimingStraightThreeToTripletInten
   });
 };
 
-const assertRevision = (score: ScoreDocumentV3, nextRevisionId: string): void => {
-  if (!isFreshRevisionIdV4(score, nextRevisionId)) {
-    throw new TupletRetimingAuthoringV4Error(
-      'A fresh stable next revision id is required.',
-      'INVALID_REVISION_ID'
-    );
-  }
-};
 
 const neutralRestNotation = (notation: NotationDocumentV4, eventId: string): boolean => {
   const value = notation.events.find(entry => entry.target.eventId === eventId)?.notation;
@@ -363,7 +355,14 @@ export const executeStraightThreeToTripletAuthoringV4 = (
   const score = createScoreDocumentV3(scoreInput);
   const notation = createNotationDocumentV4(score, notationInput);
   const intent = parseIntent(rawIntent);
-  assertRevision(score, options.nextRevisionId);
+  assertFreshRevisionIdV4(
+    score,
+    options.nextRevisionId,
+    () => new TupletRetimingAuthoringV4Error(
+      'A fresh stable next revision id is required.',
+      'INVALID_REVISION_ID'
+    )
+  );
 
   const admission = analyzeStraightThreeToTripletRetimingV4(score, notation, intent.targets);
   if (!admission.admitted) {
