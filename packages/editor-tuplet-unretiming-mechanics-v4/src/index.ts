@@ -72,21 +72,22 @@ const sameRational = (left: Rational, right: Rational): boolean =>
   BigInt(left.numerator) * BigInt(right.denominator) ===
   BigInt(right.numerator) * BigInt(left.denominator);
 
-const targetId = (address: SemanticAddressV3): string => {
-  switch (address.kind) {
-    case 'document': return address.documentId;
-    case 'measure-frame': return address.frameId;
-    case 'part': return address.partId;
-    case 'staff': return address.staffId;
-    case 'measure': return address.measureId;
-    case 'voice': return address.voiceId;
-    case 'event': return address.eventId;
-    case 'note': return address.noteId;
-    case 'grace-group': return address.graceGroupId;
-    case 'grace-event': return address.graceEventId;
-    case 'grace-note': return address.graceNoteId;
-  }
-};
+const TARGET_ID_FIELD_BY_KIND = Object.freeze({
+  document: 'documentId',
+  'measure-frame': 'frameId',
+  part: 'partId',
+  staff: 'staffId',
+  measure: 'measureId',
+  voice: 'voiceId',
+  event: 'eventId',
+  note: 'noteId',
+  'grace-group': 'graceGroupId',
+  'grace-event': 'graceEventId',
+  'grace-note': 'graceNoteId'
+} as const);
+
+const targetId = (address: SemanticAddressV3): string =>
+  address[TARGET_ID_FIELD_BY_KIND[address.kind]] as string;
 
 const rebind = (
   score: ScoreDocumentV3,
