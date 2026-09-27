@@ -170,8 +170,14 @@ export const applyFreshFourToThreeTupletAdmissionV4 = (
     );
   }
 
-  const firstTarget = addressEntityV3(score, admission.targetEventIds[0]!);
-  if (firstTarget.kind !== 'event') {
+  let firstTarget: EventAddressV3;
+  try {
+    const addressed = addressEntityV3(score, admission.targetEventIds[0]!);
+    if (addressed.kind !== 'event') {
+      throw new Error('TARGET_KIND_CHANGED');
+    }
+    firstTarget = addressed;
+  } catch {
     throw new FourToThreeTupletUnretimingAuthoringV4Error(
       'First 4:3 unretiming target disappeared.',
       'TARGET_PATH_INVALID'
