@@ -86,8 +86,10 @@ const TARGET_ID_FIELD_BY_KIND = Object.freeze({
   'grace-note': 'graceNoteId'
 } as const);
 
-const targetId = (address: SemanticAddressV3): string =>
-  address[TARGET_ID_FIELD_BY_KIND[address.kind]] as string;
+const targetId = (address: SemanticAddressV3): string => {
+  const field = TARGET_ID_FIELD_BY_KIND[address.kind];
+  return (address as unknown as Record<string, string>)[field]!;
+};
 
 const rebind = (
   score: ScoreDocumentV3,
