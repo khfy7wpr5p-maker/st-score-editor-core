@@ -9,6 +9,7 @@ import {
   analyzeGeneralizedTupletToStraightV4,
   FOUR_TO_THREE_TUPLET_PROFILE_V4
 } from '../dist/packages/editor-generalized-tuplet-admission-v4/src/index.js';
+import { IMPORTED_FOUR_TO_THREE_MUSIC_XML } from './helpers/four-to-three-tuplet-fixture.mjs';
 
 const ids=()=>{let n=0;return()=>`p10-2b-${++n}`;};
 const pitch=(step='C',alter=0,octave=4)=>({step,alter,octave});
@@ -82,43 +83,6 @@ const targets=(score,...eventIds)=>eventIds.map(eventId=>{
 });
 
 
-
-const importedFourToThreeMusicXml=`<?xml version="1.0" encoding="UTF-8"?>
-<score-partwise version="4.0">
-  <part-list><score-part id="P1"><part-name>Part</part-name></score-part></part-list>
-  <part id="P1">
-    <measure number="1">
-      <attributes>
-        <divisions>8</divisions>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
-      </attributes>
-      <note>
-        <pitch><step>C</step><octave>4</octave></pitch>
-        <duration>3</duration><voice>1</voice><type>eighth</type>
-        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
-        <notations><tuplet type="start" number="1"/></notations>
-      </note>
-      <note>
-        <pitch><step>D</step><octave>4</octave></pitch>
-        <duration>3</duration><voice>1</voice><type>eighth</type>
-        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
-      </note>
-      <note>
-        <pitch><step>E</step><octave>4</octave></pitch>
-        <duration>3</duration><voice>1</voice><type>eighth</type>
-        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
-      </note>
-      <note>
-        <pitch><step>F</step><octave>4</octave></pitch>
-        <duration>3</duration><voice>1</voice><type>eighth</type>
-        <time-modification><actual-notes>4</actual-notes><normal-notes>3</normal-notes></time-modification>
-        <notations><tuplet type="stop" number="1"/></notations>
-      </note>
-      <note><rest/><duration>20</duration><voice>1</voice></note>
-    </measure>
-  </part>
-</score-partwise>`;
 
 const eighthFourToThree=(restDuration={numerator:1,denominator:8})=>[
   note('e1','n1',{numerator:0,denominator:1},{numerator:3,denominator:32},'C'),
@@ -586,7 +550,7 @@ test('P10-2B returns deeply frozen read-only admission evidence',()=>{
 });
 
 test('P10-2B admits imported MusicXML 4:3 timing without replacing event or note identity',async()=>{
-  const imported=await openMusicXmlScoreEditorAppDocument(importedFourToThreeMusicXml,{
+  const imported=await openMusicXmlScoreEditorAppDocument(IMPORTED_FOUR_TO_THREE_MUSIC_XML,{
     documentId:'doc:p10-2b:musicxml',
     revisionId:'rev:p10-2b:musicxml',
     sha256Hex:async()=> 'c'.repeat(64)
