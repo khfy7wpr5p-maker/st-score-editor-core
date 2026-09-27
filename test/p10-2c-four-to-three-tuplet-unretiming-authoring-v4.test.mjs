@@ -22,7 +22,8 @@ const fourToThree=(position,number=1)=>eventNotation({
   }
 });
 
-const fixture=(restDuration={numerator:1,denominator:8})=>{
+const fixture=(options={})=>{
+  const restDuration=options.restDuration??{numerator:1,denominator:8};
   const document=createNewScoreEditorAppDocument({idFactory:ids(),preset:'GUITAR_TREBLE'});
   const baseScore=document.session.history.present.score;
   const baseNotation=document.session.history.present.notation;
@@ -49,12 +50,16 @@ const fixture=(restDuration={numerator:1,denominator:8})=>{
       notation:entry.notation
     })),
     events:[
-      {target:addressEntityV3(score,'e1'),notation:fourToThree('start')},
-      {target:addressEntityV3(score,'e2'),notation:fourToThree('middle')},
-      {target:addressEntityV3(score,'e3'),notation:fourToThree('middle')},
-      {target:addressEntityV3(score,'e4'),notation:fourToThree('stop')}
+      {target:addressEntityV3(score,'e1'),notation:{...fourToThree('start'),...(options.eventNotationById?.e1??{})}},
+      {target:addressEntityV3(score,'e2'),notation:{...fourToThree('middle'),...(options.eventNotationById?.e2??{})}},
+      {target:addressEntityV3(score,'e3'),notation:{...fourToThree('middle'),...(options.eventNotationById?.e3??{})}},
+      {target:addressEntityV3(score,'e4'),notation:{...fourToThree('stop'),...(options.eventNotationById?.e4??{})}},
+      ...(options.extraEvents??[]).map(({eventId,notation:value})=>({target:addressEntityV3(score,eventId),notation:eventNotation(value) }))
     ],
-    notes:[],
+    notes:Object.entries(options.noteNotationById??{}).map(([noteId,value])=>({
+      target:addressEntityV3(score,noteId),
+      notation:{accidental:null,ties:[],slurs:[],...value}
+    })),
     graceEvents:[],
     graceNotes:[],
     crossStaffPlacements:[]
@@ -114,4 +119,137 @@ test('P10-2C exposes exact 4:3 unretiming and atomically restores straight four 
   assert.equal(result.admission.reason,'ADMITTED_4_TO_3_TO_STRAIGHT_FOUR');
   assert.deepEqual(score,beforeScore);
   assert.deepEqual(notation,beforeNotation);
+});
+
+
+test('P10-2C shrinks a larger admitted adjacent rest forward without changing its identity',async()=>{
+  const module=await import('../dist/packages/editor-four-to-three-tuplet-unretiming-authoring-v4/src/index.js');
+  const {score,notation}=fixture({restDuration:{numerator:3,denominator:8}});
+  const result=module.executeFourToThreeTupletToStraightFourUnretimingV4(
+    score,notation,intent(score),{nextRevisionId:'p10-2c-shrink'}
+  );
+  const voice=result.score.parts[0].staves.find(staff=>staff.role==='standard').measures[0].voices[0];
+  assert.deepEqual(voice.events.map(event=>event.id),['e1','e2','e3','e4','r1']);
+  const tail=voice.events[4];
+  assert.equal(tail.kind,'rest');
+  assert.equal(tail.id,'r1');
+  assert.deepEqual(tail.onset,{numerator:1,denominator:2});
+  assert.deepEqual(tail.duration,{numerator:1,denominator:4});
+  assert.equal(result.admission.restPlan.action,'SHRINK_ADJACENT_REST_FORWARD');
+});
+
+test('P10-2C removes only owned 4:3 metadata and preserves unrelated event/note notation',async()=>{
+  const module=await import('../dist/packages/editor-four-to-three-tuplet-unretiming-authoring-v4/src/index.js');
+  const {score,notation}=fixture({
+    eventNotationById:{
+      e1:{articulations:[{kind:'accent',placement:'above',direction:null}]},
+      e2:{ornaments:[{kind:'trill-mark',placement:'above',accidentalMarks:[]}]}
+    },
+    noteNotationById:{
+      n1:{accidental:'natural',slurs:[{number:1,type:'start'}]},
+      n4:{slurs:[{number:1,type:'stop'}]}
+    }
+  });
+  const result=module.executeFourToThreeTupletToStraightFourUnretimingV4(
+    score,notation,intent(score),{nextRevisionId:'p10-2c-preserve'}
+  );
+  assert.deepEqual(
+    result.notation.events.find(entry=>entry.target.eventId==='e1').notation.articulations,
+    [{kind:'accent',placement:'above',direction:null}]
+  );
+  assert.deepEqual(
+    result.notation.events.find(entry=>entry.target.eventId==='e2').notation.ornaments,
+    [{kind:'trill-mark',placement:'above',accidentalMarks:[]}]
+  );
+  assert.deepEqual(
+    result.notation.notes.find(entry=>entry.target.noteId==='n1').notation,
+    {accidental:'natural',ties:[],slurs:[{number:1,type:'start'}]}
+  );
+  assert.deepEqual(
+    result.notation.notes.find(entry=>entry.target.noteId==='n4').notation,
+    {accidental:null,ties:[],slurs:[{number:1,type:'stop'}]}
+  );
+});
+
+test('P10-2C propagates fresh P10-2B admission failures without mutating inputs',async()=>{
+  const module=await import('../dist/packages/editor-four-to-three-tuplet-unretiming-authoring-v4/src/index.js');
+  let current=fixture();
+  let beforeScore=structuredClone(current.score);
+  let beforeNotation=structuredClone(current.notation);
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,
+      {...intent(current.score),targets:[...intent(current.score).targets].reverse()},
+      {nextRevisionId:'p10-2c-reordered'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&
+      error?.details?.reason==='BLOCKED_REORDERED_OR_NONCONSECUTIVE_TARGET'
+  );
+  assert.deepEqual(current.score,beforeScore);
+  assert.deepEqual(current.notation,beforeNotation);
+
+  current=fixture({eventNotationById:{e1:{dots:1}}});
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,intent(current.score),{nextRevisionId:'p10-2c-dotted'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&
+      error?.details?.reason==='BLOCKED_TIMING_COUPLED_DOTS'
+  );
+
+  current=fixture({restDuration:{numerator:1,denominator:16}});
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,intent(current.score),{nextRevisionId:'p10-2c-short-rest'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&
+      error?.details?.reason==='BLOCKED_ADJACENT_REST_INSUFFICIENT'
+  );
+
+  current=fixture();
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,intent(current.score),{nextRevisionId:current.score.revision.id}
+    ),
+    error=>error?.code==='INVALID_REVISION_ID'
+  );
+});
+
+test('P10-2C internal apply rejects stale/tampered admitted paths with bounded authoring errors',async()=>{
+  const publicModule=await import('../dist/packages/editor-four-to-three-tuplet-unretiming-authoring-v4/src/index.js');
+  const internal=await import('../dist/packages/editor-four-to-three-tuplet-unretiming-authoring-v4/src/apply-admission.js');
+  const admissionModule=await import('../dist/packages/editor-generalized-tuplet-admission-v4/src/index.js');
+  const {score,notation}=fixture();
+  const admission=admissionModule.analyzeGeneralizedTupletToStraightV4(
+    score,notation,intent(score).targets,admissionModule.FOUR_TO_THREE_TUPLET_PROFILE_V4
+  );
+  assert.equal(admission.admitted,true);
+
+  const missingFirst=structuredClone(admission);
+  missingFirst.targetEventIds[0]='missing-event';
+  assert.throws(
+    ()=>internal.applyFreshFourToThreeTupletAdmissionV4(
+      score,notation,missingFirst,'p10-2c-tamper-missing'
+    ),
+    error=>error instanceof publicModule.FourToThreeTupletUnretimingAuthoringV4Error &&
+      error.code==='TARGET_PATH_INVALID'
+  );
+
+  const incomplete=structuredClone(admission);
+  incomplete.eventPlans=incomplete.eventPlans.slice(0,3);
+  assert.throws(
+    ()=>internal.applyFreshFourToThreeTupletAdmissionV4(
+      score,notation,incomplete,'p10-2c-tamper-plan'
+    ),
+    error=>error?.code==='RESULT_INVALID'
+  );
+
+  const fakeAction=structuredClone(admission);
+  fakeAction.restPlan.action='FAKE_ACTION';
+  assert.throws(
+    ()=>internal.applyFreshFourToThreeTupletAdmissionV4(
+      score,notation,fakeAction,'p10-2c-tamper-action'
+    ),
+    error=>error?.code==='RESULT_INVALID'
+  );
 });
