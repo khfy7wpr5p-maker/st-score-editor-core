@@ -13,9 +13,9 @@ import {
 } from '../../editor-tuplet-unretiming-admission-v4/src/index.js';
 import {
   applyTupletUnretimingMechanicsV4,
+  assertFreshRevisionIdV4,
   freezeEventAddressTargetsV4,
   isExactRecordV4,
-  isFreshRevisionIdV4,
   TupletAuthoringErrorBaseV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
@@ -77,14 +77,6 @@ const parseIntent = (raw: unknown): Readonly<UnretimingTripletToStraightThreeInt
   });
 };
 
-const assertRevision = (score: ScoreDocumentV3, nextRevisionId: string): void => {
-  if (!isFreshRevisionIdV4(score, nextRevisionId)) {
-    throw new TupletUnretimingAuthoringV4Error(
-      'A fresh stable next revision id is required.',
-      'INVALID_REVISION_ID'
-    );
-  }
-};
 
 const mechanicsError = (
   message: string,
@@ -120,7 +112,14 @@ export const executeTripletToStraightThreeUnretimingV4 = (
   const score = createScoreDocumentV3(scoreInput);
   const notation = createNotationDocumentV4(score, notationInput);
   const intent = parseIntent(rawIntent);
-  assertRevision(score, options.nextRevisionId);
+  assertFreshRevisionIdV4(
+    score,
+    options.nextRevisionId,
+    () => new TupletUnretimingAuthoringV4Error(
+      'A fresh stable next revision id is required.',
+      'INVALID_REVISION_ID'
+    )
+  );
 
   const admission = analyzeTripletToStraightThreeUnretimingV4(
     score,
