@@ -16,7 +16,9 @@ import {
 import { analyzeEventDurationMutationV4 } from '../../editor-rhythm-timing-v4/src/index.js';
 import {
   buildTupletNotationDocumentV4,
-  eventNotationForTupletV4
+  eventNotationForTupletV4,
+  isExactRecordV4,
+  isFreshRevisionIdV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
 export const TUPLET_RETIMING_AUTHORING_V4_VERSION = '1.0.0' as const;
@@ -75,16 +77,12 @@ export class TupletRetimingAuthoringV4Error extends Error {
 }
 
 type RecordValue = Record<string, unknown>;
-const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const MASK_64 = (1n << 64n) - 1n;
 const FNV_OFFSET_64 = 14695981039346656037n;
 const FNV_PRIME_64 = 1099511628211n;
 
 const isRecord = (value: unknown): value is RecordValue =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const exact = (value: unknown, keys: readonly string[]): value is RecordValue =>
-  isRecord(value) && JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
 
 const gcd = (left: bigint, right: bigint): bigint => {
   let a = left < 0n ? -left : left;
@@ -126,7 +124,7 @@ const eventEnd = (event: ScoreEvent): Readonly<Rational> => rational(
 );
 
 const parseIntent = (raw: unknown): Readonly<RetimingStraightThreeToTripletIntentV4> => {
-  if (!exact(raw, ['version', 'type', 'targets']) ||
+  if (!isExactRecordV4(raw, ['version', 'type', 'targets']) ||
       raw.version !== TUPLET_RETIMING_AUTHORING_V4_VERSION ||
       raw.type !== 'RETIMING_STRAIGHT_THREE_TO_TRIPLET' ||
       !Array.isArray(raw.targets) || raw.targets.length !== 3) {
@@ -143,9 +141,7 @@ const parseIntent = (raw: unknown): Readonly<RetimingStraightThreeToTripletInten
 };
 
 const assertRevision = (score: ScoreDocumentV3, nextRevisionId: string): void => {
-  if (!ID.test(nextRevisionId) ||
-      nextRevisionId === score.revision.id ||
-      nextRevisionId === score.revision.parentId) {
+  if (!isFreshRevisionIdV4(score, nextRevisionId)) {
     throw new TupletRetimingAuthoringV4Error(
       'A fresh stable next revision id is required.',
       'INVALID_REVISION_ID'
