@@ -18,8 +18,7 @@ import {
   assertFreshRevisionIdV4,
   buildTupletNotationDocumentV4,
   eventNotationForTupletV4,
-  freezeEventAddressTargetsV4,
-  isExactRecordV4,
+  parseTupletIntentEnvelopeV4,
   TupletAuthoringErrorBaseV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
@@ -118,24 +117,6 @@ const eventEnd = (event: ScoreEvent): Readonly<Rational> => rational(
     BigInt(event.duration.numerator) * BigInt(event.onset.denominator),
   BigInt(event.onset.denominator) * BigInt(event.duration.denominator)
 );
-
-const parseIntent = (raw: unknown): Readonly<RetimingStraightThreeToTripletIntentV4> => {
-  if (!isExactRecordV4(raw, ['version', 'type', 'targets']) ||
-      raw.version !== TUPLET_RETIMING_AUTHORING_V4_VERSION ||
-      raw.type !== 'RETIMING_STRAIGHT_THREE_TO_TRIPLET' ||
-      !Array.isArray(raw.targets) || raw.targets.length !== 3) {
-    throw new TupletRetimingAuthoringV4Error(
-      'Straight-three triplet retiming intent is invalid.',
-      'INVALID_INTENT'
-    );
-  }
-  return Object.freeze({
-    version: TUPLET_RETIMING_AUTHORING_V4_VERSION,
-    type: 'RETIMING_STRAIGHT_THREE_TO_TRIPLET',
-    targets: freezeEventAddressTargetsV4(raw.targets)
-  });
-};
-
 
 const neutralRestNotation = (notation: NotationDocumentV4, eventId: string): boolean => {
   const value = notation.events.find(entry => entry.target.eventId === eventId)?.notation;
@@ -354,7 +335,16 @@ export const executeStraightThreeToTripletAuthoringV4 = (
 ): Readonly<TupletRetimingAuthoringV4Result> => {
   const score = createScoreDocumentV3(scoreInput);
   const notation = createNotationDocumentV4(score, notationInput);
-  const intent = parseIntent(rawIntent);
+  const intent = parseTupletIntentEnvelopeV4(
+    rawIntent,
+    TUPLET_RETIMING_AUTHORING_V4_VERSION,
+    'RETIMING_STRAIGHT_THREE_TO_TRIPLET',
+    3,
+    () => new TupletRetimingAuthoringV4Error(
+      'Straight-three triplet retiming intent is invalid.',
+      'INVALID_INTENT'
+    )
+  );
   assertFreshRevisionIdV4(
     score,
     options.nextRevisionId,
