@@ -66,6 +66,38 @@ export const freezeEventAddressTargetsV4 = (
     targets.map(target => Object.freeze({ ...(target as EventAddressV3) }))
   );
 
+export const parseTupletIntentEnvelopeV4 = <
+  Version extends string,
+  IntentType extends string
+>(
+  raw: unknown,
+  expectedVersion: Version,
+  expectedType: IntentType,
+  targetCount: number,
+  invalid: () => Error,
+  validateTarget?: (target: unknown) => boolean
+): Readonly<{
+  version: Version;
+  type: IntentType;
+  targets: readonly EventAddressV3[];
+}> => {
+  if (
+    !isExactRecordV4(raw, ['version', 'type', 'targets']) ||
+    raw.version !== expectedVersion ||
+    raw.type !== expectedType ||
+    !Array.isArray(raw.targets) ||
+    raw.targets.length !== targetCount ||
+    (validateTarget !== undefined && !raw.targets.every(validateTarget))
+  ) {
+    throw invalid();
+  }
+  return Object.freeze({
+    version: expectedVersion,
+    type: expectedType,
+    targets: freezeEventAddressTargetsV4(raw.targets)
+  });
+};
+
 type MechanicsErrorCodeV4 = 'TARGET_PATH_INVALID' | 'RESULT_INVALID';
 type MechanicsErrorFactoryV4 = (
   message: string,
