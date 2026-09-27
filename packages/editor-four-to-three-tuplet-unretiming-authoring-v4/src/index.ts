@@ -70,7 +70,7 @@ const parseIntent = (raw: unknown): Readonly<UnretimingFourToThreeToStraightFour
     version: FOUR_TO_THREE_TUPLET_UNRETIMING_AUTHORING_V4_VERSION,
     type: 'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR',
     targets: Object.freeze(
-      raw.targets.map(target => Object.freeze({ ...(target as EventAddressV3) }))
+      raw.targets.map(target => Object.freeze({ ...(target as unknown as EventAddressV3) }))
     )
   });
 };
