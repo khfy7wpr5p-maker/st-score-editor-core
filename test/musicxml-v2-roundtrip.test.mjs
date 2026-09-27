@@ -72,3 +72,44 @@ test('SSE-06 rejects unsupported before-grace previous-time stealing rather than
   const emptyNotation = createNotationDocumentV2(invalid, { contractVersion: '2.0.0', documentId: invalid.id, revisionId: invalid.revision.id, measures: [], events: [], notes: [], graceEvents: [], graceNotes: [] });
   assert.throws(() => serializeNotationMusicXmlV2(invalid, emptyNotation));
 });
+
+
+test('P-MXML-REF-01 accepts only neutral normal notehead presentation', () => {
+  const xml = serializeNotationMusicXmlV2(score, notation);
+  const neutral = xml.replace('</pitch>', '</pitch><notehead filled="no">normal</notehead>');
+  const neutralSource = musicXmlSourceFor(neutral);
+  const imported = importNotationMusicXmlV2(neutral, {
+    source: neutralSource,
+    documentId: score.id,
+    revisionId: 'rev-neutral-notehead'
+  });
+  assert.equal(imported.score.parts.length, 1);
+
+  const diamond = xml.replace('</pitch>', '</pitch><notehead filled="no">diamond</notehead>');
+  const diamondSource = musicXmlSourceFor(diamond);
+  assert.throws(
+    () => importNotationMusicXmlV2(diamond, {
+      source: diamondSource,
+      documentId: score.id,
+      revisionId: 'rev-diamond-notehead'
+    }),
+    error => error?.code === 'UNSUPPORTED_MUSICXML'
+  );
+});
+
+test('P-MXML-REF-01 rejects semantic staff-details instead of discarding tuning or staff-line meaning', () => {
+  const xml = serializeNotationMusicXmlV2(score, notation);
+  const withStaffDetails = xml.replace(
+    '<divisions>',
+    '<staff-details print-object="yes"><staff-lines>6</staff-lines></staff-details><divisions>'
+  );
+  const importSource = musicXmlSourceFor(withStaffDetails);
+  assert.throws(
+    () => importNotationMusicXmlV2(withStaffDetails, {
+      source: importSource,
+      documentId: score.id,
+      revisionId: 'rev-semantic-staff-details'
+    }),
+    error => error?.code === 'UNSUPPORTED_MUSICXML'
+  );
+});
