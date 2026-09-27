@@ -13,6 +13,7 @@ import {
 } from '../../editor-tuplet-unretiming-admission-v4/src/index.js';
 import {
   applyTupletUnretimingMechanicsV4,
+  freezeEventAddressTargetsV4,
   isExactRecordV4,
   isFreshRevisionIdV4,
   TupletAuthoringErrorBaseV4
@@ -72,9 +73,7 @@ const parseIntent = (raw: unknown): Readonly<UnretimingTripletToStraightThreeInt
   return Object.freeze({
     version: TUPLET_UNRETIMING_AUTHORING_V4_VERSION,
     type: 'UNRETIMING_TRIPLET_TO_STRAIGHT_THREE',
-    targets: Object.freeze(
-      raw.targets.map(target => Object.freeze({ ...(target as EventAddressV3) }))
-    )
+    targets: freezeEventAddressTargetsV4(raw.targets)
   });
 };
 
