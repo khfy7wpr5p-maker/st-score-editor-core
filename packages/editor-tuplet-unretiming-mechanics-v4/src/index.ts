@@ -51,6 +51,13 @@ export const isFreshRevisionIdV4 = (
   nextRevisionId !== score.revision.id &&
   nextRevisionId !== score.revision.parentId;
 
+export const freezeEventAddressTargetsV4 = (
+  targets: readonly unknown[]
+): readonly EventAddressV3[] =>
+  Object.freeze(
+    targets.map(target => Object.freeze({ ...(target as EventAddressV3) }))
+  );
+
 type MechanicsErrorCodeV4 = 'TARGET_PATH_INVALID' | 'RESULT_INVALID';
 type MechanicsErrorFactoryV4 = (
   message: string,
