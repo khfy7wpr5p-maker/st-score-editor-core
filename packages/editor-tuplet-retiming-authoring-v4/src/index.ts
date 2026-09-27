@@ -17,6 +17,7 @@ import { analyzeEventDurationMutationV4 } from '../../editor-rhythm-timing-v4/sr
 import {
   buildTupletNotationDocumentV4,
   eventNotationForTupletV4,
+  freezeEventAddressTargetsV4,
   isExactRecordV4,
   isFreshRevisionIdV4,
   TupletAuthoringErrorBaseV4
@@ -131,7 +132,7 @@ const parseIntent = (raw: unknown): Readonly<RetimingStraightThreeToTripletInten
   return Object.freeze({
     version: TUPLET_RETIMING_AUTHORING_V4_VERSION,
     type: 'RETIMING_STRAIGHT_THREE_TO_TRIPLET',
-    targets: Object.freeze(raw.targets.map(target => Object.freeze({ ...(target as EventAddressV3) })))
+    targets: freezeEventAddressTargetsV4(raw.targets)
   });
 };
 
