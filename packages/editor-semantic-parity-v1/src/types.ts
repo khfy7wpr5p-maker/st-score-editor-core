@@ -88,3 +88,58 @@ export type SemanticParityProfileResultV1 =
       status: 'UNSUPPORTED';
       diagnostics: readonly EditorSemanticParityDiagnosticV1[];
     }>;
+
+
+export interface EditorSemanticRationalV1 {
+  readonly numerator: number;
+  readonly denominator: number;
+}
+
+export interface EditorSemanticNoteV1 {
+  readonly partOrdinal: number;
+  readonly measureIndex: number;
+  readonly staffOrdinal: number;
+  readonly voiceOrdinal: number;
+  readonly onset: Readonly<EditorSemanticRationalV1>;
+  readonly duration: Readonly<EditorSemanticRationalV1>;
+  readonly pitchMidi: number;
+  readonly occurrenceOrdinal: number;
+  readonly tieStart: boolean;
+  readonly tieStop: boolean;
+}
+
+export interface EditorSemanticTimeSignatureV1 {
+  readonly measureIndex: number;
+  readonly beats: number;
+  readonly beatType: number;
+}
+
+export interface EditorSemanticKeySignatureV1 {
+  readonly measureIndex: number;
+  readonly staffOrdinal: number;
+  readonly fifths: number;
+}
+
+export interface EditorSemanticClefV1 {
+  readonly measureIndex: number;
+  readonly staffOrdinal: number;
+  readonly sign: string;
+  readonly line: number;
+  readonly octaveChange: number;
+}
+
+export interface EditorSemanticProjectionV1 {
+  readonly partCount: number;
+  readonly measureCount: number;
+  readonly notes: readonly EditorSemanticNoteV1[];
+  readonly timeSignatures: readonly EditorSemanticTimeSignatureV1[];
+  readonly keySignatures: readonly EditorSemanticKeySignatureV1[];
+  readonly clefs: readonly EditorSemanticClefV1[];
+}
+
+export type EditorSemanticProjectionResultV1 =
+  | Readonly<{ status: 'PASS'; projection: Readonly<EditorSemanticProjectionV1> }>
+  | Readonly<{
+      status: 'UNSUPPORTED';
+      diagnostics: readonly EditorSemanticParityDiagnosticV1[];
+    }>;

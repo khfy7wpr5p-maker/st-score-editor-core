@@ -17,3 +17,15 @@ export type {
   SemanticReferenceNoteV1,
   SemanticReferenceTimeSignatureV1
 } from './types.js';
+
+export { projectEditorSemanticsV1 } from './projection.js';
+
+export type {
+  EditorSemanticClefV1,
+  EditorSemanticKeySignatureV1,
+  EditorSemanticNoteV1,
+  EditorSemanticProjectionResultV1,
+  EditorSemanticProjectionV1,
+  EditorSemanticRationalV1,
+  EditorSemanticTimeSignatureV1
+} from './types.js';
