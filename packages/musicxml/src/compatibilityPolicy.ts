@@ -11,9 +11,7 @@ export interface MusicXmlCompatibilityDecision {
   readonly reason: string;
 }
 
-const S: MusicXmlCompatibilityClass = 'SEMANTIC_REQUIRED';
-const I: MusicXmlCompatibilityClass = 'IGNORABLE_PRESENTATION_METADATA';
-const F: MusicXmlCompatibilityClass = 'UNSUPPORTED_SEMANTIC_FAIL_CLOSED';
+export type MusicXmlCompatibilityCode = 0 | 1 | 2;
 
 const E: readonly string[] = [
   'score-partwise','part-list','score-part','part-name','part','measure','attributes','divisions','key','fifths','time','beats','beat-type','staves','clef','sign','line','clef-octave-change',
@@ -32,56 +30,28 @@ const A: Readonly<Record<string, readonly string[]>> = {
   shake:['placement'],mordent:['placement'],'inverted-mordent':['placement'],schleifer:['placement'],haydn:['placement'],'accidental-mark':['placement'],tremolo:['type','number','placement'],'wavy-line':['type','number','placement']
 };
 
-const ARTS: readonly string[] = [
-  'accent','strong-accent','staccato','tenuto','detached-legato','staccatissimo','spiccato','scoop','plop','doit','falloff','breath-mark','caesura','stress','unstress','soft-accent'
-];
+const ARTS: readonly string[] = ['accent','strong-accent','staccato','tenuto','detached-legato','staccatissimo','spiccato','scoop','plop','doit','falloff','breath-mark','caesura','stress','unstress','soft-accent'];
+const key=(path:readonly string[],name:string):string=>[...path,name].join('/');
 
-const d = (
-  classification: MusicXmlCompatibilityClass,
-  pathClass: string,
-  reason: string
-): Readonly<MusicXmlCompatibilityDecision> => Object.freeze({ classification, pathClass, reason });
-
-const key = (path: readonly string[], name: string): string => [...path, name].join('/');
-
-export const classifyMusicXmlCompatibilityElement = (
-  path: readonly string[],
-  name: string,
-  uri: string
-): Readonly<MusicXmlCompatibilityDecision> => {
-  const k = key(path, name);
-  if (uri !== '') return d(F, k, 'foreign-element');
-  if (E.includes(name)) return d(S, k, 'semantic-element');
-  if (
-    k === 'score-partwise/identification' ||
-    k === 'score-partwise/defaults' ||
-    k === 'score-partwise/part-list/score-part/part-abbreviation' ||
-    k === 'score-partwise/part-list/score-part/score-instrument' ||
-    k === 'score-partwise/part-list/score-part/midi-instrument' ||
-    k === 'score-partwise/part/measure/print' ||
-    k === 'score-partwise/part/measure/note/stem'
-  ) return d(I, k, 'ignored-subtree');
-  return d(F, k, 'unsupported-element');
+export const musicXmlCompatibilityElementCode=(path:readonly string[],name:string,uri:string):MusicXmlCompatibilityCode=>{
+  if(uri!=='')return 2;
+  if(E.includes(name))return 0;
+  const k=key(path,name);
+  return k==='score-partwise/identification'||k==='score-partwise/defaults'||k==='score-partwise/part-list/score-part/part-abbreviation'||k==='score-partwise/part-list/score-part/score-instrument'||k==='score-partwise/part-list/score-part/midi-instrument'||k==='score-partwise/part/measure/print'||k==='score-partwise/part/measure/note/stem'?1:2;
 };
 
-export const classifyMusicXmlCompatibilityAttribute = (
-  path: readonly string[],
-  element: string,
-  attribute: string,
-  uri: string
-): Readonly<MusicXmlCompatibilityDecision> => {
-  const k = key(path, element);
-  if (uri !== '') return d(F, k, 'foreign-attribute');
-  if (A[element]?.includes(attribute) === true) return d(S, k, 'semantic-attribute');
-  if (
-    (k === 'score-partwise/part/measure' && attribute === 'width') ||
-    (k === 'score-partwise/part/measure/note' && attribute === 'default-x') ||
-    (k === 'score-partwise/part/measure/note/stem' && attribute === 'default-y') ||
-    (
-      path.join('/') === 'score-partwise/part/measure/note/notations/articulations' &&
-      ARTS.includes(element) &&
-      attribute === 'default-y'
-    )
-  ) return d(I, k, 'ignored-attribute');
-  return d(F, k, 'unsupported-attribute');
+export const musicXmlCompatibilityAttributeCode=(path:readonly string[],element:string,attribute:string,uri:string):MusicXmlCompatibilityCode=>{
+  if(uri!=='')return 2;
+  if(A[element]?.includes(attribute)===true)return 0;
+  const k=key(path,element);
+  return (k==='score-partwise/part/measure'&&attribute==='width')||(k==='score-partwise/part/measure/note'&&attribute==='default-x')||(k==='score-partwise/part/measure/note/stem'&&attribute==='default-y')||(path.join('/')==='score-partwise/part/measure/note/notations/articulations'&&ARTS.includes(element)&&attribute==='default-y')?1:2;
 };
+
+const publicDecision=(code:MusicXmlCompatibilityCode,pathClass:string):Readonly<MusicXmlCompatibilityDecision>=>Object.freeze({
+  classification:code===0?'SEMANTIC_REQUIRED':code===1?'IGNORABLE_PRESENTATION_METADATA':'UNSUPPORTED_SEMANTIC_FAIL_CLOSED',
+  pathClass,
+  reason:code===0?'required':code===1?'ignored':'unsupported'
+});
+
+export const classifyMusicXmlCompatibilityElement=(path:readonly string[],name:string,uri:string):Readonly<MusicXmlCompatibilityDecision>=>publicDecision(musicXmlCompatibilityElementCode(path,name,uri),key(path,name));
+export const classifyMusicXmlCompatibilityAttribute=(path:readonly string[],element:string,attribute:string,uri:string):Readonly<MusicXmlCompatibilityDecision>=>publicDecision(musicXmlCompatibilityAttributeCode(path,element,attribute,uri),key(path,element));
