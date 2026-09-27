@@ -325,3 +325,23 @@ test('P10-2C preserves P10-2B fail-closed reasons for stale, ratio, boundary, be
     error=>error?.code==='INVALID_INTENT'
   );
 });
+
+
+test('P10-2C rejects structurally malformed semantic target records as INVALID_INTENT',async()=>{
+  const module=await import('../dist/packages/editor-four-to-three-tuplet-unretiming-authoring-v4/src/index.js');
+  const {score,notation}=fixture();
+  const valid=intent(score).targets;
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      score,
+      notation,
+      {
+        version:'1.0.0',
+        type:'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR',
+        targets:[{},valid[1],valid[2],valid[3]]
+      },
+      {nextRevisionId:'p10-2c-malformed-target'}
+    ),
+    error=>error?.code==='INVALID_INTENT'
+  );
+});
