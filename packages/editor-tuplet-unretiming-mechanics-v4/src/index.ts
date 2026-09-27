@@ -38,10 +38,9 @@ export const isExactRecordV4 = (
   keys: readonly string[]
 ): value is ExactRecordV4 => {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
-  const actual = Object.keys(value).sort();
-  const expected = [...keys].sort();
-  return actual.length === expected.length &&
-    actual.every((key, index) => key === expected[index]);
+  const actual = Object.keys(value);
+  const expected = new Set(keys);
+  return actual.length === expected.size && actual.every(key => expected.has(key));
 };
 
 export const isFreshRevisionIdV4 = (
