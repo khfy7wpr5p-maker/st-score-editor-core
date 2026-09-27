@@ -20,8 +20,8 @@ import {
 } from './apply-admission.js';
 import {
   assertFreshRevisionIdV4,
-  freezeEventAddressTargetsV4,
-  isExactRecordV4
+  isExactRecordV4,
+  parseTupletIntentEnvelopeV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
 export { FourToThreeTupletUnretimingAuthoringV4Error };
@@ -73,29 +73,6 @@ const isEventAddressRecord = (value: unknown): value is EventAddressV3 =>
   typeof value.voiceId === 'string' &&
   typeof value.eventId === 'string';
 
-const parseIntent = (raw: unknown): Readonly<UnretimingFourToThreeToStraightFourIntentV4> => {
-  if (
-    !isExactRecordV4(raw, ['version', 'type', 'targets']) ||
-    raw.version !== FOUR_TO_THREE_TUPLET_UNRETIMING_AUTHORING_V4_VERSION ||
-    raw.type !== 'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR' ||
-    !Array.isArray(raw.targets) ||
-    raw.targets.length !== 4 ||
-    !raw.targets.every(isEventAddressRecord)
-  ) {
-    throw new FourToThreeTupletUnretimingAuthoringV4Error(
-      'Exact 4:3 unretiming intent is invalid.',
-      'INVALID_INTENT'
-    );
-  }
-
-  return Object.freeze({
-    version: FOUR_TO_THREE_TUPLET_UNRETIMING_AUTHORING_V4_VERSION,
-    type: 'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR',
-    targets: freezeEventAddressTargetsV4(raw.targets)
-  });
-};
-
-
 export const executeFourToThreeTupletToStraightFourUnretimingV4 = (
   scoreInput: ScoreDocumentV3,
   notationInput: NotationDocumentV4,
@@ -104,7 +81,17 @@ export const executeFourToThreeTupletToStraightFourUnretimingV4 = (
 ): Readonly<FourToThreeTupletUnretimingAuthoringV4Result> => {
   const score = createScoreDocumentV3(scoreInput);
   const notation = createNotationDocumentV4(score, notationInput);
-  const intent = parseIntent(rawIntent);
+  const intent = parseTupletIntentEnvelopeV4(
+    rawIntent,
+    FOUR_TO_THREE_TUPLET_UNRETIMING_AUTHORING_V4_VERSION,
+    'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR',
+    4,
+    () => new FourToThreeTupletUnretimingAuthoringV4Error(
+      'Exact 4:3 unretiming intent is invalid.',
+      'INVALID_INTENT'
+    ),
+    isEventAddressRecord
+  );
   assertFreshRevisionIdV4(
     score,
     options.nextRevisionId,
