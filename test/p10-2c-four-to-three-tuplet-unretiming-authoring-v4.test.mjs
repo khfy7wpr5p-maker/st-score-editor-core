@@ -253,3 +253,75 @@ test('P10-2C internal apply rejects stale/tampered admitted paths with bounded a
     error=>error?.code==='RESULT_INVALID'
   );
 });
+
+
+test('P10-2C preserves P10-2B fail-closed reasons for stale, ratio, boundary, beam and tie cases',async()=>{
+  const module=await import('../dist/packages/editor-four-to-three-tuplet-unretiming-authoring-v4/src/index.js');
+
+  let current=fixture();
+  const staleTargets=intent(current.score).targets.map((target,index)=>
+    index===0?{...target,revisionId:'stale-revision'}:target
+  );
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,
+      {version:'1.0.0',type:'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR',targets:staleTargets},
+      {nextRevisionId:'p10-2c-stale'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&error?.details?.reason==='BLOCKED_STALE_TARGET'
+  );
+
+  current=fixture({eventNotationById:{
+    e1:{tuplet:{actualNotes:5,normalNotes:4,marks:[{number:1,type:'start'}]}}
+  }});
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,intent(current.score),{nextRevisionId:'p10-2c-wrong-ratio'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&
+      error?.details?.reason==='BLOCKED_TUPLET_PROFILE_UNSUPPORTED'
+  );
+
+  current=fixture({eventNotationById:{
+    e4:{tuplet:{actualNotes:4,normalNotes:3,marks:[{number:2,type:'stop'}]}}
+  }});
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,intent(current.score),{nextRevisionId:'p10-2c-boundary'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&
+      error?.details?.reason==='BLOCKED_TUPLET_BOUNDARY_INVALID'
+  );
+
+  current=fixture({eventNotationById:{
+    e2:{beams:[{number:1,value:'continue'}]}
+  }});
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,intent(current.score),{nextRevisionId:'p10-2c-beam'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&
+      error?.details?.reason==='BLOCKED_TIMING_COUPLED_BEAMS'
+  );
+
+  current=fixture({noteNotationById:{
+    n3:{ties:[{number:1,type:'start'}]}
+  }});
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,intent(current.score),{nextRevisionId:'p10-2c-tie'}
+    ),
+    error=>error?.code==='TIMING_NOT_ADMITTED'&&
+      error?.details?.reason==='BLOCKED_TIMING_COUPLED_TIES'
+  );
+
+  current=fixture();
+  assert.throws(
+    ()=>module.executeFourToThreeTupletToStraightFourUnretimingV4(
+      current.score,current.notation,
+      {...intent(current.score),extra:true},
+      {nextRevisionId:'p10-2c-malformed'}
+    ),
+    error=>error?.code==='INVALID_INTENT'
+  );
+});
