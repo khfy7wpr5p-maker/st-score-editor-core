@@ -11,66 +11,66 @@ export interface MusicXmlCompatibilityDecision {
   readonly reason: string;
 }
 
-const REQUIRED_ELEMENTS = new Set([
+const REQUIRED_ELEMENTS: readonly string[] = [
   'score-partwise','part-list','score-part','part-name','part','measure','attributes','divisions','key','fifths','time','beats','beat-type','staves','clef','sign','line','clef-octave-change',
   'note','grace','chord','pitch','rest','duration','voice','staff','step','alter','octave','type','dot','accidental','beam','time-modification','actual-notes','normal-notes','tie','notations','tied','slur','tuplet',
   'articulations','accent','strong-accent','staccato','tenuto','detached-legato','staccatissimo','spiccato','scoop','plop','doit','falloff','breath-mark','caesura','stress','unstress','soft-accent',
   'ornaments','trill-mark','turn','delayed-turn','inverted-turn','delayed-inverted-turn','vertical-turn','inverted-vertical-turn','shake','mordent','inverted-mordent','schleifer','haydn','accidental-mark','tremolo','wavy-line',
   'backup','forward','barline','bar-style','repeat'
-]);
+];
 
-const REQUIRED_ATTRIBUTES: Readonly<Record<string, ReadonlySet<string>>> = Object.freeze({
-  'score-partwise': new Set(['version']),
-  'score-part': new Set(['id']),
-  part: new Set(['id']),
-  measure: new Set(['number','implicit','non-controlling']),
-  note: new Set(['id']),
-  clef: new Set(['number']),
-  barline: new Set(['location']),
-  repeat: new Set(['direction']),
-  beam: new Set(['number']),
-  tie: new Set(['type']),
-  tied: new Set(['type','number']),
-  slur: new Set(['type','number']),
-  tuplet: new Set(['type','number']),
-  grace: new Set(['slash','steal-time-previous','steal-time-following','make-time']),
-  accent: new Set(['placement']),
-  'strong-accent': new Set(['placement','type']),
-  staccato: new Set(['placement']),
-  tenuto: new Set(['placement']),
-  'detached-legato': new Set(['placement']),
-  staccatissimo: new Set(['placement']),
-  spiccato: new Set(['placement']),
-  scoop: new Set(['placement']),
-  plop: new Set(['placement']),
-  doit: new Set(['placement']),
-  falloff: new Set(['placement']),
-  'breath-mark': new Set(['placement']),
-  caesura: new Set(['placement']),
-  stress: new Set(['placement']),
-  unstress: new Set(['placement']),
-  'soft-accent': new Set(['placement']),
-  'trill-mark': new Set(['placement']),
-  turn: new Set(['placement']),
-  'delayed-turn': new Set(['placement']),
-  'inverted-turn': new Set(['placement']),
-  'delayed-inverted-turn': new Set(['placement']),
-  'vertical-turn': new Set(['placement']),
-  'inverted-vertical-turn': new Set(['placement']),
-  shake: new Set(['placement']),
-  mordent: new Set(['placement']),
-  'inverted-mordent': new Set(['placement']),
-  schleifer: new Set(['placement']),
-  haydn: new Set(['placement']),
-  'accidental-mark': new Set(['placement']),
-  tremolo: new Set(['type','number','placement']),
-  'wavy-line': new Set(['type','number','placement'])
-});
+const REQUIRED_ATTRIBUTES: Readonly<Record<string, readonly string[]>> = {
+  'score-partwise': ['version'],
+  'score-part': ['id'],
+  part: ['id'],
+  measure: ['number','implicit','non-controlling'],
+  note: ['id'],
+  clef: ['number'],
+  barline: ['location'],
+  repeat: ['direction'],
+  beam: ['number'],
+  tie: ['type'],
+  tied: ['type','number'],
+  slur: ['type','number'],
+  tuplet: ['type','number'],
+  grace: ['slash','steal-time-previous','steal-time-following','make-time'],
+  accent: ['placement'],
+  'strong-accent': ['placement','type'],
+  staccato: ['placement'],
+  tenuto: ['placement'],
+  'detached-legato': ['placement'],
+  staccatissimo: ['placement'],
+  spiccato: ['placement'],
+  scoop: ['placement'],
+  plop: ['placement'],
+  doit: ['placement'],
+  falloff: ['placement'],
+  'breath-mark': ['placement'],
+  caesura: ['placement'],
+  stress: ['placement'],
+  unstress: ['placement'],
+  'soft-accent': ['placement'],
+  'trill-mark': ['placement'],
+  turn: ['placement'],
+  'delayed-turn': ['placement'],
+  'inverted-turn': ['placement'],
+  'delayed-inverted-turn': ['placement'],
+  'vertical-turn': ['placement'],
+  'inverted-vertical-turn': ['placement'],
+  shake: ['placement'],
+  mordent: ['placement'],
+  'inverted-mordent': ['placement'],
+  schleifer: ['placement'],
+  haydn: ['placement'],
+  'accidental-mark': ['placement'],
+  tremolo: ['type','number','placement'],
+  'wavy-line': ['type','number','placement']
+};
 
-const ARTICULATION_ELEMENTS = new Set([
+const ARTICULATION_ELEMENTS: readonly string[] = [
   'accent','strong-accent','staccato','tenuto','detached-legato','staccatissimo','spiccato','scoop','plop','doit','falloff',
   'breath-mark','caesura','stress','unstress','soft-accent'
-]);
+];
 
 const pathEquals = (path: readonly string[], expected: readonly string[]): boolean =>
   path.length === expected.length && path.every((value, index) => value === expected[index]);
@@ -106,7 +106,7 @@ const isIgnorableAttribute = (
   if (pathEquals(path, ['score-partwise','part','measure','note']) && element === 'stem' && attribute === 'default-y') return true;
   if (
     pathEquals(path, ['score-partwise','part','measure','note','notations','articulations']) &&
-    ARTICULATION_ELEMENTS.has(element) &&
+    ARTICULATION_ELEMENTS.includes(element) &&
     attribute === 'default-y'
   ) return true;
   return false;
@@ -125,7 +125,7 @@ export const classifyMusicXmlCompatibilityElement = (
       'foreign MusicXML element namespace is not admitted'
     );
   }
-  if (REQUIRED_ELEMENTS.has(name)) {
+  if (REQUIRED_ELEMENTS.includes(name)) {
     return decision(
       'SEMANTIC_REQUIRED',
       pathClass,
@@ -160,7 +160,7 @@ export const classifyMusicXmlCompatibilityAttribute = (
       'foreign MusicXML attribute namespace is not admitted'
     );
   }
-  if (REQUIRED_ATTRIBUTES[element]?.has(attribute) === true) {
+  if (REQUIRED_ATTRIBUTES[element]?.includes(attribute) === true) {
     return decision(
       'SEMANTIC_REQUIRED',
       pathClass,
