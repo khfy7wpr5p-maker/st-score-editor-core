@@ -71,3 +71,17 @@ test('SEM-04 profile rejects a mid-score divisions change', async () => {
   assert.equal(result.status, 'UNSUPPORTED');
   assert.equal(result.diagnostics[0]?.code, 'PROFILE_UNSUPPORTED');
 });
+
+
+test('SEM-04 profile rejects implicit pickup measures without explicit semantic measure starts', async () => {
+  const input = await bundle();
+  const pickup = input.musicXml.replace(
+    '<measure number="1">',
+    '<measure number="1" implicit="yes">'
+  );
+
+  const result = analyzeSemanticParityMusicXmlProfileV1(pickup, 4);
+
+  assert.equal(result.status, 'UNSUPPORTED');
+  assert.equal(result.diagnostics[0]?.code, 'PROFILE_UNSUPPORTED');
+});
