@@ -41,6 +41,7 @@
 - Create: `test/fixtures/sem-04-semantic-parity/semantic-baseline.musicxml`
 - Create: `test/fixtures/sem-04-semantic-parity/semantic-baseline.semantic-snapshot.json`
 - Create: `test/fixtures/sem-04-semantic-parity/provenance.json`
+- Create: `packages/editor-semantic-parity-v1/src/types.ts`
 - Create: `packages/editor-semantic-parity-v1/src/reference.ts`
 - Create: `packages/editor-semantic-parity-v1/src/index.ts`
 - Test: `test/sem-04-editor-semantic-parity-reference.test.mjs`
@@ -51,7 +52,9 @@
   - `SEMANTIC_PARITY_REFERENCE_VERSION = '1.0.0'`
   - `SemanticParityReferenceV1`
   - `SemanticParityProvenanceV1`
-  - `validateSemanticParityReferenceV1(input: unknown): Readonly<SemanticParityReferenceV1>`
+  - `SemanticParityReferenceError` with code `INVALID_REFERENCE`
+  - `EditorSemanticParityDiagnosticV1`
+  - `validateSemanticParityReferenceV1(input: { provenance: unknown; semanticSnapshot: unknown; observedSourceSha256: string }): Readonly<SemanticParityReferenceV1>`
   - `analyzeSemanticParityMusicXmlProfileV1(musicXml: string, expectedDivisionsPerQuarter: number): Readonly<SemanticParityProfileResultV1>`
 
 - [ ] **Step 1: Copy only reference artifacts from the pinned Semantic Engine commit**
@@ -95,7 +98,7 @@ Expected: FAIL because the package/reference validator does not exist.
 - `provenance`;
 - parsed `semanticSnapshot` as an explicitly validated minimal external evidence structure.
 
-Validate only fields SEM-04 consumes. Do not mirror the full Python model.
+Validate only fields SEM-04 consumes. Do not mirror the full Python model. The caller computes the SHA-256 of the MusicXML bytes and supplies it as `observedSourceSha256`; reference validation requires exact equality with provenance before returning a usable reference.
 
 - [ ] **Step 4: Implement fixed-divisions profile analysis**
 
@@ -135,7 +138,6 @@ test: pin semantic parity reference fixture
 - Consumes:
   - `ScoreDocumentV3`
   - `NotationDocumentV4`
-  - `divisionsPerQuarter: number`
 - Produces:
   - `EditorSemanticProjectionV1`
   - `EditorSemanticNoteV1`
@@ -269,16 +271,14 @@ Never convert through JavaScript floating point.
 
 - [ ] **Step 3: Implement structural note matching**
 
-Match by:
-- part ordinal;
-- measure index;
-- staff ordinal;
-- voice ordinal;
-- rational onset;
-- pitch MIDI;
-- occurrence ordinal.
+Use two deterministic passes:
+1. exact-match pass on the approved full key: part ordinal, measure index, staff ordinal, voice ordinal, rational onset, pitch MIDI, occurrence ordinal;
+2. mismatch-classification fallback on the same structural slot without pitch, but only when exactly one unmatched candidate exists on each side.
 
-Then compare:
+This preserves the approved exact key while allowing a changed pitch to be reported as `PITCH_MISMATCH` rather than collapsing into an unexplained missing row. Ambiguous fallback candidates return `UNSUPPORTED`.
+
+After pairing, compare:
+- pitch;
 - duration;
 - tie-start role;
 - tie-stop role.
@@ -312,7 +312,7 @@ Independently alter only one field per case and assert deterministic diagnostics
 - `KEY_SIGNATURE_MISMATCH`
 - `CLEF_MISMATCH`
 
-The tests must mutate independent test data, not derive expected mismatches from comparator output.
+The tests must mutate independent test data, not derive expected mismatches from comparator output. `PITCH_MISMATCH` must specifically exercise the unique structural-slot fallback described above.
 
 - [ ] **Step 6: Ensure deterministic diagnostic ordering**
 
