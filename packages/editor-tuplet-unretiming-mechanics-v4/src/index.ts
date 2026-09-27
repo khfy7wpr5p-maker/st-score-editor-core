@@ -36,11 +36,13 @@ const STABLE_ID_V4 = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 export const isExactRecordV4 = (
   value: unknown,
   keys: readonly string[]
-): value is ExactRecordV4 =>
-  value !== null &&
-  typeof value === 'object' &&
-  !Array.isArray(value) &&
-  JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
+): value is ExactRecordV4 => {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length &&
+    actual.every((key, index) => key === expected[index]);
+};
 
 export const isFreshRevisionIdV4 = (
   score: ScoreDocumentV3,
