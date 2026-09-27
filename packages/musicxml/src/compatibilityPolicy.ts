@@ -12,7 +12,8 @@ export interface MusicXmlCompatibilityDecision {
 }
 
 const E = '|score-partwise|part-list|score-part|part-name|part|measure|attributes|divisions|key|fifths|time|beats|beat-type|staves|clef|sign|line|clef-octave-change|note|grace|chord|pitch|rest|duration|voice|staff|step|alter|octave|type|dot|accidental|beam|time-modification|actual-notes|normal-notes|tie|notations|tied|slur|tuplet|articulations|accent|strong-accent|staccato|tenuto|detached-legato|staccatissimo|spiccato|scoop|plop|doit|falloff|breath-mark|caesura|stress|unstress|soft-accent|ornaments|trill-mark|turn|delayed-turn|inverted-turn|delayed-inverted-turn|vertical-turn|inverted-vertical-turn|shake|mordent|inverted-mordent|schleifer|haydn|accidental-mark|tremolo|wavy-line|backup|forward|barline|bar-style|repeat|';
-const A = '|score-partwise@version|score-part@id|part@id|measure@number|measure@implicit|measure@non-controlling|note@id|clef@number|barline@location|repeat@direction|beam@number|tie@type|tied@type|tied@number|slur@type|slur@number|tuplet@type|tuplet@number|grace@slash|grace@steal-time-previous|grace@steal-time-following|grace@make-time|accent@placement|strong-accent@placement|strong-accent@type|staccato@placement|tenuto@placement|detached-legato@placement|staccatissimo@placement|spiccato@placement|scoop@placement|plop@placement|doit@placement|falloff@placement|breath-mark@placement|caesura@placement|stress@placement|unstress@placement|soft-accent@placement|trill-mark@placement|turn@placement|delayed-turn@placement|inverted-turn@placement|delayed-inverted-turn@placement|vertical-turn@placement|inverted-vertical-turn@placement|shake@placement|mordent@placement|inverted-mordent@placement|schleifer@placement|haydn@placement|accidental-mark@placement|tremolo@type|tremolo@number|tremolo@placement|wavy-line@type|wavy-line@number|wavy-line@placement|';
+const A = '|score-partwise@version|score-part@id|part@id|measure@number|measure@implicit|measure@non-controlling|note@id|clef@number|barline@location|repeat@direction|beam@number|tie@type|tied@type|tied@number|slur@type|slur@number|tuplet@type|tuplet@number|grace@slash|grace@steal-time-previous|grace@steal-time-following|grace@make-time|strong-accent@type|tremolo@type|tremolo@number|wavy-line@type|wavy-line@number|';
+const PLACEMENT = '|accent|strong-accent|staccato|tenuto|detached-legato|staccatissimo|spiccato|scoop|plop|doit|falloff|breath-mark|caesura|stress|unstress|soft-accent|trill-mark|turn|delayed-turn|inverted-turn|delayed-inverted-turn|vertical-turn|inverted-vertical-turn|shake|mordent|inverted-mordent|schleifer|haydn|accidental-mark|tremolo|wavy-line|';
 const ART = '|accent|strong-accent|staccato|tenuto|detached-legato|staccatissimo|spiccato|scoop|plop|doit|falloff|breath-mark|caesura|stress|unstress|soft-accent|';
 
 const has = (set: string, value: string): boolean => set.includes(`|${value}|`);
@@ -43,7 +44,7 @@ export const musicXmlCompatibilityAttributeCodeAt = (
   uri: string
 ): MusicXmlCompatibilityCode => {
   if (uri !== '') return 2;
-  if (has(A, `${element}@${attribute}`)) return 0;
+  if ((attribute === 'placement' && has(PLACEMENT, element)) || has(A, `${element}@${attribute}`)) return 0;
   if (
     (p === 'score-partwise/part' && element === 'measure' && attribute === 'width') ||
     (p === 'score-partwise/part/measure' && element === 'note' && attribute === 'default-x') ||
