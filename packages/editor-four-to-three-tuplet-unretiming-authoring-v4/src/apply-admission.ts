@@ -1,7 +1,10 @@
 import type { ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
 import type { NotationDocumentV4 } from '../../notation-structure-v4/src/index.js';
 import type { GeneralizedTupletAdmissionV4 } from '../../editor-generalized-tuplet-admission-v4/src/index.js';
-import { applyTupletUnretimingMechanicsV4 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
+import {
+  applyTupletUnretimingMechanicsV4,
+  TupletAuthoringErrorBaseV4
+} from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
 export type FourToThreeTupletUnretimingAuthoringV4ErrorCode =
   | 'INVALID_INTENT'
@@ -10,20 +13,14 @@ export type FourToThreeTupletUnretimingAuthoringV4ErrorCode =
   | 'TARGET_PATH_INVALID'
   | 'RESULT_INVALID';
 
-export class FourToThreeTupletUnretimingAuthoringV4Error extends Error {
-  readonly code: FourToThreeTupletUnretimingAuthoringV4ErrorCode;
-  readonly details: Readonly<Record<string, unknown>>;
-
+export class FourToThreeTupletUnretimingAuthoringV4Error
+  extends TupletAuthoringErrorBaseV4<FourToThreeTupletUnretimingAuthoringV4ErrorCode> {
   constructor(
     message: string,
     code: FourToThreeTupletUnretimingAuthoringV4ErrorCode,
     details: Record<string, unknown> = {}
   ) {
-    super(message);
-    this.name = 'FourToThreeTupletUnretimingAuthoringV4Error';
-    this.code = code;
-    this.details = Object.freeze({ ...details });
-    Object.freeze(this);
+    super('FourToThreeTupletUnretimingAuthoringV4Error', message, code, details);
   }
 }
 
