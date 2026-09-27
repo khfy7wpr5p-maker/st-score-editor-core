@@ -1,9 +1,7 @@
 import {
-  EDITOR_SESSION_V4_VERSION,
+  commitCanonicalEditorSessionResultV4,
   type EditorSessionStateV4
 } from '../../editor-session-controller-v4/src/index.js';
-import { commitEditorHistoryV4 } from '../../editor-history-v4/src/index.js';
-import { createRendererRequestV4WithProfile } from '../../renderer-contract-v4/src/index.js';
 import {
   executeFourToThreeTupletToStraightFourUnretimingV4,
   type FourToThreeTupletUnretimingAuthoringV4Options
@@ -21,24 +19,10 @@ export const commitSessionFourToThreeTupletToStraightFourV4 = (
     intent,
     options
   );
-  const history = commitEditorHistoryV4(
-    session.history,
-    result.score,
-    result.notation
+  return commitCanonicalEditorSessionResultV4(
+    session,
+    result,
+    'FOUR_TO_THREE_TUPLET_UNRETIMING_COMMITTED',
+    'Atomic 4:3 tuplet to straight-four unretiming committed in the unified V4 history.'
   );
-
-  return Object.freeze({
-    version: EDITOR_SESSION_V4_VERSION,
-    history,
-    selection: result.selection,
-    renderRequest: createRendererRequestV4WithProfile(
-      history.present.score,
-      history.present.notation,
-      session.renderRequest.renderer
-    ),
-    status: Object.freeze({
-      code: 'FOUR_TO_THREE_TUPLET_UNRETIMING_COMMITTED',
-      message: 'Atomic 4:3 tuplet to straight-four unretiming committed in the unified V4 history.'
-    })
-  });
 };
