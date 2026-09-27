@@ -1,6 +1,7 @@
 import {
   MusicXmlError,
   importNotationMusicXml,
+  type MusicXmlCompatibilityEvidence,
   type MusicXmlImportOptions,
   type MusicXmlInput,
   type ParsedXmlNode
@@ -25,6 +26,7 @@ import { parseMusicXmlV2Tree } from './parser.js';
 export interface NotationMusicXmlV2ImportResult {
   readonly score: Readonly<ScoreDocumentV2>;
   readonly notation: Readonly<NotationDocumentV2>;
+  readonly compatibility: Readonly<MusicXmlCompatibilityEvidence>;
 }
 
 const children=(node:ParsedXmlNode,name?:string):readonly ParsedXmlNode[]=>name===undefined?node.children:node.children.filter((item)=>item.name===name);
@@ -136,5 +138,5 @@ export const importNotationMusicXmlV2=(input:MusicXmlInput,options:MusicXmlImpor
   const base=importNotationMusicXml(projection,{...options,source:projectionSource});
   const migrated=migrateSchemaPairV1ToV2(base.score,base.notation);
   const enriched=parseExtras(parsed.root,migrated.score,migrated.notation,options.source);
-  return Object.freeze(enriched);
+  return Object.freeze({...enriched,compatibility:parsed.compatibility});
 };
