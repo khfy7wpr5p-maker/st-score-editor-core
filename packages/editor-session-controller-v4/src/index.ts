@@ -83,6 +83,24 @@ export const commitCanonicalEditorSessionResultV4 = (
     session.renderRequest.renderer
   );
 
+export const executeAndCommitCanonicalEditorSessionMutationV4 = <Options>(
+  session: EditorSessionStateV4,
+  intent: unknown,
+  options: Options,
+  execute: (
+    score: ScoreDocumentV3,
+    notation: NotationDocumentV4,
+    intent: unknown,
+    options: Options
+  ) => EditorSessionCanonicalCommitResultV4,
+  code: string,
+  message: string
+): Readonly<EditorSessionStateV4> => {
+  const current = session.history.present;
+  const result = execute(current.score, current.notation, intent, options);
+  return commitCanonicalEditorSessionResultV4(session, result, code, message);
+};
+
 const legacyOsmdProfile = (): RendererProfile => rendererProfile('osmd');
 
 const assertSessionRevisionDoesNotReuseParent = (
