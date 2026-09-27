@@ -8,10 +8,12 @@ export interface MusicXmlCompatibilityDiagnostic {
   readonly reason: string;
   readonly count: number;
 }
+
 export interface MusicXmlCompatibilityEvidence {
   readonly diagnostics: readonly Readonly<MusicXmlCompatibilityDiagnostic>[];
   readonly truncated: boolean;
 }
+
 export interface MusicXmlCompatibilityRecorder {
   readonly record: (diagnostic: Omit<MusicXmlCompatibilityDiagnostic, 'count'>) => void;
   readonly snapshot: () => Readonly<MusicXmlCompatibilityEvidence>;
@@ -20,23 +22,25 @@ export interface MusicXmlCompatibilityRecorder {
 export const createMusicXmlCompatibilityRecorder = (
   limit: number = MUSICXML_COMPATIBILITY_DIAGNOSTIC_LIMIT
 ): MusicXmlCompatibilityRecorder => {
-  if (!Number.isInteger(limit) || limit <= 0) throw new RangeError('Invalid MusicXML compatibility diagnostic limit.');
+  if (!Number.isInteger(limit) || limit <= 0) throw new RangeError('MusicXML compatibility diagnostic limit must be a positive integer.');
   const values = new Map<string, MusicXmlCompatibilityDiagnostic>();
   let truncated = false;
-  const record = (v: Omit<MusicXmlCompatibilityDiagnostic, 'count'>): void => {
-    const k = [v.element,v.attribute ?? '',v.pathClass,v.reason].join('\u001f');
-    const prior = values.get(k);
-    if (prior) {
-      values.set(k, Object.freeze({ ...prior, count:prior.count + 1 }));
-    } else if (values.size < limit) {
-      values.set(k, Object.freeze({ ...v, count:1 }));
-    } else {
-      truncated = true;
+
+  return Object.freeze({
+    record(diagnostic: Omit<MusicXmlCompatibilityDiagnostic, 'count'>): void {
+      const key = [diagnostic.element, diagnostic.attribute ?? '', diagnostic.pathClass, diagnostic.reason].join('\u0000');
+      const previous = values.get(key);
+      if (previous !== undefined) {
+        values.set(key, { ...previous, count: previous.count + 1 });
+      } else if (values.size < limit) {
+        values.set(key, { ...diagnostic, count: 1 });
+      } else {
+        truncated = true;
+      }
+    },
+    snapshot(): Readonly<MusicXmlCompatibilityEvidence> {
+      const diagnostics = Object.freeze([...values.values()].map(item => Object.freeze({ ...item })));
+      return Object.freeze({ diagnostics, truncated });
     }
-  };
-  const snapshot = (): Readonly<MusicXmlCompatibilityEvidence> => Object.freeze({
-    diagnostics:Object.freeze([...values.values()]),
-    truncated
   });
-  return Object.freeze({ record, snapshot });
 };
