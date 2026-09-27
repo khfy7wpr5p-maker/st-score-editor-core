@@ -243,3 +243,13 @@ Automated WebKit success remains regression evidence only; the iPhone Safari P08
 **P10-2B closeout — exact-head qualification, Sonar live triage and review.**
 
 Before merge, the current branch still requires fresh exact-head CI/retained WebKit evidence, live Sonar status and whole-branch review. Physical iPhone/Safari evidence is separately required before any release/cutover claim. Generalized tuplet mutation is not authorized; broader tuplets, beams and rhythm/relation semantics remain separate architectural tranches.
+
+## P10-2C — Exact 4:3 Tuplet Core / Session Mutation
+
+**EXACT 4:3 CORE + SESSION MUTATION IMPLEMENTED / QUALIFICATION PENDING / BROWSER AUTHORING NOT AUTHORIZED.**
+
+P10-2C consumes **fresh P10-2B** evidence inside each mutation call for exactly four current-revision events carrying one exact 4:3 tuplet. The dedicated `editor-four-to-three-tuplet-unretiming-authoring-v4` package copies the admitted event timing and adjacent-rest plan exactly, removes only the owned 4:3 tuplet metadata, and preserves event/note identity plus existing part/staff/frame/measure/Voice topology.
+
+The separate `editor-session-four-to-three-tuplet-unretiming-v4` wrapper commits one accepted action as exactly one `EditorHistoryV4` revision. Exact Undo restores the original 4:3 pair and exact Redo restores the straight-four pair. Imported MusicXML regression preserves imported event/note identity and source metadata while remaining on the existing renderer projection path.
+
+P10-2B remains read-only. Existing APP-11J/P10-2 exact 3:2 authority is unchanged. Renderer coordinates remain non-authoritative. **Generalized/arbitrary tuplet mutation and browser/workstation authoring are not authorized** by P10-2C; browser exposure remains a separate gate. Production release, public write, SesliTab cutover and Render/deploy authority remain unchanged.

@@ -63,6 +63,44 @@ const state = (
   renderRequest: createRendererRequestV4WithProfile(history.present.score, history.present.notation, profile),
   status: Object.freeze({ code, message })
 });
+export interface EditorSessionCanonicalCommitResultV4 {
+  readonly score: Readonly<ScoreDocumentV3>;
+  readonly notation: Readonly<NotationDocumentV4>;
+  readonly selection: SemanticAddressV3 | null;
+}
+
+export const commitCanonicalEditorSessionResultV4 = (
+  session: EditorSessionStateV4,
+  result: EditorSessionCanonicalCommitResultV4,
+  code: string,
+  message: string
+): Readonly<EditorSessionStateV4> =>
+  state(
+    commitEditorHistoryV4(session.history, result.score, result.notation),
+    result.selection,
+    code,
+    message,
+    session.renderRequest.renderer
+  );
+
+export const executeAndCommitCanonicalEditorSessionMutationV4 = <Options>(
+  session: EditorSessionStateV4,
+  intent: unknown,
+  options: Options,
+  execute: (
+    score: ScoreDocumentV3,
+    notation: NotationDocumentV4,
+    intent: unknown,
+    options: Options
+  ) => EditorSessionCanonicalCommitResultV4,
+  code: string,
+  message: string
+): Readonly<EditorSessionStateV4> => {
+  const current = session.history.present;
+  const result = execute(current.score, current.notation, intent, options);
+  return commitCanonicalEditorSessionResultV4(session, result, code, message);
+};
+
 const legacyOsmdProfile = (): RendererProfile => rendererProfile('osmd');
 
 const assertSessionRevisionDoesNotReuseParent = (

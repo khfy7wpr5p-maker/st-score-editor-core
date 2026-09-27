@@ -223,13 +223,14 @@
     }
   },
   "next_development_action": {
-    "id": "P10-2-CLOSEOUT",
-    "title": "Bounded Triplet removal / unretiming exact-head qualification and review",
+    "id": "P10-2C-CLOSEOUT",
+    "title": "Exact 4:3 core/session mutation exact-head qualification and review",
     "mode": "qualification_before_merge",
     "production_code_change": false,
     "merge_or_release_authority_inferred": false
   },
   "remaining_gates": [
+    "p10_2c_browser_productization",
     "p10_2_physical_device_validation_before_release_claim",
     "broader_p10_2_rhythm_relations",
     "arbitrary_tuplet_ratios_cardinalities",
@@ -363,6 +364,32 @@
     "physical_device_validation_required": true,
     "physical_device_validation_passed": false,
     "production_default": false,
+    "production_release_authorized": false,
+    "seslitab_cutover_authorized": false
+  },
+  "p10_2c": {
+    "status": "EXACT_4_3_CORE_SESSION_MUTATION_IMPLEMENTED_QUALIFICATION_PENDING",
+    "source_admission": "editor-generalized-tuplet-admission-v4",
+    "profile": {
+      "actual_notes": 4,
+      "normal_notes": 3,
+      "target_cardinality": 4
+    },
+    "canonical_mutation_package": "editor-four-to-three-tuplet-unretiming-authoring-v4",
+    "session_package": "editor-session-four-to-three-tuplet-unretiming-v4",
+    "history_authority": "EditorHistoryV4",
+    "one_user_edit_one_history_revision": true,
+    "exact_undo_redo": true,
+    "preserve_event_note_identity": true,
+    "imported_musicxml_identity_preserved": true,
+    "adjacent_rest_actions": [
+      "remove_adjacent_rest_when_exactly_consumed",
+      "shrink_adjacent_rest_forward_when_larger"
+    ],
+    "renderer_coordinate_authority": false,
+    "browser_authoring_authority": false,
+    "generalized_tuplet_mutation_authorized": false,
+    "arbitrary_tuplet_support": false,
     "production_release_authorized": false,
     "seslitab_cutover_authorized": false
   }
