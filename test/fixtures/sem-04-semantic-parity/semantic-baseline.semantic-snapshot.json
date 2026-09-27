@@ -12,7 +12,7 @@
     {"source_id":"n5","part_id":"P1","measure_index":1,"pitch_midi":64,"onset_div":20,"duration_div":12,"voice":1,"staff":1,"tie_prev":null,"tie_next":null,"is_grace":false}
   ],
   "time_signatures": [{"part_id":"P1","onset_div":0,"beats":4,"beat_type":4}],
-  "key_signatures": [{"part_id":"P1","onset_div":0,"fifths":0,"mode":"major"}],
+  "key_signatures": [{"part_id":"P1","onset_div":0,"fifths":0,"mode":null}],
   "clefs": [{"part_id":"P1","onset_div":0,"staff":1,"sign":"G","line":2,"octave_change":0}],
   "diagnostics": []
 }
