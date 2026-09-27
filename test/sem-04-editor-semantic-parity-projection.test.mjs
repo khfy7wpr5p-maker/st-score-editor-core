@@ -262,12 +262,12 @@ test('SEM-04 projects canonical pitched notes, exact timing, tie roles and expli
     })),
     [
       { measureIndex: 0, staffOrdinal: 1, voiceOrdinal: 1, onset: { numerator: 0, denominator: 1 }, duration: { numerator: 1, denominator: 2 }, pitchMidi: 60, occurrenceOrdinal: 1, tieStart: false, tieStop: false },
+      { measureIndex: 0, staffOrdinal: 1, voiceOrdinal: 1, onset: { numerator: 1, denominator: 2 }, duration: { numerator: 1, denominator: 2 }, pitchMidi: 62, occurrenceOrdinal: 1, tieStart: true, tieStop: false },
       { measureIndex: 0, staffOrdinal: 1, voiceOrdinal: 2, onset: { numerator: 0, denominator: 1 }, duration: { numerator: 1, denominator: 1 }, pitchMidi: 55, occurrenceOrdinal: 1, tieStart: false, tieStop: false },
       { measureIndex: 0, staffOrdinal: 2, voiceOrdinal: 1, onset: { numerator: 0, denominator: 1 }, duration: { numerator: 1, denominator: 1 }, pitchMidi: 48, occurrenceOrdinal: 1, tieStart: false, tieStop: false },
-      { measureIndex: 0, staffOrdinal: 1, voiceOrdinal: 1, onset: { numerator: 1, denominator: 2 }, duration: { numerator: 1, denominator: 2 }, pitchMidi: 62, occurrenceOrdinal: 1, tieStart: true, tieStop: false },
       { measureIndex: 1, staffOrdinal: 1, voiceOrdinal: 1, onset: { numerator: 0, denominator: 1 }, duration: { numerator: 1, denominator: 4 }, pitchMidi: 62, occurrenceOrdinal: 1, tieStart: false, tieStop: true },
-      { measureIndex: 1, staffOrdinal: 1, voiceOrdinal: 2, onset: { numerator: 0, denominator: 1 }, duration: { numerator: 1, denominator: 1 }, pitchMidi: 57, occurrenceOrdinal: 1, tieStart: false, tieStop: false },
-      { measureIndex: 1, staffOrdinal: 1, voiceOrdinal: 1, onset: { numerator: 1, denominator: 4 }, duration: { numerator: 3, denominator: 4 }, pitchMidi: 64, occurrenceOrdinal: 1, tieStart: false, tieStop: false }
+      { measureIndex: 1, staffOrdinal: 1, voiceOrdinal: 1, onset: { numerator: 1, denominator: 4 }, duration: { numerator: 3, denominator: 4 }, pitchMidi: 64, occurrenceOrdinal: 1, tieStart: false, tieStop: false },
+      { measureIndex: 1, staffOrdinal: 1, voiceOrdinal: 2, onset: { numerator: 0, denominator: 1 }, duration: { numerator: 1, denominator: 1 }, pitchMidi: 57, occurrenceOrdinal: 1, tieStart: false, tieStop: false }
     ]
   );
   assert.deepEqual(result.projection.timeSignatures, [{ measureIndex: 0, beats: 4, beatType: 4 }]);
