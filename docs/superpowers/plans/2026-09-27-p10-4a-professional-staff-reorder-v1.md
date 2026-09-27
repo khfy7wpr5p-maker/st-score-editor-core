@@ -226,7 +226,13 @@ Cover all descendant selection kinds, no-staff kinds, one click = one history re
 npm run build && node --test   test/p10-4a-professional-staff-reorder-browser-v1.test.mjs   test/p10-3a-professional-pitch-toolbar-v1.test.mjs   test/p10-1-professional-ui-attachment-v1.test.mjs
 ```
 
-Also discover and run the existing P10-3B browser/workstation tests by repository filename rather than creating duplicates if names have changed.
+Also run the existing P10-3B browser/workstation test:
+
+```bash
+node --test test/p10-3b-browser-professional-range-replace-v1.test.mjs
+```
+
+Do not create a duplicate P10-3B test.
 
 - [ ] **Step 8: Commit Task 2**
 
