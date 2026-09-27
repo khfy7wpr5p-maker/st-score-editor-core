@@ -19,6 +19,7 @@ import {
   type FourToThreeTupletUnretimingAuthoringV4ErrorCode
 } from './apply-admission.js';
 import {
+  freezeEventAddressTargetsV4,
   isExactRecordV4,
   isFreshRevisionIdV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
@@ -90,9 +91,7 @@ const parseIntent = (raw: unknown): Readonly<UnretimingFourToThreeToStraightFour
   return Object.freeze({
     version: FOUR_TO_THREE_TUPLET_UNRETIMING_AUTHORING_V4_VERSION,
     type: 'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR',
-    targets: Object.freeze(
-      raw.targets.map(target => Object.freeze({ ...(target as unknown as EventAddressV3) }))
-    )
+    targets: freezeEventAddressTargetsV4(raw.targets)
   });
 };
 
