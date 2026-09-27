@@ -92,7 +92,7 @@ const defaultEventNotation = (): EventNotationV2 => ({
   ornaments: []
 });
 
-const eventNotationFor = (
+export const eventNotationForTupletV4 = (
   notation: NotationDocumentV4,
   eventId: string
 ): EventNotationV2 =>
@@ -118,7 +118,7 @@ const noteIds = (event: ScoreEvent): readonly string[] =>
       ? event.notes.map(note => note.id)
       : [];
 
-const buildNotation = (
+export const buildTupletNotationDocumentV4 = (
   score: ScoreDocumentV3,
   base: NotationDocumentV4,
   eventMap: ReadonlyMap<string, EventNotationV2>,
@@ -308,7 +308,7 @@ export const applyTupletUnretimingMechanicsV4 = (
     notation.events.map(entry => [entry.target.eventId, entry.notation] as const)
   );
   for (const eventId of plan.targetEventIds) {
-    const nextNotation = withoutTuplet(eventNotationFor(notation, eventId));
+    const nextNotation = withoutTuplet(eventNotationForTupletV4(notation, eventId));
     if (neutralEventNotation(nextNotation)) eventMap.delete(eventId);
     else eventMap.set(eventId, nextNotation);
   }
@@ -332,7 +332,7 @@ export const applyTupletUnretimingMechanicsV4 = (
       { cause: cause instanceof Error ? cause.message : String(cause) }
     );
   }
-  const nextNotation = buildNotation(nextScore, notation, eventMap, options);
+  const nextNotation = buildTupletNotationDocumentV4(nextScore, notation, eventMap, options);
 
   for (const eventPlan of plan.eventPlans) {
     const value = resolveEvent(nextScore, eventPlan.eventId);
