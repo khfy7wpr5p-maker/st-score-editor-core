@@ -176,3 +176,47 @@ test('processing deadline is fail-closed', () => {
     (error) => error instanceof MusicXmlError && error.code === 'PROCESSING_TIMEOUT'
   );
 });
+
+
+const withReviewedPresentationEnvelope = simplePolyphonic
+  .replace(
+    '<score-partwise version="4.0">',
+    `<score-partwise version="4.0">
+  <identification><encoding><software>ST synthetic legacy parity</software></encoding></identification>
+  <defaults><scaling><millimeters>7</millimeters><tenths>40</tenths></scaling></defaults>`
+  )
+  .replace(
+    '<score-part id="P1"><part-name>Piano</part-name></score-part>',
+    `<score-part id="P1">
+      <part-name>Piano</part-name>
+      <part-abbreviation>Pno.</part-abbreviation>
+      <score-instrument id="P1-I1"><instrument-name>Piano</instrument-name></score-instrument>
+      <midi-instrument id="P1-I1"><midi-channel>1</midi-channel><midi-program>1</midi-program><volume>80</volume></midi-instrument>
+    </score-part>`
+  )
+  .replace(
+    '<measure number="1">',
+    `<measure number="1" width="300">
+      <print><system-layout><system-distance>70</system-distance></system-layout></print>`
+  )
+  .replace(
+    '<note>',
+    '<note default-x="20"><stem default-y="10">up</stem>'
+  );
+
+test('P-MXML-REF-01 legacy importer ignores the same reviewed metadata/layout envelope without changing score semantics', () => {
+  const baseline = importMusicXml(simplePolyphonic, { source: sourceFor(simplePolyphonic, 'd') });
+  const compatible = importMusicXml(withReviewedPresentationEnvelope, { source: sourceFor(withReviewedPresentationEnvelope, 'e') });
+  assert.equal(areMusicSemanticsEquivalent(baseline, compatible), true);
+});
+
+test('P-MXML-REF-01 legacy importer still fails closed for unsupported semantic direction content', () => {
+  const xml = simplePolyphonic.replace(
+    '<measure number="1">',
+    '<measure number="1"><direction><direction-type/></direction>'
+  );
+  assert.throws(
+    () => importMusicXml(xml, { source: sourceFor(xml, 'f') }),
+    error => error instanceof MusicXmlError && error.code === 'UNSUPPORTED_MUSICXML'
+  );
+});
