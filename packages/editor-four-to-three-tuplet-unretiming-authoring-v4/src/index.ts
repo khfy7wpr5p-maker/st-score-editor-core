@@ -18,6 +18,10 @@ import {
   FourToThreeTupletUnretimingAuthoringV4Error,
   type FourToThreeTupletUnretimingAuthoringV4ErrorCode
 } from './apply-admission.js';
+import {
+  isExactRecordV4,
+  isFreshRevisionIdV4
+} from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
 export { FourToThreeTupletUnretimingAuthoringV4Error };
 export type { FourToThreeTupletUnretimingAuthoringV4ErrorCode };
@@ -42,16 +46,6 @@ export interface FourToThreeTupletUnretimingAuthoringV4Result {
   readonly admission: Readonly<GeneralizedTupletAdmissionV4>;
 }
 
-type RecordValue = Record<string, unknown>;
-const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
-
-const isRecord = (value: unknown): value is RecordValue =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const exact = (value: unknown, keys: readonly string[]): value is RecordValue =>
-  isRecord(value) &&
-  JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
-
 const EVENT_ADDRESS_KEYS = [
   'contractVersion',
   'kind',
@@ -66,7 +60,7 @@ const EVENT_ADDRESS_KEYS = [
 ] as const;
 
 const isEventAddressRecord = (value: unknown): value is EventAddressV3 =>
-  exact(value, EVENT_ADDRESS_KEYS) &&
+  isExactRecordV4(value, EVENT_ADDRESS_KEYS) &&
   value.contractVersion === SEMANTIC_ADDRESS_V3_VERSION &&
   value.kind === 'event' &&
   typeof value.documentId === 'string' &&
@@ -80,7 +74,7 @@ const isEventAddressRecord = (value: unknown): value is EventAddressV3 =>
 
 const parseIntent = (raw: unknown): Readonly<UnretimingFourToThreeToStraightFourIntentV4> => {
   if (
-    !exact(raw, ['version', 'type', 'targets']) ||
+    !isExactRecordV4(raw, ['version', 'type', 'targets']) ||
     raw.version !== FOUR_TO_THREE_TUPLET_UNRETIMING_AUTHORING_V4_VERSION ||
     raw.type !== 'UNRETIMING_FOUR_TO_THREE_TO_STRAIGHT_FOUR' ||
     !Array.isArray(raw.targets) ||
@@ -103,11 +97,7 @@ const parseIntent = (raw: unknown): Readonly<UnretimingFourToThreeToStraightFour
 };
 
 const assertRevision = (score: ScoreDocumentV3, nextRevisionId: string): void => {
-  if (
-    !ID.test(nextRevisionId) ||
-    nextRevisionId === score.revision.id ||
-    nextRevisionId === score.revision.parentId
-  ) {
+  if (!isFreshRevisionIdV4(score, nextRevisionId)) {
     throw new FourToThreeTupletUnretimingAuthoringV4Error(
       'A fresh stable next revision id is required.',
       'INVALID_REVISION_ID'
