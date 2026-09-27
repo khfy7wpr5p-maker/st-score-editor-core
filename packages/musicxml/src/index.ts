@@ -65,3 +65,23 @@ export {
   areMusicSemanticsEquivalent,
   musicSemanticFingerprint
 } from './semanticEquivalence.js';
+
+export {
+  MUSICXML_COMPATIBILITY_POLICY_VERSION,
+  classifyMusicXmlCompatibilityAttribute,
+  classifyMusicXmlCompatibilityElement
+} from './compatibilityPolicy.js';
+export type {
+  MusicXmlCompatibilityClass,
+  MusicXmlCompatibilityDecision
+} from './compatibilityPolicy.js';
+
+export {
+  MUSICXML_COMPATIBILITY_DIAGNOSTIC_LIMIT,
+  createMusicXmlCompatibilityRecorder
+} from './compatibilityDiagnostics.js';
+export type {
+  MusicXmlCompatibilityDiagnostic,
+  MusicXmlCompatibilityEvidence,
+  MusicXmlCompatibilityRecorder
+} from './compatibilityDiagnostics.js';
