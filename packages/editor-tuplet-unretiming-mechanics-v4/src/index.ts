@@ -66,6 +66,26 @@ export const freezeEventAddressTargetsV4 = (
     targets.map(target => Object.freeze({ ...(target as EventAddressV3) }))
   );
 
+export const parseExactTupletTargetsV4 = (
+  raw: unknown,
+  version: string,
+  type: string,
+  targetCount: number,
+  targetGuard?: (value: unknown) => boolean
+): readonly EventAddressV3[] | null => {
+  if (
+    !isExactRecordV4(raw, ['version', 'type', 'targets']) ||
+    raw.version !== version ||
+    raw.type !== type ||
+    !Array.isArray(raw.targets) ||
+    raw.targets.length !== targetCount ||
+    (targetGuard !== undefined && !raw.targets.every(targetGuard))
+  ) {
+    return null;
+  }
+  return freezeEventAddressTargetsV4(raw.targets);
+};
+
 export const parseTupletIntentEnvelopeV4 = <
   Version extends string,
   IntentType extends string
