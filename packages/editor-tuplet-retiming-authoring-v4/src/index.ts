@@ -18,7 +18,8 @@ import {
   buildTupletNotationDocumentV4,
   eventNotationForTupletV4,
   isExactRecordV4,
-  isFreshRevisionIdV4
+  isFreshRevisionIdV4,
+  TupletAuthoringErrorBaseV4
 } from '../../editor-tuplet-unretiming-mechanics-v4/src/index.js';
 
 export const TUPLET_RETIMING_AUTHORING_V4_VERSION = '1.0.0' as const;
@@ -59,20 +60,14 @@ export type TupletRetimingAuthoringV4ErrorCode =
   | 'REST_ID_COLLISION'
   | 'RESULT_INVALID';
 
-export class TupletRetimingAuthoringV4Error extends Error {
-  readonly code: TupletRetimingAuthoringV4ErrorCode;
-  readonly details: Readonly<Record<string, unknown>>;
-
+export class TupletRetimingAuthoringV4Error
+  extends TupletAuthoringErrorBaseV4<TupletRetimingAuthoringV4ErrorCode> {
   constructor(
     message: string,
     code: TupletRetimingAuthoringV4ErrorCode,
     details: Record<string, unknown> = {}
   ) {
-    super(message);
-    this.name = 'TupletRetimingAuthoringV4Error';
-    this.code = code;
-    this.details = Object.freeze({ ...details });
-    Object.freeze(this);
+    super('TupletRetimingAuthoringV4Error', message, code, details);
   }
 }
 
