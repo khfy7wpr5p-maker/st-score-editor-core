@@ -42,7 +42,6 @@ const normalizedRational = (value: Rational): Readonly<EditorSemanticRationalV1>
     || value.numerator < 0
     || value.denominator <= 0) return null;
   const divisor = gcd(value.numerator, value.denominator);
-  if (divisor === 0) return null;
   return Object.freeze({
     numerator: value.numerator / divisor,
     denominator: value.denominator / divisor
