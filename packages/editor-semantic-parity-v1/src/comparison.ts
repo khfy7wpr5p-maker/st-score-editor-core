@@ -126,25 +126,26 @@ const measureStarts = (
   const contexts = [...semanticSnapshot.time_signatures].sort(
     (left, right) => left.onset_div - right.onset_div
   );
-  if (contexts.length === 0 || contexts[0]?.onset_div !== 0) return null;
+  const firstContext = contexts[0];
+  if (firstContext === undefined || firstContext.onset_div !== 0
+    || firstContext.beats <= 0 || firstContext.beat_type <= 0) return null;
+  if (contexts[1]?.onset_div === 0) return null;
 
   const starts: number[] = [];
   let start = 0;
-  let current: { readonly beats: number; readonly beat_type: number } | null = null;
-  let contextIndex = 0;
+  let current: { readonly beats: number; readonly beat_type: number } =
+    Object.freeze({ beats: firstContext.beats, beat_type: firstContext.beat_type });
+  let contextIndex = 1;
 
   for (let measureIndex = 0; measureIndex < semanticSnapshot.measure_count; measureIndex += 1) {
-    let contextsAtStart = 0;
-    while (contextIndex < contexts.length && contexts[contextIndex]?.onset_div === start) {
-      if (contextsAtStart > 0) return null;
-      const next = contexts[contextIndex];
-      if (next === undefined || next.beats <= 0 || next.beat_type <= 0) return null;
-      current = Object.freeze({ beats: next.beats, beat_type: next.beat_type });
-      contextsAtStart += 1;
+    const upcoming = contexts[contextIndex];
+    if (upcoming !== undefined && upcoming.onset_div < start) return null;
+    if (upcoming !== undefined && upcoming.onset_div === start) {
+      if (upcoming.beats <= 0 || upcoming.beat_type <= 0) return null;
+      current = Object.freeze({ beats: upcoming.beats, beat_type: upcoming.beat_type });
       contextIndex += 1;
+      if (contexts[contextIndex]?.onset_div === start) return null;
     }
-    if (current === null) return null;
-    if (contexts[contextIndex] !== undefined && (contexts[contextIndex]?.onset_div ?? -1) < start) return null;
 
     starts.push(start);
     const durationNumerator =
@@ -172,9 +173,9 @@ const semanticNote = (
     || note.voice <= 0 || note.staff <= 0
     || note.measure_index < 0 || note.measure_index >= starts.length
     || note.duration_div <= 0) return null;
-  const measureStart = starts[note.measure_index];
+  const measureStart = starts[note.measure_index] as number;
   const nextMeasureStart = starts[note.measure_index + 1];
-  if (measureStart === undefined || note.onset_div < measureStart) return null;
+  if (note.onset_div < measureStart) return null;
   if (nextMeasureStart !== undefined
     && (note.onset_div >= nextMeasureStart || note.onset_div + note.duration_div > nextMeasureStart)) {
     return null;
@@ -270,20 +271,23 @@ type Pair = Readonly<{
   structuralMismatch: null | 'PITCH_MISMATCH' | 'ONSET_MISMATCH' | 'VOICE_MISMATCH' | 'STAFF_MISMATCH';
 }>;
 
+type StructuralMismatch = Exclude<Pair['structuralMismatch'], null>;
+
 const singleFieldDifference = (
   editor: EditorSemanticNoteV1,
   semantic: SemanticComparableNote
-): Pair['structuralMismatch'] | 'MULTIPLE' => {
+): StructuralMismatch | 'MULTIPLE' => {
   if (editor.partOrdinal !== semantic.partOrdinal
     || editor.measureIndex !== semantic.measureIndex
     || editor.occurrenceOrdinal !== semantic.occurrenceOrdinal) return 'MULTIPLE';
 
-  const differences: Pair['structuralMismatch'][] = [];
+  const differences: StructuralMismatch[] = [];
   if (editor.staffOrdinal !== semantic.staffOrdinal) differences.push('STAFF_MISMATCH');
   if (editor.voiceOrdinal !== semantic.voiceOrdinal) differences.push('VOICE_MISMATCH');
   if (!equalRational(editor.onset, semantic.onset)) differences.push('ONSET_MISMATCH');
   if (editor.pitchMidi !== semantic.pitchMidi) differences.push('PITCH_MISMATCH');
-  return differences.length === 1 ? differences[0] ?? 'MULTIPLE' : 'MULTIPLE';
+  if (differences.length !== 1) return 'MULTIPLE';
+  return differences[0] as StructuralMismatch;
 };
 
 const pairNotes = (
@@ -310,11 +314,11 @@ const pairNotes = (
 
   for (const [editorIndex, editor] of editorNotes.entries()) {
     if (usedEditor.has(editorIndex)) continue;
-    const candidates: Array<{ index: number; mismatch: Pair['structuralMismatch'] }> = [];
+    const candidates: Array<{ index: number; mismatch: StructuralMismatch }> = [];
     for (const [semanticIndex, semantic] of semanticNotes.entries()) {
       if (usedSemantic.has(semanticIndex)) continue;
       const mismatch = singleFieldDifference(editor, semantic);
-      if (mismatch !== 'MULTIPLE' && mismatch !== null) {
+      if (mismatch !== 'MULTIPLE') {
         candidates.push({ index: semanticIndex, mismatch });
       }
     }
