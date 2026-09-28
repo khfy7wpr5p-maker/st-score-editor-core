@@ -5,6 +5,24 @@ export type MusicXmlCompatibilityClass =
   | 'IGNORABLE_PRESENTATION_METADATA'
   | 'UNSUPPORTED_SEMANTIC_FAIL_CLOSED';
 
+export type MusicXmlImportDisposition =
+  | 'CANONICAL_EDITABLE'
+  | 'PRESERVED_RENDERABLE'
+  | 'UNSUPPORTED_SEMANTIC_FAIL_CLOSED';
+
+export const importDispositionForMusicXmlCompatibilityClass = (
+  classification: MusicXmlCompatibilityClass
+): MusicXmlImportDisposition => {
+  switch (classification) {
+    case 'SEMANTIC_REQUIRED':
+      return 'CANONICAL_EDITABLE';
+    case 'IGNORABLE_PRESENTATION_METADATA':
+      return 'PRESERVED_RENDERABLE';
+    case 'UNSUPPORTED_SEMANTIC_FAIL_CLOSED':
+      return 'UNSUPPORTED_SEMANTIC_FAIL_CLOSED';
+  }
+};
+
 export interface MusicXmlCompatibilityDecision {
   readonly classification: MusicXmlCompatibilityClass;
   readonly pathClass: string;
