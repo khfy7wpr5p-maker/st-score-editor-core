@@ -68,60 +68,61 @@ def _ornament_values(note: Any) -> list[str]:
     return [str(value) for value in list(getattr(note, "ornaments", ()) or ())]
 
 def _note_rows(part: Any) -> list[dict[str, Any]]:
-    array = part.note_array(
-        include_pitch_spelling=True,
-        include_staff=True,
-        include_divs_per_quarter=True,
-        include_key_signature=True,
-        include_time_signature=True,
-        include_grace_notes=True,
-    )
-    names = set(array.dtype.names or ())
-    note_objects = {
-        source_id: note
-        for note in list(getattr(part, "notes", ()) or ())
-        if (source_id := _source_note_id(note)) is not None
-    }
     out: list[dict[str, Any]] = []
-    for row in array:
-        def get(name: str, default: Any = None) -> Any:
-            return _py(row[name]) if name in names else default
+    beat_map = part.beat_map
+    quarter_map = part.quarter_map
+    quarter_duration_map = part.quarter_duration_map
+    time_signature_map = part.time_signature_map
+    key_signature_map = part.key_signature_map
 
-        source_note_id = str(get("id")) if get("id") not in (None, "None", "") else None
-        note_object = note_objects.get(source_note_id) if source_note_id is not None else None
-        tie_prev = getattr(note_object, "tie_prev", None) if note_object is not None else None
-        tie_next = getattr(note_object, "tie_next", None) if note_object is not None else None
+    for note in list(getattr(part, "notes", ()) or ()):
+        start_div = _point_t(note, "start")
+        end_div = _point_t(note, "end")
+        if start_div is None or end_div is None or end_div < start_div:
+            raise ValueError("Partitura note has invalid timeline bounds.")
+
+        source_note_id = _source_note_id(note)
+        tie_prev = getattr(note, "tie_prev", None)
+        tie_next = getattr(note, "tie_next", None)
+        ts_beats, ts_beat_type, _ = time_signature_map(start_div)
+        key_fifths, key_mode = key_signature_map(start_div)
+
+        onset_beat = float(beat_map(start_div))
+        end_beat = float(beat_map(end_div))
+        onset_quarter = float(quarter_map(start_div))
+        end_quarter = float(quarter_map(end_div))
 
         out.append(
             {
                 "sourceNoteId": source_note_id,
-                "pitch": int(get("pitch")),
-                "step": str(get("step")) if get("step") is not None else None,
-                "alter": int(get("alter")) if get("alter") is not None else 0,
-                "octave": int(get("octave")) if get("octave") is not None else None,
-                "onsetBeat": float(get("onset_beat")) if get("onset_beat") is not None else None,
-                "durationBeat": float(get("duration_beat")) if get("duration_beat") is not None else None,
-                "onsetQuarter": float(get("onset_quarter")) if get("onset_quarter") is not None else None,
-                "durationQuarter": float(get("duration_quarter")) if get("duration_quarter") is not None else None,
-                "onsetDiv": int(get("onset_div")) if get("onset_div") is not None else None,
-                "durationDiv": int(get("duration_div")) if get("duration_div") is not None else None,
-                "voice": int(get("voice")) if get("voice") is not None else None,
-                "staff": int(get("staff")) if get("staff") is not None else None,
-                "divsPerQuarter": int(get("divs_pq")) if get("divs_pq") is not None else None,
-                "keyFifths": int(get("ks_fifths")) if get("ks_fifths") is not None else None,
-                "keyMode": int(get("ks_mode")) if get("ks_mode") is not None else None,
-                "timeBeats": int(get("ts_beats")) if get("ts_beats") is not None else None,
-                "timeBeatType": int(get("ts_beat_type")) if get("ts_beat_type") is not None else None,
+                "pitch": int(note.midi_pitch),
+                "step": str(note.step),
+                "alter": int(note.alter),
+                "octave": int(note.octave),
+                "onsetBeat": onset_beat,
+                "durationBeat": end_beat - onset_beat,
+                "onsetQuarter": onset_quarter,
+                "durationQuarter": end_quarter - onset_quarter,
+                "onsetDiv": start_div,
+                "durationDiv": end_div - start_div,
+                "voice": int(note.voice) if note.voice is not None else None,
+                "staff": int(note.staff) if note.staff is not None else None,
+                "divsPerQuarter": int(quarter_duration_map(start_div)),
+                "keyFifths": int(key_fifths),
+                "keyMode": int(key_mode),
+                "timeBeats": int(ts_beats),
+                "timeBeatType": int(ts_beat_type),
                 "ties": {
                     "start": tie_next is not None,
                     "stop": tie_prev is not None,
                 },
                 "tiePrevSourceNoteId": _source_note_id(tie_prev) if tie_prev is not None else None,
                 "tieNextSourceNoteId": _source_note_id(tie_next) if tie_next is not None else None,
-                "tuplet": _tuplet_from_symbolic_duration(note_object) if note_object is not None else None,
-                "fingerings": _fingering_values(note_object) if note_object is not None else [],
-                "articulations": _articulation_values(note_object) if note_object is not None else [],
-                "ornaments": _ornament_values(note_object) if note_object is not None else [],
+                "tuplet": _tuplet_from_symbolic_duration(note),
+                "fingerings": _fingering_values(note),
+                "articulations": _articulation_values(note),
+                "ornaments": _ornament_values(note),
+                "isGrace": isinstance(note, ptscore.GraceNote),
             }
         )
     return out
