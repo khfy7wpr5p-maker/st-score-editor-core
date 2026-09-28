@@ -107,3 +107,24 @@ Round-trip fixtures must be synthetic, first-party, public-domain or explicitly 
 ## Container policy
 
 `.mxl` remains unadmitted. A future container contract must define compressed/uncompressed size, entry count, path rules, MIME/content checks, decompression limits and cancellation behavior before support is added.
+
+## P-MXML-REF-01 compatibility policy
+
+P-MXML-REF-01 hardens real-world MusicXML admission without creating a second canonical authority or a generic lenient parser.
+
+The bounded compatibility policy has exactly three classes:
+
+- `SEMANTIC_REQUIRED`: admitted musical meaning must be preserved in the canonical result;
+- `IGNORABLE_PRESENTATION_METADATA`: only explicitly reviewed noncanonical presentation/metadata may be discarded;
+- `UNSUPPORTED_SEMANTIC_FAIL_CLOSED`: unsupported or ambiguous musical meaning is rejected.
+
+The initial reviewed ignorable profile is intentionally narrow: root identification/defaults metadata, score-part abbreviation/instrument/MIDI metadata, measure print/system layout metadata and width, `note@default-x`, `stem@default-y`, supported-articulation `@default-y`, neutral `<notehead>normal</notehead>` presentation with the reviewed `filled` attribute, and empty print-only `staff-details print-object="yes"`.
+
+Unsupported semantic examples remain fail-closed, including `direction`, `sound`, `harmony`, foreign semantic namespaces, semantic `staff-details` children such as staff-line/tuning data, and non-neutral notehead shapes. Unknown is never treated as ignorable merely because it looks presentational.
+
+Compatibility diagnostics are bounded, additive and noncanonical. They do not enter `ScoreDocumentV3`, `NotationDocumentV4`, `EditorSessionV4` or `EditorHistoryV4`.
+
+Partitura remains reference-only. It is an independent parser/oracle for compatibility evidence and is not a production browser dependency or canonical authority. No Python/backend/network dependency is introduced into the browser runtime by P-MXML-REF-01.
+
+The private blocker `sorf_op35_no13-let.musicxml` is qualification-only and is not committed because redistribution rights/provenance are not established. Repository regressions use the first-party synthetic surrogate and its semantic-only twin.
+

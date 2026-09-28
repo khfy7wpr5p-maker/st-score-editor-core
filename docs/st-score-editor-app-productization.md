@@ -243,3 +243,18 @@ Automated WebKit success remains regression evidence only; the iPhone Safari P08
 **P10-2B closeout — exact-head qualification, Sonar live triage and review.**
 
 Before merge, the current branch still requires fresh exact-head CI/retained WebKit evidence, live Sonar status and whole-branch review. Physical iPhone/Safari evidence is separately required before any release/cutover claim. Generalized tuplet mutation is not authorized; broader tuplets, beams and rhythm/relation semantics remain separate architectural tranches.
+
+## P-MXML-REF-01 compatibility hardening
+
+The standalone browser MusicXML path now has bounded real-world presentation/metadata compatibility evidence while retaining fail-closed unsupported semantics. Synthetic full-envelope vs semantic-only canonical equivalence is proven through the real app-document seam, and dedicated mobile WebKit qualification is green.
+
+This is compatibility hardening, not a release or cutover decision. The exact private blocker and physical Android/iPhone reruns remain Task 8 qualification evidence.
+
+```text
+manualDeviceValidationRequired = true
+standaloneReleaseGatePassed = false
+seslitabCutoverAuthorized = false
+```
+
+Automated WebKit remains regression evidence only and cannot substitute for the required physical-device matrix.
+

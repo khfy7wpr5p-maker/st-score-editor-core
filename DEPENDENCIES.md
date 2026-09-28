@@ -125,3 +125,12 @@ Through E8-C it is still:
 E8-C accepts only a host/test-supplied bounded JSON representation of `CanonicalTabResult 2.0.0` and revalidates it against the current locally derived E8-B projection.
 
 A future E8-D host invocation boundary must undergo a separate dependency/provenance/security review and remains human-gated.
+
+## P-MXML-REF-01 dependency boundary
+
+Partitura remains reference-only. It is not installed, vendored, fetched at runtime or granted canonical/editor authority.
+
+No Python/backend/network dependency is introduced by P-MXML-REF-01. The production browser dependency graph remains limited to the repository's already admitted JavaScript/TypeScript toolchain and XML parser dependencies; no HTTP client, subprocess library, Python runtime or Partitura package is added.
+
+The P-MXML-REF-01 WebKit qualification path uses the existing local browser build and Playwright/WebKit setup only. It does not create a Render/deploy dependency or a second runtime service.
+

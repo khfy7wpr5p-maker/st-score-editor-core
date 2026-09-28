@@ -239,3 +239,18 @@ standaloneReleaseGatePassed = false
 ```
 
 The P08/P09 professional/keyboard/renderer physical iPhone Safari device gate is PASS on the P09-qualified baseline, but full APP-09 G1–G10 release evidence remains incomplete. Android Chrome and Windows Edge/Chrome/Firefox remain pending physical release targets; iPad Safari remains secondary. Automated WebKit regression alone is not physical-device evidence.
+
+## P-MXML-REF-01 — real-world MusicXML compatibility hardening
+
+Tasks 1–6 have automated qualification evidence: synthetic real-world blocker characterization, typed three-way policy, bounded active-parser admission, legacy-policy consistency, canonical-equivalence/source-identity proof and dedicated mobile WebKit MusicXML-open regression.
+
+Task 7 synchronizes documentation and repository-reality assertions. **Task 8 physical qualification pending.**
+
+This work is compatibility hardening only. It does not itself close the APP-09 release matrix and does not authorize production/SesliTab cutover.
+
+```text
+manualDeviceValidationRequired = true
+standaloneReleaseGatePassed = false
+seslitabCutoverAuthorized = false
+```
+

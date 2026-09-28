@@ -302,3 +302,23 @@ standaloneReleaseGatePassed = false
 ```
 
 The P08/P09 iPhone Safari device gate is PASS for its tested scope, but the full APP-09 G1–G10 release matrix is incomplete. Android Chrome, Windows Edge, Windows Chrome and Windows Firefox remain pending physical release targets, with iPad Safari secondary.
+
+## P-MXML-REF-01 — bounded MusicXML compatibility admission
+
+The production browser MusicXML open path remains single-authority and fail-closed:
+
+```text
+MusicXML bytes
+ -> xmlSafety/resource limits
+ -> bounded compatibility classification
+ -> importNotationMusicXmlV2
+ -> migrate V2 -> V3/V4
+ -> EditorSessionV4
+```
+
+`ScoreDocumentV3 + NotationDocumentV4` remains the canonical pair, and `EditorSessionV4 / EditorHistoryV4` remains the only history authority. Compatibility diagnostics are bounded noncanonical evidence only.
+
+There is no fallback importer, no generic ignore-unknown mode and no second canonical parser authority. The original input bytes/source identity remain the auditable source envelope; the reviewed compatibility projection is only an import-time admission mechanism.
+
+Partitura is external reference/oracle evidence only. P-MXML-REF-01 adds no Python/backend/network production path and no Render/deploy authority.
+

@@ -120,6 +120,7 @@ test('APP-01 opens MusicXML into a canonical V4 app document and marks imported 
   assert.equal(imported.session.history.present.score.source.format, 'musicxml');
   assert.equal(imported.session.history.present.score.source.byteLength, new TextEncoder().encode(xml).byteLength);
   assert.equal(imported.session.history.present.score.source.sha256, expectedSha256);
+  assert.equal('compatibility' in imported, false);
 });
 
 test('APP-01 rejects an invalid injected source digest instead of accepting fake identity', async () => {

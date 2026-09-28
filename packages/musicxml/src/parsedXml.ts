@@ -1,5 +1,9 @@
 import { SaxesParser } from 'saxes';
 
+import {
+  musicXmlCompatibilityAttributeCodeAt,
+  musicXmlCompatibilityElementCodeAt
+} from './compatibilityPolicy.js';
 import { MusicXmlError } from './errors.js';
 import type { MusicXmlProcessingRuntime } from './processing.js';
 import { normalizeMusicXmlInput } from './xmlSafety.js';
@@ -35,21 +39,6 @@ type MutableNode = {
   text: string;
   children: MutableNode[];
 };
-
-const ATTRIBUTE_ALLOWLIST: Readonly<Record<string, ReadonlySet<string>>> = Object.freeze({
-  'score-partwise': new Set(['version']),
-  'score-part': new Set(['id']),
-  part: new Set(['id']),
-  measure: new Set(['number', 'implicit', 'non-controlling']),
-  clef: new Set(['number']),
-  barline: new Set(['location']),
-  repeat: new Set(['direction']),
-  beam: new Set(['number']),
-  tie: new Set(['type']),
-  tied: new Set(['type', 'number']),
-  slur: new Set(['type', 'number']),
-  tuplet: new Set(['type', 'number'])
-});
 
 const LEAF_ELEMENTS = new Set([
   'part-name',
@@ -111,36 +100,8 @@ const enforceLimit = (
   if (observed > limit) failLimit(code, field, limit, observed);
 };
 
-const enforceElementEnvelope = (
-  name: string,
-  uri: string,
-  attributes: readonly ParsedXmlAttribute[],
-  parent: MutableNode | undefined
-): void => {
-  if (uri !== '') {
-    throw new MusicXmlError('Namespaced MusicXML elements are not supported in E2.', 'UNSUPPORTED_MUSICXML', {
-      element: name,
-      uri
-    });
-  }
-
-  if (parent !== undefined && LEAF_ELEMENTS.has(parent.name)) {
-    throw new MusicXmlError('MusicXML leaf element cannot contain child elements in E2.', 'UNSUPPORTED_MUSICXML', {
-      parent: parent.name,
-      child: name
-    });
-  }
-
-  const allowedAttributes = ATTRIBUTE_ALLOWLIST[name] ?? new Set<string>();
-  for (const attribute of attributes) {
-    if (attribute.uri !== '' || !allowedAttributes.has(attribute.name)) {
-      throw new MusicXmlError('Unsupported MusicXML attribute.', 'UNSUPPORTED_MUSICXML', {
-        element: name,
-        attribute: attribute.name,
-        uri: attribute.uri
-      });
-    }
-  }
+const unsupported = (details: Record<string, unknown>): never => {
+  throw new MusicXmlError('Unsupported MusicXML content.', 'UNSUPPORTED_MUSICXML', details);
 };
 
 export interface ParsedMusicXmlResult {
@@ -157,7 +118,10 @@ export const parseMusicXmlTree = (
 
   const parser = new SaxesParser({ xmlns: true, position: true });
   const stack: MutableNode[] = [];
+  const path: string[] = [];
   let root: MutableNode | null = null;
+  let skipDepth = 0;
+  let ignoredLeaf = '';
   let elementCount = 0;
   let attributeCount = 0;
   let textBytes = 0;
@@ -168,7 +132,7 @@ export const parseMusicXmlTree = (
 
   parser.on('opentag', (tag) => {
     runtime.checkpoint('xml:open-tag');
-    const depth = stack.length + 1;
+    const depth = path.length + 1;
     enforceLimit('XML_DEPTH_LIMIT_EXCEEDED', 'maxDepth', runtime.limits.maxDepth, depth);
 
     elementCount += 1;
@@ -184,39 +148,74 @@ export const parseMusicXmlTree = (
 
     const name = tag.local || tag.name;
     const uri = tag.uri || '';
+    const parentPath = path.join('/');
+
+    if (skipDepth > 0) {
+      path.push(name);
+      skipDepth += 1;
+      return;
+    }
+
+    if (ignoredLeaf !== '') unsupported({ parent: ignoredLeaf, child: name });
+
+    const elementCode = musicXmlCompatibilityElementCodeAt(parentPath, name, uri);
+    if (elementCode === 2) unsupported({ element: name, uri });
+
+    if (elementCode === 1) {
+      if (name === 'stem') {
+        for (const attribute of attributes) {
+          if (musicXmlCompatibilityAttributeCodeAt(parentPath, name, attribute.name, attribute.uri) !== 1) {
+            unsupported({ element: name, attribute: attribute.name, uri: attribute.uri });
+          }
+        }
+        ignoredLeaf = name;
+      } else {
+        skipDepth = 1;
+      }
+      path.push(name);
+      return;
+    }
+
     const parent = stack[stack.length - 1];
-    enforceElementEnvelope(name, uri, attributes, parent);
+    if (parent !== undefined && LEAF_ELEMENTS.has(parent.name)) {
+      unsupported({ parent: parent.name, child: name });
+    }
+
+    const retainedAttributes: ParsedXmlAttribute[] = [];
+    for (const attribute of attributes) {
+      const code = musicXmlCompatibilityAttributeCodeAt(parentPath, name, attribute.name, attribute.uri);
+      if (code === 0) retainedAttributes.push(attribute);
+      else if (code === 2) unsupported({ element: name, attribute: attribute.name, uri: attribute.uri });
+    }
 
     const node: MutableNode = {
       name,
       uri,
-      attributes,
+      attributes: retainedAttributes,
       text: '',
       children: []
     };
 
     if (stack.length === 0) {
-      if (root !== null) {
-        throw new MusicXmlError('XML must contain exactly one root element.', 'INVALID_XML');
-      }
+      if (root !== null) throw new MusicXmlError('XML must contain exactly one root element.', 'INVALID_XML');
       root = node;
     } else {
       if (parent === undefined) throw new MusicXmlError('XML parser stack became inconsistent.', 'INVALID_XML');
       parent.children.push(node);
     }
     stack.push(node);
+    path.push(name);
   });
 
   const appendText = (text: string): void => {
     runtime.checkpoint('xml:text');
     textBytes += new TextEncoder().encode(text).byteLength;
     enforceLimit('XML_TEXT_LIMIT_EXCEEDED', 'maxTextBytes', runtime.limits.maxTextBytes, textBytes);
+    if (skipDepth > 0 || ignoredLeaf !== '') return;
     const current = stack[stack.length - 1];
     if (current !== undefined) {
       if (EMPTY_ELEMENTS.has(current.name) && text.trim().length > 0) {
-        throw new MusicXmlError('Empty MusicXML marker cannot contain text in E2.', 'UNSUPPORTED_MUSICXML', {
-          element: current.name
-        });
+        unsupported({ element: current.name });
       }
       current.text += text;
     }
@@ -226,7 +225,18 @@ export const parseMusicXmlTree = (
   parser.on('cdata', appendText);
   parser.on('closetag', () => {
     runtime.checkpoint('xml:close-tag');
+    if (skipDepth > 0) {
+      skipDepth -= 1;
+      path.pop();
+      return;
+    }
+    if (ignoredLeaf !== '') {
+      ignoredLeaf = '';
+      path.pop();
+      return;
+    }
     stack.pop();
+    path.pop();
   });
 
   try {
@@ -237,7 +247,7 @@ export const parseMusicXmlTree = (
   }
 
   runtime.checkpoint('xml:parse:complete');
-  if (root === null || stack.length !== 0) {
+  if (root === null || stack.length !== 0 || path.length !== 0 || skipDepth !== 0 || ignoredLeaf !== '') {
     throw new MusicXmlError('XML is not well formed.', 'INVALID_XML');
   }
 
