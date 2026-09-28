@@ -35,12 +35,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const freezeStringRecord = (value: Readonly<Record<string, string>>): Readonly<Record<string, string>> => {
-  const entries = Object.entries(value).map(([key, item]) => {
+  const result: Record<string, string> = {};
+  for (const [key, item] of Object.entries(value)) {
     requireNonEmpty(key, 'MusicXML preserved attribute name');
     if (typeof item !== 'string') throw new TypeError('MusicXML preserved attribute values must be strings.');
-    return [key, item] as const;
-  });
-  return Object.freeze(Object.fromEntries(entries));
+    result[key] = item;
+  }
+  return Object.freeze(result);
 };
 
 export const importDispositionForCompatibilityClass = (
@@ -56,15 +57,15 @@ export const classifyImportFallbackEligibility = (
       reason: 'native compatibility rejection is eligible for bounded fallback'
     });
   }
-  const reasons = new Map<string, string>([
-    ['MALFORMED_XML', 'malformed XML must fail before fallback'],
-    ['SECURITY_POLICY', 'security-policy rejection must not reach fallback'],
-    ['RESOURCE_LIMIT', 'resource-limit rejection must not reach fallback'],
-    ['UNREPRESENTABLE_SEMANTIC', 'unrepresentable semantics remain fail-closed']
-  ]);
+  const reasons: Readonly<Record<string, string>> = Object.freeze({
+    MALFORMED_XML: 'malformed XML must fail before fallback',
+    SECURITY_POLICY: 'security-policy rejection must not reach fallback',
+    RESOURCE_LIMIT: 'resource-limit rejection must not reach fallback',
+    UNREPRESENTABLE_SEMANTIC: 'unrepresentable semantics remain fail-closed'
+  });
   return Object.freeze({
     eligible: false,
-    reason: reasons.get(kind) ?? 'unknown failure kind is not fallback eligible'
+    reason: reasons[kind] ?? 'unknown failure kind is not fallback eligible'
   });
 };
 
