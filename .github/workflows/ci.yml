@@ -43,32 +43,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install pinned Partitura import dependency
-        run: python -m pip install --disable-pip-version-check -r services/partitura_import/requirements.txt
+        run: python -m pip install --disable-pip-version-check --only-binary :all: -r services/partitura_import/requirements.txt
       - name: Test bounded Partitura import boundary
         run: python -m unittest discover -s services/partitura_import/tests -p "test_*.py" -v
-
-  sonar-diagnostics:
-    name: Sonar annotation diagnostics
-    permissions:
-      checks: read
-      contents: read
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Read Sonar annotations
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 30); do
-            checks=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$REPO/commits/$SHA/check-runs")
-            check_id=$(printf '%s' "$checks" | jq -r '.check_runs[] | select(.name == "SonarCloud Code Analysis" and .status == "completed") | .id' | head -n1)
-            if [ -n "$check_id" ]; then
-              curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$REPO/check-runs/$check_id/annotations" | jq .
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "Sonar annotations were not available before timeout." >&2
-          exit 1
