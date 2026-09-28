@@ -35,13 +35,12 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const freezeStringRecord = (value: Readonly<Record<string, string>>): Readonly<Record<string, string>> => {
-  const result: Record<string, string> = {};
-  for (const [key, item] of Object.entries(value)) {
+  const entries = Object.entries(value).map(([key, item]) => {
     requireNonEmpty(key, 'MusicXML preserved attribute name');
     if (typeof item !== 'string') throw new TypeError('MusicXML preserved attribute values must be strings.');
-    result[key] = item;
-  }
-  return Object.freeze(result);
+    return [key, item] as const;
+  });
+  return Object.freeze(Object.fromEntries(entries));
 };
 
 export const importDispositionForCompatibilityClass = (
