@@ -67,3 +67,20 @@ Unknown semantic constructs are not admitted by this inventory. `direction`, `so
 - Manual physical-device validation required: true.
 - SesliTab cutover authorized: false.
 - Render/deploy change authorized by P-MXML-REF-01: false.
+
+## Task 7 automated qualification state
+
+- Automated current result: PASS for Tasks 1–6 on the implementation branch.
+- Dedicated mobile WebKit result: PASS for the bounded P-MXML-REF-01 open/canonical-equivalence/unsupported-semantic regression.
+- Compatibility policy version: `1.0.0`.
+- Compatibility diagnostic cap: 64 unique diagnostic keys.
+- Production dependency state: no Partitura/Python/backend/network dependency added.
+- Canonical authority state: `ScoreDocumentV3 + NotationDocumentV4`; compatibility evidence remains noncanonical.
+- Known fail-closed examples: `direction`, `sound`, `harmony`, foreign semantic namespaces, semantic staff-details and non-neutral noteheads.
+- Private blocker repository state: not committed.
+- Task 8 physical qualification pending.
+- APP-09 full release gate: false.
+- Manual physical-device validation required: true.
+- SesliTab cutover authorized: false.
+- Render/deploy change authorized by P-MXML-REF-01: false.
+
