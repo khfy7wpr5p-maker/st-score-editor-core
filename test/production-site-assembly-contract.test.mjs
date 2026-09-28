@@ -132,6 +132,14 @@ test('production assembly emits a root index that wires exact renderer plus non-
     assert.match(html, /connect-src https:\/\/raw\.githubusercontent\.com/);
     assert.match(html, /id="st-score-audio-instrument"/);
     assert.match(html, /value="VIOLIN">Violin/);
+    const selectorIndex = html.indexOf('id="st-score-audio-instrument"');
+    const productionBootstrapIndex = html.indexOf('<script src="./st-score-editor-production-bootstrap.js"></script>');
+    assert.notEqual(selectorIndex, -1);
+    assert.notEqual(productionBootstrapIndex, -1);
+    assert.ok(
+      selectorIndex < productionBootstrapIndex,
+      'production audio selector must be parsed before the production bootstrap executes'
+    );
     assert.match(bootstrap, /audioApi\.version !== '0\.1\.2'/);
     assert.match(bootstrap, /createAudioEngine\(\{ defaultInstrument: 'GRAND_PIANO' \}\)/);
     assert.match(bootstrap, /attachAudioPort\(audioEngine\)/);

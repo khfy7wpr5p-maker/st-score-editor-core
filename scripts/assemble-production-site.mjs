@@ -39,16 +39,18 @@ const patchBootstrap = source => {
 
 const patchHtml = source => {
   const editorScript = '<script src="./st-score-editor-app.js"></script>';
+  const previewBootstrapScript = '<script src="./st-score-editor-app09b-bootstrap.js"></script>';
   if (!source.includes(editorScript)) throw new Error('PRODUCTION_AUDIO_EDITOR_SCRIPT_HOOK_MISSING');
-  const closingBody = '</body>';
-  if (source.split(closingBody).length - 1 !== 1) throw new Error('PRODUCTION_AUDIO_BODY_HOOK_MISSING');
+  if (source.split(previewBootstrapScript).length - 1 !== 1) {
+    throw new Error('PRODUCTION_AUDIO_BOOTSTRAP_SCRIPT_HOOK_MISSING');
+  }
   const instrumentControl = `<label id="st-score-audio-instrument-control" style="position:fixed;top:max(8px,env(safe-area-inset-top));right:8px;z-index:10000;padding:6px 8px;border:1px solid currentColor;border-radius:8px;background:Canvas;color:CanvasText;font:12px/1.2 system-ui,-apple-system,sans-serif">Ses <select id="st-score-audio-instrument" aria-label="Ses enstrümanı"><option value="GRAND_PIANO" selected>Piano</option><option value="VIOLIN">Violin</option></select></label>`;
+  const productionBootstrapScript = '<script src="./st-score-editor-production-bootstrap.js"></script>';
   return source
     .replace(editorScript, '<script src="./audio-runtime/st-score-audio-engine.js"></script>\n<script src="./st-score-editor-app.js"></script>')
     .replace("connect-src 'none';", "connect-src https://raw.githubusercontent.com;")
-    .replace('./st-score-editor-app09b-bootstrap.js', './st-score-editor-production-bootstrap.js')
-    .replace('<title>ST Score Editor APP-09B Test</title>', '<title>ST Score Editor</title>')
-    .replace(closingBody, `${instrumentControl}\n${closingBody}`);
+    .replace(previewBootstrapScript, `${instrumentControl}\n${productionBootstrapScript}`)
+    .replace('<title>ST Score Editor APP-09B Test</title>', '<title>ST Score Editor</title>');
 };
 
 export async function assembleProductionSite({
