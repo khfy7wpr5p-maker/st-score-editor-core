@@ -101,12 +101,12 @@ export const extractPreservedMusicXmlSymbolsV1 = (
     attributes += rawAttributes.length;
     if (attributes > runtime.limits.maxAttributes) throw new RangeError('MusicXML preservation attribute limit exceeded.');
 
-    const attrs: Record<string, string> = {};
-    for (const item of rawAttributes) {
+    const attributeEntries = rawAttributes.map(item => {
       const attributeName = item.local || item.name;
       if ((item.uri || '') !== '') throw new TypeError(`Foreign attribute namespace is not reviewed for preservation: ${attributeName}`);
-      attrs[attributeName] = item.value;
-    }
+      return [attributeName, item.value] as const;
+    });
+    const attrs: Record<string, string> = Object.fromEntries(attributeEntries);
 
     const inTechnical = name === 'technical' || parent?.inTechnical === true;
     const inStaffDetails = name === 'staff-details' || parent?.inStaffDetails === true;
