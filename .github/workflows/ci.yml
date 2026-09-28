@@ -46,3 +46,27 @@ jobs:
         run: 'python -m pip install --disable-pip-version-check --only-binary=:all: -r services/partitura_import/requirements.txt'
       - name: Test bounded Partitura import boundary
         run: python -m unittest discover -s services/partitura_import/tests -p "test_*.py" -v
+
+  sonar-diagnostics:
+    name: Sonar annotation diagnostics
+    permissions:
+      checks: read
+      contents: read
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Read Sonar annotations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            check_id=$(gh api "repos/$REPO/commits/$SHA/check-runs" --jq '.check_runs[] | select(.name == "SonarCloud Code Analysis" and .status == "completed") | .id' | head -n1)
+            if [ -n "$check_id" ]; then
+              gh api "repos/$REPO/check-runs/$check_id/annotations"
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
