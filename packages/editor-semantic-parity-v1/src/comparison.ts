@@ -413,21 +413,20 @@ export const compareEditorSemanticsV1 = (
   }
 
   const semanticKeyByMeasure = new Map(semantic.keySignatures.map((item) => [item.measureIndex, item.fifths]));
-  const editorKeyComparable = editor.keySignatures.map((item) => ({
-    measureIndex: item.measureIndex,
-    fifths: item.fifths
-  }));
-  const semanticKeyComparable = [...new Map(
-    editor.keySignatures.map((item) => [
-      item.measureIndex,
-      { measureIndex: item.measureIndex, fifths: semanticKeyByMeasure.get(item.measureIndex) }
-    ])
-  ).values()];
-  const keyMissing = semantic.keySignatures.some(
-    (item) => !editor.keySignatures.some((editorItem) => editorItem.measureIndex === item.measureIndex)
-  );
-  if (keyMissing || semanticKeyComparable.some((item) => item.fifths === undefined)
-    || !sameJson(editorKeyComparable, semanticKeyComparable)) {
+  const editorKeyByMeasure = new Map<number, number>();
+  let conflictingEditorKey = false;
+  for (const item of editor.keySignatures) {
+    const existing = editorKeyByMeasure.get(item.measureIndex);
+    if (existing !== undefined && existing !== item.fifths) conflictingEditorKey = true;
+    editorKeyByMeasure.set(item.measureIndex, item.fifths);
+  }
+  const editorKeyComparable = [...editorKeyByMeasure.entries()]
+    .map(([measureIndex, fifths]) => ({ measureIndex, fifths }))
+    .sort((left, right) => left.measureIndex - right.measureIndex);
+  const semanticKeyComparable = [...semanticKeyByMeasure.entries()]
+    .map(([measureIndex, fifths]) => ({ measureIndex, fifths }))
+    .sort((left, right) => left.measureIndex - right.measureIndex);
+  if (conflictingEditorKey || !sameJson(editorKeyComparable, semanticKeyComparable)) {
     diagnostics.push(diagnostic('KEY_SIGNATURE_MISMATCH', 'Key-signature fifths contexts differ.'));
   }
 
