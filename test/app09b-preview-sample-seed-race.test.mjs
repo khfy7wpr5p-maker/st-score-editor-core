@@ -71,3 +71,39 @@ test('APP-09B stable preview seeds its sample before mounting interactive file c
     await rm(temp, { recursive: true, force: true });
   }
 });
+
+
+test('APP-09B stable preview retries the same canonical revision after one transient renderer failure', async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-app09b-render-retry-'));
+  try {
+    const runtimeDir = path.join(temp, 'runtime');
+    const outputDir = path.join(temp, 'out');
+    await mkdir(runtimeDir, { recursive: true });
+    await writeRuntime(runtimeDir);
+
+    await assembleStableApp09BPreview({ runtimeDir, outputDir });
+    const bootstrap = await readFile(path.join(outputDir, 'st-score-editor-app09b-bootstrap.js'), 'utf8');
+
+    const failureStart = bootstrap.indexOf("mark('app09bRenderStatus', 'failed');");
+    assert.ok(failureStart >= 0, 'render failure branch must exist');
+    const failureBlock = bootstrap.slice(failureStart, failureStart + 1200);
+
+    assert.match(
+      failureBlock,
+      /lastAttemptRevision = null;/,
+      'a transient failure must release the same revision for a bounded retry'
+    );
+    assert.match(
+      failureBlock,
+      /scheduleRenderCurrent\(\)/,
+      'the released revision must be scheduled for a retry without requiring a user edit or resize'
+    );
+    assert.match(
+      failureBlock,
+      /renderRetryCount/,
+      'same-revision retry must be bounded rather than loop forever'
+    );
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
