@@ -56,15 +56,15 @@ export const classifyImportFallbackEligibility = (
       reason: 'native compatibility rejection is eligible for bounded fallback'
     });
   }
-  const reasons: Readonly<Record<string, string>> = Object.freeze({
-    MALFORMED_XML: 'malformed XML must fail before fallback',
-    SECURITY_POLICY: 'security-policy rejection must not reach fallback',
-    RESOURCE_LIMIT: 'resource-limit rejection must not reach fallback',
-    UNREPRESENTABLE_SEMANTIC: 'unrepresentable semantics remain fail-closed'
-  });
+  const reasons = new Map<string, string>([
+    ['MALFORMED_XML', 'malformed XML must fail before fallback'],
+    ['SECURITY_POLICY', 'security-policy rejection must not reach fallback'],
+    ['RESOURCE_LIMIT', 'resource-limit rejection must not reach fallback'],
+    ['UNREPRESENTABLE_SEMANTIC', 'unrepresentable semantics remain fail-closed']
+  ]);
   return Object.freeze({
     eligible: false,
-    reason: reasons[kind] ?? 'unknown failure kind is not fallback eligible'
+    reason: reasons.get(kind) ?? 'unknown failure kind is not fallback eligible'
   });
 };
 
