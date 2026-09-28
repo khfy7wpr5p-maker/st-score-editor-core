@@ -103,5 +103,48 @@ class PartituraImportBoundaryTest(unittest.TestCase):
         )
         self.assertEqual(result["sourceIdentity"], "../../outside/score.musicxml")
 
+    def test_partitura_semantics_include_ties_tuplets_fingering_and_articulation(self):
+        xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Guitar</part-name></score-part></part-list>
+  <part id="P1"><measure number="1">
+    <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+    <note id="tie-start">
+      <pitch><step>E</step><octave>4</octave></pitch>
+      <duration>2</duration><voice>1</voice><type>eighth</type>
+      <tie type="start"/>
+      <notations>
+        <tied type="start"/>
+        <articulations><staccato/></articulations>
+        <technical><fingering>1</fingering></technical>
+      </notations>
+    </note>
+    <note id="tie-stop">
+      <pitch><step>E</step><octave>4</octave></pitch>
+      <duration>2</duration><voice>1</voice><type>eighth</type>
+      <tie type="stop"/>
+      <notations><tied type="stop"/></notations>
+    </note>
+    <note id="triplet">
+      <pitch><step>G</step><octave>4</octave></pitch>
+      <duration>1</duration><voice>1</voice><type>eighth</type>
+      <time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>
+    </note>
+  </measure></part>
+</score-partwise>
+"""
+        result = import_musicxml_bytes(
+            xml,
+            source_identity="fixture:semantics.musicxml",
+            contract_version=NORMALIZED_IMPORT_ENVELOPE_VERSION,
+        )
+        notes = {note["sourceNoteId"]: note for note in result["parts"][0]["notes"]}
+
+        self.assertEqual(notes["tie-start"]["ties"], {"start": True, "stop": False})
+        self.assertEqual(notes["tie-stop"]["ties"], {"start": False, "stop": True})
+        self.assertEqual(notes["tie-start"]["fingerings"], ["1"])
+        self.assertIn("staccato", notes["tie-start"]["articulations"])
+        self.assertEqual(notes["triplet"]["tuplet"], {"actualNotes": 3, "normalNotes": 2})
+
 if __name__ == "__main__":
     unittest.main()
