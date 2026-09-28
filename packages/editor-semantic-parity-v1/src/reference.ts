@@ -220,9 +220,11 @@ export const analyzeSemanticParityMusicXmlProfileV1 = (
     return unsupported(`MusicXML is outside the admitted semantic parity parser profile: ${error instanceof Error ? error.message : String(error)}`);
   }
 
-  if (childrenNamed(root, 'part').length !== 1) return unsupported('SEM-04 admits exactly one MusicXML part.');
+  const parts = childrenNamed(root, 'part');
+  if (parts.length !== 1) return unsupported('SEM-04 admits exactly one MusicXML part.');
+  if (childrenNamed(parts[0] as XmlNode, 'measure').length < 2) return unsupported('SEM-04 requires at least two MusicXML measures.');
   if (descendants(root, 'grace').length > 0) return unsupported('Grace notes are outside the SEM-04 comparison profile.');
-  if (descendants(root, 'tuplet').length > 0 || descendants(root, 'beam').length > 0 || descendants(root, 'slur').length > 0 || descendants(root, 'tremolo').length > 0) {
+  if (descendants(root, 'tuplet').length > 0 || descendants(root, 'time-modification').length > 0 || descendants(root, 'beam').length > 0 || descendants(root, 'slur').length > 0 || descendants(root, 'tremolo').length > 0) {
     return unsupported('Tuplet, beam, slur and tremolo semantics are outside the SEM-04 comparison profile.');
   }
   for (const measure of descendants(root, 'measure')) {
