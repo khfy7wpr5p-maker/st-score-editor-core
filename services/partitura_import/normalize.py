@@ -97,7 +97,7 @@ def _note_rows(part: Any) -> list[dict[str, Any]]:
                 "sourceNoteId": source_note_id,
                 "pitch": int(note.midi_pitch),
                 "step": str(note.step),
-                "alter": int(note.alter),
+                "alter": 0 if note.alter is None else int(note.alter),
                 "octave": int(note.octave),
                 "onsetBeat": onset_beat,
                 "durationBeat": end_beat - onset_beat,
@@ -109,7 +109,7 @@ def _note_rows(part: Any) -> list[dict[str, Any]]:
                 "staff": int(note.staff) if note.staff is not None else None,
                 "divsPerQuarter": int(quarter_duration_map(start_div)),
                 "keyFifths": int(key_fifths),
-                "keyMode": int(key_mode),
+                "keyMode": None if key_mode is None else int(key_mode),
                 "timeBeats": int(ts_beats),
                 "timeBeatType": int(ts_beat_type),
                 "ties": {
