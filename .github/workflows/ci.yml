@@ -47,26 +47,20 @@ jobs:
       - name: Test bounded Partitura import boundary
         run: python -m unittest discover -s services/partitura_import/tests -p "test_*.py" -v
 
-  sonar-diagnostics:
-    name: Sonar annotation diagnostics
+  partitura-lock-diagnostics:
+    name: Partitura wheel lock diagnostics
     permissions:
-      checks: read
       contents: read
     runs-on: ubuntu-24.04
     steps:
-      - name: Read Sonar annotations
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.event.pull_request.head.sha }}
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Resolve wheel hashes
         run: |
-          set -euo pipefail
-          for attempt in $(seq 1 30); do
-            check_id=$(gh api "repos/$REPO/commits/$SHA/check-runs" --jq '.check_runs[] | select(.name == "SonarCloud Code Analysis" and .status == "completed") | .id' | head -n1)
-            if [ -n "$check_id" ]; then
-              gh api "repos/$REPO/check-runs/$check_id/annotations"
-              exit 0
-            fi
-            sleep 5
-          done
-          exit 1
+          mkdir -p /tmp/partitura-wheels
+          python -m pip download --disable-pip-version-check --only-binary=:all: --no-deps -r services/partitura_import/requirements.txt -d /tmp/partitura-wheels
+          sha256sum /tmp/partitura-wheels/*
