@@ -101,3 +101,29 @@ test('SEM-04 comparator fails closed when one-field fallback is ambiguous', () =
   assert.equal(report.status, 'UNSUPPORTED');
   assert.equal(codes(report).includes('PROFILE_UNSUPPORTED'), true);
 });
+
+
+test('SEM-04 comparator fails closed on duplicate time-signature contexts at one measure start', () => {
+  const reference = clone(referenceBaseline());
+  reference.semanticSnapshot.time_signatures.push({
+    part_id: 'P1',
+    onset_div: 0,
+    beats: 3,
+    beat_type: 4
+  });
+
+  const report = compareEditorSemanticsV1(editorBaseline(), reference);
+
+  assert.equal(report.status, 'UNSUPPORTED');
+  assert.equal(codes(report).includes('PROFILE_UNSUPPORTED'), true);
+});
+
+test('SEM-04 comparator fails closed when a semantic note crosses its declared measure boundary', () => {
+  const reference = clone(referenceBaseline());
+  reference.semanticSnapshot.notes[1].duration_div = 20;
+
+  const report = compareEditorSemanticsV1(editorBaseline(), reference);
+
+  assert.equal(report.status, 'UNSUPPORTED');
+  assert.equal(codes(report).includes('PROFILE_UNSUPPORTED'), true);
+});
