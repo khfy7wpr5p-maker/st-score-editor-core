@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import os
 import signal
 import tempfile
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any, Iterator
 
 import partitura
@@ -53,20 +53,6 @@ def _validate_source(xml_bytes: bytes) -> None:
         raise ImportBoundaryError("MusicXML source contains prohibited document type or entity declaration.")
 
 
-@contextmanager
-def _private_musicxml_file(xml_bytes: bytes) -> Iterator[str]:
-    fd, path = tempfile.mkstemp(prefix="st-partitura-import-", suffix=".musicxml")
-    try:
-        with os.fdopen(fd, "wb") as source:
-            source.write(xml_bytes)
-        yield path
-    finally:
-        try:
-            os.unlink(path)
-        except FileNotFoundError:
-            pass
-
-
 def import_musicxml_bytes(
     xml_bytes: bytes,
     *,
@@ -81,7 +67,9 @@ def import_musicxml_bytes(
     _validate_source(xml_bytes)
 
     try:
-        with _private_musicxml_file(xml_bytes) as path:
+        with tempfile.TemporaryDirectory(prefix="st-partitura-import-") as temp_dir:
+            path = Path(temp_dir) / "source.musicxml"
+            path.write_bytes(xml_bytes)
             with _parse_deadline(MAX_PARSE_SECONDS):
                 score = partitura.load_musicxml(path)
                 normalized = normalize_score(score, source_identity)
