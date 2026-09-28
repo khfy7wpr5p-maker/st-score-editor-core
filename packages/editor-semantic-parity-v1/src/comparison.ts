@@ -134,12 +134,13 @@ const measureStarts = (
   let contextIndex = 0;
 
   for (let measureIndex = 0; measureIndex < semanticSnapshot.measure_count; measureIndex += 1) {
+    let contextsAtStart = 0;
     while (contextIndex < contexts.length && contexts[contextIndex]?.onset_div === start) {
+      if (contextsAtStart > 0) return null;
       const next = contexts[contextIndex];
       if (next === undefined || next.beats <= 0 || next.beat_type <= 0) return null;
-      if (current !== null && contextIndex + 1 < contexts.length
-        && contexts[contextIndex + 1]?.onset_div === start) return null;
       current = Object.freeze({ beats: next.beats, beat_type: next.beat_type });
+      contextsAtStart += 1;
       contextIndex += 1;
     }
     if (current === null) return null;
@@ -170,9 +171,14 @@ const semanticNote = (
   if (note.is_grace || note.voice === null || note.staff === null
     || note.voice <= 0 || note.staff <= 0
     || note.measure_index < 0 || note.measure_index >= starts.length
-    || note.duration_div < 0) return null;
+    || note.duration_div <= 0) return null;
   const measureStart = starts[note.measure_index];
+  const nextMeasureStart = starts[note.measure_index + 1];
   if (measureStart === undefined || note.onset_div < measureStart) return null;
+  if (nextMeasureStart !== undefined
+    && (note.onset_div >= nextMeasureStart || note.onset_div + note.duration_div > nextMeasureStart)) {
+    return null;
+  }
   const onset = rational(
     BigInt(note.onset_div - measureStart),
     4n * BigInt(divisionsPerQuarter)
