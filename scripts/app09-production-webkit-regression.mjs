@@ -1,45 +1,32 @@
 import { createServer } from 'node:http';
-import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { webkit } from 'playwright';
 
-const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const browserRoot = path.join(repoRoot, 'dist', 'browser');
-const contentTypes = new Map([
-  ['.html', 'text/html; charset=utf-8'],
-  ['.js', 'text/javascript; charset=utf-8'],
-  ['.mjs', 'text/javascript; charset=utf-8'],
-  ['.json', 'application/json; charset=utf-8'],
-  ['.svg', 'image/svg+xml'],
-  ['.xml', 'application/xml; charset=utf-8'],
-  ['.musicxml', 'application/xml; charset=utf-8']
-]);
+const browserRoot = path.resolve('dist/browser');
+const mimeFor = file => ({
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml'
+}[path.extname(file)] ?? 'application/octet-stream');
 
-function resolveRequestPath(requestUrl) {
-  const pathname = decodeURIComponent(new URL(requestUrl ?? '/', 'http://127.0.0.1').pathname);
-  const resolved = path.resolve(browserRoot, pathname.replace(/^\/+/, '') || 'index.html');
-  if (resolved !== browserRoot && !resolved.startsWith(`${browserRoot}${path.sep}`)) {
-    throw new Error('request escaped browser output root');
-  }
-  return resolved;
-}
-
-const server = createServer(async (request, response) => {
-  try {
-    const requestedPath = resolveRequestPath(request.url);
-    const info = await stat(requestedPath);
-    if (!info.isFile()) {
+const server = createServer((request, response) => {
+  void (async () => {
+    const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://local.test').pathname);
+    const candidate = path.resolve(browserRoot, pathname.replace(/^\/+/, '') || 'index.html');
+    if (candidate !== browserRoot && !candidate.startsWith(`${browserRoot}${path.sep}`)) {
       response.writeHead(404).end('not found');
       return;
     }
-    response.setHeader('Content-Type', contentTypes.get(path.extname(requestedPath)) ?? 'application/octet-stream');
-    response.setHeader('Cache-Control', 'no-store');
-    createReadStream(requestedPath).pipe(response);
-  } catch {
-    response.writeHead(404).end('not found');
-  }
+    try {
+      const body = await readFile(candidate);
+      response.writeHead(200, { 'Content-Type': mimeFor(candidate), 'Cache-Control': 'no-store' }).end(body);
+    } catch {
+      response.writeHead(404).end('not found');
+    }
+  })();
 });
 
 await new Promise((resolve, reject) => {
@@ -47,41 +34,35 @@ await new Promise((resolve, reject) => {
   server.listen(0, '127.0.0.1', resolve);
 });
 const address = server.address();
-if (address === null || typeof address === 'string') {
-  server.close();
-  throw new Error('APP-09 production WebKit server did not expose a TCP port.');
-}
+if (address === null || typeof address === 'string') throw new Error('APP09_PRODUCTION_WEBKIT_PORT_MISSING');
 
 let browser;
 try {
   browser = await webkit.launch({ headless: true });
-  const context = await browser.newContext({
+  const page = await browser.newPage({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 3,
     hasTouch: true,
     isMobile: true
   });
-  const page = await context.newPage();
-  const browserErrors = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') browserErrors.push(message.text());
-  });
-  page.on('pageerror', (error) => browserErrors.push(error.message));
+  const errors = [];
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', error => errors.push(error.message));
 
-  await page.goto(`http://127.0.0.1:${address.port}/index.html`, {
-    waitUntil: 'load',
-    timeout: 30000
-  });
-
-  await page.waitForFunction(() => {
-    const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
-    const child = frame instanceof HTMLIFrameElement ? frame.contentDocument : null;
-    return document.documentElement.dataset.app09bRendererReady === 'true' &&
-      document.documentElement.dataset.app09bRenderStatus === 'current' &&
-      globalThis.STScoreEditorAudioEngine !== undefined &&
-      document.getElementById('st-score-audio-instrument') instanceof HTMLSelectElement &&
-      (child?.querySelectorAll('svg').length ?? 0) > 0;
-  }, null, { timeout: 30000 });
+  await page.goto(`http://127.0.0.1:${address.port}/index.html`, { waitUntil: 'load', timeout: 30000 });
+  try {
+    await page.waitForFunction(() => {
+      const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
+      const child = frame instanceof HTMLIFrameElement ? frame.contentDocument : null;
+      return document.documentElement.dataset.app09bRendererReady === 'true' &&
+        document.documentElement.dataset.app09bRenderStatus === 'current' &&
+        globalThis.STScoreEditorAudioEngine !== undefined &&
+        document.getElementById('st-score-audio-instrument') instanceof HTMLSelectElement &&
+        (child?.querySelectorAll('svg').length ?? 0) > 0;
+    }, null, { timeout: 30000 });
+  } catch (error) {
+    throw new Error(`APP09_PRODUCTION_RENDER_TIMEOUT: ${errors.slice(-8).join(' | ') || error.message}`);
+  }
 
   const state = await page.evaluate(() => {
     const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
@@ -90,23 +71,20 @@ try {
       rendererReady: document.documentElement.dataset.app09bRendererReady ?? null,
       renderStatus: document.documentElement.dataset.app09bRenderStatus ?? null,
       svgCount: child?.querySelectorAll('svg').length ?? -1,
-      audioEngineAttached: globalThis.STScoreEditorAudioEngine !== undefined,
+      audioAttached: globalThis.STScoreEditorAudioEngine !== undefined,
       selectorPresent: document.getElementById('st-score-audio-instrument') instanceof HTMLSelectElement
     };
   });
 
-  if (browserErrors.length > 0) {
-    throw new Error(`APP-09 production WebKit browser errors: ${browserErrors.slice(-12).join(' | ')}`);
-  }
+  if (errors.length) throw new Error(`APP09_PRODUCTION_BROWSER_ERRORS: ${errors.slice(-8).join(' | ')}`);
   if (state.rendererReady !== 'true' || state.renderStatus !== 'current' || state.svgCount < 1) {
-    throw new Error(`APP-09 production renderer did not produce visible SVG: ${JSON.stringify(state)}`);
+    throw new Error(`APP09_PRODUCTION_RENDER_NOT_VISIBLE: ${JSON.stringify(state)}`);
   }
-  if (!state.audioEngineAttached || !state.selectorPresent) {
-    throw new Error(`APP-09 production audio host did not initialize: ${JSON.stringify(state)}`);
+  if (!state.audioAttached || !state.selectorPresent) {
+    throw new Error(`APP09_PRODUCTION_AUDIO_NOT_READY: ${JSON.stringify(state)}`);
   }
-
   console.log(`APP-09 production WebKit regression: PASS (${JSON.stringify(state)})`);
 } finally {
-  if (browser !== undefined) await browser.close();
-  await new Promise((resolve) => server.close(resolve));
+  if (browser) await browser.close();
+  await new Promise(resolve => server.close(resolve));
 }
