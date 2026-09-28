@@ -182,3 +182,18 @@ seslitabCutoverAuthorized = false
 ```
 
 SesliTab is not an architectural dependency of ST Score Editor Core and remains outside this development track.
+
+## P-MXML-REF-01 automated compatibility evidence
+
+P-MXML-REF-01 adds bounded MusicXML compatibility evidence to the existing standalone hardening chain. The synthetic real-world envelope, canonical-equivalence/source-identity checks and dedicated mobile WebKit MusicXML-open regression are automated PASS evidence.
+
+They do not close APP-09 and do not substitute for physical-device qualification. The previously failing Android Chrome and iPhone Safari MusicXML-open paths must be rerun with the exact private/reference file during Task 8.
+
+```text
+manualDeviceValidationRequired = true
+standaloneReleaseGatePassed = false
+seslitabCutoverAuthorized = false
+```
+
+No merge, deploy, Render change, production exposure or SesliTab cutover is implied by this compatibility evidence.
+
