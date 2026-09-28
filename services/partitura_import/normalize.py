@@ -32,6 +32,41 @@ def _iter_score_parts(score: Any) -> list[Any]:
         return [score]
 
 
+def _source_note_id(note: Any) -> str | None:
+    value = getattr(note, "id", None)
+    if value in (None, "", "None"):
+        return None
+    return str(value)
+
+
+def _tuplet_from_symbolic_duration(note: Any) -> dict[str, int] | None:
+    symbolic = getattr(note, "symbolic_duration", None)
+    if not isinstance(symbolic, dict):
+        return None
+    actual = symbolic.get("actual_notes")
+    normal = symbolic.get("normal_notes")
+    if actual is None or normal is None:
+        return None
+    return {"actualNotes": int(actual), "normalNotes": int(normal)}
+
+
+def _fingering_values(note: Any) -> list[str]:
+    values: list[str] = []
+    for technical in list(getattr(note, "technical", ()) or ()):
+        if isinstance(technical, ptscore.Fingering):
+            value = getattr(technical, "fingering", None)
+            if value is not None:
+                values.append(str(value))
+    return values
+
+
+def _articulation_values(note: Any) -> list[str]:
+    return [str(value) for value in list(getattr(note, "articulations", ()) or ())]
+
+
+def _ornament_values(note: Any) -> list[str]:
+    return [str(value) for value in list(getattr(note, "ornaments", ()) or ())]
+
 def _note_rows(part: Any) -> list[dict[str, Any]]:
     array = part.note_array(
         include_pitch_spelling=True,
@@ -42,14 +77,24 @@ def _note_rows(part: Any) -> list[dict[str, Any]]:
         include_grace_notes=True,
     )
     names = set(array.dtype.names or ())
+    note_objects = {
+        source_id: note
+        for note in list(getattr(part, "notes", ()) or ())
+        if (source_id := _source_note_id(note)) is not None
+    }
     out: list[dict[str, Any]] = []
     for row in array:
         def get(name: str, default: Any = None) -> Any:
             return _py(row[name]) if name in names else default
 
+        source_note_id = str(get("id")) if get("id") not in (None, "None", "") else None
+        note_object = note_objects.get(source_note_id) if source_note_id is not None else None
+        tie_prev = getattr(note_object, "tie_prev", None) if note_object is not None else None
+        tie_next = getattr(note_object, "tie_next", None) if note_object is not None else None
+
         out.append(
             {
-                "sourceNoteId": str(get("id")) if get("id") not in (None, "None", "") else None,
+                "sourceNoteId": source_note_id,
                 "pitch": int(get("pitch")),
                 "step": str(get("step")) if get("step") is not None else None,
                 "alter": int(get("alter")) if get("alter") is not None else 0,
@@ -67,6 +112,16 @@ def _note_rows(part: Any) -> list[dict[str, Any]]:
                 "keyMode": int(get("ks_mode")) if get("ks_mode") is not None else None,
                 "timeBeats": int(get("ts_beats")) if get("ts_beats") is not None else None,
                 "timeBeatType": int(get("ts_beat_type")) if get("ts_beat_type") is not None else None,
+                "ties": {
+                    "start": tie_next is not None,
+                    "stop": tie_prev is not None,
+                },
+                "tiePrevSourceNoteId": _source_note_id(tie_prev) if tie_prev is not None else None,
+                "tieNextSourceNoteId": _source_note_id(tie_next) if tie_next is not None else None,
+                "tuplet": _tuplet_from_symbolic_duration(note_object) if note_object is not None else None,
+                "fingerings": _fingering_values(note_object) if note_object is not None else [],
+                "articulations": _articulation_values(note_object) if note_object is not None else [],
+                "ornaments": _ornament_values(note_object) if note_object is not None else [],
             }
         )
     return out
