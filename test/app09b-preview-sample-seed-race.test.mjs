@@ -103,6 +103,11 @@ test('APP-09B stable preview retries the same canonical revision after one trans
       /renderRetryCount/,
       'same-revision retry must be bounded rather than loop forever'
     );
+    assert.match(bootstrap, /let renderInFlight = false;/);
+    assert.match(bootstrap, /if \(renderInFlight\) return;/);
+    assert.match(bootstrap, /renderInFlight = true;/);
+    assert.match(bootstrap, /finally \{\s*renderInFlight = false;/);
+    assert.match(bootstrap, /latestRevision !== currentRevision/);
   } finally {
     await rm(temp, { recursive: true, force: true });
   }

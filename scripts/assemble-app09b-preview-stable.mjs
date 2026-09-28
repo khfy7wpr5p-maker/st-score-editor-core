@@ -85,6 +85,7 @@ const rendererAttachWithDeferredSubscriptionBlock = `    controller.attachOsmdRe
 
 const renderRetryStateBlock = `  let renderScheduled = false;`;
 const renderRetryStateWithBoundedRetryBlock = `  let renderScheduled = false;
+  let renderInFlight = false;
   let renderRetryRevision = null;
   let renderRetryCount = 0;`;
 
@@ -97,7 +98,16 @@ const renderSchedulerHeadWithRetryResetBlock = `  const scheduleRenderCurrent = 
       renderRetryRevision = revision;
       renderRetryCount = 0;
     }
-    if (revision === null || revision === lastRenderedRevision || revision === lastAttemptRevision || renderScheduled || rendererApi === null) return;`;
+    if (revision === null || revision === lastRenderedRevision || revision === lastAttemptRevision || renderScheduled || rendererApi === null) return;
+    if (renderInFlight) return;`;
+
+const renderAttemptBlock = `      lastAttemptRevision = currentRevision;
+      try {
+        await controller.renderCurrent();`;
+const renderAttemptWithSingleFlightBlock = `      lastAttemptRevision = currentRevision;
+      renderInFlight = true;
+      try {
+        await controller.renderCurrent();`;
 
 const renderFailureBlock = `      } catch (error) {
         mark('app09bRenderStatus', 'failed');
@@ -121,6 +131,16 @@ const renderFailureWithBoundedRetryBlock = `      } catch (error) {
           } else {
             queueMicrotask(retryCurrentRevision);
           }
+        }
+      } finally {
+        renderInFlight = false;
+        const latestRevision = controller.getSnapshot().revisionId;
+        if (
+          latestRevision !== null &&
+          latestRevision !== currentRevision &&
+          latestRevision !== lastRenderedRevision
+        ) {
+          scheduleRenderCurrent();
         }
       }`;
 
@@ -306,9 +326,14 @@ const addBoundedRenderRetry = (bootstrap) => {
       `APP09B bounded render retry patch mismatch: state=${stateOccurrences}, scheduler=${schedulerOccurrences}, failure=${failureOccurrences}.`
     );
   }
+  const attemptOccurrences = bootstrap.split(renderAttemptBlock).length - 1;
+  if (attemptOccurrences !== 1) {
+    throw new Error(`APP09B single-flight render patch mismatch: attempt=${attemptOccurrences}.`);
+  }
   return bootstrap
     .replace(renderRetryStateBlock, renderRetryStateWithBoundedRetryBlock)
     .replace(renderSchedulerHeadBlock, renderSchedulerHeadWithRetryResetBlock)
+    .replace(renderAttemptBlock, renderAttemptWithSingleFlightBlock)
     .replace(renderFailureBlock, renderFailureWithBoundedRetryBlock);
 };
 
