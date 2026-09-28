@@ -36,8 +36,13 @@ const gcd = (left: number, right: number): number => {
   return a;
 };
 
-const normalizedRational = (value: Rational): Readonly<EditorSemanticRationalV1> => {
+const normalizedRational = (value: Rational): Readonly<EditorSemanticRationalV1> | null => {
+  if (!Number.isSafeInteger(value.numerator)
+    || !Number.isSafeInteger(value.denominator)
+    || value.numerator < 0
+    || value.denominator <= 0) return null;
   const divisor = gcd(value.numerator, value.denominator);
+  if (divisor === 0) return null;
   return Object.freeze({
     numerator: value.numerator / divisor,
     denominator: value.denominator / divisor
@@ -121,6 +126,11 @@ export const projectEditorSemanticsV1 = (
           for (const event of voice.events) {
             if (event.kind === 'rest') continue;
             const atoms = event.kind === 'note' ? [event.note] : event.notes;
+            const onset = normalizedRational(event.onset);
+            const duration = normalizedRational(event.duration);
+            if (onset === null || duration === null) {
+              return unsupported('Invalid canonical rational timing is outside SEM-04.');
+            }
             for (const atom of atoms) {
               const roles = tieRoles.get(atom.id) ?? { tieStart: false, tieStop: false };
               candidates.push({
@@ -129,8 +139,8 @@ export const projectEditorSemanticsV1 = (
                 measureIndex,
                 staffOrdinal: staff.ordinal,
                 voiceOrdinal: voice.ordinal,
-                onset: normalizedRational(event.onset),
-                duration: normalizedRational(event.duration),
+                onset,
+                duration,
                 pitchMidi: pitchMidi(atom.pitch),
                 occurrenceOrdinal: 1,
                 tieStart: roles.tieStart,
