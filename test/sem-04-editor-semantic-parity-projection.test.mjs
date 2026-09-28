@@ -306,3 +306,16 @@ test('SEM-04 sparse notation stays sparse and does not fabricate contexts', () =
   assert.deepEqual(result.projection.keySignatures, []);
   assert.deepEqual(result.projection.clefs, []);
 });
+
+
+test('SEM-04 projection fails closed instead of throwing on invalid canonical rational input', () => {
+  const valid = scoreFixture();
+  const notation = notationFixture(valid, { sparse: true });
+  const score = structuredClone(valid);
+  score.parts[0].staves[0].measures[0].voices[0].events[0].duration.denominator = 0;
+
+  const result = projectEditorSemanticsV1(score, notation);
+
+  assert.equal(result.status, 'UNSUPPORTED');
+  assert.equal(result.diagnostics[0]?.code, 'PROFILE_UNSUPPORTED');
+});
