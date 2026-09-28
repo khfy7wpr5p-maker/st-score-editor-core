@@ -141,7 +141,11 @@ class PartituraImportBoundaryTest(unittest.TestCase):
         notes = {note["sourceNoteId"]: note for note in result["parts"][0]["notes"]}
 
         self.assertEqual(notes["tie-start"]["ties"], {"start": True, "stop": False})
+        self.assertEqual(notes["tie-start"]["tieNextSourceNoteId"], "tie-stop")
+        self.assertIsNone(notes["tie-start"]["tiePrevSourceNoteId"])
         self.assertEqual(notes["tie-stop"]["ties"], {"start": False, "stop": True})
+        self.assertEqual(notes["tie-stop"]["tiePrevSourceNoteId"], "tie-start")
+        self.assertIsNone(notes["tie-stop"]["tieNextSourceNoteId"])
         self.assertEqual(notes["tie-start"]["fingerings"], ["1"])
         self.assertIn("staccato", notes["tie-start"]["articulations"])
         self.assertEqual(notes["triplet"]["tuplet"], {"actualNotes": 3, "normalNotes": 2})
