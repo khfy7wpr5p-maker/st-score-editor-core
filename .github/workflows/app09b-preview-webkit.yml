@@ -79,6 +79,29 @@ jobs:
         run: node scripts/app09b-webkit-preview-regression.mjs
       - name: Run APP-09B WebKit controlled layout rerender regression
         run: node scripts/app09b-webkit-controlled-layout-regression.mjs
+      - name: Prepare deterministic production audio runtime stub
+        run: |
+          mkdir -p "$RUNNER_TEMP/st-score-audio-runtime"
+          cat > "$RUNNER_TEMP/st-score-audio-runtime/st-score-audio-engine.js" <<'EOF'
+          globalThis.STScoreAudioEngine = Object.freeze({
+            version: '0.1.2',
+            createAudioEngine() {
+              return Object.freeze({
+                prepare: async () => {},
+                setInstrument: async () => {},
+                audition: async () => Object.freeze({ ok: true })
+              });
+            }
+          });
+          EOF
+      - name: Assemble production site for WebKit regression
+        env:
+          ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
+          ST_SCORE_AUDIO_RUNTIME_DIR: ${{ runner.temp }}/st-score-audio-runtime
+        run: |
+          node --input-type=module -e "import { assembleProductionSite } from './scripts/assemble-production-site.mjs'; await assembleProductionSite({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR, outputDir: 'dist/browser', refreshRendererRuntime: false });"
+      - name: Run APP-09 production WebKit bootstrap regression
+        run: node scripts/app09-production-webkit-regression.mjs
 
   p05-paste-render:
     permissions:
