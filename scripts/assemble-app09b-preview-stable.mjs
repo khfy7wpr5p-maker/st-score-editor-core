@@ -83,6 +83,47 @@ const rendererAttachBlock = `    controller.attachOsmdRenderer(host);`;
 const rendererAttachWithDeferredSubscriptionBlock = `    controller.attachOsmdRenderer(host);
     controller.subscribe(() => { scheduleRenderCurrent(); });`;
 
+const renderRetryStateBlock = `  let renderScheduled = false;`;
+const renderRetryStateWithBoundedRetryBlock = `  let renderScheduled = false;
+  let renderRetryRevision = null;
+  let renderRetryCount = 0;`;
+
+const renderSchedulerHeadBlock = `  const scheduleRenderCurrent = () => {
+    const revision = controller.getSnapshot().revisionId;
+    if (revision === null || revision === lastRenderedRevision || revision === lastAttemptRevision || renderScheduled || rendererApi === null) return;`;
+const renderSchedulerHeadWithRetryResetBlock = `  const scheduleRenderCurrent = () => {
+    const revision = controller.getSnapshot().revisionId;
+    if (revision !== renderRetryRevision) {
+      renderRetryRevision = revision;
+      renderRetryCount = 0;
+    }
+    if (revision === null || revision === lastRenderedRevision || revision === lastAttemptRevision || renderScheduled || rendererApi === null) return;`;
+
+const renderFailureBlock = `      } catch (error) {
+        mark('app09bRenderStatus', 'failed');
+        console.error('APP09B render failed', error);
+      }`;
+const renderFailureWithBoundedRetryBlock = `      } catch (error) {
+        mark('app09bRenderStatus', 'failed');
+        console.error('APP09B render failed', error);
+        if (
+          controller.getSnapshot().revisionId === currentRevision &&
+          renderRetryRevision === currentRevision &&
+          renderRetryCount < 1
+        ) {
+          renderRetryCount += 1;
+          lastAttemptRevision = null;
+          const retryCurrentRevision = () => {
+            if (controller.getSnapshot().revisionId === currentRevision) scheduleRenderCurrent();
+          };
+          if (typeof globalThis.requestAnimationFrame === 'function') {
+            globalThis.requestAnimationFrame(() => { retryCurrentRevision(); });
+          } else {
+            queueMicrotask(retryCurrentRevision);
+          }
+        }
+      }`;
+
 const legacyOnHitBlock = `    const onHit = async (clientX, clientY) => {
       const evidence = renderEvidence;
       if (evidence === null) return;
@@ -256,6 +297,21 @@ const deferRenderSubscriptionUntilRendererAttached = (bootstrap) => {
     .replace(rendererAttachBlock, rendererAttachWithDeferredSubscriptionBlock);
 };
 
+const addBoundedRenderRetry = (bootstrap) => {
+  const stateOccurrences = bootstrap.split(renderRetryStateBlock).length - 1;
+  const schedulerOccurrences = bootstrap.split(renderSchedulerHeadBlock).length - 1;
+  const failureOccurrences = bootstrap.split(renderFailureBlock).length - 1;
+  if (stateOccurrences !== 1 || schedulerOccurrences !== 1 || failureOccurrences !== 1) {
+    throw new Error(
+      `APP09B bounded render retry patch mismatch: state=${stateOccurrences}, scheduler=${schedulerOccurrences}, failure=${failureOccurrences}.`
+    );
+  }
+  return bootstrap
+    .replace(renderRetryStateBlock, renderRetryStateWithBoundedRetryBlock)
+    .replace(renderSchedulerHeadBlock, renderSchedulerHeadWithRetryResetBlock)
+    .replace(renderFailureBlock, renderFailureWithBoundedRetryBlock);
+};
+
 const addUniqueRestTouchFallback = (bootstrap) => {
   const occurrences = bootstrap.split(legacyOnHitBlock).length - 1;
   if (occurrences !== 1) {
@@ -275,7 +331,8 @@ export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defa
   const stableBootstrap = bootstrap.replace(movingBridge, stableBridge);
   const seededBootstrap = relocateSampleSeedBeforeMount(stableBootstrap);
   const subscriptionSafeBootstrap = deferRenderSubscriptionUntilRendererAttached(seededBootstrap);
-  const patched = addUniqueRestTouchFallback(subscriptionSafeBootstrap);
+  const retrySafeBootstrap = addBoundedRenderRetry(subscriptionSafeBootstrap);
+  const patched = addUniqueRestTouchFallback(retrySafeBootstrap);
   await writeFile(bootstrapPath, patched, 'utf8');
   return manifest;
 }
