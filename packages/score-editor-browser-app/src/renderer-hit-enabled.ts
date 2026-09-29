@@ -20,6 +20,13 @@ import {
   GENERIC_RENDERED_EVENT_TARGET_VERSION,
   resolveRenderedScoreEventRefAddressV4
 } from '../../editor-renderer-selection-bridge-v4/src/generic-rendered-event.js';
+import {
+  createSuspiciousMeasureHighlightStateV1,
+  SUSPICIOUS_MEASURE_HIGHLIGHT_STATE_VERSION,
+  type SuspiciousMeasureFindingEvidenceV1,
+  type SuspiciousMeasureHighlightStateV1,
+  type SuspiciousMeasureRenderIdentityV1
+} from './correction-measure-highlight-state.js';
 
 export const RENDERER_HIT_ENABLED_BROWSER_APP_VERSION = '1.1.0' as const;
 
@@ -29,7 +36,9 @@ export const rendererHitEnabledBrowserAppProfile = Object.freeze({
   genericRenderedEventTargetingBundled: true,
   genericRenderedEventTargetVersion: GENERIC_RENDERED_EVENT_TARGET_VERSION,
   rendererHitCanonicalInput: 'opaque-renderer-request-v4-manifest-token' as const,
-  rendererDomSvgCoordinateAuthority: false
+  rendererDomSvgCoordinateAuthority: false,
+  suspiciousMeasureHighlightStateVersion: SUSPICIOUS_MEASURE_HIGHLIGHT_STATE_VERSION,
+  suspiciousMeasureHighlightCanonicalAuthority: false
 });
 
 export type RendererSemanticHitBridgeControllerErrorCode =
@@ -37,7 +46,8 @@ export type RendererSemanticHitBridgeControllerErrorCode =
   | 'RENDERER_PRESENTATION_MISMATCH'
   | 'RENDERED_NOTE_UNMAPPED'
   | 'RENDERED_EVENT_UNMAPPED'
-  | 'SELECTION_REJECTED';
+  | 'SELECTION_REJECTED'
+  | 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH';
 
 export class RendererSemanticHitBridgeControllerError extends Error {
   readonly code: RendererSemanticHitBridgeControllerErrorCode;
@@ -58,12 +68,19 @@ export interface RendererHitEnabledStandaloneScoreEditorController extends Omit<
   readonly selectRenderedScoreEventRef: (rawRef: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly resolveRenderedScoreNoteRef: (address: SemanticAddressV3) => Readonly<RenderedScoreNoteRefV4> | null;
   readonly resolveRenderedScoreMeasureRef: (address: SemanticAddressV3) => Readonly<RenderedScoreMeasureRefV4> | null;
+  readonly getSuspiciousMeasureHighlightState: () => Readonly<SuspiciousMeasureHighlightStateV1> | null;
+  readonly setSuspiciousMeasureFindings: (input: Readonly<{
+    current: SuspiciousMeasureRenderIdentityV1;
+    findings: readonly SuspiciousMeasureFindingEvidenceV1[];
+  }>) => Readonly<SuspiciousMeasureHighlightStateV1>;
+  readonly clearSuspiciousMeasureHighlights: () => void;
 }
 
 export const createRendererHitEnabledStandaloneScoreEditorController = (
   options: RecoveryEnabledControllerOptions = {}
 ): Readonly<RendererHitEnabledStandaloneScoreEditorController> => {
   const base = createRendererEnabledStandaloneScoreEditorController(options);
+  let suspiciousMeasureState: Readonly<SuspiciousMeasureHighlightStateV1> | null = null;
 
   const requireCurrentPresentation = () => {
     const document = base.getDocument();
@@ -163,7 +180,27 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
     resolveRenderedScoreMeasureRef: (address: SemanticAddressV3) => {
       const current = requireCurrentPresentation();
       return resolveSemanticAddressRenderedScoreMeasureRefV4(current.score, current.request, address);
-    }
+    },
+    getSuspiciousMeasureHighlightState: () => {
+      const score = base.getDocument()?.session.history.present.score;
+      if (
+        suspiciousMeasureState !== null &&
+        (score === undefined || score.id !== suspiciousMeasureState.documentId || score.revision.id !== suspiciousMeasureState.revisionId)
+      ) suspiciousMeasureState = null;
+      return suspiciousMeasureState;
+    },
+    setSuspiciousMeasureFindings: (input) => {
+      const current = requireCurrentPresentation();
+      if (input.current.documentId !== current.score.id || input.current.revisionId !== current.score.revision.id) {
+        throw new RendererSemanticHitBridgeControllerError(
+          'Suspicious measure evidence does not match the current accepted presentation.',
+          'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
+        );
+      }
+      suspiciousMeasureState = createSuspiciousMeasureHighlightStateV1(input);
+      return suspiciousMeasureState;
+    },
+    clearSuspiciousMeasureHighlights: () => { suspiciousMeasureState = null; }
   });
   return controller;
 };
@@ -179,7 +216,8 @@ export const createRendererHitEnabledStandaloneBrowserAppRuntime = () => {
       semanticHitBridgeVersion: EDITOR_RENDERER_SELECTION_BRIDGE_V4_VERSION,
       genericRenderedEventTargetVersion: GENERIC_RENDERED_EVENT_TARGET_VERSION,
       hitCanonicalInput: 'opaque-renderer-request-v4-manifest-token' as const,
-      domSvgCoordinateAuthority: false
+      domSvgCoordinateAuthority: false,
+      suspiciousMeasureHighlightStateVersion: SUSPICIOUS_MEASURE_HIGHLIGHT_STATE_VERSION
     })
   });
 };
