@@ -34,12 +34,32 @@ const memoryStore = () => {
 };
 
 const integrationProfile = rendererProfileForIntegration('st-score-rendering-layer');
-const host = () => ({
-  packageName: 'opensheetmusicdisplay',
-  packageVersion: '2.1.2',
-  license: 'BSD-3-Clause',
-  instance: { async load() {}, render() {}, clear() {} }
-});
+
+const rendererHost = () => {
+  const calls = {
+    measureHighlights: [],
+    clearMeasureHighlights: 0,
+    clears: 0
+  };
+  let evidence = Object.freeze({ renderEpoch: 'epoch-1', sourceId: 'source-1' });
+  return {
+    calls,
+    setEvidence(next) { evidence = Object.freeze({ ...next }); },
+    value: {
+      packageName: 'opensheetmusicdisplay',
+      packageVersion: '2.1.2',
+      license: 'BSD-3-Clause',
+      instance: {
+        async load() {},
+        render() {},
+        clear() { calls.clears += 1; },
+        getRenderEvidence() { return evidence; },
+        async highlightMeasure(value) { calls.measureHighlights.push(structuredClone(value)); },
+        async clearMeasureHighlights() { calls.clearMeasureHighlights += 1; }
+      }
+    }
+  };
+};
 
 const controller = () => createRendererHitEnabledStandaloneScoreEditorController({
   rendererProfile: integrationProfile,
@@ -48,11 +68,22 @@ const controller = () => createRendererHitEnabledStandaloneScoreEditorController
   sha256Hex: async () => 'a'.repeat(64)
 });
 
-test('SES-106 correction highlights are presentation-only and do not create history', async () => {
+const finding = (score, id, targets, overrides = {}) => ({
+  findingId: id,
+  documentId: score.id,
+  revisionId: score.revision.id,
+  renderEpoch: 'epoch-1',
+  sourceId: 'source-1',
+  measureTargets: targets,
+  ...overrides
+});
+
+test('SES-106 renders one red measure highlight per exact current suspicious measure without history mutation', async () => {
   const value = controller();
   const opened = await value.openMusicXml(xml, { title: 'Correction highlight state' });
   assert.equal(opened.error, null);
-  value.attachOsmdRenderer(host());
+  const renderer = rendererHost();
+  value.attachOsmdRenderer(renderer.value);
   await value.renderCurrent();
 
   const document = value.getDocument();
@@ -61,24 +92,26 @@ test('SES-106 correction highlights are presentation-only and do not create hist
   const beforePast = document.session.history.past.length;
   const beforeFuture = document.session.history.future.length;
 
-  const state = value.setSuspiciousMeasureFindings({
+  const state = await value.setSuspiciousMeasureFindings({
     current: {
       documentId: score.id,
       revisionId: score.revision.id,
       renderEpoch: 'epoch-1',
       sourceId: 'source-1'
     },
-    findings: [{
-      findingId: 'duration-1',
-      documentId: score.id,
-      revisionId: score.revision.id,
-      renderEpoch: 'epoch-1',
-      sourceId: 'source-1',
-      measureTargets: [{ partId: 'P1', measureIndex: 0 }]
-    }]
+    findings: [
+      finding(score, 'duration-1', [{ partId: 'P1', measureIndex: 0 }]),
+      finding(score, 'duration-2', [{ partId: 'P1', measureIndex: 0 }])
+    ]
   });
 
   assert.deepEqual(state.targets, [{ partId: 'P1', measureIndex: 0 }]);
+  assert.deepEqual(renderer.calls.measureHighlights, [{
+    target: { partId: 'P1', measureIndex: 0 },
+    className: 'st-score-suspicious-measure'
+  }]);
+  assert.equal(renderer.calls.clearMeasureHighlights, 1);
+
   const after = value.getDocument();
   assert.ok(after);
   assert.equal(after.session.history.present.score.revision.id, score.revision.id);
@@ -87,24 +120,42 @@ test('SES-106 correction highlights are presentation-only and do not create hist
   value.unmount();
 });
 
+test('SES-106 fresh empty analysis clears rendered suspicious measure highlights', async () => {
+  const value = controller();
+  await value.openMusicXml(xml, { title: 'Correction highlight clear' });
+  const renderer = rendererHost();
+  value.attachOsmdRenderer(renderer.value);
+  await value.renderCurrent();
+  const score = value.getDocument().session.history.present.score;
+
+  await value.setSuspiciousMeasureFindings({
+    current: { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1', sourceId: 'source-1' },
+    findings: [finding(score, 'f1', [{ partId: 'P1', measureIndex: 0 }])]
+  });
+  assert.equal(renderer.calls.measureHighlights.length, 1);
+
+  const state = await value.setSuspiciousMeasureFindings({
+    current: { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1', sourceId: 'source-1' },
+    findings: []
+  });
+  assert.deepEqual(state.targets, []);
+  assert.equal(renderer.calls.clearMeasureHighlights, 2);
+  value.unmount();
+});
+
 test('SES-106 canonical revision change clears transient suspicious measure state', async () => {
   const value = controller();
   await value.openMusicXml(xml, { title: 'Correction highlight stale clear' });
-  value.attachOsmdRenderer(host());
+  const renderer = rendererHost();
+  value.attachOsmdRenderer(renderer.value);
   await value.renderCurrent();
 
   const document = value.getDocument();
   assert.ok(document);
   const score = document.session.history.present.score;
-  value.setSuspiciousMeasureFindings({
-    current: { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1' },
-    findings: [{
-      findingId: 'f1',
-      documentId: score.id,
-      revisionId: score.revision.id,
-      renderEpoch: 'epoch-1',
-      measureTargets: [{ partId: 'P1', measureIndex: 0 }]
-    }]
+  await value.setSuspiciousMeasureFindings({
+    current: { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1', sourceId: 'source-1' },
+    findings: [finding(score, 'f1', [{ partId: 'P1', measureIndex: 0 }])]
   });
   assert.notEqual(value.getSuspiciousMeasureHighlightState(), null);
 
@@ -123,29 +174,36 @@ test('SES-106 canonical revision change clears transient suspicious measure stat
   value.unmount();
 });
 
-test('SES-106 rejects evidence that does not match the accepted current presentation', async () => {
+test('SES-106 rejects missing, stale epoch, stale source and stale revision presentation evidence before highlighting', async () => {
   const value = controller();
   await value.openMusicXml(xml, { title: 'Correction highlight mismatch' });
   const document = value.getDocument();
   assert.ok(document);
   const score = document.session.history.present.score;
 
-  assert.throws(
+  await assert.rejects(
     () => value.setSuspiciousMeasureFindings({
-      current: { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1' },
+      current: { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1', sourceId: 'source-1' },
       findings: []
     }),
     error => error instanceof RendererSemanticHitBridgeControllerError && error.code === 'NO_CURRENT_RENDER_PRESENTATION'
   );
 
-  value.attachOsmdRenderer(host());
+  const renderer = rendererHost();
+  value.attachOsmdRenderer(renderer.value);
   await value.renderCurrent();
-  assert.throws(
-    () => value.setSuspiciousMeasureFindings({
-      current: { documentId: score.id, revisionId: 'stale-revision', renderEpoch: 'epoch-1' },
-      findings: []
-    }),
-    error => error instanceof RendererSemanticHitBridgeControllerError && error.code === 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
-  );
+
+  for (const current of [
+    { documentId: score.id, revisionId: 'stale-revision', renderEpoch: 'epoch-1', sourceId: 'source-1' },
+    { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-old', sourceId: 'source-1' },
+    { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1', sourceId: 'source-old' }
+  ]) {
+    await assert.rejects(
+      () => value.setSuspiciousMeasureFindings({ current, findings: [] }),
+      error => error instanceof RendererSemanticHitBridgeControllerError &&
+        error.code === 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
+    );
+  }
+  assert.equal(renderer.calls.measureHighlights.length, 0);
   value.unmount();
 });
