@@ -202,9 +202,33 @@ export const createStandaloneScoreEditorController = (
     });
   };
 
-  const notify = (): Readonly<ScoreEditorBrowserAppSnapshot> => {
+  type NotificationMode = 'FULL_SHELL' | 'PRESENTATION_ONLY';
+
+  const renderPresentationOnly = (): void => {
+    if (root === null) return;
+    const selection = current?.session.selection ?? null;
+    const inspector = root.querySelector<HTMLElement>('.stse-inspector');
+    if (inspector !== null) {
+      inspector.textContent = current === null
+        ? 'No document'
+        : `revision: ${current.session.history.present.score.revision.id}\nselection: ${selection === null ? 'none' : `${selection.kind}:${entityId(selection)}`}\nprojection: ${current.session.renderRequest.projectionStatus}`;
+    }
+
+    const statusCode = root.querySelector<HTMLElement>('.stse-status strong');
+    if (statusCode !== null) {
+      statusCode.textContent = lastError?.code ?? current?.session.status.code ?? 'NO_DOCUMENT';
+      statusCode.classList.toggle('stse-error', lastError !== null);
+    }
+    const statusMessage = root.querySelector<HTMLElement>('.stse-status-message');
+    if (statusMessage !== null) {
+      statusMessage.textContent = lastError?.message ?? current?.session.status.message ?? 'Create or open a score document.';
+    }
+  };
+
+  const notify = (mode: NotificationMode = 'FULL_SHELL'): Readonly<ScoreEditorBrowserAppSnapshot> => {
     const value = snapshot();
-    render();
+    if (mode === 'PRESENTATION_ONLY') renderPresentationOnly();
+    else render();
     for (const listener of listeners) listener(value);
     return value;
   };
@@ -214,14 +238,17 @@ export const createStandaloneScoreEditorController = (
     return current;
   };
 
-  const mutate = (operation: () => Readonly<ScoreEditorAppDocument>): Readonly<ScoreEditorBrowserAppSnapshot> => {
+  const mutate = (
+    operation: () => Readonly<ScoreEditorAppDocument>,
+    mode: NotificationMode = 'FULL_SHELL'
+  ): Readonly<ScoreEditorBrowserAppSnapshot> => {
     try {
       current = operation();
       lastError = null;
     } catch (error) {
       lastError = errorInfo(error);
     }
-    return notify();
+    return notify(mode);
   };
 
   const render = (): void => {
@@ -331,7 +358,10 @@ export const createStandaloneScoreEditorController = (
     adoptValidatedSnapshot: (document) => mutate(() => adoptScoreEditorAppDocumentSnapshot(document)),
     exportMusicXml: () => exportMusicXmlScoreEditorAppDocument(requireDocument()),
     markSaved: (nextTitle) => mutate(() => markScoreEditorAppDocumentSaved(requireDocument(), nextTitle ?? requireDocument().title)),
-    select: (address) => mutate(() => selectAppSemanticAddress(requireDocument(), address)),
+    select: (address) => mutate(
+      () => selectAppSemanticAddress(requireDocument(), address),
+      'PRESENTATION_ONLY'
+    ),
     undo: () => mutate(() => navigateAppDocumentHistory(requireDocument(), 'UNDO')),
     redo: () => mutate(() => navigateAppDocumentHistory(requireDocument(), 'REDO')),
     commitBasic: (intent, options) => mutate(() => commitAppBasicAuthoringIntent(requireDocument(), intent, options)),
