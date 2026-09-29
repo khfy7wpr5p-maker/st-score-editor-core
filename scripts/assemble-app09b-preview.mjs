@@ -232,6 +232,7 @@ const previewBootstrap = `(() => {
   let renderScheduled = false;
   let suspiciousMeasureState = null;
   let correctionAnalysisState = null;
+  let correctionInputState = null;
 
   const mark = (name, value) => {
     document.documentElement.dataset[name] = value;
@@ -337,6 +338,12 @@ const previewBootstrap = `(() => {
   };
 
   const analyzeMusicXmlAndHighlight = async (musicxml) => {
+    const revisionId = controller.getSnapshot().revisionId;
+    if (
+      correctionInputState === null ||
+      correctionInputState.revisionId !== revisionId ||
+      correctionInputState.musicxml !== musicxml
+    ) throw new Error('APP09B_CORRECTION_INPUT_REVISION_MISMATCH');
     const runtime = globalThis.STOmrCorrectionAnalysisRuntime;
     if (!runtime || typeof runtime.analyzeMusicXmlSuspiciousMeasures !== 'function') {
       throw new Error('APP09B_CORRECTION_ANALYSIS_RUNTIME_UNAVAILABLE');
@@ -379,8 +386,25 @@ const previewBootstrap = `(() => {
         })])
       });
     });
+    const beforeHistory = documentState.session.history;
+    const before = Object.freeze({
+      revisionId: beforeHistory.present.score.revision.id,
+      pastLength: beforeHistory.past.length,
+      futureLength: beforeHistory.future.length
+    });
     const presentation = await applySuspiciousMeasureFindings({ current, findings });
-    correctionAnalysisState = Object.freeze({ analysis, presentation });
+    const afterDocument = controller.getDocument?.();
+    const afterHistory = afterDocument?.session?.history;
+    const presentationInvariant = Object.freeze({
+      revisionUnchanged: afterHistory?.present?.score?.revision?.id === before.revisionId,
+      historyUnchanged:
+        afterHistory?.past?.length === before.pastLength &&
+        afterHistory?.future?.length === before.futureLength
+    });
+    if (!presentationInvariant.revisionUnchanged || !presentationInvariant.historyUnchanged) {
+      throw new Error('APP09B_CORRECTION_PRESENTATION_MUTATED_HISTORY');
+    }
+    correctionAnalysisState = Object.freeze({ analysis, presentation, presentationInvariant });
     mark('app09bCorrectionStatus', 'applied');
     return correctionAnalysisState;
   };
@@ -389,6 +413,7 @@ const previewBootstrap = `(() => {
     const openResult = await controller.openMusicXml(musicxml, options);
     if (openResult?.error) return Object.freeze({ openResult, analysis: null, analysisError: null });
     const revisionId = controller.getSnapshot().revisionId;
+    correctionInputState = Object.freeze({ revisionId, musicxml });
     try {
       scheduleRenderCurrent();
       await waitForCurrentRender(revisionId);
@@ -471,6 +496,7 @@ const previewBootstrap = `(() => {
           renderEvidence = null;
           suspiciousMeasureState = null;
           correctionAnalysisState = null;
+          correctionInputState = null;
           lastLoadSucceeded = false;
           lastRenderedRevision = null;
           frame.style.visibility = 'hidden';
