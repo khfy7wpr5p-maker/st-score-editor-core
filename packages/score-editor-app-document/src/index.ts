@@ -274,15 +274,17 @@ export const openMusicXmlScoreEditorAppDocument = async (
   musicXml: string,
   options: OpenMusicXmlAppDocumentOptions = {}
 ): Promise<Readonly<ScoreEditorAppDocument>> => {
-  const imported = await (options.load || importNotationMusicXmlV2)(musicXml, {
-    source: Object.freeze({
-      sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
-      format: 'musicxml' as const,
-      byteLength: new TextEncoder().encode(musicXml).length
-    }),
-    documentId: options.documentId,
-    revisionId: options.revisionId
-  } as Parameters<typeof importNotationMusicXmlV2>[1]);
+  const bytes = new TextEncoder().encode(musicXml);
+  const source = Object.freeze({
+    sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
+    format: 'musicxml' as const,
+    byteLength: bytes.byteLength
+  });
+  const imported = await (options.load ?? importNotationMusicXmlV2)(musicXml, {
+    source,
+    ...(options.documentId === undefined ? {} : { documentId: options.documentId }),
+    ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId })
+  });
   const migrated = migrateScoreNotationV2ToV3(imported.score, imported.notation);
   const session = sessionFromV3(migrated.score, migrated.notation, options.rendererProfile);
   return appState(cleanTitle(options.title, 'Imported Score'), 'MUSICXML', session, session.history.present.score.revision.id);
