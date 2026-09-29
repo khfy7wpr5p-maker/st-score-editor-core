@@ -133,7 +133,7 @@ try {
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
 
-  await page.goto(`http://127.0.0.1:${previewServer.port}/${entryHtml}`, {
+  await page.goto(`http://127.0.0.1:10080/${entryHtml}`, {
     waitUntil: 'load',
     timeout: 30000
   });
@@ -291,5 +291,4 @@ try {
   console.log(`SES-111 ${qualificationMode} ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, blockedStyleDiagnostics: blockedStyleDiagnostics.length, screenshotPath })})`);
 } finally {
   if (browser !== undefined) await browser.close();
-  await previewServer.close();
 }
