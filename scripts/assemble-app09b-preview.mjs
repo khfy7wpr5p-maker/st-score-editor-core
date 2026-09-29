@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const APP09B_RENDERER_SOURCE_REVISION = '6a716e68366b7ba303ef1a560a3cf34083a383f4';
+export const APP09B_RENDERER_SOURCE_REVISION = '90ba96f5f731c121229a0e916f85e3ab328069a7';
 export const APP09B_OSMD_VERSION = '2.1.2';
 export const APP09B_RENDERER_CONTRACT_VERSION = '0.2.0';
 export const APP09B_PREVIEW_VERSION = '1.0.0';
