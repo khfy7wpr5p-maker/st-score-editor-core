@@ -1,6 +1,6 @@
-import { createServer } from 'node:http';
-import { createReadStream } from 'node:fs';
-import { mkdir, stat } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { mkdir } from 'node:fs/promises';
+import { createServer as createNetServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, webkit } from 'playwright';
@@ -13,16 +13,6 @@ const qualificationMode = process.env.ST_CE_E2E_MODE ?? 'preview';
 const entryHtml = process.env.ST_CE_E2E_ENTRY ?? 'st-score-editor-app09b.html';
 const browserType = browserName === 'chromium' ? chromium : browserName === 'webkit' ? webkit : null;
 if (browserType === null) throw new Error('ST_CE_E2E_BROWSER must be chromium or webkit.');
-
-const contentTypes = new Map([
-  ['.html', 'text/html; charset=utf-8'],
-  ['.js', 'text/javascript; charset=utf-8'],
-  ['.mjs', 'text/javascript; charset=utf-8'],
-  ['.json', 'application/json; charset=utf-8'],
-  ['.svg', 'image/svg+xml'],
-  ['.xml', 'application/xml; charset=utf-8'],
-  ['.musicxml', 'application/xml; charset=utf-8']
-]);
 
 const overfullMusicXml = `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0">
@@ -45,37 +35,67 @@ const correctedMusicXml = overfullMusicXml.replace(
   '<note><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type></note>'
 );
 
-function resolveRequestPath(requestUrl) {
-  const pathname = decodeURIComponent(new URL(requestUrl ?? '/', 'http://127.0.0.1').pathname);
-  const resolved = path.resolve(browserRoot, pathname.replace(/^\/+/, '') || 'st-score-editor-app09b.html');
-  if (resolved !== browserRoot && !resolved.startsWith(`${browserRoot}${path.sep}`)) {
-    throw new Error('request escaped browser output root');
+const allocateLoopbackPort = async () => {
+  const probe = createNetServer();
+  await new Promise((resolve, reject) => {
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', resolve);
+  });
+  const address = probe.address();
+  if (address === null || typeof address === 'string') {
+    probe.close();
+    throw new Error('SES-111 port probe did not expose a TCP port.');
   }
-  return resolved;
-}
+  const port = address.port;
+  await new Promise((resolve, reject) => probe.close((error) => error ? reject(error) : resolve()));
+  return port;
+};
 
-const server = createServer(async (request, response) => {
-  try {
-    const requestedPath = resolveRequestPath(request.url);
-    const info = await stat(requestedPath);
-    if (!info.isFile()) {
-      response.writeHead(404).end('not found');
-      return;
+const startExistingPreviewServer = async () => {
+  const port = await allocateLoopbackPort();
+  const child = spawn(
+    process.execPath,
+    [path.join(repoRoot, 'scripts', 'serve-app09b-preview.mjs')],
+    {
+      cwd: repoRoot,
+      env: { ...process.env, PORT: String(port) },
+      stdio: ['ignore', 'pipe', 'pipe']
     }
-    response.setHeader('Content-Type', contentTypes.get(path.extname(requestedPath)) ?? 'application/octet-stream');
-    response.setHeader('Cache-Control', 'no-store');
-    createReadStream(requestedPath).pipe(response);
-  } catch {
-    response.writeHead(404).end('not found');
-  }
-});
+  );
+  let output = '';
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`SES-111 preview server startup timeout: ${output}`)), 15000);
+    const inspect = (chunk) => {
+      output += chunk.toString();
+      if (output.includes(`APP-09B preview server listening on ${port}`)) {
+        clearTimeout(timer);
+        resolve();
+      }
+    };
+    child.stdout.on('data', inspect);
+    child.stderr.on('data', inspect);
+    child.once('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.once('exit', (code) => {
+      if (code !== null && !output.includes(`APP-09B preview server listening on ${port}`)) {
+        clearTimeout(timer);
+        reject(new Error(`SES-111 preview server exited during startup: ${code} ${output}`));
+      }
+    });
+  });
+  return Object.freeze({
+    port,
+    stop: async () => {
+      if (child.exitCode !== null) return;
+      child.kill('SIGTERM');
+      await new Promise((resolve) => child.once('exit', resolve));
+    }
+  });
+};
 
-await new Promise((resolve, reject) => {
-  server.once('error', reject);
-  server.listen(0, '127.0.0.1', resolve);
-});
-const address = server.address();
-if (address === null || typeof address === 'string') throw new Error('SES-111 server did not expose a TCP port.');
+const previewServer = await startExistingPreviewServer();
 
 let browser;
 try {
@@ -96,7 +116,7 @@ try {
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
 
-  await page.goto(`http://127.0.0.1:${address.port}/${entryHtml}`, {
+  await page.goto(`http://127.0.0.1:${previewServer.port}/${entryHtml}`, {
     waitUntil: 'load',
     timeout: 30000
   });
@@ -254,5 +274,5 @@ try {
   console.log(`SES-111 ${qualificationMode} ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, blockedStyleDiagnostics: blockedStyleDiagnostics.length, screenshotPath })})`);
 } finally {
   if (browser !== undefined) await browser.close();
-  await new Promise((resolve) => server.close(resolve));
+  await previewServer.stop();
 }
