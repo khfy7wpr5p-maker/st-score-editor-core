@@ -70,6 +70,7 @@ const patchHtml = source => {
 export async function assembleProductionSite({
   runtimeDir,
   audioRuntimeDir,
+  correctionRuntimeDir = null,
   outputDir = defaultOutputDir,
   refreshRendererRuntime = true
 } = {}) {
@@ -81,6 +82,7 @@ export async function assembleProductionSite({
 
   const baseManifest = await assembleStableApp09BPreviewCli({
     runtimeDir,
+    correctionRuntimeDir,
     outputDir,
     includeIosDiagnostic: false,
     refreshRendererRuntime
@@ -104,6 +106,7 @@ export async function assembleProductionSite({
     editorSource: 'main',
     entryHtml: 'index.html',
     renderer: baseManifest.renderer,
+    correctionAnalysis: baseManifest.correctionAnalysis,
     audio: Object.freeze({
       release: AUDIO_RELEASE,
       releaseCommit: AUDIO_RELEASE_COMMIT,
@@ -153,6 +156,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = await assembleProductionSite({
     runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR,
     audioRuntimeDir,
+    correctionRuntimeDir: process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR ?? null,
     outputDir: process.env.ST_PRODUCTION_OUTPUT_DIR || defaultOutputDir,
     refreshRendererRuntime: process.env.ST_PRODUCTION_REFRESH_RENDERER_RUNTIME !== '0'
   });
