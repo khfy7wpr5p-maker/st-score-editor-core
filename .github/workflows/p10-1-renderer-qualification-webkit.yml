@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: khfy7wpr5p-maker/st-score-rendering-layer
-          ref: 90ba96f5f731c121229a0e916f85e3ab328069a7
+          ref: 86e4fda12af42a910515fb97a66a7575bec86c18
           path: st-score-rendering-layer
           persist-credentials: false
       - name: Build exact renderer runtime
@@ -35,7 +35,7 @@ jobs:
           gzip -dc "$GITHUB_WORKSPACE/scripts/renderer-runtime-lock/st-score-rendering-layer-90ba96f5f731c121229a0e916f85e3ab328069a7.package-lock.json.gz" > "$GITHUB_WORKSPACE/st-score-rendering-layer/package-lock.json"
           cd "$GITHUB_WORKSPACE/st-score-rendering-layer"
           npm ci --ignore-scripts --no-audit --no-fund
-          ST_SCORE_RENDERER_SOURCE_REVISION=90ba96f5f731c121229a0e916f85e3ab328069a7 npm run export:workstation-runtime
+          ST_SCORE_RENDERER_SOURCE_REVISION=86e4fda12af42a910515fb97a66a7575bec86c18 npm run export:workstation-runtime
       - name: Assemble P10-1 renderer-attached qualification preview
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ github.workspace }}/st-score-rendering-layer/dist/workstation-runtime
