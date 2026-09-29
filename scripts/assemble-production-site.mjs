@@ -156,7 +156,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = await assembleProductionSite({
     runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR,
     audioRuntimeDir,
-    correctionRuntimeDir: process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR ?? null,
     outputDir: process.env.ST_PRODUCTION_OUTPUT_DIR || defaultOutputDir,
     refreshRendererRuntime: process.env.ST_PRODUCTION_REFRESH_RENDERER_RUNTIME !== '0'
   });
