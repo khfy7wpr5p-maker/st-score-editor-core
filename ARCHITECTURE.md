@@ -252,6 +252,25 @@ For the admitted APP-11G/H/I profile:
 - Undo restores exact prior pair;
 - renderer geometry contributes no timing or range evidence.
 
+## SEM-04 — Offline Semantic Parity Reference
+
+SEM-04 adds a test/CI-only parity harness, not a second runtime semantic authority. The same controlled MusicXML fixture is opened through the existing Editor Core application import path and compared with a provenance-pinned ST Score Semantic Engine snapshot.
+
+```text
+controlled MusicXML
+  +--> existing Editor Core import --> ScoreDocumentV3 + NotationDocumentV4
+  |                                  --> read-only EditorSemanticProjectionV1
+  |
+  +--> pinned Semantic Engine snapshot + provenance
+                                      |
+                                      v
+                         read-only parity comparison
+```
+
+Cross-engine raw IDs are not considered equivalent. Comparison is structural and bounded to the admitted SEM-04 profile. Rational Editor timing is compared to pinned division-domain evidence using exact integer/rational conversion. Mismatch and unsupported states produce evidence only; they cannot create revisions, select authoring targets, mutate canonical state, or trigger correction.
+
+There is no Editor Core dependency on Python, Partitura, a Semantic Engine service, Render, or network availability. User documents are not compared at runtime.
+
 ## Still fail-closed
 
 The following remain outside current production authority:
