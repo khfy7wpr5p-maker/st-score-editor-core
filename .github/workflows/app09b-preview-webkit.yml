@@ -61,6 +61,8 @@ jobs:
         run: node scripts/app11f-webkit-triplet-authoring-regression.mjs
       - name: Run APP-11I WebKit straight-note triplet retiming regression
         run: node scripts/app11i-webkit-triplet-retiming-regression.mjs
+      - name: Run SES-82 presentation-only shell regression
+        run: node scripts/ses82-webkit-presentation-only-shell-regression.mjs
       - name: Checkout exact ST Score Rendering Layer revision
         run: |
           git clone https://github.com/khfy7wpr5p-maker/st-score-rendering-layer.git "$RUNNER_TEMP/st-score-rendering-layer"
