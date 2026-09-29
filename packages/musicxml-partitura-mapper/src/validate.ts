@@ -136,8 +136,8 @@ const record = (value: unknown, path: string): R => {
 
 const exact = (value: unknown, keys: readonly string[], path: string): R => {
   const item = record(value, path);
-  const observed = Object.keys(item).sort();
-  const expected = [...keys].sort();
+  const observed = Object.keys(item).sort((left, right) => left.localeCompare(right));
+  const expected = [...keys].sort((left, right) => left.localeCompare(right));
   if (JSON.stringify(observed) !== JSON.stringify(expected)) {
     throw new PartituraMapperValidationError(
       'Partitura normalized field set is invalid.',
