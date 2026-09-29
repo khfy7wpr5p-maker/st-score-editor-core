@@ -8,6 +8,8 @@ import {
 import {
   clearOsmdPresentation,
   renderWithOsmdV4,
+  type OsmdMeasureHighlightRequest,
+  type OsmdRenderEvidence,
   type OsmdRendererHost
 } from '../../renderer-osmd/src/index.js';
 import type { RendererRequestV4 } from '../../renderer-contract-v4/src/index.js';
@@ -38,6 +40,9 @@ export interface RendererEnabledStandaloneScoreEditorController extends Omit<Rec
   readonly attachOsmdRenderer: (host: OsmdRendererHost) => void;
   readonly detachRenderer: () => void;
   readonly renderCurrent: () => Promise<Readonly<BrowserRendererControllerState>>;
+  readonly getRendererEvidence: () => Readonly<OsmdRenderEvidence> | null;
+  readonly highlightMeasure: (highlight: Readonly<OsmdMeasureHighlightRequest>) => Promise<void>;
+  readonly clearMeasureHighlights: () => Promise<void>;
   readonly unmount: () => void;
 }
 
@@ -45,7 +50,9 @@ export type RendererLifecycleErrorCode =
   | 'RENDERER_NOT_ATTACHED'
   | 'NO_RENDER_DOCUMENT'
   | 'RENDERER_STALE_RESULT'
-  | 'RENDERER_RENDER_FAILED';
+  | 'RENDERER_RENDER_FAILED'
+  | 'RENDERER_EVIDENCE_UNAVAILABLE'
+  | 'RENDERER_MEASURE_HIGHLIGHT_UNAVAILABLE';
 
 export class RendererLifecycleError extends Error {
   readonly code: RendererLifecycleErrorCode;
@@ -88,6 +95,25 @@ export const createRendererEnabledStandaloneScoreEditorController = (
     renderedRevisionId = null;
   };
 
+  const requireCurrentRenderedHost = (): OsmdRendererHost => {
+    const activeHost = host;
+    const document = base.getDocument();
+    if (
+      activeHost === null ||
+      document === null ||
+      renderedDocumentId === null ||
+      renderedRevisionId === null ||
+      document.session.history.present.score.id !== renderedDocumentId ||
+      document.session.history.present.score.revision.id !== renderedRevisionId
+    ) {
+      throw new RendererLifecycleError(
+        'Measure presentation requires an accepted current renderer revision.',
+        'RENDERER_EVIDENCE_UNAVAILABLE'
+      );
+    }
+    return activeHost;
+  };
+
   const unsubscribe = base.subscribe((snapshot) => {
     if (renderedRevisionId !== null && (snapshot.revisionId !== renderedRevisionId || base.getDocument()?.session.history.present.score.id !== renderedDocumentId)) {
       clearRenderedIdentity();
@@ -117,6 +143,37 @@ export const createRendererEnabledStandaloneScoreEditorController = (
       host = null;
       clearRenderedIdentity();
       status = Object.freeze({ code: 'RENDERER_DETACHED', message: 'Renderer host detached.' });
+    },
+    getRendererEvidence: () => {
+      const activeHost = requireCurrentRenderedHost();
+      const evidence = activeHost.instance.getRenderEvidence?.() ?? null;
+      if (
+        evidence === null ||
+        typeof evidence.renderEpoch !== 'string' ||
+        evidence.renderEpoch.length === 0 ||
+        (evidence.sourceId !== null && (typeof evidence.sourceId !== 'string' || evidence.sourceId.length === 0))
+      ) return null;
+      return Object.freeze({ renderEpoch: evidence.renderEpoch, sourceId: evidence.sourceId });
+    },
+    highlightMeasure: async (highlight: Readonly<OsmdMeasureHighlightRequest>) => {
+      const activeHost = requireCurrentRenderedHost();
+      if (typeof activeHost.instance.highlightMeasure !== 'function') {
+        throw new RendererLifecycleError(
+          'Attached renderer host does not expose measure highlight capability.',
+          'RENDERER_MEASURE_HIGHLIGHT_UNAVAILABLE'
+        );
+      }
+      await activeHost.instance.highlightMeasure(highlight);
+    },
+    clearMeasureHighlights: async () => {
+      const activeHost = requireCurrentRenderedHost();
+      if (typeof activeHost.instance.clearMeasureHighlights !== 'function') {
+        throw new RendererLifecycleError(
+          'Attached renderer host does not expose measure highlight capability.',
+          'RENDERER_MEASURE_HIGHLIGHT_UNAVAILABLE'
+        );
+      }
+      await activeHost.instance.clearMeasureHighlights();
     },
     renderCurrent: async () => {
       const activeHost = host;
