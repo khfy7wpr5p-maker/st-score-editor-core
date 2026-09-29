@@ -19,12 +19,12 @@ The private qualification file `sorf_op35_no13-let.musicxml` remains outside Git
 | Finale-style synthetic | Native | PASS in Python boundary | none | 4 notes | canonical reopen required | none |
 | Sibelius-style synthetic | Native | PASS in Python boundary | none | 4 notes + admitted articulation path | canonical reopen required | none |
 | Polyphonic synthetic | Native | PASS in Python boundary | none | 6 notes / 2 voices | canonical reopen required | none |
-| Guitar TAB technical synthetic | One-shot Partitura fallback | PASS in Python boundary; source note `g1` retained | `staff-lines`, `tuning-step`, `tuning-octave`, `staff-tuning`, `staff-details`, `string`, `fret` | 1 E4 note; source position string 1 / fret 0 joins exact V3 note | not serialized: raw sidecar is noncanonical evidence | none within reviewed technical family |
+| Guitar TAB technical synthetic | One-shot Partitura fallback | PASS in Python boundary; source note `g1` retained | `staff-lines`, `tuning-step`, `tuning-alter`, `tuning-octave`, `staff-tuning`, `staff-details`, `string`, `fret`, `bend-alter`, `bend`, `hammer-on`, `pull-off`, `natural`, `harmonic`, `pluck`, `golpe` | 1 E4 note; source position string 1 / fret 0 joins exact V3 note | not serialized: raw sidecar is noncanonical evidence | none within reviewed technical family |
 | Unsupported direction synthetic | Fail closed | not required for routing decision | none promoted | no active document accepted | not applicable | `direction` remains fundamentally unrepresentable in current ST canonical import contract |
 
 ## No-data-loss gate
 
-For reviewed Guitar/TAB technical families, success requires one of two explicit outcomes:
+For the reviewed Guitar/TAB technical families exercised here — string/fret, staff tuning, bend, hammer-on, pull-off, harmonic, pluck and golpe — success requires one of two explicit outcomes:
 
 1. source evidence is preserved in the raw sidecar and deterministically joined to the canonical note identity; or
 2. import fails closed with a diagnostic.
