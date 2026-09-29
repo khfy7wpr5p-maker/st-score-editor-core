@@ -55,11 +55,12 @@ export function validateRendererRuntimeManifest(manifest) {
   });
 }
 
-async function validateCorrectionAnalysisRuntime(runtimeDir) {
-  const manifestPath = path.join(runtimeDir, 'ce-analysis-browser-runtime.manifest.json');
-  const artifactPath = path.join(runtimeDir, 'ce-analysis-browser-runtime.js');
-  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-  if (!isRecord(manifest)) throw new TypeError('APP09B correction analysis manifest must be an object.');
+function validateCorrectionAnalysisRuntime(runtime) {
+  if (!isRecord(runtime) || !isRecord(runtime.manifest) || !(runtime.artifact instanceof Uint8Array)) {
+    throw new TypeError('APP09B correction analysis runtime must provide manifest object and artifact bytes.');
+  }
+  const manifest = runtime.manifest;
+  const artifact = runtime.artifact;
   if (
     manifest.contract !== APP09B_CORRECTION_ANALYSIS_CONTRACT ||
     manifest.contractVersion !== APP09B_CORRECTION_ANALYSIS_CONTRACT_VERSION ||
@@ -85,7 +86,6 @@ async function validateCorrectionAnalysisRuntime(runtimeDir) {
   ]) {
     if (manifest[field] !== false) throw new Error(`APP09B correction analysis forbidden authority enabled: ${field}.`);
   }
-  const artifact = await readFile(artifactPath);
   if (!Number.isInteger(manifest.bytes) || manifest.bytes !== artifact.byteLength) {
     throw new Error('APP09B correction analysis artifact byte size mismatch.');
   }
@@ -595,7 +595,7 @@ ${correctionEnabled ? '<script src="./correction-runtime/ce-analysis-browser-run
 </html>
 `;
 
-export async function assembleApp09BPreview({ runtimeDir, correctionRuntimeDir = null, outputDir = defaultOutputDir } = {}) {
+export async function assembleApp09BPreview({ runtimeDir, correctionRuntime = null, outputDir = defaultOutputDir } = {}) {
   if (typeof runtimeDir !== 'string' || runtimeDir.length === 0) {
     throw new TypeError('APP09B renderer runtime directory is required.');
   }
@@ -612,12 +612,15 @@ export async function assembleApp09BPreview({ runtimeDir, correctionRuntimeDir =
   let correctionAnalysis = Object.freeze({ enabled: false });
   const correctionTarget = path.join(outputDir, 'correction-runtime');
   await rm(correctionTarget, { recursive: true, force: true });
-  if (correctionRuntimeDir !== null) {
-    if (typeof correctionRuntimeDir !== 'string' || correctionRuntimeDir.length === 0) {
-      throw new TypeError('APP09B correction runtime directory must be a non-empty string when provided.');
-    }
-    correctionAnalysis = await validateCorrectionAnalysisRuntime(correctionRuntimeDir);
-    await cp(correctionRuntimeDir, correctionTarget, { recursive: true });
+  if (correctionRuntime !== null) {
+    correctionAnalysis = validateCorrectionAnalysisRuntime(correctionRuntime);
+    await mkdir(correctionTarget, { recursive: true });
+    await writeFile(path.join(correctionTarget, 'ce-analysis-browser-runtime.js'), correctionRuntime.artifact);
+    await writeFile(
+      path.join(correctionTarget, 'ce-analysis-browser-runtime.manifest.json'),
+      `${JSON.stringify(correctionRuntime.manifest, null, 2)}\n`,
+      'utf8'
+    );
   }
 
   await writeFile(path.join(outputDir, 'st-score-editor-app09b-bootstrap.js'), previewBootstrap, 'utf8');
