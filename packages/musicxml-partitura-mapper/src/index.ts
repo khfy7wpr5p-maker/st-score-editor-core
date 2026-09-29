@@ -1,4 +1,4 @@
-import { addressEntityV2 } from '../../addressing-v2/src/index.js';
+import { addressEntityV2, type MeasureAddressV2 } from '../../addressing-v2/src/index.js';
 import {
   NORMALIZED_IMPORT_ENVELOPE_VERSION,
   validateNormalizedImportEnvelopeV1,
@@ -365,7 +365,7 @@ const eventNotationForRest = (
       ) {
         fail('Partitura rest dot count is invalid.', 'INVALID_ENVELOPE', `${path}.symbolicDuration.dots`);
       }
-      dots = symbolicDots;
+      dots = symbolicDots as number;
     }
     const actualRaw = symbolic.actual_notes;
     const normalRaw = symbolic.normal_notes;
@@ -700,7 +700,7 @@ const buildNotationV2 = (
         if (target.kind !== 'measure') {
           fail('Canonical V2 measure target changed kind.', 'CANONICAL_VALIDATION_FAILED', `measure-${p}-${staff}-${m}`);
         }
-        measures.push({ target, notation });
+        measures.push({ target: target as MeasureAddressV2, notation });
       }
     }
   }
