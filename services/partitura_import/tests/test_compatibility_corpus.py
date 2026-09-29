@@ -1,5 +1,6 @@
 import pathlib
 import sys
+import time
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
@@ -20,6 +21,22 @@ CASES = {
 }
 
 class Ses90CompatibilityCorpusTest(unittest.TestCase):
+    def test_ses91_partitura_import_timing_is_measured_in_its_own_domain(self):
+        durations_ms = {}
+        for filename in CASES:
+            xml_bytes = (FIXTURE_ROOT / filename).read_bytes()
+            started = time.perf_counter()
+            import_musicxml_bytes(
+                xml_bytes,
+                source_identity=f"fixture:{filename}",
+                contract_version=NORMALIZED_IMPORT_ENVELOPE_VERSION,
+            )
+            durations_ms[filename] = round((time.perf_counter() - started) * 1000, 3)
+
+        self.assertEqual(set(durations_ms), set(CASES))
+        self.assertTrue(all(value >= 0 for value in durations_ms.values()))
+        print("SES91_PARTITURA_TIMING_MS", durations_ms)
+
     def test_partitura_normalizes_every_admitted_representative_fixture(self):
         for filename, expected_notes in CASES.items():
             with self.subTest(filename=filename):
