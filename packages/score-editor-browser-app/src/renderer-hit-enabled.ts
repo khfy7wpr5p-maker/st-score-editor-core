@@ -43,7 +43,8 @@ export type RendererSemanticHitBridgeControllerErrorCode =
   | 'RENDERER_PRESENTATION_MISMATCH'
   | 'RENDERED_NOTE_UNMAPPED'
   | 'RENDERED_EVENT_UNMAPPED'
-  | 'SELECTION_REJECTED';
+  | 'SELECTION_REJECTED'
+  | 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH';
 
 export class RendererSemanticHitBridgeControllerError extends Error {
   readonly code: RendererSemanticHitBridgeControllerErrorCode;
@@ -68,8 +69,8 @@ export interface RendererHitEnabledStandaloneScoreEditorController extends Omit<
   readonly setSuspiciousMeasureFindings: (input: Readonly<{
     current: SuspiciousMeasureRenderIdentityV1;
     findings: readonly SuspiciousMeasureFindingEvidenceV1[];
-  }>) => Readonly<SuspiciousMeasureHighlightStateV1>;
-  readonly clearSuspiciousMeasureHighlights: () => void;
+  }>) => Promise<Readonly<SuspiciousMeasureHighlightStateV1>>;
+  readonly clearSuspiciousMeasureHighlights: () => Promise<void>;
 }
 
 export const createRendererHitEnabledStandaloneScoreEditorController = (
@@ -185,21 +186,53 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
       ) suspiciousMeasureState = null;
       return suspiciousMeasureState;
     },
-    setSuspiciousMeasureFindings: (input: Readonly<{
+    setSuspiciousMeasureFindings: async (input: Readonly<{
       current: SuspiciousMeasureRenderIdentityV1;
       findings: readonly SuspiciousMeasureFindingEvidenceV1[];
     }>) => {
       const current = requireCurrentPresentation();
-      if (input.current.documentId !== current.score.id || input.current.revisionId !== current.score.revision.id) {
+      const evidence = base.getRendererEvidence();
+      const expectedSourceId = input.current.sourceId ?? null;
+      if (
+        input.current.documentId !== current.score.id ||
+        input.current.revisionId !== current.score.revision.id ||
+        evidence === null ||
+        evidence.renderEpoch !== input.current.renderEpoch ||
+        evidence.sourceId !== expectedSourceId
+      ) {
         throw new RendererSemanticHitBridgeControllerError(
-          'Suspicious measure evidence does not match the current accepted presentation.',
-          'RENDERER_PRESENTATION_MISMATCH'
+          'Suspicious measure evidence does not match the exact current renderer presentation.',
+          'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH',
+          {
+            evidenceRenderEpoch: evidence?.renderEpoch ?? null,
+            findingRenderEpoch: input.current.renderEpoch,
+            evidenceSourceId: evidence?.sourceId ?? null,
+            findingSourceId: expectedSourceId
+          }
         );
       }
-      suspiciousMeasureState = createSuspiciousMeasureHighlightStateV1(input);
-      return suspiciousMeasureState;
+
+      const nextState = createSuspiciousMeasureHighlightStateV1(input);
+      try {
+        await base.clearMeasureHighlights();
+        for (const target of nextState.targets) {
+          await base.highlightMeasure(Object.freeze({
+            target,
+            className: 'st-score-suspicious-measure'
+          }));
+        }
+      } catch (error) {
+        suspiciousMeasureState = null;
+        try { await base.clearMeasureHighlights(); } catch { /* presentation cleanup is best-effort after failure */ }
+        throw error;
+      }
+      suspiciousMeasureState = nextState;
+      return nextState;
     },
-    clearSuspiciousMeasureHighlights: () => { suspiciousMeasureState = null; }
+    clearSuspiciousMeasureHighlights: async () => {
+      suspiciousMeasureState = null;
+      await base.clearMeasureHighlights();
+    }
   });
   return controller;
 };
