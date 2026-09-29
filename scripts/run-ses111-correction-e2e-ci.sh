@@ -7,7 +7,6 @@ readonly WORK_ROOT="${RUNNER_TEMP:-/tmp}/ses-111-correction-e2e"
 readonly RENDERER_ROOT="${WORK_ROOT}/st-score-rendering-layer"
 readonly CORRECTION_ROOT="${WORK_ROOT}/st-omr-correction-engine"
 readonly AUDIO_ROOT="${WORK_ROOT}/st-score-audio-runtime"
-readonly SERVER_LOG="${WORK_ROOT}/app09b-server.log"
 
 rm -rf "${WORK_ROOT}"
 mkdir -p "${WORK_ROOT}"
@@ -51,24 +50,6 @@ await assembleStableApp09BPreviewCli({
   correctionRuntime: { manifest, artifact }
 });
 NODE
-
-PORT=10080 node scripts/serve-app09b-preview.mjs > "${SERVER_LOG}" 2>&1 &
-server_pid=$!
-cleanup() {
-  if kill -0 "${server_pid}" 2>/dev/null; then
-    kill "${server_pid}" || true
-    wait "${server_pid}" 2>/dev/null || true
-  fi
-}
-trap cleanup EXIT
-
-for _ in $(seq 1 30); do
-  if curl --fail --silent --show-error "http://127.0.0.1:10080/st-score-editor-app09b.html" > /dev/null; then
-    break
-  fi
-  sleep 0.2
-done
-curl --fail --silent --show-error "http://127.0.0.1:10080/st-score-editor-app09b.html" > /dev/null
 
 ST_CE_E2E_BROWSER=webkit node scripts/ses111-correction-analysis-e2e.mjs
 ST_CE_E2E_BROWSER=chromium node scripts/ses111-correction-analysis-e2e.mjs
