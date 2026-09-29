@@ -177,10 +177,96 @@ const previewBootstrap = `(() => {
   let lastRenderedRevision = null;
   let lastAttemptRevision = null;
   let renderScheduled = false;
+  let suspiciousMeasureState = null;
 
   const mark = (name, value) => {
     document.documentElement.dataset[name] = value;
   };
+
+  const isBoundedId = (value) => typeof value === 'string' && value.length > 0 && value.length <= 256 && value === value.trim();
+
+  const applySuspiciousMeasureFindings = async (input) => {
+    const documentState = controller.getDocument?.();
+    const score = documentState?.session?.history?.present?.score;
+    const current = input?.current;
+    const evidence = renderEvidence;
+    if (
+      rendererApi === null ||
+      evidence === null ||
+      !score ||
+      !current ||
+      current.documentId !== score.id ||
+      current.revisionId !== score.revision.id ||
+      current.renderEpoch !== evidence.renderEpoch ||
+      (current.sourceId ?? null) !== evidence.sourceId ||
+      !Array.isArray(input?.findings)
+    ) {
+      throw new Error('APP09B_SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH');
+    }
+
+    const unique = new Map();
+    for (const finding of input.findings) {
+      if (
+        !finding ||
+        finding.documentId !== current.documentId ||
+        finding.revisionId !== current.revisionId ||
+        finding.renderEpoch !== current.renderEpoch ||
+        (finding.sourceId ?? null) !== (current.sourceId ?? null) ||
+        !Array.isArray(finding.measureTargets) ||
+        finding.measureTargets.length !== 1
+      ) continue;
+      const target = finding.measureTargets[0];
+      if (
+        !target ||
+        !isBoundedId(target.partId) ||
+        !Number.isSafeInteger(target.measureIndex) ||
+        target.measureIndex < 0
+      ) continue;
+      unique.set(target.partId + '\\u0000' + target.measureIndex, Object.freeze({
+        partId: target.partId,
+        measureIndex: target.measureIndex
+      }));
+    }
+
+    const targets = Object.freeze([...unique.values()].sort((left, right) =>
+      left.partId === right.partId
+        ? left.measureIndex - right.measureIndex
+        : left.partId.localeCompare(right.partId)
+    ));
+    await rendererApi.clearMeasureHighlights();
+    try {
+      for (const target of targets) {
+        await rendererApi.highlightMeasure({ target, className: 'st-score-suspicious-measure' });
+      }
+    } catch (error) {
+      suspiciousMeasureState = null;
+      try { await rendererApi.clearMeasureHighlights(); } catch {}
+      throw error;
+    }
+    suspiciousMeasureState = Object.freeze({
+      documentId: current.documentId,
+      revisionId: current.revisionId,
+      renderEpoch: current.renderEpoch,
+      ...(current.sourceId === undefined ? {} : { sourceId: current.sourceId }),
+      targets
+    });
+    return suspiciousMeasureState;
+  };
+
+  const clearSuspiciousMeasureHighlights = async () => {
+    suspiciousMeasureState = null;
+    if (rendererApi !== null) await rendererApi.clearMeasureHighlights();
+  };
+
+  Object.defineProperty(globalThis, 'STScoreCorrectionHighlightBridge', {
+    value: Object.freeze({
+      applyFindings: applySuspiciousMeasureFindings,
+      clear: clearSuspiciousMeasureHighlights,
+      getState: () => suspiciousMeasureState
+    }),
+    writable: false,
+    configurable: false
+  });
 
   const scheduleRenderCurrent = () => {
     const revision = controller.getSnapshot().revisionId;
@@ -226,6 +312,7 @@ const previewBootstrap = `(() => {
             throw new Error('APP09B_RENDER_EPOCH_MISSING');
           }
           renderEvidence = Object.freeze({ renderEpoch: result.renderEpoch, sourceId: result.sourceId ?? null });
+          suspiciousMeasureState = null;
           lastLoadSucceeded = true;
         },
         render() {
@@ -243,6 +330,7 @@ const previewBootstrap = `(() => {
         },
         clear() {
           renderEvidence = null;
+          suspiciousMeasureState = null;
           lastLoadSucceeded = false;
           lastRenderedRevision = null;
           frame.style.visibility = 'hidden';
@@ -301,7 +389,8 @@ const previewBootstrap = `(() => {
       getState: () => Object.freeze({
         snapshot: controller.getSnapshot(),
         renderer: controller.getRendererState(),
-        renderEvidence
+        renderEvidence,
+        suspiciousMeasures: suspiciousMeasureState
       })
     }),
     writable: false,
