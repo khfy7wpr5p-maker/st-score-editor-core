@@ -62,7 +62,7 @@ test('SES-91 release qualification keeps Partitura isolated and release physical
   assert.equal(manifest.release.mergeAuthorizedBySes91, false);
 
   const pkg = JSON.parse(packageText);
-  assert.deepEqual(Object.keys(pkg.dependencies ?? {}).sort(), ['saxes', 'xmlchars']);
+  assert.deepEqual(Object.keys(pkg.dependencies ?? {}).sort((left, right) => left.localeCompare(right)), ['saxes', 'xmlchars']);
   assert.doesNotMatch(packageText, /partitura|python|axios|node-fetch/i);
   assert.doesNotMatch(appText, /from ['"]\.\.\/\.\.\/musicxml-import-router\/src\/index\.js['"]/);
   assert.doesNotMatch(browserText, /partitura|python|render\.com|axios|node-fetch/i);
