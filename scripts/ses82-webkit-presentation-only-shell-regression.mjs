@@ -15,7 +15,7 @@ const contentTypes = new Map([
 
 const resolveRequestPath = requestUrl => {
   const pathname = decodeURIComponent(new URL(requestUrl ?? '/', 'http://127.0.0.1').pathname);
-  const resolved = path.resolve(browserRoot, pathname.replace(/^\\/+/, '') || 'st-score-editor-app.html');
+  const resolved = path.resolve(browserRoot, pathname.replace(/^\/+/, '') || 'st-score-editor-app.html');
   if (resolved !== browserRoot && !resolved.startsWith(`${browserRoot}${path.sep}`)) {
     throw new Error('request escaped browser output root');
   }
