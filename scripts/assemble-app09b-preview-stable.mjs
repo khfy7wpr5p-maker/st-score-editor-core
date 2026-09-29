@@ -388,7 +388,7 @@ async function refreshExactRendererRuntime() {
 
 export async function assembleStableApp09BPreviewCli({
   runtimeDir,
-  correctionRuntimeDir = process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR ?? null,
+  correctionRuntimeDir = null,
   outputDir = defaultOutputDir,
   includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1',
   refreshRendererRuntime = process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1'
@@ -404,7 +404,6 @@ export async function assembleStableApp09BPreviewCli({
       env: {
         ...process.env,
         ST_SCORE_RENDERER_RUNTIME_DIR: exactRuntimeDir ?? '',
-        ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR: correctionRuntimeDir ?? '',
         ST_APP09B_OUTPUT_DIR: outputDir
       }
     }
@@ -418,10 +417,9 @@ export async function assembleStableApp09BPreviewCli({
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
-  const correctionRuntimeDir = process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR ?? null;
   const includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1';
   const refreshRendererRuntime = process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1';
-  const result = await assembleStableApp09BPreviewCli({ runtimeDir, correctionRuntimeDir, includeIosDiagnostic, refreshRendererRuntime });
+  const result = await assembleStableApp09BPreviewCli({ runtimeDir, includeIosDiagnostic, refreshRendererRuntime });
   const mode = includeIosDiagnostic ? 'stable preview + iOS device diagnostic' : 'stable preview';
   const source = refreshRendererRuntime ? 'refreshed exact renderer' : 'provided renderer';
   console.log(`APP-09B ${mode} assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, ${source}, autoResize=false controlled-host)`);
