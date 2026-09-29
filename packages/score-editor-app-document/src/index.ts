@@ -74,7 +74,7 @@ export interface OpenMusicXmlAppDocumentOptions {
   readonly revisionId?: string;
   readonly sha256Hex?: AppSha256Provider;
   readonly rendererProfile?: RendererProfile;
-  readonly load?: AppMusicXmlImporter;
+  readonly load?: AppMusicXmlImporter | undefined;
 }
 
 export type ScoreEditorAppDocumentErrorCode =
