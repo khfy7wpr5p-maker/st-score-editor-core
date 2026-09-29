@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,7 +8,8 @@ import path from 'node:path';
 import {
   APP09B_OSMD_VERSION,
   APP09B_RENDERER_CONTRACT_VERSION,
-  APP09B_RENDERER_SOURCE_REVISION
+  APP09B_RENDERER_SOURCE_REVISION,
+  APP09B_CORRECTION_ENGINE_SOURCE_REVISION
 } from '../scripts/assemble-app09b-preview.mjs';
 import {
   AUDIO_RELEASE_ASSET_SHA256,
@@ -43,6 +45,31 @@ const writeRendererRuntime = async root => {
   await writeFile(path.join(root, 'vendor/opensheetmusicdisplay.min.js'), 'x');
   await writeFile(path.join(root, 'modules/contracts.js'), 'x');
   await writeFile(path.join(root, 'runtime-manifest.json'), `${JSON.stringify(rendererManifest())}\n`);
+};
+
+const writeCorrectionRuntime = async root => {
+  await mkdir(root, { recursive: true });
+  const artifact = 'globalThis.STOmrCorrectionAnalysisRuntime={analyzeMusicXmlSuspiciousMeasures(){return {mode:"SHADOW_ONLY",partId:"P1",measureCount:1,unmappedFindingCount:0,suspiciousMeasures:[],automaticApplyAuthority:false,musicXmlWriteBackAuthority:false}}};';
+  await writeFile(path.join(root, 'ce-analysis-browser-runtime.js'), artifact);
+  await writeFile(path.join(root, 'ce-analysis-browser-runtime.manifest.json'), JSON.stringify({
+    contract: 'ST_OMR_CORRECTION_ENGINE_ANALYSIS_BROWSER',
+    contractVersion: '1.0.0',
+    runtimeVersion: '1.0.0',
+    engineSourceRevision: APP09B_CORRECTION_ENGINE_SOURCE_REVISION,
+    artifact: 'ce-analysis-browser-runtime.js',
+    format: 'iife',
+    target: 'es2022',
+    global: 'STOmrCorrectionAnalysisRuntime',
+    externalImports: 0,
+    networkCapable: false,
+    persistenceCapable: false,
+    authenticationAuthority: false,
+    automaticApplyAuthority: false,
+    learningAuthority: false,
+    musicXmlWriteBackAuthority: false,
+    bytes: Buffer.byteLength(artifact),
+    sha256: createHash('sha256').update(artifact).digest('hex')
+  }));
 };
 
 test('production site pins the official Audio Engine v0.1.2 release identity', () => {
@@ -92,14 +119,17 @@ test('production assembly emits a root index that wires exact renderer plus non-
   try {
     const runtimeDir = path.join(temp, 'renderer');
     const audioRuntimeDir = path.join(temp, 'audio');
+    const correctionRuntimeDir = path.join(temp, 'correction');
     const outputDir = path.join(temp, 'out');
     await writeRendererRuntime(runtimeDir);
+    await writeCorrectionRuntime(correctionRuntimeDir);
     await mkdir(audioRuntimeDir, { recursive: true });
     await writeFile(path.join(audioRuntimeDir, 'st-score-audio-engine.js'), 'globalThis.STScoreAudioEngine = {};');
 
     const manifest = await assembleProductionSite({
       runtimeDir,
       audioRuntimeDir,
+      correctionRuntimeDir,
       outputDir,
       refreshRendererRuntime: false
     });
@@ -111,6 +141,10 @@ test('production assembly emits a root index that wires exact renderer plus non-
     assert.equal(manifest.contract, 'ST_SCORE_EDITOR_PRODUCTION_SITE');
     assert.equal(manifest.version, '1.3.0');
     assert.equal(manifest.renderer.rendererSourceRevision, APP09B_RENDERER_SOURCE_REVISION);
+    assert.equal(manifest.correctionAnalysis.enabled, true);
+    assert.equal(manifest.correctionAnalysis.engineSourceRevision, APP09B_CORRECTION_ENGINE_SOURCE_REVISION);
+    assert.equal(manifest.correctionAnalysis.automaticApplyAuthority, false);
+    assert.equal(manifest.correctionAnalysis.musicXmlWriteBackAuthority, false);
     assert.equal(manifest.audio.release, 'v0.1.2');
     assert.equal(manifest.audio.defaultInstrument, 'GRAND_PIANO');
     assert.equal(manifest.audio.instrumentSelection, 'host-ui-noncanonical');
@@ -128,6 +162,7 @@ test('production assembly emits a root index that wires exact renderer plus non-
     assert.equal(manifest.seslitabCutoverAuthorized, false);
     assert.equal(manifest.manualDeviceValidationRequired, true);
     assert.match(html, /audio-runtime\/st-score-audio-engine\.js/);
+    assert.match(html, /correction-runtime\/ce-analysis-browser-runtime\.js/);
     assert.match(html, /st-score-editor-production-bootstrap\.js/);
     assert.match(html, /connect-src https:\/\/raw\.githubusercontent\.com/);
     assert.match(html, /id="st-score-audio-instrument"/);
@@ -140,6 +175,7 @@ test('production assembly emits a root index that wires exact renderer plus non-
       selectorIndex < productionBootstrapIndex,
       'production audio selector must be parsed before the production bootstrap executes'
     );
+    assert.match(bootstrap, /openMusicXmlWithCorrectionAnalysis/);
     assert.match(bootstrap, /audioApi\.version !== '0\.1\.2'/);
     assert.match(bootstrap, /createAudioEngine\(\{ defaultInstrument: 'GRAND_PIANO' \}\)/);
     assert.match(bootstrap, /attachAudioPort\(audioEngine\)/);
