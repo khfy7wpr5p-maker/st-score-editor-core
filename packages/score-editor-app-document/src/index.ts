@@ -282,9 +282,9 @@ export const openMusicXmlScoreEditorAppDocument = async (
   });
   const imported = await (options.musicXmlImporter ?? importNotationMusicXmlV2)(musicXml, {
     source,
-    ...(options.documentId === undefined ? {} : { documentId: options.documentId }),
-    ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId })
-  });
+    documentId: options.documentId,
+    revisionId: options.revisionId
+  } as Parameters<typeof importNotationMusicXmlV2>[1]);
   const migrated = migrateScoreNotationV2ToV3(imported.score, imported.notation);
   const session = sessionFromV3(migrated.score, migrated.notation, options.rendererProfile);
   return appState(cleanTitle(options.title, 'Imported Score'), 'MUSICXML', session, session.history.present.score.revision.id);
