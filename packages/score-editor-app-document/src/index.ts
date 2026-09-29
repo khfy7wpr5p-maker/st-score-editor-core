@@ -246,7 +246,7 @@ const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string
 const verifiedSha256Hex = async (text: string, provider: AppSha256Provider): Promise<string> => {
   const digest = await provider(text);
   if (!/^[\da-f]{64}$/.test(digest)) {
-    throw new ScoreEditorAppDocumentError('SHA-256 provider returned an invalid digest.', 'INVALID_SHA256_RESULT');
+    throw new ScoreEditorAppDocumentError('SHA-256 provider returned invalid digest.', 'INVALID_SHA256_RESULT');
   }
   return digest;
 };
