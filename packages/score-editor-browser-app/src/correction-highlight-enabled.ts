@@ -104,10 +104,11 @@ export const createCorrectionHighlightEnabledStandaloneScoreEditorController = (
   };
 
   const unsubscribe = base.subscribe((snapshot) => {
+    const currentDocumentId = base.getDocument()?.session.history.present.score.id ?? null;
     if (
       highlightState !== null &&
       (
-        snapshot.documentId !== highlightState.documentId ||
+        currentDocumentId !== highlightState.documentId ||
         snapshot.revisionId !== highlightState.revisionId
       )
     ) {
@@ -119,7 +120,10 @@ export const createCorrectionHighlightEnabledStandaloneScoreEditorController = (
     ...base,
     profile: correctionHighlightEnabledBrowserAppProfile,
     getSuspiciousMeasureHighlightState: () => highlightState,
-    setSuspiciousMeasureFindings: (input) => {
+    setSuspiciousMeasureFindings: (input: Readonly<{
+      current: SuspiciousMeasureRenderIdentityV1;
+      findings: readonly SuspiciousMeasureFindingEvidenceV1[];
+    }>) => {
       assertCurrentPresentation(input.current);
       highlightState = createSuspiciousMeasureHighlightStateV1(input);
       return highlightState;
