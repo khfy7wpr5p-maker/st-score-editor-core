@@ -43,7 +43,7 @@
     "deployAuthorizedBySes91": false
   },
   "integration": {
-    "fileEnabledOpenSeam": "INJECTABLE_LOADER_FORWARDING",
+    "fileEnabledOpenSeam": "INJECTABLE_LOAD_FORWARDING",
     "fallbackProviderConfiguredByCore": false,
     "externalProviderEndpointHardcoded": false,
     "physicalProviderWiringRequiredBeforeDevicePass": true
