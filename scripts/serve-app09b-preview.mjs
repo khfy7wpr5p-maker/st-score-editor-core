@@ -32,7 +32,7 @@ const resolveRequestPath = (rawUrl) => {
   return absolute;
 };
 
-export const createApp09bPreviewServer = () => createServer(async (request, response) => {
+const server = createServer(async (request, response) => {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     response.writeHead(405, { Allow: 'GET, HEAD', 'Cache-Control': 'no-store' });
     response.end('Method Not Allowed');
@@ -62,32 +62,6 @@ export const createApp09bPreviewServer = () => createServer(async (request, resp
   }
 });
 
-export const startApp09bPreviewServer = async ({ listenPort = 0, host = '127.0.0.1' } = {}) => {
-  if (!Number.isInteger(listenPort) || listenPort < 0 || listenPort > 65535) {
-    throw new TypeError('APP-09B preview server port is invalid.');
-  }
-  if (host !== '127.0.0.1' && host !== '0.0.0.0') {
-    throw new TypeError('APP-09B preview server host is invalid.');
-  }
-  const server = createApp09bPreviewServer();
-  await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(listenPort, host, resolve);
-  });
-  const address = server.address();
-  if (address === null || typeof address === 'string') {
-    await new Promise((resolve) => server.close(resolve));
-    throw new Error('APP-09B preview server did not expose a TCP port.');
-  }
-  return Object.freeze({
-    port: address.port,
-    close: () => new Promise((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
-    })
-  });
-};
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const started = await startApp09bPreviewServer({ listenPort: port, host: '0.0.0.0' });
-  console.log(`APP-09B preview server listening on ${started.port}`);
-}
+server.listen(port, '0.0.0.0', () => {
+  console.log(`APP-09B preview server listening on ${port}`);
+});
