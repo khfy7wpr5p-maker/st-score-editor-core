@@ -10,7 +10,8 @@
     "dedicatedMusicXmlWebKitRequired": true,
     "retainedAppWebKitRequired": true,
     "staticDependencyBoundaryRequired": true,
-    "securityBoundaryRequired": true
+    "securityBoundaryRequired": true,
+    "fileEnabledFallbackLoaderForwarding": true
   },
   "security": {
     "browserRuntimePythonDependency": false,
@@ -40,5 +41,11 @@
     "seslitabCutoverAuthorized": false,
     "mergeAuthorizedBySes91": false,
     "deployAuthorizedBySes91": false
+  },
+  "integration": {
+    "fileEnabledOpenSeam": "INJECTABLE_LOADER_FORWARDING",
+    "fallbackProviderConfiguredByCore": false,
+    "externalProviderEndpointHardcoded": false,
+    "physicalProviderWiringRequiredBeforeDevicePass": true
   }
 }
