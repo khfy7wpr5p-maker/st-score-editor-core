@@ -23,6 +23,8 @@ jobs:
           node-version: "22"
       - name: Setup Editor WebKit dependencies
         run: bash scripts/setup-editor-webkit-ci.sh
+      - name: Install Chromium for SES-111 cross-browser qualification
+        run: node node_modules/playwright/cli.js install --with-deps chromium
       - name: Build Editor Core browser artifacts
         run: npm run build:browser
       - name: Build isolated P09-D keyboard workstation qualification artifact
@@ -73,10 +75,40 @@ jobs:
           cd "$RUNNER_TEMP/st-score-rendering-layer"
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock
           ST_SCORE_RENDERER_SOURCE_REVISION=effc13c82eb1e537773541e5a659f435ecb71583 npm run export:workstation-runtime
+      - name: Checkout exact ST OMR Correction Engine analysis revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: khfy7wpr5p-maker/st-omr-correction-engine
+          ref: 2584f68024d76edbaeda3155e13cf5b422bc2457
+          path: st-omr-correction-engine
+          persist-credentials: false
+      - name: Build exact read-only Correction Engine analysis runtime
+        run: |
+          cd "$GITHUB_WORKSPACE/st-omr-correction-engine"
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm run build:ce-analysis-browser
       - name: Assemble stable APP-09B preview
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
+          ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR: ${{ github.workspace }}/st-omr-correction-engine/dist/browser-analysis
         run: node scripts/assemble-app09b-preview-stable.mjs
+      - name: Run SES-111 WebKit correction analysis E2E
+        env:
+          ST_CE_E2E_BROWSER: webkit
+        run: node scripts/ses111-correction-analysis-e2e.mjs
+      - name: Run SES-111 Chromium correction analysis E2E
+        env:
+          ST_CE_E2E_BROWSER: chromium
+        run: node scripts/ses111-correction-analysis-e2e.mjs
+      - name: Upload SES-111 qualification app and screenshots
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ses-111-correction-e2e
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/browser
+            artifacts/ses-111
       - name: Run APP-09B WebKit renderer regression
         run: node scripts/app09b-webkit-preview-regression.mjs
       - name: Run APP-09B WebKit controlled layout rerender regression
