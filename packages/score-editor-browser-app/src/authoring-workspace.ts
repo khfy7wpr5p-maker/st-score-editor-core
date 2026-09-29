@@ -376,7 +376,7 @@ export const createAuthoringWorkspaceStandaloneScoreEditorController = (
     return state();
   };
 
-  base.subscribe(() => { decorate(); });
+  base.subscribe(() => { root?.querySelector('[data-st-authoring-palette]')?.remove(); decorate(); });
 
   const controller: AuthoringWorkspaceStandaloneScoreEditorController = {
     ...base,
