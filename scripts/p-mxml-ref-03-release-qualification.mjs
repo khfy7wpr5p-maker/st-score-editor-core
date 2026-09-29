@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
+import { createSingleNotePartituraEnvelopeV1 } from './lib/p-mxml-ref-03-envelope-fixture.mjs';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 import {
   routeMusicXmlImportV1,
@@ -30,58 +31,7 @@ const sourceFor = value => Object.freeze({
 const shaProvider = async value => sha256(value);
 const finiteDuration = value => Number.isFinite(value) && value >= 0 ? value : 0;
 
-const envelopeFor = sourceIdentity => ({
-  version: '1.0.0',
-  sourceIdentity,
-  parts: [{
-    id: 'P1',
-    name: 'Synthetic Guitar',
-    staffCount: 1,
-    measureCount: 1,
-    noteCount: 1,
-    restCount: 0,
-    measures: [{ number: 1, name: '1', startDiv: 0, endDiv: 16 }],
-    notes: [{
-      sourceNoteId: 'g1',
-      pitch: 64,
-      step: 'E',
-      alter: 0,
-      octave: 4,
-      onsetBeat: 0,
-      durationBeat: 1,
-      onsetQuarter: 0,
-      durationQuarter: 1,
-      onsetDiv: 0,
-      durationDiv: 4,
-      voice: 1,
-      staff: 1,
-      divsPerQuarter: 4,
-      keyFifths: 0,
-      keyMode: null,
-      timeBeats: 4,
-      timeBeatType: 4,
-      ties: { start: false, stop: false },
-      tiePrevSourceNoteId: null,
-      tieNextSourceNoteId: null,
-      tuplet: null,
-      fingerings: [],
-      articulations: [],
-      ornaments: [],
-      isGrace: false
-    }],
-    rests: [],
-    timeSignatures: [{ startDiv: 0, beats: 4, beatType: 4 }],
-    keySignatures: [{ startDiv: 0, fifths: 0, mode: null }],
-    clefs: [{ startDiv: 0, staff: 1, sign: 'G', line: 2, octaveChange: 0 }]
-  }],
-  preservedSymbols: [],
-  diagnostics: [],
-  provenance: {
-    parser: 'partitura',
-    partituraVersion: '1.9.0',
-    sourceIdentity
-  }
-});
+const envelopeFor = sourceIdentity => createSingleNotePartituraEnvelopeV1(sourceIdentity);
 
 const firstSelectableAddress = score => {
   const part = score.parts[0];
