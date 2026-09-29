@@ -1,10 +1,10 @@
 import type { RecoveryEnabledControllerOptions } from './recovery-enabled.js';
 import {
-  createRendererHitEnabledStandaloneBrowserAppRuntime,
-  createRendererHitEnabledStandaloneScoreEditorController,
-  rendererHitEnabledBrowserAppProfile,
-  type RendererHitEnabledStandaloneScoreEditorController
-} from './renderer-hit-enabled.js';
+  createCorrectionHighlightEnabledStandaloneBrowserAppRuntime,
+  createCorrectionHighlightEnabledStandaloneScoreEditorController,
+  correctionHighlightEnabledBrowserAppProfile,
+  type CorrectionHighlightEnabledStandaloneScoreEditorController
+} from './correction-highlight-enabled.js';
 import {
   createViewportPresentationLayer,
   resolveViewportKeyboardAction,
@@ -20,7 +20,7 @@ export { VIEWPORT_ZOOM_STEP, VIEWPORT_PAN_STEP, resolveViewportKeyboardAction };
 export type { ViewportKeyboardAction, ViewportPresentationSnapshot };
 
 export const viewportEnabledBrowserAppProfile = Object.freeze({
-  ...rendererHitEnabledBrowserAppProfile,
+  ...correctionHighlightEnabledBrowserAppProfile,
   viewportNavigationBundled: true,
   viewportCanonicalAuthority: false,
   coordinateAuthoring: false,
@@ -28,7 +28,7 @@ export const viewportEnabledBrowserAppProfile = Object.freeze({
   responsiveViewportProfiles: Object.freeze(['iphone', 'ipad', 'desktop'] as const)
 });
 
-export interface ViewportEnabledStandaloneScoreEditorController extends Omit<RendererHitEnabledStandaloneScoreEditorController, 'profile' | 'mount' | 'unmount'> {
+export interface ViewportEnabledStandaloneScoreEditorController extends Omit<CorrectionHighlightEnabledStandaloneScoreEditorController, 'profile' | 'mount' | 'unmount'> {
   readonly profile: typeof viewportEnabledBrowserAppProfile;
   readonly mount: (root: HTMLElement) => void;
   readonly unmount: () => void;
@@ -46,7 +46,7 @@ export interface ViewportEnabledStandaloneScoreEditorController extends Omit<Ren
 export const createViewportEnabledStandaloneScoreEditorController = (
   options: RecoveryEnabledControllerOptions = {}
 ): Readonly<ViewportEnabledStandaloneScoreEditorController> => {
-  const base = createRendererHitEnabledStandaloneScoreEditorController(options);
+  const base = createCorrectionHighlightEnabledStandaloneScoreEditorController(options);
   const viewport = createViewportPresentationLayer();
   base.subscribe(() => { viewport.refresh(); });
 
@@ -75,7 +75,7 @@ export const createViewportEnabledStandaloneScoreEditorController = (
 };
 
 export const createViewportEnabledStandaloneBrowserAppRuntime = () => {
-  const base = createRendererHitEnabledStandaloneBrowserAppRuntime();
+  const base = createCorrectionHighlightEnabledStandaloneBrowserAppRuntime();
   return Object.freeze({
     ...base,
     profile: viewportEnabledBrowserAppProfile,
