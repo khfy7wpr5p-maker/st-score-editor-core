@@ -72,8 +72,14 @@ try {
     sentinel.hidden = true;
     appBefore.append(sentinel);
 
-    const historyBefore = controller.getDocument().session.history.past.length;
-    controller.select(null);
+    const documentBefore = controller.getDocument();
+    const event = documentBefore.session.history.present.score.parts[0].staves[0].measures[0].voices[0].events[0];
+    const target = documentBefore.session.renderRequest.manifest.entries.find(entry =>
+      entry.address.kind === 'event' && entry.address.eventId === event.id
+    )?.address;
+    if (!target) throw new Error('SES82_EVENT_TARGET_MISSING');
+    const historyBefore = documentBefore.session.history.past.length;
+    controller.select(target);
 
     const documentAfter = controller.getDocument();
     const appAfter = document.querySelector('[data-st-score-editor-app]');
@@ -81,13 +87,18 @@ try {
       sameAppNode: appAfter === appBefore,
       sentinelPreserved: sentinel.isConnected && appAfter?.contains(sentinel) === true,
       selectionKind: documentAfter.session.selection?.kind ?? null,
+      inspectorText: appAfter?.querySelector('.stse-inspector')?.textContent ?? null,
+      statusCode: appAfter?.querySelector('.stse-status strong')?.textContent ?? null,
       historyBefore,
       historyAfter: documentAfter.session.history.past.length
     };
   });
 
-  if (result.selectionKind !== null || result.historyAfter !== result.historyBefore) {
+  if (result.selectionKind !== 'event' || result.historyAfter !== result.historyBefore) {
     throw new Error(`SES-82 selection semantics changed: ${JSON.stringify(result)}`);
+  }
+  if (!result.inspectorText?.includes('selection: event:') || result.statusCode !== 'SELECTION_CHANGED') {
+    throw new Error(`SES-82 presentation-only selection left stale shell state: ${JSON.stringify(result)}`);
   }
   if (!result.sameAppNode || !result.sentinelPreserved) {
     throw new Error(`SES-82 presentation-only selection rebuilt the full shell: ${JSON.stringify(result)}`);
