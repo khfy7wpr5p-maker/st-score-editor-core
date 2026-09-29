@@ -91,16 +91,23 @@ function validateCorrectionAnalysisRuntime(runtime) {
   }
   const digest = createHash('sha256').update(artifact).digest('hex');
   if (manifest.sha256 !== digest) throw new Error('APP09B correction analysis artifact digest mismatch.');
+  const source = Buffer.from(artifact).toString('utf8');
+  if (Buffer.byteLength(source, 'utf8') !== artifact.byteLength) {
+    throw new Error('APP09B correction analysis artifact must be exact UTF-8 JavaScript.');
+  }
   return Object.freeze({
-    enabled: true,
-    engineSourceRevision: manifest.engineSourceRevision,
-    contract: manifest.contract,
-    contractVersion: manifest.contractVersion,
-    runtimeVersion: manifest.runtimeVersion,
-    artifact: manifest.artifact,
-    sha256: manifest.sha256,
-    automaticApplyAuthority: false,
-    musicXmlWriteBackAuthority: false
+    metadata: Object.freeze({
+      enabled: true,
+      engineSourceRevision: manifest.engineSourceRevision,
+      contract: manifest.contract,
+      contractVersion: manifest.contractVersion,
+      runtimeVersion: manifest.runtimeVersion,
+      artifact: manifest.artifact,
+      sha256: manifest.sha256,
+      automaticApplyAuthority: false,
+      musicXmlWriteBackAuthority: false
+    }),
+    source
   });
 }
 
@@ -577,7 +584,7 @@ const previewBootstrap = `(() => {
 })();
 `;
 
-const previewHtml = (correctionEnabled) => `<!doctype html>
+const previewHtml = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -589,7 +596,6 @@ const previewHtml = (correctionEnabled) => `<!doctype html>
 <body>
 <div id="st-score-editor-app-root"></div>
 <script src="./st-score-editor-app.js"></script>
-${correctionEnabled ? '<script src="./correction-runtime/ce-analysis-browser-runtime.js"></script>' : ''}
 <script src="./st-score-editor-app09b-bootstrap.js"></script>
 </body>
 </html>
@@ -610,21 +616,15 @@ export async function assembleApp09BPreview({ runtimeDir, correctionRuntime = nu
   await cp(runtimeDir, rendererTarget, { recursive: true });
 
   let correctionAnalysis = Object.freeze({ enabled: false });
-  const correctionTarget = path.join(outputDir, 'correction-runtime');
-  await rm(correctionTarget, { recursive: true, force: true });
+  let bootstrapSource = previewBootstrap;
   if (correctionRuntime !== null) {
-    correctionAnalysis = validateCorrectionAnalysisRuntime(correctionRuntime);
-    await mkdir(correctionTarget, { recursive: true });
-    await writeFile(path.join(correctionTarget, 'ce-analysis-browser-runtime.js'), correctionRuntime.artifact);
-    await writeFile(
-      path.join(correctionTarget, 'ce-analysis-browser-runtime.manifest.json'),
-      `${JSON.stringify(correctionRuntime.manifest, null, 2)}\n`,
-      'utf8'
-    );
+    const validated = validateCorrectionAnalysisRuntime(correctionRuntime);
+    correctionAnalysis = validated.metadata;
+    bootstrapSource = `${validated.source}\n${previewBootstrap}`;
   }
 
-  await writeFile(path.join(outputDir, 'st-score-editor-app09b-bootstrap.js'), previewBootstrap, 'utf8');
-  await writeFile(path.join(outputDir, 'st-score-editor-app09b.html'), previewHtml(correctionAnalysis.enabled), 'utf8');
+  await writeFile(path.join(outputDir, 'st-score-editor-app09b-bootstrap.js'), bootstrapSource, 'utf8');
+  await writeFile(path.join(outputDir, 'st-score-editor-app09b.html'), previewHtml, 'utf8');
   await writeFile(path.join(outputDir, 'app09b-touch-test.musicxml'), sampleMusicXml, 'utf8');
 
   const previewManifest = Object.freeze({
