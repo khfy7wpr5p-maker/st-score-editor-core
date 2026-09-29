@@ -22,7 +22,6 @@ import {
 } from '../../editor-renderer-selection-bridge-v4/src/generic-rendered-event.js';
 import {
   createSuspiciousMeasureHighlightStateV1,
-  SUSPICIOUS_MEASURE_HIGHLIGHT_STATE_VERSION,
   type SuspiciousMeasureFindingEvidenceV1,
   type SuspiciousMeasureHighlightStateV1,
   type SuspiciousMeasureRenderIdentityV1
@@ -36,9 +35,7 @@ export const rendererHitEnabledBrowserAppProfile = Object.freeze({
   genericRenderedEventTargetingBundled: true,
   genericRenderedEventTargetVersion: GENERIC_RENDERED_EVENT_TARGET_VERSION,
   rendererHitCanonicalInput: 'opaque-renderer-request-v4-manifest-token' as const,
-  rendererDomSvgCoordinateAuthority: false,
-  suspiciousMeasureHighlightStateVersion: SUSPICIOUS_MEASURE_HIGHLIGHT_STATE_VERSION,
-  suspiciousMeasureHighlightCanonicalAuthority: false
+  rendererDomSvgCoordinateAuthority: false
 });
 
 export type RendererSemanticHitBridgeControllerErrorCode =
@@ -46,8 +43,7 @@ export type RendererSemanticHitBridgeControllerErrorCode =
   | 'RENDERER_PRESENTATION_MISMATCH'
   | 'RENDERED_NOTE_UNMAPPED'
   | 'RENDERED_EVENT_UNMAPPED'
-  | 'SELECTION_REJECTED'
-  | 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH';
+  | 'SELECTION_REJECTED';
 
 export class RendererSemanticHitBridgeControllerError extends Error {
   readonly code: RendererSemanticHitBridgeControllerErrorCode;
@@ -197,7 +193,7 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
       if (input.current.documentId !== current.score.id || input.current.revisionId !== current.score.revision.id) {
         throw new RendererSemanticHitBridgeControllerError(
           'Suspicious measure evidence does not match the current accepted presentation.',
-          'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
+          'RENDERER_PRESENTATION_MISMATCH'
         );
       }
       suspiciousMeasureState = createSuspiciousMeasureHighlightStateV1(input);
@@ -219,8 +215,7 @@ export const createRendererHitEnabledStandaloneBrowserAppRuntime = () => {
       semanticHitBridgeVersion: EDITOR_RENDERER_SELECTION_BRIDGE_V4_VERSION,
       genericRenderedEventTargetVersion: GENERIC_RENDERED_EVENT_TARGET_VERSION,
       hitCanonicalInput: 'opaque-renderer-request-v4-manifest-token' as const,
-      domSvgCoordinateAuthority: false,
-      suspiciousMeasureHighlightStateVersion: SUSPICIOUS_MEASURE_HIGHLIGHT_STATE_VERSION
+      domSvgCoordinateAuthority: false
     })
   });
 };
