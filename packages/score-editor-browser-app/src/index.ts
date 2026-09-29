@@ -77,11 +77,7 @@ export interface ScoreEditorBrowserAppSnapshot {
 }
 
 export type ScoreEditorBrowserAppListener = (snapshot: Readonly<ScoreEditorBrowserAppSnapshot>) => void;
-export interface StandaloneScoreEditorControllerOptions {
-  readonly rendererProfile?: RendererProfile;
-  readonly musicXmlImportRouter?: OpenMusicXmlAppDocumentOptions['musicXmlImportRouter'];
-  readonly partituraFallback?: OpenMusicXmlAppDocumentOptions['partituraFallback'];
-}
+export interface StandaloneScoreEditorControllerOptions { readonly rendererProfile?: RendererProfile }
 
 export type ScoreEditorBrowserAppErrorCode =
   | 'NO_DOCUMENT'
@@ -189,18 +185,6 @@ export const createStandaloneScoreEditorController = (
     controllerOptions.rendererProfile === undefined || options.rendererProfile !== undefined
       ? options
       : Object.freeze({ ...options, rendererProfile: controllerOptions.rendererProfile }) as unknown as T;
-
-  const withOpenImportDependencies = (
-    options: OpenMusicXmlAppDocumentOptions
-  ): OpenMusicXmlAppDocumentOptions => Object.freeze({
-    ...options,
-    ...(options.musicXmlImportRouter !== undefined || controllerOptions.musicXmlImportRouter === undefined
-      ? {}
-      : { musicXmlImportRouter: controllerOptions.musicXmlImportRouter }),
-    ...(options.partituraFallback !== undefined || controllerOptions.partituraFallback === undefined
-      ? {}
-      : { partituraFallback: controllerOptions.partituraFallback })
-  });
 
   const snapshot = (): Readonly<ScoreEditorBrowserAppSnapshot> => {
     const selection = current?.session.selection ?? null;
@@ -340,13 +324,7 @@ export const createStandaloneScoreEditorController = (
     unmount: () => { if (root !== null) root.replaceChildren(); root = null; },
     newDocument: (options = {}) => mutate(() => createNewScoreEditorAppDocument(withRendererProfile(options))),
     openMusicXml: async (musicXml, options = {}) => {
-      try {
-        current = await openMusicXmlScoreEditorAppDocument(
-          musicXml,
-          withOpenImportDependencies(withRendererProfile(options))
-        );
-        lastError = null;
-      }
+      try { current = await openMusicXmlScoreEditorAppDocument(musicXml, withRendererProfile(options)); lastError = null; }
       catch (error) { lastError = errorInfo(error); }
       return notify();
     },
