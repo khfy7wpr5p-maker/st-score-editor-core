@@ -80,11 +80,20 @@
       "expectedPreservedElements": [
         "staff-lines",
         "tuning-step",
+        "tuning-alter",
         "tuning-octave",
         "staff-tuning",
         "staff-details",
         "string",
-        "fret"
+        "fret",
+        "bend-alter",
+        "bend",
+        "hammer-on",
+        "pull-off",
+        "natural",
+        "harmonic",
+        "pluck",
+        "golpe"
       ],
       "roundTrip": "RAW_SIDECAR_NONCANONICAL"
     },
