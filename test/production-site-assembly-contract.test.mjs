@@ -164,6 +164,6 @@ test('SES-105 production bootstrap forwards an optional external MusicXML import
   assert.match(source, /STScoreEditorMusicXmlImporter/);
   assert.match(source, /typeof externalMusicXmlImporter === 'function'/);
   assert.match(source, /load: externalMusicXmlImporter/);
-  assert.doesNotMatch(source, /https?:\\/\\/[^'"`]*partitura/i);
-  assert.doesNotMatch(source, /render\\.com[^'"`]*/i);
+  assert.doesNotMatch(source, /https?:\/\/[^'"`]*partitura/i);
+  assert.doesNotMatch(source, /render\.com[^'"`]*/i);
 });
