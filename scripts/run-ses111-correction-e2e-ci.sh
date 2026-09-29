@@ -33,12 +33,12 @@ git -C "${CORRECTION_ROOT}" checkout --detach "${CORRECTION_REVISION}"
 )
 
 ST_SCORE_RENDERER_RUNTIME_DIR="${RENDERER_ROOT}/dist/workstation-runtime" \
-CORRECTION_ROOT="${CORRECTION_ROOT}" \
+ST_CE_RUNTIME_ROOT="${CORRECTION_ROOT}" \
 node --input-type=module <<'NODE'
 import { readFile } from 'node:fs/promises';
 import { assembleStableApp09BPreviewCli } from './scripts/assemble-app09b-preview-stable.mjs';
 
-const correctionRoot = process.env.CORRECTION_ROOT;
+const correctionRoot = process.env.ST_CE_RUNTIME_ROOT;
 const manifest = JSON.parse(await readFile(
   correctionRoot + '/dist/browser-analysis/ce-analysis-browser-runtime.manifest.json',
   'utf8'
@@ -89,12 +89,12 @@ EOF
 
 ST_SCORE_RENDERER_RUNTIME_DIR="${RENDERER_ROOT}/dist/workstation-runtime" \
 ST_SCORE_AUDIO_RUNTIME_DIR="${AUDIO_ROOT}" \
-CORRECTION_ROOT="${CORRECTION_ROOT}" \
+ST_CE_RUNTIME_ROOT="${CORRECTION_ROOT}" \
 node --input-type=module <<'NODE'
 import { readFile } from 'node:fs/promises';
 import { assembleProductionSite } from './scripts/assemble-production-site.mjs';
 
-const correctionRoot = process.env.CORRECTION_ROOT;
+const correctionRoot = process.env.ST_CE_RUNTIME_ROOT;
 const manifest = JSON.parse(await readFile(
   correctionRoot + '/dist/browser-analysis/ce-analysis-browser-runtime.manifest.json',
   'utf8'
