@@ -1,3 +1,4 @@
+import { webcrypto } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
@@ -29,7 +30,7 @@ test('SES-91 release qualification keeps Partitura isolated and release physical
   assert.equal(result.interaction.editCreatesOneRevision, true);
   assert.equal(result.interaction.undoRestoresImportedRevision, true);
   assert.equal(result.interaction.redoRestoresEditedRevision, true);
-  assert.equal(result.interaction.renderProducedMusicXml, true);
+  assert.equal(result.interaction.renderRequestCurrent, true);
   assert.equal(result.timing.policy, 'INFORMATIONAL_SEPARATE_DOMAINS');
   assert.ok(Number.isFinite(result.timing.openImportMs));
   assert.ok(Number.isFinite(result.timing.interactionMs));
@@ -69,6 +70,7 @@ test('SES-91 release qualification keeps Partitura isolated and release physical
 
 
 test('SES-91 real file-enabled open path forwards the configured fallback loader exactly once', async () => {
+  if (globalThis.crypto === undefined) globalThis.crypto = webcrypto;
   const xml = await read('corpus/fixtures/musicxml-compatibility/ses-90-guitar-tab-technical.musicxml');
   let calls = 0;
   const loader = createSes91V2FallbackLoader(() => { calls += 1; });
@@ -90,6 +92,8 @@ test('SES-91 real file-enabled open path forwards the configured fallback loader
   const before = calls;
   controller.undo();
   controller.redo();
-  controller.exportMusicXml();
+  const current = controller.getDocument();
+  assert.ok(current?.session.renderRequest);
+  assert.equal(current.session.renderRequest.revisionId, current.session.history.present.score.revision.id);
   assert.equal(calls, before);
 });
