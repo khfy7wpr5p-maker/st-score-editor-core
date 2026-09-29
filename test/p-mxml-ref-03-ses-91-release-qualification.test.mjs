@@ -73,7 +73,7 @@ test('SES-91 real file-enabled open path forwards the configured fallback loader
   let calls = 0;
   const loader = createSes91V2FallbackLoader(() => { calls += 1; });
   const controller = createFileEnabledStandaloneScoreEditorController({
-    musicXmlImportLoader: loader
+    load: loader
   });
   const file = {
     name: 'ses-91-guitar.musicxml',
