@@ -213,7 +213,7 @@ test('SES-89 app open uses the router once; later canonical edit and Undo never 
     sha256Hex: nodeSha256,
     documentId: 'doc-app-ses-89',
     revisionId: 'rev-app-ses-89',
-    musicXmlImporter: v2ImporterWithFallback(async request => {
+    importer: v2ImporterWithFallback(async request => {
       calls += 1;
       return envelopeFor(request.sourceIdentity);
     })
@@ -246,7 +246,7 @@ test('SES-89 browser open seam injects the router/fallback only for file-open an
     sha256Hex: nodeSha256,
     documentId: 'doc-browser-ses-89',
     revisionId: 'rev-browser-ses-89',
-    musicXmlImporter: v2ImporterWithFallback(async request => {
+    importer: v2ImporterWithFallback(async request => {
       calls += 1;
       return envelopeFor(request.sourceIdentity);
     })
