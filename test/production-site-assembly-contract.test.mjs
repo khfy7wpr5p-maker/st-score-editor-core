@@ -175,7 +175,8 @@ test('production assembly emits a root index that wires exact renderer plus non-
     assert.equal(manifest.seslitabCutoverAuthorized, false);
     assert.equal(manifest.manualDeviceValidationRequired, true);
     assert.match(html, /audio-runtime\/st-score-audio-engine\.js/);
-    assert.match(html, /correction-runtime\/ce-analysis-browser-runtime\.js/);
+    assert.doesNotMatch(html, /correction-runtime\/ce-analysis-browser-runtime\.js/);
+    assert.match(bootstrap, /STOmrCorrectionAnalysisRuntime/);
     assert.match(html, /st-score-editor-production-bootstrap\.js/);
     assert.match(html, /connect-src https:\/\/raw\.githubusercontent\.com/);
     assert.match(html, /id="st-score-audio-instrument"/);
