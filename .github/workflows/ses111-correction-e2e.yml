@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: khfy7wpr5p-maker/st-omr-correction-engine
-          ref: 2584f68024d76edbaeda3155e13cf5b422bc2457
+          ref: bdaeb1e6fec8aee27d1cc72347f5be735af3cf30
           path: st-omr-correction-engine
           persist-credentials: false
       - name: Build exact read-only Correction Engine analysis runtime
