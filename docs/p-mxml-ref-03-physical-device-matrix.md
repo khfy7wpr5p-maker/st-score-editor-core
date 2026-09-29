@@ -15,7 +15,7 @@ This matrix is the manual evidence gate for the Partitura-assisted MusicXML fall
 
 ## Required provider wiring
 
-The ST Score Editor Core file workflow accepts a host-supplied MusicXML import loader. Core does not hardcode a Partitura endpoint or network provider. Before physical testing, the qualifying host/application must wire the approved bounded Partitura provider into the file-enabled controller's `musicXmlImportLoader` option.
+The ST Score Editor Core file workflow accepts a host-supplied MusicXML import loader. Core does not hardcode a Partitura endpoint or network provider. Before physical testing, the qualifying host/application must wire the approved bounded Partitura provider into the file-enabled controller's `load` option.
 
 Provider wiring is a prerequisite for claiming fallback-path physical PASS. It is not evidence of canonical authority: Partitura output must still pass the ST mapper/validator.
 
