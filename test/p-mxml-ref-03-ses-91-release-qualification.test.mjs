@@ -45,11 +45,15 @@ test('SES-91 release qualification keeps Partitura isolated and release physical
   assert.equal(manifest.status, 'AUTOMATED_PASS_PHYSICAL_DEVICE_PENDING');
   assert.equal(manifest.automated.partituraIsolationTrace, true);
   assert.equal(manifest.automated.partituraTimingSeparatedFromInteractionTiming, true);
+  assert.equal(manifest.automated.fileEnabledFallbackLoaderForwarding, true);
   assert.equal(manifest.automated.node18_20_22Required, true);
   assert.equal(manifest.automated.dedicatedMusicXmlWebKitRequired, true);
   assert.equal(manifest.security.browserRuntimePythonDependency, false);
   assert.equal(manifest.security.browserRuntimeNetworkFallbackDependency, false);
   assert.equal(manifest.security.newRenderServiceOrUrl, false);
+  assert.equal(manifest.integration.fallbackProviderConfiguredByCore, false);
+  assert.equal(manifest.integration.externalProviderEndpointHardcoded, false);
+  assert.equal(manifest.integration.physicalProviderWiringRequiredBeforeDevicePass, true);
   assert.equal(manifest.physical.iPhoneSafari, 'PENDING_EXACT_REFERENCE_FILE_RERUN');
   assert.equal(manifest.physical.androidChrome, 'PENDING_EXACT_REFERENCE_FILE_RERUN');
   assert.equal(manifest.release.productionReleaseAuthorized, false);
