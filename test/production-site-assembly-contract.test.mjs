@@ -158,3 +158,32 @@ test('production assembly emits a root index that wires exact renderer plus non-
     await rm(temp, { recursive: true, force: true });
   }
 });
+
+
+test('SES-105 production bootstrap forwards an optional external MusicXML importer without hardcoding a provider endpoint', async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-ses105-production-'));
+  try {
+    const runtimeDir = path.join(temp, 'renderer');
+    const audioRuntimeDir = path.join(temp, 'audio');
+    const outputDir = path.join(temp, 'out');
+    await writeRendererRuntime(runtimeDir);
+    await mkdir(audioRuntimeDir, { recursive: true });
+    await writeFile(path.join(audioRuntimeDir, 'st-score-audio-engine.js'), 'globalThis.STScoreAudioEngine = {};');
+
+    await assembleProductionSite({
+      runtimeDir,
+      audioRuntimeDir,
+      outputDir,
+      refreshRendererRuntime: false
+    });
+
+    const bootstrap = await readFile(path.join(outputDir, 'st-score-editor-production-bootstrap.js'), 'utf8');
+    assert.match(bootstrap, /STScoreEditorMusicXmlImporter/);
+    assert.match(bootstrap, /typeof externalMusicXmlImporter === 'function'/);
+    assert.match(bootstrap, /load: externalMusicXmlImporter/);
+    assert.doesNotMatch(bootstrap, /https?:\/\/[^'"`]*partitura/i);
+    assert.doesNotMatch(bootstrap, /render\.com[^'"`]*/i);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
