@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const APP09B_RENDERER_SOURCE_REVISION = '70c21ad73c0b2e9c71e415cc3272a10673df9d60';
+export const APP09B_RENDERER_SOURCE_REVISION = '6a716e68366b7ba303ef1a560a3cf34083a383f4';
 export const APP09B_OSMD_VERSION = '2.1.2';
 export const APP09B_RENDERER_CONTRACT_VERSION = '0.2.0';
 export const APP09B_PREVIEW_VERSION = '1.0.0';
@@ -145,7 +145,15 @@ const previewBootstrap = `(() => {
       try {
         const child = frame.contentWindow;
         const host = child?.__ST_SCORE_RENDER_HOST__;
-        if (host && typeof host.renderMusicXml === 'function' && typeof host.hitTestNoteDetailed === 'function' && typeof host.highlight === 'function' && typeof host.dispose === 'function') {
+        if (
+          host &&
+          typeof host.renderMusicXml === 'function' &&
+          typeof host.hitTestNoteDetailed === 'function' &&
+          typeof host.highlight === 'function' &&
+          typeof host.highlightMeasure === 'function' &&
+          typeof host.clearMeasureHighlights === 'function' &&
+          typeof host.dispose === 'function'
+        ) {
           resolve(host);
           return;
         }
@@ -223,6 +231,15 @@ const previewBootstrap = `(() => {
         render() {
           if (!lastLoadSucceeded) throw new Error('APP09B_RENDER_WITHOUT_SUCCESSFUL_LOAD');
           frame.style.visibility = 'visible';
+        },
+        getRenderEvidence() {
+          return renderEvidence;
+        },
+        async highlightMeasure(highlight) {
+          return api.highlightMeasure(highlight);
+        },
+        async clearMeasureHighlights() {
+          return api.clearMeasureHighlights();
         },
         clear() {
           renderEvidence = null;
