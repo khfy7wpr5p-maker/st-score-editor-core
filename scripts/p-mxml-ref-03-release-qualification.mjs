@@ -11,8 +11,7 @@ import {
   openMusicXmlScoreEditorAppDocument,
   selectAppSemanticAddress,
   commitAppTopologyIntent,
-  navigateAppDocumentHistory,
-  exportMusicXmlScoreEditorAppDocument
+  navigateAppDocumentHistory
 } from '../dist/packages/score-editor-app-document/src/index.js';
 
 export const P_MXML_REF_03_RELEASE_QUALIFICATION_VERSION = '1.0.0';
@@ -169,10 +168,10 @@ export const runPartituraIsolationQualification = async ({
   const redoRestoresEditedRevision =
     document.session.history.present.score.revision.id === editedRevision;
 
-  const rendered = exportMusicXmlScoreEditorAppDocument(document);
-  const renderProducedMusicXml =
-    typeof rendered === 'string' &&
-    rendered.includes('<score-partwise');
+  const renderRequest = document.session.renderRequest;
+  const renderRequestCurrent =
+    renderRequest.documentId === document.session.history.present.score.id &&
+    renderRequest.revisionId === editedRevision;
 
   const interactionMs = finiteDuration(now() - interactionStarted);
   const fallbackCallsAfter = appFallbackCalls;
@@ -192,7 +191,7 @@ export const runPartituraIsolationQualification = async ({
       editCreatesOneRevision,
       undoRestoresImportedRevision,
       redoRestoresEditedRevision,
-      renderProducedMusicXml
+      renderRequestCurrent
     }),
     timing: Object.freeze({
       policy: 'INFORMATIONAL_SEPARATE_DOMAINS',
