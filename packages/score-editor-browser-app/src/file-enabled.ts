@@ -87,7 +87,7 @@ const defaultDownloadHandoff: BrowserDownloadHandoff = async (artifact) => {
   const documentValue = globalThis.document;
   const urlApi = globalThis.URL;
   if (documentValue === undefined || typeof urlApi?.createObjectURL !== 'function' || typeof urlApi.revokeObjectURL !== 'function') {
-    throw new FileEnabledControllerError('Browser download host is unavailable.', 'DOWNLOAD_HOST_UNAVAILABLE');
+    throw new FileEnabledControllerError('Download host unavailable.', 'DOWNLOAD_HOST_UNAVAILABLE');
   }
   const blob = new Blob([artifact.text], { type: artifact.mimeType });
   const url = urlApi.createObjectURL(blob);
