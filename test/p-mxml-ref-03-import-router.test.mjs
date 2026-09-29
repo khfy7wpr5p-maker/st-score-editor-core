@@ -8,6 +8,7 @@ import {
 } from '../dist/packages/musicxml/src/index.js';
 import {
   routeMusicXmlImportV1,
+  routeMusicXmlImportV2CompatibleV1,
   MusicXmlImportRouterError
 } from '../dist/packages/musicxml-import-router/src/index.js';
 import {
@@ -26,6 +27,9 @@ const sourceFor = xml => ({
   byteLength: new TextEncoder().encode(xml).byteLength
 });
 const nodeSha256 = async text => sha256(text);
+const v2ImporterWithFallback = fallback => (musicXml, options) =>
+  routeMusicXmlImportV2CompatibleV1(musicXml, { ...options, partituraFallback: fallback });
+
 
 const baseXml = noteBody => `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0">
@@ -209,11 +213,10 @@ test('SES-89 app open uses the router once; later canonical edit and Undo never 
     sha256Hex: nodeSha256,
     documentId: 'doc-app-ses-89',
     revisionId: 'rev-app-ses-89',
-    musicXmlImportRouter: routeMusicXmlImportV1,
-    partituraFallback: async request => {
+    musicXmlImporter: v2ImporterWithFallback(async request => {
       calls += 1;
       return envelopeFor(request.sourceIdentity);
-    }
+    })
   });
 
   assert.equal(calls, 1);
@@ -243,11 +246,10 @@ test('SES-89 browser open seam injects the router/fallback only for file-open an
     sha256Hex: nodeSha256,
     documentId: 'doc-browser-ses-89',
     revisionId: 'rev-browser-ses-89',
-    musicXmlImportRouter: routeMusicXmlImportV1,
-    partituraFallback: async request => {
+    musicXmlImporter: v2ImporterWithFallback(async request => {
       calls += 1;
       return envelopeFor(request.sourceIdentity);
-    }
+    })
   });
   assert.equal(opened.error, null);
   assert.equal(calls, 1);
