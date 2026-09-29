@@ -8,8 +8,7 @@ import {
 import {
   clearOsmdPresentation,
   renderWithOsmdV4,
-  type OsmdMeasureHighlightRequest,
-  type OsmdRenderEvidence,
+  type OsmdMeasureHighlightTarget,
   type OsmdRendererHost
 } from '../../renderer-osmd/src/index.js';
 import type { RendererRequestV4 } from '../../renderer-contract-v4/src/index.js';
@@ -40,9 +39,11 @@ export interface RendererEnabledStandaloneScoreEditorController extends Omit<Rec
   readonly attachOsmdRenderer: (host: OsmdRendererHost) => void;
   readonly detachRenderer: () => void;
   readonly renderCurrent: () => Promise<Readonly<BrowserRendererControllerState>>;
-  readonly getRendererEvidence: () => Readonly<OsmdRenderEvidence> | null;
-  readonly highlightMeasure: (highlight: Readonly<OsmdMeasureHighlightRequest>) => Promise<void>;
-  readonly clearMeasureHighlights: () => Promise<void>;
+  readonly replaceMeasureHighlights: (input: Readonly<{
+    renderEpoch: string;
+    sourceId: string | null;
+    targets: readonly OsmdMeasureHighlightTarget[];
+  }>) => Promise<void>;
   readonly unmount: () => void;
 }
 
@@ -51,7 +52,6 @@ export type RendererLifecycleErrorCode =
   | 'NO_RENDER_DOCUMENT'
   | 'RENDERER_STALE_RESULT'
   | 'RENDERER_RENDER_FAILED'
-  | 'RENDERER_EVIDENCE_UNAVAILABLE'
   | 'RENDERER_MEASURE_HIGHLIGHT_UNAVAILABLE';
 
 export class RendererLifecycleError extends Error {
@@ -95,25 +95,6 @@ export const createRendererEnabledStandaloneScoreEditorController = (
     renderedRevisionId = null;
   };
 
-  const requireCurrentRenderedHost = (): OsmdRendererHost => {
-    const activeHost = host;
-    const document = base.getDocument();
-    if (
-      activeHost === null ||
-      document === null ||
-      renderedDocumentId === null ||
-      renderedRevisionId === null ||
-      document.session.history.present.score.id !== renderedDocumentId ||
-      document.session.history.present.score.revision.id !== renderedRevisionId
-    ) {
-      throw new RendererLifecycleError(
-        'Measure presentation requires an accepted current renderer revision.',
-        'RENDERER_EVIDENCE_UNAVAILABLE'
-      );
-    }
-    return activeHost;
-  };
-
   const unsubscribe = base.subscribe((snapshot) => {
     if (renderedRevisionId !== null && (snapshot.revisionId !== renderedRevisionId || base.getDocument()?.session.history.present.score.id !== renderedDocumentId)) {
       clearRenderedIdentity();
@@ -144,36 +125,34 @@ export const createRendererEnabledStandaloneScoreEditorController = (
       clearRenderedIdentity();
       status = Object.freeze({ code: 'RENDERER_DETACHED', message: 'Renderer host detached.' });
     },
-    getRendererEvidence: () => {
-      const activeHost = requireCurrentRenderedHost();
-      const evidence = activeHost.instance.getRenderEvidence?.() ?? null;
+    replaceMeasureHighlights: async (input) => {
+      const activeHost = host;
+      const document = base.getDocument();
+      const evidence = activeHost?.instance.getRenderEvidence?.() ?? null;
       if (
-        evidence === null ||
-        typeof evidence.renderEpoch !== 'string' ||
-        evidence.renderEpoch.length === 0 ||
-        (evidence.sourceId !== null && (typeof evidence.sourceId !== 'string' || evidence.sourceId.length === 0))
-      ) return null;
-      return Object.freeze({ renderEpoch: evidence.renderEpoch, sourceId: evidence.sourceId });
-    },
-    highlightMeasure: async (highlight: Readonly<OsmdMeasureHighlightRequest>) => {
-      const activeHost = requireCurrentRenderedHost();
-      if (typeof activeHost.instance.highlightMeasure !== 'function') {
+        activeHost === null ||
+        document === null ||
+        renderedDocumentId !== document.session.history.present.score.id ||
+        renderedRevisionId !== document.session.history.present.score.revision.id ||
+        evidence?.renderEpoch !== input.renderEpoch ||
+        evidence?.sourceId !== input.sourceId ||
+        typeof activeHost.instance.highlightMeasure !== 'function' ||
+        typeof activeHost.instance.clearMeasureHighlights !== 'function'
+      ) {
         throw new RendererLifecycleError(
-          'Attached renderer host does not expose measure highlight capability.',
-          'RENDERER_MEASURE_HIGHLIGHT_UNAVAILABLE'
-        );
-      }
-      await activeHost.instance.highlightMeasure(highlight);
-    },
-    clearMeasureHighlights: async () => {
-      const activeHost = requireCurrentRenderedHost();
-      if (typeof activeHost.instance.clearMeasureHighlights !== 'function') {
-        throw new RendererLifecycleError(
-          'Attached renderer host does not expose measure highlight capability.',
+          'Current renderer cannot accept this measure highlight presentation.',
           'RENDERER_MEASURE_HIGHLIGHT_UNAVAILABLE'
         );
       }
       await activeHost.instance.clearMeasureHighlights();
+      try {
+        for (const target of input.targets) {
+          await activeHost.instance.highlightMeasure({ target, className: 'st-score-suspicious-measure' });
+        }
+      } catch (error) {
+        try { await activeHost.instance.clearMeasureHighlights(); } catch { /* presentation-only cleanup */ }
+        throw error;
+      }
     },
     renderCurrent: async () => {
       const activeHost = host;
