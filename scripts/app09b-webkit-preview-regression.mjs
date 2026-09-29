@@ -188,6 +188,7 @@ try {
     });
     const child = frame.contentDocument;
     const overlay = child.querySelector('[data-st-score-measure-highlight="true"]');
+    const overlayCount = child.querySelectorAll('[data-st-score-measure-highlight="true"]').length;
     const noteColored = child.querySelector('[data-st-score-highlight="true"]') !== null;
     const afterDocument = controller.getDocument?.();
     const afterHistory = afterDocument?.session?.history;
@@ -206,7 +207,7 @@ try {
     const overlayAfterClear = child.querySelectorAll('[data-st-score-measure-highlight="true"]').length;
     return {
       targets: state?.targets ?? null,
-      overlayCount: overlay ? child.querySelectorAll('[data-st-score-measure-highlight="true"]').length : 0,
+      overlayCount,
       overlayClass: overlay?.classList.contains('st-score-suspicious-measure') ?? false,
       overlayPartId: overlay?.getAttribute('data-st-score-measure-part-id') ?? null,
       overlayMeasureIndex: overlay?.getAttribute('data-st-score-measure-index') ?? null,
