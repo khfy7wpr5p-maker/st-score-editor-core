@@ -47,6 +47,11 @@ export interface MusicXmlImportRouterSuccessV1 {
   readonly nativeFailureKind: ImportFallbackFailureKindV1 | null;
 }
 
+export type MusicXmlImportRouterV1 = (
+  musicXml: string,
+  options: MusicXmlImportRouterOptionsV1
+) => Promise<Readonly<MusicXmlImportRouterSuccessV1>>;
+
 export type MusicXmlImportRouterErrorCode =
   | 'FALLBACK_CALL_FAILED'
   | 'FALLBACK_VALIDATION_FAILED';
