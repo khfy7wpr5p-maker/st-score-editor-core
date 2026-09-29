@@ -202,9 +202,9 @@ export const createStandaloneScoreEditorController = (
     });
   };
 
-  const notify = (): Readonly<ScoreEditorBrowserAppSnapshot> => {
+  const notify = (renderShell = true): Readonly<ScoreEditorBrowserAppSnapshot> => {
     const value = snapshot();
-    render();
+    if (renderShell) render(); else renderPresentation();
     for (const listener of listeners) listener(value);
     return value;
   };
@@ -214,14 +214,36 @@ export const createStandaloneScoreEditorController = (
     return current;
   };
 
-  const mutate = (operation: () => Readonly<ScoreEditorAppDocument>): Readonly<ScoreEditorBrowserAppSnapshot> => {
+  const mutate = (
+    operation: () => Readonly<ScoreEditorAppDocument>,
+    renderShell = true
+  ): Readonly<ScoreEditorBrowserAppSnapshot> => {
     try {
       current = operation();
       lastError = null;
     } catch (error) {
       lastError = errorInfo(error);
     }
-    return notify();
+    return notify(renderShell);
+  };
+
+  const renderPresentation = (): void => {
+    const selection = current?.session.selection ?? null;
+    const inspector = root?.querySelector<HTMLElement>('.stse-inspector');
+    if (inspector !== null && inspector !== undefined) {
+      inspector.textContent = current === null
+        ? 'No document'
+        : `revision: ${current.session.history.present.score.revision.id}\nselection: ${selection === null ? 'none' : `${selection.kind}:${entityId(selection)}`}\nprojection: ${current.session.renderRequest.projectionStatus}`;
+    }
+    const code = root?.querySelector<HTMLElement>('.stse-status strong');
+    if (code !== null && code !== undefined) {
+      code.textContent = lastError?.code ?? current?.session.status.code ?? 'NO_DOCUMENT';
+      code.classList.toggle('stse-error', lastError !== null);
+    }
+    const message = root?.querySelector<HTMLElement>('.stse-status-message');
+    if (message !== null && message !== undefined) {
+      message.textContent = lastError?.message ?? current?.session.status.message ?? 'Create or open a score document.';
+    }
   };
 
   const render = (): void => {
@@ -295,19 +317,16 @@ export const createStandaloneScoreEditorController = (
     const side = owner.createElement('aside'); side.className = 'stse-side';
     const heading = owner.createElement('h2'); heading.textContent = 'Inspector';
     const inspector = owner.createElement('div'); inspector.className = 'stse-inspector';
-    const selection = current?.session.selection ?? null;
-    inspector.textContent = current === null
-      ? 'No document'
-      : `revision: ${current.session.history.present.score.revision.id}\nselection: ${selection === null ? 'none' : `${selection.kind}:${entityId(selection)}`}\nprojection: ${current.session.renderRequest.projectionStatus}`;
     side.append(heading, inspector);
     main.append(workspace, side);
 
     const status = owner.createElement('footer'); status.className = 'stse-status';
-    const statusCode = owner.createElement('strong'); statusCode.textContent = lastError?.code ?? current?.session.status.code ?? 'NO_DOCUMENT'; if (lastError !== null) statusCode.className = 'stse-error';
-    const statusMessage = owner.createElement('span'); statusMessage.className = 'stse-status-message'; statusMessage.textContent = lastError?.message ?? current?.session.status.message ?? 'Create or open a score document.';
+    const statusCode = owner.createElement('strong');
+    const statusMessage = owner.createElement('span'); statusMessage.className = 'stse-status-message';
     status.append(statusCode, statusMessage);
     app.append(toolbar, main, status);
     root.replaceChildren(app);
+    renderPresentation();
   };
 
   const controller: StandaloneScoreEditorController = {
@@ -331,7 +350,7 @@ export const createStandaloneScoreEditorController = (
     adoptValidatedSnapshot: (document) => mutate(() => adoptScoreEditorAppDocumentSnapshot(document)),
     exportMusicXml: () => exportMusicXmlScoreEditorAppDocument(requireDocument()),
     markSaved: (nextTitle) => mutate(() => markScoreEditorAppDocumentSaved(requireDocument(), nextTitle ?? requireDocument().title)),
-    select: (address) => mutate(() => selectAppSemanticAddress(requireDocument(), address)),
+    select: (address) => mutate(() => selectAppSemanticAddress(requireDocument(), address), false),
     undo: () => mutate(() => navigateAppDocumentHistory(requireDocument(), 'UNDO')),
     redo: () => mutate(() => navigateAppDocumentHistory(requireDocument(), 'REDO')),
     commitBasic: (intent, options) => mutate(() => commitAppBasicAuthoringIntent(requireDocument(), intent, options)),

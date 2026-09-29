@@ -112,6 +112,14 @@ Dedicated mobile WebKit coverage proves straight eighths -> canonical `1/12` tri
 - `.mxl`, direct PDF-byte generation and cloud/server revision authority;
 - canonical Triplet removal/unretiming mutation beyond the existing APP-11J read-only admission.
 
+## SEM-04 — Read-only Semantic Parity
+
+SEM-04 is CI/reference evidence only. A controlled MusicXML fixture is interpreted independently by the existing Editor Core import path and by a pinned ST Score Semantic Engine snapshot, then compared through a read-only structural projection.
+
+The authority boundaries do not change: `ScoreDocumentV3 + NotationDocumentV4` remain canonical, `EditorSessionV4 / EditorHistoryV4` remain history authority, and `SemanticAddressV3` remains Editor Core identity. Semantic Engine/Partitura is not an Editor Core runtime or browser dependency, no network/Render service is added, and the parity harness has no mutation or automatic-correction authority.
+
+The initial parity profile is deliberately bounded to one pitched part, fixed divisions-per-quarter, normal notes/chords, simple tie boundary roles, and explicit time/key/clef contexts. Unsupported structures fail closed rather than being coerced.
+
 ## Automated quality gate
 
 Feature PRs require exact-head validation before merge:
