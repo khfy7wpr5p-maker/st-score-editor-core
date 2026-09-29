@@ -191,47 +191,30 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
       findings: readonly SuspiciousMeasureFindingEvidenceV1[];
     }>) => {
       const current = requireCurrentPresentation();
-      const evidence = base.getRendererEvidence();
-      const expectedSourceId = input.current.sourceId ?? null;
-      if (
-        input.current.documentId !== current.score.id ||
-        input.current.revisionId !== current.score.revision.id ||
-        evidence === null ||
-        evidence.renderEpoch !== input.current.renderEpoch ||
-        evidence.sourceId !== expectedSourceId
-      ) {
+      if (input.current.documentId !== current.score.id || input.current.revisionId !== current.score.revision.id) {
         throw new RendererSemanticHitBridgeControllerError(
-          'Suspicious measure evidence does not match the exact current renderer presentation.',
-          'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH',
-          {
-            evidenceRenderEpoch: evidence?.renderEpoch ?? null,
-            findingRenderEpoch: input.current.renderEpoch,
-            evidenceSourceId: evidence?.sourceId ?? null,
-            findingSourceId: expectedSourceId
-          }
+          'Suspicious measure evidence does not match the current presentation.',
+          'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
         );
       }
-
       const nextState = createSuspiciousMeasureHighlightStateV1(input);
-      try {
-        await base.clearMeasureHighlights();
-        for (const target of nextState.targets) {
-          await base.highlightMeasure(Object.freeze({
-            target,
-            className: 'st-score-suspicious-measure'
-          }));
-        }
-      } catch (error) {
-        suspiciousMeasureState = null;
-        try { await base.clearMeasureHighlights(); } catch { /* presentation cleanup is best-effort after failure */ }
-        throw error;
-      }
+      await base.replaceMeasureHighlights({
+        renderEpoch: input.current.renderEpoch,
+        sourceId: input.current.sourceId ?? null,
+        targets: nextState.targets
+      });
       suspiciousMeasureState = nextState;
       return nextState;
     },
     clearSuspiciousMeasureHighlights: async () => {
+      const current = suspiciousMeasureState;
+      if (current === null) return;
+      await base.replaceMeasureHighlights({
+        renderEpoch: current.renderEpoch,
+        sourceId: current.sourceId ?? null,
+        targets: []
+      });
       suspiciousMeasureState = null;
-      await base.clearMeasureHighlights();
     }
   });
   return controller;
