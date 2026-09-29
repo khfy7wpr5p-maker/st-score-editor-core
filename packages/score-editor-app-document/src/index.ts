@@ -74,7 +74,7 @@ export interface OpenMusicXmlAppDocumentOptions {
   readonly revisionId?: string;
   readonly sha256Hex?: AppSha256Provider;
   readonly rendererProfile?: RendererProfile;
-  readonly musicXmlImporter?: AppMusicXmlImporter;
+  readonly importer?: AppMusicXmlImporter;
 }
 
 export type ScoreEditorAppDocumentErrorCode =
@@ -274,14 +274,12 @@ export const openMusicXmlScoreEditorAppDocument = async (
   musicXml: string,
   options: OpenMusicXmlAppDocumentOptions = {}
 ): Promise<Readonly<ScoreEditorAppDocument>> => {
-  const bytes = new TextEncoder().encode(musicXml);
-  const source = Object.freeze({
-    sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
-    format: 'musicxml' as const,
-    byteLength: bytes.byteLength
-  });
-  const imported = await (options.musicXmlImporter ?? importNotationMusicXmlV2)(musicXml, {
-    source,
+  const imported = await (options.importer || importNotationMusicXmlV2)(musicXml, {
+    source: Object.freeze({
+      sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
+      format: 'musicxml' as const,
+      byteLength: new TextEncoder().encode(musicXml).byteLength
+    }),
     documentId: options.documentId,
     revisionId: options.revisionId
   } as Parameters<typeof importNotationMusicXmlV2>[1]);
