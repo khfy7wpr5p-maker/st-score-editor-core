@@ -4,8 +4,6 @@ import { addressEntityV2 } from '../../addressing-v2/src/index.js';
 import type { SemanticAddressV3 } from '../../addressing-v3/src/index.js';
 import { migrateScoreNotationV2ToV3 } from '../../schema-migration-v2-v3/src/index.js';
 import {
-  createEditorSessionV4,
-  createEditorSessionV4WithRendererProfile,
   createEditorSessionV4FromV3,
   createEditorSessionV4FromV3WithRendererProfile,
   commitSessionBasicAuthoringIntentV4,
@@ -38,10 +36,6 @@ import type { TeacherEventSpanSelectionV4 } from '../../editor-teacher-event-spa
 import type { TeacherOctaveTransposeAdmissionV4 } from '../../editor-teacher-octave-transpose-admission-v4/src/index.js';
 import type { TeacherOctaveTransposeAuthoringV4Options } from '../../editor-teacher-octave-transpose-authoring-v4/src/index.js';
 import { importNotationMusicXmlV2 } from '../../musicxml-v2/src/index.js';
-import type {
-  MusicXmlImportRouterV1,
-  PartituraFallbackImporterV1
-} from '../../musicxml-import-router/src/index.js';
 import { renderableMusicXmlV4, RendererContractV4Error } from '../../renderer-contract-v4/src/index.js';
 
 export const SCORE_EDITOR_APP_DOCUMENT_VERSION = '1.0.0' as const;
@@ -53,6 +47,10 @@ export const NEW_SCORE_PRESETS = Object.freeze([
 export type NewScorePreset = typeof NEW_SCORE_PRESETS[number];
 export type AppDocumentOrigin = 'NEW' | 'MUSICXML';
 export type AppSha256Provider = (text: string) => Promise<string>;
+export type AppMusicXmlImporter = (
+  musicXml: Parameters<typeof importNotationMusicXmlV2>[0],
+  options: Parameters<typeof importNotationMusicXmlV2>[1]
+) => ReturnType<typeof importNotationMusicXmlV2> | Promise<ReturnType<typeof importNotationMusicXmlV2>>;
 
 export interface ScoreEditorAppDocument {
   readonly version: typeof SCORE_EDITOR_APP_DOCUMENT_VERSION;
@@ -76,8 +74,7 @@ export interface OpenMusicXmlAppDocumentOptions {
   readonly revisionId?: string;
   readonly sha256Hex?: AppSha256Provider;
   readonly rendererProfile?: RendererProfile;
-  readonly musicXmlImportRouter?: MusicXmlImportRouterV1;
-  readonly partituraFallback?: PartituraFallbackImporterV1;
+  readonly musicXmlImporter?: AppMusicXmlImporter;
 }
 
 export type ScoreEditorAppDocumentErrorCode =
@@ -262,14 +259,6 @@ const sessionFromV3 = (
   ? createEditorSessionV4FromV3(score, notation)
   : createEditorSessionV4FromV3WithRendererProfile(score, notation, profile);
 
-const sessionFromV4 = (
-  score: Parameters<typeof createEditorSessionV4>[0],
-  notation: Parameters<typeof createEditorSessionV4>[1],
-  profile: RendererProfile | undefined
-): Readonly<EditorSessionStateV4> => profile === undefined
-  ? createEditorSessionV4(score, notation)
-  : createEditorSessionV4WithRendererProfile(score, notation, profile);
-
 export const createNewScoreEditorAppDocument = (
   options: NewAppDocumentOptions = {}
 ): Readonly<ScoreEditorAppDocument> => {
@@ -291,24 +280,13 @@ export const openMusicXmlScoreEditorAppDocument = async (
     format: 'musicxml' as const,
     byteLength: bytes.byteLength
   });
-  if (options.musicXmlImportRouter === undefined) {
-    const imported = importNotationMusicXmlV2(musicXml, {
-      source,
-      ...(options.documentId === undefined ? {} : { documentId: options.documentId }),
-      ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId })
-    });
-    const migrated = migrateScoreNotationV2ToV3(imported.score, imported.notation);
-    const session = sessionFromV3(migrated.score, migrated.notation, options.rendererProfile);
-    return appState(cleanTitle(options.title, 'Imported Score'), 'MUSICXML', session, session.history.present.score.revision.id);
-  }
-
-  const routed = await options.musicXmlImportRouter(musicXml, {
+  const imported = await (options.musicXmlImporter ?? importNotationMusicXmlV2)(musicXml, {
     source,
     ...(options.documentId === undefined ? {} : { documentId: options.documentId }),
-    ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId }),
-    ...(options.partituraFallback === undefined ? {} : { partituraFallback: options.partituraFallback })
+    ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId })
   });
-  const session = sessionFromV4(routed.score, routed.notation, options.rendererProfile);
+  const migrated = migrateScoreNotationV2ToV3(imported.score, imported.notation);
+  const session = sessionFromV3(migrated.score, migrated.notation, options.rendererProfile);
   return appState(cleanTitle(options.title, 'Imported Score'), 'MUSICXML', session, session.history.present.score.revision.id);
 };
 
