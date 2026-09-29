@@ -189,7 +189,10 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
       ) suspiciousMeasureState = null;
       return suspiciousMeasureState;
     },
-    setSuspiciousMeasureFindings: (input) => {
+    setSuspiciousMeasureFindings: (input: Readonly<{
+      current: SuspiciousMeasureRenderIdentityV1;
+      findings: readonly SuspiciousMeasureFindingEvidenceV1[];
+    }>) => {
       const current = requireCurrentPresentation();
       if (input.current.documentId !== current.score.id || input.current.revisionId !== current.score.revision.id) {
         throw new RendererSemanticHitBridgeControllerError(
