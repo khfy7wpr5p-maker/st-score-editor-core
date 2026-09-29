@@ -4,6 +4,8 @@ import { addressEntityV2 } from '../../addressing-v2/src/index.js';
 import type { SemanticAddressV3 } from '../../addressing-v3/src/index.js';
 import { migrateScoreNotationV2ToV3 } from '../../schema-migration-v2-v3/src/index.js';
 import {
+  createEditorSessionV4,
+  createEditorSessionV4WithRendererProfile,
   createEditorSessionV4FromV3,
   createEditorSessionV4FromV3WithRendererProfile,
   commitSessionBasicAuthoringIntentV4,
@@ -258,6 +260,14 @@ const sessionFromV3 = (
   ? createEditorSessionV4FromV3(score, notation)
   : createEditorSessionV4FromV3WithRendererProfile(score, notation, profile);
 
+const sessionFromV4 = (
+  score: Parameters<typeof createEditorSessionV4>[0],
+  notation: Parameters<typeof createEditorSessionV4>[1],
+  profile: RendererProfile | undefined
+): Readonly<EditorSessionStateV4> => profile === undefined
+  ? createEditorSessionV4(score, notation)
+  : createEditorSessionV4WithRendererProfile(score, notation, profile);
+
 export const createNewScoreEditorAppDocument = (
   options: NewAppDocumentOptions = {}
 ): Readonly<ScoreEditorAppDocument> => {
@@ -285,7 +295,7 @@ export const openMusicXmlScoreEditorAppDocument = async (
     ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId }),
     ...(options.partituraFallback === undefined ? {} : { partituraFallback: options.partituraFallback })
   });
-  const session = sessionFromV3(imported.score, imported.notation, options.rendererProfile);
+  const session = sessionFromV4(imported.score, imported.notation, options.rendererProfile);
   return appState(cleanTitle(options.title, 'Imported Score'), 'MUSICXML', session, session.history.present.score.revision.id);
 };
 
