@@ -96,6 +96,17 @@ const firstSelectableAddress = score => {
   return address;
 };
 
+export const createSes91V2FallbackLoader = (onFallback = () => {}) => (
+  xml,
+  options
+) => routeMusicXmlImportV2CompatibleV1(xml, {
+  ...options,
+  partituraFallback: async request => {
+    onFallback(request);
+    return envelopeFor(request.sourceIdentity);
+  }
+});
+
 export const runPartituraIsolationQualification = async ({
   now = () => performance.now()
 } = {}) => {
@@ -115,13 +126,7 @@ export const runPartituraIsolationQualification = async ({
   const openImportMs = finiteDuration(now() - importStarted);
 
   let appFallbackCalls = 0;
-  const load = (xml, options) => routeMusicXmlImportV2CompatibleV1(xml, {
-    ...options,
-    partituraFallback: async request => {
-      appFallbackCalls += 1;
-      return envelopeFor(request.sourceIdentity);
-    }
-  });
+  const load = createSes91V2FallbackLoader(() => { appFallbackCalls += 1; });
 
   let document = await openMusicXmlScoreEditorAppDocument(musicXml, {
     documentId: 'doc:ses-91-app',
