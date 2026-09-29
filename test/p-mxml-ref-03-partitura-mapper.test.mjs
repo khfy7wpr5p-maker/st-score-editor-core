@@ -202,7 +202,7 @@ test('SES-87 does not return a partial canonical pair for invalid overlapping vo
   );
 
   assert.equal(result.ok, false);
-  assert.equal(result.diagnostics.some(item => item.code === 'CANONICAL_VALIDATION_FAILED'), true);
+  assert.equal(result.diagnostics.some(item => item.code === 'INVALID_TIMING'), true);
   assert.equal('score' in result, false);
   assert.equal('notation' in result, false);
 });
