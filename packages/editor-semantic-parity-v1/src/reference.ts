@@ -158,14 +158,14 @@ const parseSnapshot = (value: unknown): Readonly<SemanticParitySnapshotV1> => {
     source_kind: 'musicxml',
     part_count: integerValue(input.part_count, 'semanticSnapshot.part_count'),
     measure_count: integerValue(input.measure_count, 'semanticSnapshot.measure_count'),
-    notes: Object.freeze(arrayValue(input.notes, 'semanticSnapshot.notes').map(parseNote)),
+    notes: Object.freeze(arrayValue(input.notes, 'semanticSnapshot.notes').map((value, index) => parseNote(value, index))),
     time_signatures: Object.freeze(
-      arrayValue(input.time_signatures, 'semanticSnapshot.time_signatures').map(parseTimeSignature)
+      arrayValue(input.time_signatures, 'semanticSnapshot.time_signatures').map((value, index) => parseTimeSignature(value, index))
     ),
     key_signatures: Object.freeze(
-      arrayValue(input.key_signatures, 'semanticSnapshot.key_signatures').map(parseKeySignature)
+      arrayValue(input.key_signatures, 'semanticSnapshot.key_signatures').map((value, index) => parseKeySignature(value, index))
     ),
-    clefs: Object.freeze(arrayValue(input.clefs, 'semanticSnapshot.clefs').map(parseClef))
+    clefs: Object.freeze(arrayValue(input.clefs, 'semanticSnapshot.clefs').map((value, index) => parseClef(value, index)))
   });
 };
 
