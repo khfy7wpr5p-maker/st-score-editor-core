@@ -64,7 +64,7 @@ const note = (overrides = {}) => ({
   ...overrides
 });
 
-const envelope = (partOverrides = {}, envelopeOverrides = {}) => ({
+const envelope = (partOverrides = {}) => ({
   version: '1.0.0',
   sourceIdentity: 'fixture:supported.musicxml',
   parts: [{
@@ -90,16 +90,13 @@ const envelope = (partOverrides = {}, envelopeOverrides = {}) => ({
     clefs: [],
     ...partOverrides
   }],
-  eventCount: 2,
-  measureCount: 1,
-  provenance: {
+   provenance: {
     parser: 'partitura',
     partituraVersion: '1.9.0',
     sourceIdentity: 'fixture:supported.musicxml'
   },
   preservedSymbols: [],
-  diagnostics: [],
-  ...envelopeOverrides
+  diagnostics: []
 });
 
 const sidecar = (symbols = [], sourceIdentity = 'fixture:supported.musicxml') => ({
@@ -199,7 +196,7 @@ test('SES-87 does not return a partial canonical pair for invalid overlapping vo
         note({ sourceNoteId: 'n2', onsetDiv: 4, durationDiv: 4, onsetQuarter: 1, durationQuarter: 1 })
       ],
       rests: []
-    }, { eventCount: 2 }),
+    }),
     sidecar(),
     options
   );
