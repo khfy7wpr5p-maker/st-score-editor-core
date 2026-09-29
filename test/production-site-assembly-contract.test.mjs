@@ -48,11 +48,9 @@ const writeRendererRuntime = async root => {
   await writeFile(path.join(root, 'runtime-manifest.json'), `${JSON.stringify(rendererManifest())}\n`);
 };
 
-const writeCorrectionRuntime = async root => {
-  await mkdir(root, { recursive: true });
-  const artifact = 'globalThis.STOmrCorrectionAnalysisRuntime={analyzeMusicXmlSuspiciousMeasures(){return {mode:"SHADOW_ONLY",partId:"P1",measureCount:1,unmappedFindingCount:0,suspiciousMeasures:[],automaticApplyAuthority:false,musicXmlWriteBackAuthority:false}}};';
-  await writeFile(path.join(root, 'ce-analysis-browser-runtime.js'), artifact);
-  await writeFile(path.join(root, 'ce-analysis-browser-runtime.manifest.json'), JSON.stringify({
+const correctionRuntimeFixture = () => {
+  const artifact = Buffer.from('globalThis.STOmrCorrectionAnalysisRuntime={analyzeMusicXmlSuspiciousMeasures(){return {mode:"SHADOW_ONLY",partId:"P1",measureCount:1,unmappedFindingCount:0,suspiciousMeasures:[],automaticApplyAuthority:false,musicXmlWriteBackAuthority:false}}};');
+  const manifest = Object.freeze({
     contract: 'ST_OMR_CORRECTION_ENGINE_ANALYSIS_BROWSER',
     contractVersion: '1.0.0',
     runtimeVersion: '1.0.0',
@@ -68,10 +66,11 @@ const writeCorrectionRuntime = async root => {
     automaticApplyAuthority: false,
     learningAuthority: false,
     musicXmlWriteBackAuthority: false,
-    bytes: Buffer.byteLength(artifact),
+    bytes: artifact.byteLength,
     sha256: createHash('sha256').update(artifact).digest('hex')
-  }));
-};
+  });
+  return Object.freeze({ manifest, artifact });
+}
 
 test('APP-09B keeps Correction Engine runtime optional', async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-ce-optional-'));
@@ -135,17 +134,15 @@ test('production assembly emits a root index that wires exact renderer plus non-
   try {
     const runtimeDir = path.join(temp, 'renderer');
     const audioRuntimeDir = path.join(temp, 'audio');
-    const correctionRuntimeDir = path.join(temp, 'correction');
     const outputDir = path.join(temp, 'out');
     await writeRendererRuntime(runtimeDir);
-    await writeCorrectionRuntime(correctionRuntimeDir);
     await mkdir(audioRuntimeDir, { recursive: true });
     await writeFile(path.join(audioRuntimeDir, 'st-score-audio-engine.js'), 'globalThis.STScoreAudioEngine = {};');
 
     const manifest = await assembleProductionSite({
       runtimeDir,
       audioRuntimeDir,
-      correctionRuntimeDir,
+      correctionRuntime: correctionRuntimeFixture(),
       outputDir,
       refreshRendererRuntime: false
     });
