@@ -1,0 +1,106 @@
+{
+  "version": "1.0.0",
+  "rightsPolicy": "FIRST_PARTY_SYNTHETIC_ONLY",
+  "fixtures": [
+    {
+      "id": "musescore-style",
+      "family": "MuseScore-style",
+      "file": "ses-90-musescore-style.musicxml",
+      "provenance": "first-party synthetic",
+      "personalData": false,
+      "redistribution": "repository-owned",
+      "expectedRoute": "NATIVE",
+      "expectedFallbackCalls": 0,
+      "expectedCanonicalNotes": 4,
+      "expectedPreservedElements": [],
+      "roundTrip": "CANONICAL_REOPEN"
+    },
+    {
+      "id": "audiveris-style",
+      "family": "Audiveris-style",
+      "file": "ses-90-audiveris-style.musicxml",
+      "provenance": "first-party synthetic",
+      "personalData": false,
+      "redistribution": "repository-owned",
+      "expectedRoute": "NATIVE",
+      "expectedFallbackCalls": 0,
+      "expectedCanonicalNotes": 3,
+      "expectedPreservedElements": [],
+      "roundTrip": "CANONICAL_REOPEN"
+    },
+    {
+      "id": "finale-style",
+      "family": "Finale-style",
+      "file": "ses-90-finale-style.musicxml",
+      "provenance": "first-party synthetic",
+      "personalData": false,
+      "redistribution": "repository-owned",
+      "expectedRoute": "NATIVE",
+      "expectedFallbackCalls": 0,
+      "expectedCanonicalNotes": 4,
+      "expectedPreservedElements": [],
+      "roundTrip": "CANONICAL_REOPEN"
+    },
+    {
+      "id": "sibelius-style",
+      "family": "Sibelius-style",
+      "file": "ses-90-sibelius-style.musicxml",
+      "provenance": "first-party synthetic",
+      "personalData": false,
+      "redistribution": "repository-owned",
+      "expectedRoute": "NATIVE",
+      "expectedFallbackCalls": 0,
+      "expectedCanonicalNotes": 4,
+      "expectedPreservedElements": [],
+      "roundTrip": "CANONICAL_REOPEN"
+    },
+    {
+      "id": "polyphonic",
+      "family": "Polyphonic",
+      "file": "ses-90-polyphonic.musicxml",
+      "provenance": "first-party synthetic",
+      "personalData": false,
+      "redistribution": "repository-owned",
+      "expectedRoute": "NATIVE",
+      "expectedFallbackCalls": 0,
+      "expectedCanonicalNotes": 6,
+      "expectedPreservedElements": [],
+      "roundTrip": "CANONICAL_REOPEN"
+    },
+    {
+      "id": "guitar-tab-technical",
+      "family": "Guitar-TAB-technical",
+      "file": "ses-90-guitar-tab-technical.musicxml",
+      "provenance": "first-party synthetic",
+      "personalData": false,
+      "redistribution": "repository-owned",
+      "expectedRoute": "PARTITURA_FALLBACK",
+      "expectedFallbackCalls": 1,
+      "expectedCanonicalNotes": 1,
+      "expectedPreservedElements": [
+        "staff-lines",
+        "tuning-step",
+        "tuning-octave",
+        "staff-tuning",
+        "staff-details",
+        "string",
+        "fret"
+      ],
+      "roundTrip": "RAW_SIDECAR_NONCANONICAL"
+    },
+    {
+      "id": "unsupported-direction",
+      "family": "Unsupported-semantic",
+      "file": "ses-90-unsupported-direction.musicxml",
+      "provenance": "first-party synthetic",
+      "personalData": false,
+      "redistribution": "repository-owned",
+      "expectedRoute": "FAIL_CLOSED",
+      "expectedError": "UNSUPPORTED_MUSICXML",
+      "expectedFallbackCalls": 0,
+      "expectedCanonicalNotes": 0,
+      "expectedPreservedElements": [],
+      "roundTrip": "NOT_APPLICABLE"
+    }
+  ]
+}
