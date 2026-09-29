@@ -14,8 +14,14 @@ import {
   classifyMusicXmlV2ImportFailure,
   importNotationMusicXmlV2
 } from '../../musicxml-v2/src/index.js';
-import { migrateScoreNotationV2ToV3 } from '../../schema-migration-v2-v3/src/index.js';
-import { migrateNotationV3ToV4 } from '../../schema-migration-v3-v4/src/index.js';
+import {
+  downgradeScoreNotationV3ToV2,
+  migrateScoreNotationV2ToV3
+} from '../../schema-migration-v2-v3/src/index.js';
+import {
+  downgradeNotationV4ToV3,
+  migrateNotationV3ToV4
+} from '../../schema-migration-v3-v4/src/index.js';
 import type { NotationDocumentV4 } from '../../notation-structure-v4/src/index.js';
 import type { ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
 import type { MusicXmlImportOptions } from '../../musicxml/src/index.js';
@@ -182,4 +188,15 @@ export const routeMusicXmlImportV1 = async (
     preservedSymbols: mapped.preservedSymbols,
     nativeFailureKind
   });
+};
+
+
+export const routeMusicXmlImportV2CompatibleV1 = async (
+  musicXml: string,
+  options: MusicXmlImportRouterOptionsV1
+): Promise<Readonly<Pick<ReturnType<typeof importNotationMusicXmlV2>, 'score' | 'notation'>>> => {
+  const routed = await routeMusicXmlImportV1(musicXml, options);
+  const notationV3 = downgradeNotationV4ToV3(routed.score, routed.notation);
+  const v2 = downgradeScoreNotationV3ToV2(routed.score, notationV3);
+  return Object.freeze({ score: v2.score, notation: v2.notation });
 };
