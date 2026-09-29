@@ -3,6 +3,7 @@ import {
   validateNormalizedImportEnvelopeV1
 } from '../../musicxml-import-contract/src/index.js';
 
+import { compareStrings } from './order.js';
 export type PartituraMapperDiagnosticCodeV1 =
   | 'INVALID_ENVELOPE'
   | 'SOURCE_IDENTITY_MISMATCH'
@@ -136,8 +137,8 @@ const record = (value: unknown, path: string): R => {
 
 const exact = (value: unknown, keys: readonly string[], path: string): R => {
   const item = record(value, path);
-  const observed = Object.keys(item).sort();
-  const expected = [...keys].sort();
+  const observed = Object.keys(item).sort(compareStrings);
+  const expected = [...keys].sort(compareStrings);
   if (JSON.stringify(observed) !== JSON.stringify(expected)) {
     throw new PartituraMapperValidationError(
       'Partitura normalized field set is invalid.',
@@ -446,9 +447,9 @@ const validatePart = (value: unknown, index: number): ValidatedPartituraPartV1 =
     'measures','notes','rests','timeSignatures','keySignatures','clefs'
   ], path);
 
-  const measures = array(item.measures, `${path}.measures`).map(validateMeasure);
-  const notes = array(item.notes, `${path}.notes`).map(validateNote);
-  const rests = array(item.rests, `${path}.rests`).map(validateRest);
+  const measures = array(item.measures, `${path}.measures`).map((item, index) => validateMeasure(item, index));
+  const notes = array(item.notes, `${path}.notes`).map((item, index) => validateNote(item, index));
+  const rests = array(item.rests, `${path}.rests`).map((item, index) => validateRest(item, index));
   const staffCount = integer(item.staffCount, 1, 128, `${path}.staffCount`);
 
   if (integer(item.measureCount, 1, 2000, `${path}.measureCount`) !== measures.length) {
@@ -500,9 +501,9 @@ const validatePart = (value: unknown, index: number): ValidatedPartituraPartV1 =
     measures: Object.freeze(measures),
     notes: Object.freeze(notes),
     rests: Object.freeze(rests),
-    timeSignatures: Object.freeze(array(item.timeSignatures, `${path}.timeSignatures`).map(validateTimeSignature)),
-    keySignatures: Object.freeze(array(item.keySignatures, `${path}.keySignatures`).map(validateKeySignature)),
-    clefs: Object.freeze(array(item.clefs, `${path}.clefs`).map(validateClef))
+    timeSignatures: Object.freeze(array(item.timeSignatures, `${path}.timeSignatures`).map((item, index) => validateTimeSignature(item, index))),
+    keySignatures: Object.freeze(array(item.keySignatures, `${path}.keySignatures`).map((item, index) => validateKeySignature(item, index))),
+    clefs: Object.freeze(array(item.clefs, `${path}.clefs`).map((item, index) => validateClef(item, index)))
   });
 };
 
@@ -556,7 +557,7 @@ export const validatePartituraEnvelopeV1 = (value: unknown): Readonly<ValidatedP
     );
   }
 
-  const parts = array(root.parts, '$.parts').map(validatePart);
+  const parts = array(root.parts, '$.parts').map((item, index) => validatePart(item, index));
   if (parts.length === 0) {
     throw new PartituraMapperValidationError(
       'Partitura envelope must contain at least one part.',

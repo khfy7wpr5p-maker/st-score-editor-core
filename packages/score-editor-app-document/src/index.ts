@@ -236,7 +236,7 @@ const blankV2 = (
 const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string> => {
   const cryptoValue = globalThis.crypto as Crypto | undefined;
   if (cryptoValue === undefined || cryptoValue.subtle === undefined) {
-    throw new ScoreEditorAppDocumentError('Web Crypto SHA-256 support is required for MusicXML source identity.', 'CRYPTO_UNAVAILABLE');
+    throw new ScoreEditorAppDocumentError('Web Crypto SHA-256 unavailable.', 'CRYPTO_UNAVAILABLE');
   }
   const bytes = new TextEncoder().encode(text);
   const digest = await cryptoValue.subtle.digest('SHA-256', bytes);
@@ -246,7 +246,7 @@ const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string
 const verifiedSha256Hex = async (text: string, provider: AppSha256Provider): Promise<string> => {
   const digest = await provider(text);
   if (!/^[\da-f]{64}$/.test(digest)) {
-    throw new ScoreEditorAppDocumentError('SHA-256 provider returned invalid digest.', 'INVALID_SHA256_RESULT');
+    throw new ScoreEditorAppDocumentError('Invalid SHA-256 digest.', 'INVALID_SHA256_RESULT');
   }
   return digest;
 };
@@ -274,15 +274,17 @@ export const openMusicXmlScoreEditorAppDocument = async (
   musicXml: string,
   options: OpenMusicXmlAppDocumentOptions = {}
 ): Promise<Readonly<ScoreEditorAppDocument>> => {
-  const imported = await (options.load || importNotationMusicXmlV2)(musicXml, {
-    source: Object.freeze({
-      sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
-      format: 'musicxml' as const,
-      byteLength: new TextEncoder().encode(musicXml).length
-    }),
-    documentId: options.documentId,
-    revisionId: options.revisionId
-  } as Parameters<typeof importNotationMusicXmlV2>[1]);
+  const bytes = new TextEncoder().encode(musicXml);
+  const source = Object.freeze({
+    sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
+    format: 'musicxml' as const,
+    byteLength: bytes.byteLength
+  });
+  const imported = await (options.load ?? importNotationMusicXmlV2)(musicXml, {
+    source,
+    ...(options.documentId === undefined ? {} : { documentId: options.documentId }),
+    ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId })
+  });
   const migrated = migrateScoreNotationV2ToV3(imported.score, imported.notation);
   const session = sessionFromV3(migrated.score, migrated.notation, options.rendererProfile);
   return appState(cleanTitle(options.title, 'Imported Score'), 'MUSICXML', session, session.history.present.score.revision.id);
@@ -294,7 +296,7 @@ export const exportMusicXmlScoreEditorAppDocument = (document: ScoreEditorAppDoc
   } catch (error) {
     if (error instanceof RendererContractV4Error) {
       throw new ScoreEditorAppDocumentError(
-        'Current document contains semantics that do not yet have an admitted lossless MusicXML export path.',
+        'MusicXML export unavailable for current semantics.',
         'EXPORT_UNAVAILABLE',
         { projectionStatus: document.session.renderRequest.projectionStatus, cause: error.message }
       );

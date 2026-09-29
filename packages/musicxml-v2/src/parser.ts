@@ -50,21 +50,15 @@ const deepFreeze = <T>(value: T): Readonly<T> => {
 const unsupported = (
   element: string,
   attribute: string | null = null,
-  fallbackEligible = false
+  fallback = false
 ): never => {
   throw new MusicXmlError('Unsupported MusicXML.','UNSUPPORTED_MUSICXML',{
     element,
     attribute,
     compatibilityClass:'UNSUPPORTED_SEMANTIC_FAIL_CLOSED',
-    fallbackFailureKind: fallbackEligible
-      ? 'NATIVE_COMPATIBILITY_REJECTION'
-      : 'UNREPRESENTABLE_SEMANTIC'
+    fallback
   });
 };
-
-const reviewedFallbackWrapper = (parentPath: string, name: string): boolean =>
-  (parentPath === 'score-partwise/part/measure/note/notations' && name === 'technical') ||
-  (parentPath === 'score-partwise/part/measure/attributes' && name === 'staff-details');
 
 export const classifyMusicXmlV2ImportFailure = (
   error: unknown
@@ -91,7 +85,7 @@ export const classifyMusicXmlV2ImportFailure = (
     case 'SERIALIZATION_LIMIT':
       return 'RESOURCE_LIMIT';
     case 'UNSUPPORTED_MUSICXML':
-      return error.details.fallbackFailureKind === 'NATIVE_COMPATIBILITY_REJECTION'
+      return error.details.fallback === true
         ? 'NATIVE_COMPATIBILITY_REJECTION'
         : 'UNREPRESENTABLE_SEMANTIC';
     case 'INVALID_MUSICXML_SEMANTICS':
@@ -141,7 +135,7 @@ export const parseMusicXmlV2Tree = (
       unsupported(
         leafName,
         name,
-        leafName === 'staff-details' && parentPath === 'score-partwise/part/measure/attributes/staff-details'
+        leafName === 'staff-details'
       );
     }
 
@@ -158,7 +152,7 @@ export const parseMusicXmlV2Tree = (
       } else if (name === 'staff-details') {
         const a = attrs[0];
         if (attrs.length !== 1 || a?.uri !== '' || a?.name !== 'print-object' || a?.value !== 'yes') {
-          unsupported(name, null, reviewedFallbackWrapper(parentPath, name));
+          unsupported(name, null, true);
         }
       } else {
         for (const a of attrs) {
@@ -173,7 +167,7 @@ export const parseMusicXmlV2Tree = (
     }
 
     const code = musicXmlCompatibilityElementCodeAt(parentPath,name,uri);
-    if (code === 2) unsupported(name, null, reviewedFallbackWrapper(parentPath, name));
+    if (code === 2) unsupported(name, null, name === 'technical' && parentPath === 'score-partwise/part/measure/note/notations');
     if (code === 1) {
       record(name,null,pathClass);
       parts.push(name);

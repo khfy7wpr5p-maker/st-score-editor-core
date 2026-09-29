@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { createPartituraNoteFixtureV1 } from '../scripts/lib/p-mxml-ref-03-envelope-fixture.mjs';
 import { importNotationMusicXmlV2 } from '../dist/packages/musicxml-v2/src/index.js';
 import { migrateScoreNotationV2ToV3 } from '../dist/packages/schema-migration-v2-v3/src/index.js';
 import { migrateNotationV3ToV4 } from '../dist/packages/schema-migration-v3-v4/src/index.js';
@@ -34,35 +35,7 @@ const source = Object.freeze({
   byteLength: new TextEncoder().encode(xml).byteLength
 });
 
-const note = (overrides = {}) => ({
-  sourceNoteId: 'n1',
-  pitch: 64,
-  step: 'E',
-  alter: 0,
-  octave: 4,
-  onsetBeat: 0,
-  durationBeat: 1,
-  onsetQuarter: 0,
-  durationQuarter: 1,
-  onsetDiv: 0,
-  durationDiv: 4,
-  voice: 1,
-  staff: 1,
-  divsPerQuarter: 4,
-  keyFifths: 0,
-  keyMode: null,
-  timeBeats: 4,
-  timeBeatType: 4,
-  ties: { start: false, stop: false },
-  tiePrevSourceNoteId: null,
-  tieNextSourceNoteId: null,
-  tuplet: null,
-  fingerings: [],
-  articulations: [],
-  ornaments: [],
-  isGrace: false,
-  ...overrides
-});
+const note = (overrides = {}) => createPartituraNoteFixtureV1({ sourceNoteId: 'n1', ...overrides });
 
 const envelope = (partOverrides = {}) => ({
   version: '1.0.0',

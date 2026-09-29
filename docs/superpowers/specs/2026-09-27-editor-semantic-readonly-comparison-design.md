@@ -1,0 +1,350 @@
+# SEM-04 — Editor Core Read-Only Semantic Comparison Architecture
+
+Date: 2026-09-27  
+Status: WRITTEN SPEC — USER REVIEW REQUIRED BEFORE IMPLEMENTATION PLAN  
+Consumer: ST Score Editor Core  
+Reference engine: ST Score Semantic Engine  
+Semantic Engine qualified head: `ffc997b242fa862e180e698385cc0afb52de47a1`  
+Editor Core baseline: `40e84d1fb9af4ad370adf99cb0f2e91df33d6e60`
+
+## 1. Purpose
+
+Add an independent read-only semantic parity check for MusicXML imported by Editor Core.
+
+The goal is not to replace Editor Core's canonical model. The goal is to answer:
+
+> For a controlled MusicXML fixture, did Editor Core and ST Score Semantic Engine interpret the same musical facts?
+
+The comparison is evidence only. It cannot mutate score state, choose authoring targets, create history revisions, or change runtime behavior.
+
+## 2. Existing authority that remains unchanged
+
+Editor Core remains authoritative for:
+
+- `ScoreDocumentV3 + NotationDocumentV4` — canonical score state;
+- `EditorSessionV4 / EditorHistoryV4` — history;
+- `SemanticAddressV3` — exact revision-bound semantic identity;
+- Editor Core MusicXML import/export policy;
+- renderer and browser integration boundaries already documented in Editor Core.
+
+ST Score Semantic Engine remains an independent semantic/reference engine.
+
+Partitura remains an implementation dependency of Semantic Engine only. It does not become an Editor Core runtime dependency.
+
+## 3. Chosen architecture
+
+Use an **offline fixture-level parity harness** in Editor Core.
+
+No live Python process, no REST service, no browser dependency, and no cross-repository runtime call is introduced.
+
+```text
+controlled MusicXML fixture
+        |
+        +-------------------------------+
+        |                               |
+        v                               v
+Editor Core importer              Semantic Engine
+        |                               |
+        v                               v
+ScoreDocumentV3 +                 SemanticSnapshot JSON
+NotationDocumentV4                + provenance
+        |
+        v
+EditorSemanticProjectionV1
+        |
+        +------------- compare ----------+
+                      |
+                      v
+          EditorSemanticComparisonReportV1
+```
+
+The Semantic Engine result is checked in as reference evidence beside the Editor Core fixture. It is regenerated only through a separately controlled requalification step.
+
+## 4. Alternatives considered
+
+### A. Browser/runtime Partitura integration — rejected
+
+This would add Python/Partitura runtime authority and packaging complexity to Editor Core. It also creates a second semantic path in the product runtime.
+
+### B. Semantic Engine network service — rejected
+
+A service would create deployment, network, availability, version-skew and security coupling. No such service is needed for read-only parity evidence.
+
+### C. Semantic Engine directly consumes Editor Core canonical JSON — rejected for first tranche
+
+This would couple Semantic Engine to `ScoreDocumentV3/NotationDocumentV4` evolution and risk making the reference engine dependent on the model it is supposed to independently check.
+
+### D. Offline fixture-level parity harness — selected
+
+This preserves independence, is deterministic, has no runtime authority, and can be tested in CI.
+
+## 5. First comparison profile
+
+The first profile is intentionally narrow.
+
+### Supported
+
+- one MusicXML part;
+- pitched notes;
+- two or more measures;
+- multiple staves;
+- multiple voices;
+- stable note ordering;
+- fixed divisions-per-quarter for the entire fixture;
+- pitch;
+- measure membership;
+- onset;
+- duration;
+- voice;
+- staff;
+- simple tie start/stop semantics;
+- time signature;
+- key signature;
+- clef.
+
+### Explicitly unsupported in first profile
+
+- unpitched/percussion notes;
+- grace-note comparison;
+- cross-staff notation;
+- polymeter/non-controlling measures;
+- mid-score divisions changes;
+- arbitrary tuplets;
+- beams;
+- slurs;
+- tremolo;
+- duplicate indistinguishable unison chord tones at the same structural position;
+- automatic correction;
+- runtime comparison on user documents.
+
+Unsupported input must produce `UNSUPPORTED`, not a false mismatch and not silent coercion.
+
+## 6. Identity comparison rule
+
+Raw IDs are **not** compared across engines.
+
+Reasons:
+
+- Editor Core generates canonical entity IDs such as part/staff/measure/event/note identities;
+- Semantic Engine preserves MusicXML/Partitura source IDs when present;
+- neither ID namespace is allowed to replace the other.
+
+Comparison uses structural coordinates.
+
+Initial pitched-note comparison key:
+
+```text
+part ordinal
+measure index
+staff ordinal
+voice ordinal
+onset
+pitch MIDI
+occurrence ordinal
+```
+
+The occurrence ordinal is only a deterministic tie-breaker inside the comparison projection. It is not canonical identity.
+
+`SemanticAddressV3` remains Editor Core identity and is never generated by Semantic Engine.
+
+## 7. Timing normalization
+
+This is the most important first-tranche limitation.
+
+Editor Core stores timing as canonical rational whole-note units.
+
+Semantic Engine v1 currently exposes `onset_div` and `duration_div` in Partitura/MusicXML division units.
+
+Therefore the first parity fixture must have one fixed `divisionsPerQuarter` value recorded in its provenance manifest.
+
+Conversion for the controlled fixture is:
+
+```text
+editor rational whole-note value
+    = semantic division value / (4 * divisionsPerQuarter)
+```
+
+Example with `divisionsPerQuarter = 4`:
+
+```text
+duration_div = 4  ->  1/4 whole note
+duration_div = 16 ->  1 whole note
+```
+
+A MusicXML file that changes `divisions` mid-score is `UNSUPPORTED` in SEM-04.
+
+A future generalized parity tranche may add a normalized rational timing contract to Semantic Engine. SEM-04 does not change Semantic Engine's public snapshot schema.
+
+## 8. Editor-side projection
+
+A new read-only projection may be implemented later as:
+
+```text
+EditorSemanticProjectionV1
+```
+
+Input:
+
+- `ScoreDocumentV3`
+- `NotationDocumentV4`
+- fixture provenance
+
+Output is immutable comparison data only.
+
+It must flatten pitched note/chord content into structural note rows containing only the fields required by this spec.
+
+It must not:
+
+- mutate the score;
+- allocate new canonical IDs;
+- create history;
+- read renderer geometry;
+- infer authoring targets;
+- call a network service;
+- run Partitura.
+
+## 9. Tie comparison
+
+First-profile tie comparison is boundary-role parity, not raw-ID endpoint parity.
+
+For each structurally matched note:
+
+- Semantic Engine `tie_next != null` corresponds to Editor notation tie-start;
+- Semantic Engine `tie_prev != null` corresponds to Editor notation tie-stop.
+
+Ambiguous multiple tie numbering or relation topology outside this bounded profile is `UNSUPPORTED`.
+
+A later tranche may compare full resolved tie endpoint topology.
+
+## 10. Context comparison
+
+### Measure count
+
+Semantic Engine `measure_count` is compared to Editor Core `measureFrames.length`.
+
+### Time signature
+
+Compare by measure index.
+
+### Key signature
+
+Compare by measure index.
+
+### Clef
+
+Compare by measure index + staff ordinal.
+
+Raw measure IDs and notation target IDs are not compared.
+
+## 11. Reference fixture provenance
+
+Each parity fixture must include a small immutable provenance record:
+
+```json
+{
+  "schemaVersion": "st-editor-semantic-parity-fixture-v1",
+  "sourceSha256": "<sha256>",
+  "semanticEngineCommit": "ffc997b242fa862e180e698385cc0afb52de47a1",
+  "semanticSnapshotSchema": "st-semantic-snapshot-v1",
+  "partituraVersion": "1.9.0",
+  "divisionsPerQuarter": 4
+}
+```
+
+The expected SemanticSnapshot JSON must be generated from the exact same MusicXML bytes identified by `sourceSha256`.
+
+A provenance mismatch is `UNSUPPORTED` or fixture-invalid, never PASS.
+
+## 12. Comparison report
+
+The later implementation plan may define an immutable report similar to:
+
+```text
+PASS
+MISMATCH
+UNSUPPORTED
+```
+
+Example diagnostic categories:
+
+- `SOURCE_SHA_MISMATCH`
+- `PROFILE_UNSUPPORTED`
+- `PART_COUNT_MISMATCH`
+- `MEASURE_COUNT_MISMATCH`
+- `NOTE_COUNT_MISMATCH`
+- `PITCH_MISMATCH`
+- `ONSET_MISMATCH`
+- `DURATION_MISMATCH`
+- `VOICE_MISMATCH`
+- `STAFF_MISMATCH`
+- `TIE_ROLE_MISMATCH`
+- `TIME_SIGNATURE_MISMATCH`
+- `KEY_SIGNATURE_MISMATCH`
+- `CLEF_MISMATCH`
+
+The report is evidence only and has no mutation authority.
+
+## 13. Test strategy
+
+Implementation must follow RED → GREEN → refactor while green.
+
+Minimum evidence:
+
+1. controlled fixture imports successfully through Editor Core;
+2. checked-in Semantic Engine reference snapshot has valid provenance;
+3. unchanged fixture produces `PASS`;
+4. independently mutated test projections demonstrate detection of:
+   - pitch mismatch;
+   - onset/duration mismatch;
+   - voice/staff mismatch;
+   - tie-role mismatch;
+   - context mismatch;
+5. unsupported profile returns `UNSUPPORTED`;
+6. no Editor Core revision/history change occurs;
+7. no renderer/browser/network authority is involved;
+8. existing Editor Core Node 18/20/22 contract/build/test suite remains green.
+
+The parity expected values must originate from the independent Semantic Engine artifact, not be generated from the Editor Core projection under test.
+
+## 14. Repository ownership
+
+First implementation code, if later approved, belongs in **ST Score Editor Core** because it validates Editor Core's import semantics.
+
+Semantic Engine is consumed only through a checked-in reference artifact plus provenance.
+
+No source code is copied between repositories.
+
+## 15. Deployment and product boundary
+
+SEM-04 adds no:
+
+- Render service;
+- domain;
+- browser feature;
+- user-facing UI;
+- production network dependency;
+- runtime Python dependency;
+- automatic score correction.
+
+It is CI/test/reference infrastructure only.
+
+## 16. Acceptance criteria
+
+The architecture is accepted when:
+
+- Editor Core remains canonical;
+- comparison is read-only;
+- raw cross-engine IDs are never treated as equivalent identity;
+- timing conversion is explicit and limited to the fixed-divisions profile;
+- reference provenance pins exact Semantic Engine commit and Partitura version;
+- mismatch and unsupported states are explicit;
+- no runtime or deployment coupling exists;
+- first implementation scope is small enough for independent TDD verification.
+
+## 17. Next gate
+
+This written spec must be reviewed and explicitly approved by the user.
+
+Only after written-spec approval may Superpowers `writing-plans` be invoked to produce the implementation plan.
+
+No production or test implementation is authorized by this document alone.

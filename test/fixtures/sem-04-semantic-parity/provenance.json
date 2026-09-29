@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "st-editor-semantic-parity-fixture-v1",
+  "sourceSha256": "5e52fd119f2801daa6230dc956c3d0c21b17f3330882f3f9428c081dbca2663d",
+  "semanticEngineCommit": "ffc997b242fa862e180e698385cc0afb52de47a1",
+  "semanticSnapshotSchema": "st-semantic-snapshot-v1",
+  "partituraVersion": "1.9.0",
+  "divisionsPerQuarter": 4
+}

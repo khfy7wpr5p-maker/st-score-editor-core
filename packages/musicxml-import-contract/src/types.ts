@@ -24,9 +24,7 @@ export interface ImportProvenanceV1 {
   readonly parser: string;
 }
 
-export interface PreservedMusicXmlSymbolV1 {
-  readonly version: NormalizedImportEnvelopeVersion;
-  readonly disposition: 'PRESERVED_RENDERABLE';
+interface PreservedMusicXmlSymbolFieldsV1 {
   readonly element: string;
   readonly sourcePath: string;
   readonly measureNumber: string | null;
@@ -36,15 +34,12 @@ export interface PreservedMusicXmlSymbolV1 {
   readonly provenance: Readonly<ImportProvenanceV1>;
 }
 
-export interface CreatePreservedMusicXmlSymbolV1Input {
-  readonly element: string;
-  readonly sourcePath: string;
-  readonly measureNumber: string | null;
-  readonly sourceNoteId: string | null;
-  readonly attributes: Readonly<Record<string, string>>;
-  readonly text: string | null;
-  readonly provenance: Readonly<ImportProvenanceV1>;
+export interface PreservedMusicXmlSymbolV1 extends PreservedMusicXmlSymbolFieldsV1 {
+  readonly version: NormalizedImportEnvelopeVersion;
+  readonly disposition: 'PRESERVED_RENDERABLE';
 }
+
+export interface CreatePreservedMusicXmlSymbolV1Input extends PreservedMusicXmlSymbolFieldsV1 {}
 
 export interface NormalizedImportEnvelopeV1 {
   readonly version: NormalizedImportEnvelopeVersion;

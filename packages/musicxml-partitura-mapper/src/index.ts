@@ -31,6 +31,7 @@ import {
 import type { ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
 import type { Rational, SourceIdentity } from '../../score-model/src/index.js';
 
+import { compareStrings } from './order.js';
 import {
   PartituraMapperValidationError,
   validatePartituraEnvelopeV1,
@@ -123,8 +124,8 @@ const plainRecord = (value: unknown, path: string): R => {
 
 const exact = (value: unknown, keys: readonly string[], path: string): R => {
   const item = plainRecord(value, path);
-  const observed = Object.keys(item).sort();
-  const expected = [...keys].sort();
+  const observed = Object.keys(item).sort(compareStrings);
+  const expected = [...keys].sort(compareStrings);
   if (JSON.stringify(observed) !== JSON.stringify(expected)) {
     return fail('Field set is invalid.', 'INVALID_ENVELOPE', path, { observed, expected });
   }

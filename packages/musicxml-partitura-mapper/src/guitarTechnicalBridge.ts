@@ -24,6 +24,7 @@ import {
 } from '../../score-model-v3/src/index.js';
 import type { Pitch, ScoreEvent } from '../../score-model/src/index.js';
 
+import { compareStrings } from './order.js';
 import {
   validatePartituraEnvelopeV1,
   type ValidatedPartituraEnvelopeV1,
@@ -170,8 +171,8 @@ const record = (value: unknown, path: string): RecordValue => {
 
 const exact = (value: unknown, keys: readonly string[], path: string): RecordValue => {
   const item = record(value, path);
-  const expected = [...keys].sort();
-  const observed = Object.keys(item).sort();
+  const expected = [...keys].sort(compareStrings);
+  const observed = Object.keys(item).sort(compareStrings);
   if (JSON.stringify(expected) !== JSON.stringify(observed)) {
     return fail('Field set is invalid.', 'INVALID_INPUT', path, { expected, observed });
   }
