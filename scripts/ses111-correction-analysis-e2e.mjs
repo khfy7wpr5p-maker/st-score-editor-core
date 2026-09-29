@@ -1,8 +1,8 @@
-import { mkdir } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import { mkdir, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, webkit } from 'playwright';
-import { startApp09bPreviewServer } from './serve-app09b-preview.mjs';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const browserRoot = path.join(repoRoot, 'dist', 'browser');
@@ -34,7 +34,86 @@ const correctedMusicXml = overfullMusicXml.replace(
   '<note><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type></note>'
 );
 
-const previewServer = await startApp09bPreviewServer();
+const contentTypes = new Map([
+  ['.html', 'text/html; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'],
+  ['.mjs', 'text/javascript; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'],
+  ['.xml', 'application/xml; charset=utf-8'],
+  ['.musicxml', 'application/vnd.recordare.musicxml+xml; charset=utf-8'],
+  ['.svg', 'image/svg+xml'],
+  ['.css', 'text/css; charset=utf-8']
+]);
+
+const loadBrowserArtifacts = async () => {
+  const files = new Map();
+  const visit = async (directory, relativePrefix = '') => {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      const relative = relativePrefix.length === 0 ? entry.name : `${relativePrefix}/${entry.name}`;
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await visit(absolute, relative);
+      } else if (entry.isFile()) {
+        const urlPath = `/${relative.split(path.sep).join('/')}`;
+        files.set(urlPath, Object.freeze({
+          body: await readFile(absolute),
+          contentType: contentTypes.get(path.extname(entry.name).toLowerCase()) ?? 'application/octet-stream'
+        }));
+      }
+    }
+  };
+  await visit(browserRoot);
+  return files;
+};
+
+const startLoopbackArtifactServer = async () => {
+  const files = await loadBrowserArtifacts();
+  const server = createServer((request, response) => {
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      response.writeHead(405, { Allow: 'GET, HEAD', 'Cache-Control': 'no-store' }).end();
+      return;
+    }
+    const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+    const requestPath = url.pathname === '/' ? `/${entryHtml}` : url.pathname;
+    const asset = files.get(requestPath);
+    if (!asset) {
+      response.writeHead(404, { 'Cache-Control': 'no-store' }).end('not found');
+      return;
+    }
+    response.writeHead(200, {
+      'Content-Type': asset.contentType,
+      'Content-Length': asset.body.byteLength,
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer'
+    });
+    if (request.method === 'HEAD') response.end();
+    else response.end(asset.body);
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === 'string') {
+    await new Promise((resolve) => server.close(resolve));
+    throw new Error('SES-111 loopback server did not expose a TCP port.');
+  }
+  return Object.freeze({
+    port: address.port,
+    close: () => new Promise((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    })
+  });
+};
+
+const previewServer = await startLoopbackArtifactServer();
+const traversalProbe = await fetch(`http://127.0.0.1:${previewServer.port}/%2e%2e/package.json`, { redirect: 'manual' });
+if (traversalProbe.status !== 404) {
+  throw new Error(`SES-111 static server exposed a path outside the artifact table: ${traversalProbe.status}`);
+}
 let browser;
 try {
   browser = await browserType.launch({ headless: true });
