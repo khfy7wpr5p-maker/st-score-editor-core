@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "documentType": "p_mxml_ref_03_release_qualification",
+  "status": "AUTOMATED_PASS_PHYSICAL_DEVICE_PENDING",
+  "automated": {
+    "partituraIsolationTrace": true,
+    "partituraTimingSeparatedFromInteractionTiming": true,
+    "pythonPartituraTimingMeasuredSeparately": true,
+    "node18_20_22Required": true,
+    "dedicatedMusicXmlWebKitRequired": true,
+    "retainedAppWebKitRequired": true,
+    "staticDependencyBoundaryRequired": true,
+    "securityBoundaryRequired": true
+  },
+  "security": {
+    "browserRuntimePythonDependency": false,
+    "browserRuntimeNetworkFallbackDependency": false,
+    "rawPreservedSymbolsCanonicalAuthority": false,
+    "newRenderServiceOrUrl": false,
+    "genericIgnoreUnknownMode": false
+  },
+  "performance": {
+    "policy": "INFORMATIONAL_SEPARATE_DOMAINS",
+    "importTimingDomain": "file-open/fallback only",
+    "interactionTimingDomain": "selection/edit/undo/redo/render after open",
+    "fallbackCallsDuringInteractionExpected": 0,
+    "ses82LatencyClaimedFixed": false
+  },
+  "physical": {
+    "iPhoneSafari": "PENDING_EXACT_REFERENCE_FILE_RERUN",
+    "androidChrome": "PENDING_EXACT_REFERENCE_FILE_RERUN",
+    "automatedWebKitIsPhysicalEvidence": false,
+    "exactPrivateReferenceFileRequired": true,
+    "privateReferenceFileCommitted": false
+  },
+  "release": {
+    "manualDeviceValidationRequired": true,
+    "standaloneReleaseGatePassed": false,
+    "productionReleaseAuthorized": false,
+    "seslitabCutoverAuthorized": false,
+    "mergeAuthorizedBySes91": false,
+    "deployAuthorizedBySes91": false
+  }
+}
