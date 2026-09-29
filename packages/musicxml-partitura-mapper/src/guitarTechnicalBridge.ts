@@ -170,8 +170,8 @@ const record = (value: unknown, path: string): RecordValue => {
 
 const exact = (value: unknown, keys: readonly string[], path: string): RecordValue => {
   const item = record(value, path);
-  const expected = [...keys].sort();
-  const observed = Object.keys(item).sort();
+  const expected = [...keys].sort((left, right) => left.localeCompare(right));
+  const observed = Object.keys(item).sort((left, right) => left.localeCompare(right));
   if (JSON.stringify(expected) !== JSON.stringify(observed)) {
     return fail('Field set is invalid.', 'INVALID_INPUT', path, { expected, observed });
   }
