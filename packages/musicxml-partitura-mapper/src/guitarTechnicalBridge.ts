@@ -342,14 +342,14 @@ const buildNormalizedNoteRefs = (
     }
 
     for (let staff = 1; staff <= part.staffCount; staff += 1) {
-      const canonicalStaff = canonicalPart.staves.find(item => item.id === `staff-${p}-${staff}`);
+      const canonicalStaff = canonicalPart!.staves.find(item => item.id === `staff-${p}-${staff}`);
       if (canonicalStaff === undefined || canonicalStaff.role === 'tablature-linked') {
         fail('Canonical Partitura-mapped content staff identity is missing.', 'CANONICAL_MISMATCH', `$.score.parts[${partIndex}].staves[${staff - 1}]`);
       }
 
       for (let measureIndex = 0; measureIndex < part.measures.length; measureIndex += 1) {
         const m = measureIndex + 1;
-        const canonicalMeasure = canonicalStaff.measures.find(item => item.id === `measure-${p}-${staff}-${m}`);
+        const canonicalMeasure = canonicalStaff!.measures.find(item => item.id === `measure-${p}-${staff}-${m}`);
         if (canonicalMeasure === undefined) {
           fail('Canonical Partitura-mapped measure identity is missing.', 'CANONICAL_MISMATCH', `$.score.parts[${partIndex}].staves[${staff - 1}].measures[${measureIndex}]`);
         }
@@ -370,7 +370,7 @@ const buildNormalizedNoteRefs = (
         if (voices.size === 0) voices.add(1);
 
         for (const voice of [...voices].sort((left, right) => left - right)) {
-          const canonicalVoice = canonicalMeasure.voices.find(
+          const canonicalVoice = canonicalMeasure!.voices.find(
             item => item.id === `voice-${p}-${staff}-${m}-${voice}`
           );
           if (canonicalVoice === undefined) {
@@ -378,28 +378,29 @@ const buildNormalizedNoteRefs = (
           }
 
           const groups = groupsFor(part, partIndex, staff, measureIndex, voice);
-          if (canonicalVoice.events.length !== groups.length) {
-            fail('Canonical event count disagrees with normalized Partitura event grouping.', 'CANONICAL_MISMATCH', canonicalVoice.id, {
-              canonicalEvents: canonicalVoice.events.length,
+          if (canonicalVoice!.events.length !== groups.length) {
+            fail('Canonical event count disagrees with normalized Partitura event grouping.', 'CANONICAL_MISMATCH', canonicalVoice!.id, {
+              canonicalEvents: canonicalVoice!.events.length,
               normalizedGroups: groups.length
             });
           }
 
           groups.forEach((group, eventOffset) => {
-            const event = canonicalVoice.events[eventOffset];
+            const event = canonicalVoice!.events[eventOffset];
             if (event === undefined) {
-              fail('Canonical event traversal ended early.', 'CANONICAL_MISMATCH', canonicalVoice.id);
+              fail('Canonical event traversal ended early.', 'CANONICAL_MISMATCH', canonicalVoice!.id);
             }
+            const currentEvent = event as ScoreEvent;
             if (group.rests.length > 0) {
-              if (group.rests.length !== 1 || group.notes.length !== 0 || event.kind !== 'rest') {
-                fail('Canonical rest grouping disagrees with normalized Partitura data.', 'CANONICAL_MISMATCH', event.id);
+              if (group.rests.length !== 1 || group.notes.length !== 0 || currentEvent.kind !== 'rest') {
+                fail('Canonical rest grouping disagrees with normalized Partitura data.', 'CANONICAL_MISMATCH', currentEvent.id);
               }
               return;
             }
 
-            const atoms = notesOf(event);
+            const atoms = notesOf(currentEvent);
             if (atoms.length !== group.notes.length || atoms.length === 0) {
-              fail('Canonical pitched event cardinality disagrees with normalized Partitura chord grouping.', 'CANONICAL_MISMATCH', event.id, {
+              fail('Canonical pitched event cardinality disagrees with normalized Partitura chord grouping.', 'CANONICAL_MISMATCH', currentEvent.id, {
                 canonicalNotes: atoms.length,
                 normalizedNotes: group.notes.length
               });
@@ -408,14 +409,16 @@ const buildNormalizedNoteRefs = (
             group.notes.forEach((note, noteOffset) => {
               const atom = atoms[noteOffset];
               if (atom === undefined || !samePitch(atom.pitch, note)) {
-                fail('Canonical note pitch/order disagrees with normalized Partitura data.', 'CANONICAL_MISMATCH', event.id, {
+                fail('Canonical note pitch/order disagrees with normalized Partitura data.', 'CANONICAL_MISMATCH', currentEvent.id, {
                   sourceIndex: note.sourceIndex
                 });
               }
-              const address = addressEntityV3(score, atom.id);
+              const currentAtom = atom as { readonly id: string; readonly pitch: Pitch };
+              const address = addressEntityV3(score, currentAtom.id);
               if (address.kind !== 'note') {
-                fail('Canonical Partitura-mapped note identity did not resolve as a normal note.', 'CANONICAL_MISMATCH', atom.id);
+                fail('Canonical Partitura-mapped note identity did not resolve as a normal note.', 'CANONICAL_MISMATCH', currentAtom.id);
               }
+              const noteAddress = address as NoteAddressV3;
 
               if (note.sourceNoteId !== null) {
                 const key = sourceKey(partIndex, note.sourceNoteId);
@@ -433,7 +436,7 @@ const buildNormalizedNoteRefs = (
                 measureIndex,
                 voice,
                 note,
-                target: address
+                target: noteAddress
               }));
             });
           });
@@ -535,7 +538,7 @@ const parseTuning = (
     }
     const staff = parseStaffNumber(symbol, symbols);
     const count = integerText(symbol.text, symbol.sourcePath, 1, 16);
-    const key = staffKey(partIndex, staff);
+    const key = staffKey(partIndex as number, staff);
     const existing = staffLines.get(key);
     if (existing !== undefined && existing !== count) {
       fail('Conflicting staff-lines evidence exists for one Guitar staff.', 'INVALID_TUNING_EVIDENCE', symbol.sourcePath, {
@@ -555,7 +558,7 @@ const parseTuning = (
     if (rawLine === undefined) {
       fail('staff-tuning evidence requires a line attribute.', 'INVALID_TUNING_EVIDENCE', symbol.sourcePath);
     }
-    const stringNumber = integerText(rawLine, `${symbol.sourcePath}.@line`, 1, 16);
+    const stringNumber = integerText(rawLine as string, `${symbol.sourcePath}.@line`, 1, 16);
     const staff = parseStaffNumber(symbol, symbols);
     const stepSymbol = descendant(symbol, symbols, 'tuning-step');
     const octaveSymbol = descendant(symbol, symbols, 'tuning-octave');
@@ -563,14 +566,14 @@ const parseTuning = (
     if (stepSymbol === null || octaveSymbol === null) {
       fail('staff-tuning requires tuning-step and tuning-octave evidence.', 'INVALID_TUNING_EVIDENCE', symbol.sourcePath);
     }
-    const step = stepSymbol.text;
+    const step = stepSymbol!.text;
     if (step === null || !/^[A-G]$/.test(step)) {
-      fail('Tuning pitch step is invalid.', 'INVALID_TUNING_EVIDENCE', stepSymbol.sourcePath, { step });
+      fail('Tuning pitch step is invalid.', 'INVALID_TUNING_EVIDENCE', stepSymbol!.sourcePath, { step });
     }
-    const octave = signedIntegerText(octaveSymbol.text, octaveSymbol.sourcePath, -1, 9);
+    const octave = signedIntegerText(octaveSymbol!.text, octaveSymbol!.sourcePath, -1, 9);
     const alter = alterSymbol === null ? 0 : signedIntegerText(alterSymbol.text, alterSymbol.sourcePath, -2, 2);
     const evidence = Object.freeze({
-      partIndex,
+      partIndex: partIndex as number,
       staff,
       stringNumber,
       openPitch: Object.freeze({
@@ -580,10 +583,10 @@ const parseTuning = (
       }),
       sourcePath: symbol.sourcePath
     });
-    const key = tuningKey(partIndex, staff, stringNumber);
+    const key = tuningKey(partIndex as number, staff, stringNumber);
     if (byKey.has(key)) {
       fail('Duplicate tuning evidence exists for one Guitar string.', 'INVALID_TUNING_EVIDENCE', symbol.sourcePath, {
-        partIndex,
+        partIndex: partIndex as number,
         staff,
         stringNumber
       });
@@ -693,7 +696,15 @@ const enginePositions = (
 
     for (const entry of result.entries) {
       const current = addressEntityV3(score, entry.target.noteId);
-      if (current.kind !== 'note' || !knownNoteIds.has(current.noteId)) {
+      if (current.kind !== 'note') {
+        fail(
+          'Validated Guitar Workspace evidence did not resolve as a current V3 note.',
+          'ENGINE_EVIDENCE_REJECTED',
+          entry.target.noteId
+        );
+      }
+      const currentNote = current as NoteAddressV3;
+      if (!knownNoteIds.has(currentNote.noteId)) {
         fail(
           'Validated Guitar Workspace evidence points outside the Partitura-normalized note set.',
           'ENGINE_EVIDENCE_REJECTED',
@@ -706,7 +717,7 @@ const enginePositions = (
         entry.selectedPosition !== null;
       if (entry.selectedPosition !== null) {
         positions.set(
-          current.noteId,
+          currentNote.noteId,
           Object.freeze({
             position: Object.freeze({ ...entry.selectedPosition }),
             direct
@@ -716,7 +727,7 @@ const enginePositions = (
       if (!direct && entry.selectedPosition !== null) {
         diagnostics.push(Object.freeze({
           code: 'ENGINE_POSITION_NOT_DIRECT',
-          path: current.noteId,
+          path: currentNote.noteId,
           message: 'Guitar Workspace position belongs to a non-direct arrangement decision and was not used as imported TAB.',
           details: Object.freeze({
             disposition: entry.disposition,
@@ -766,7 +777,7 @@ const validateTechnicalSymbolTargets = (
     if (partIndex === null) {
       fail('Note-local preserved symbol has no deterministic Part path.', 'INVALID_INPUT', symbol.sourcePath);
     }
-    const ref = bySource.get(sourceKey(partIndex, symbol.sourceNoteId));
+    const ref = bySource.get(sourceKey(partIndex as number, symbol.sourceNoteId));
     if (ref === undefined) {
       fail(
         'Preserved technical symbol sourceNoteId does not resolve to normalized Partitura note identity.',
@@ -775,9 +786,10 @@ const validateTechnicalSymbolTargets = (
         { sourceNoteId: symbol.sourceNoteId, partIndex }
       );
     }
-    const list = grouped.get(ref) ?? [];
+    const resolvedRef = ref as NormalizedNoteRef;
+    const list = grouped.get(resolvedRef) ?? [];
     list.push(symbol);
-    grouped.set(ref, list);
+    grouped.set(resolvedRef, list);
   }
 
   const frozen = new Map<NormalizedNoteRef, readonly Readonly<PreservedMusicXmlSymbolV1>[]>();
