@@ -20,6 +20,17 @@ const ensureRegularFile = async absolute => {
 };
 
 const patchBootstrap = source => {
+  const controllerCreateAnchor = "  const controller = globalThis.STScoreEditorApp.createController({ rendererProfile: integrationProfile });";
+  const controllerCreateOccurrences = source.split(controllerCreateAnchor).length - 1;
+  if (controllerCreateOccurrences !== 1) {
+    throw new Error(`PRODUCTION_MUSICXML_CONTROLLER_HOOK_MISSING:${controllerCreateOccurrences}`);
+  }
+  const controllerCreatePatch = `  const externalMusicXmlImporter = globalThis.STScoreEditorMusicXmlImporter;
+  const controller = globalThis.STScoreEditorApp.createController({
+    rendererProfile: integrationProfile,
+    ...(typeof externalMusicXmlImporter === 'function' ? { load: externalMusicXmlImporter } : {})
+  });`;
+
   const controllerAnchor = "  Object.defineProperty(globalThis, 'STScoreEditorAppController', { value: controller, writable: false, configurable: false });";
   const controllerOccurrences = source.split(controllerAnchor).length - 1;
   if (controllerOccurrences !== 1) {
@@ -34,7 +45,10 @@ const patchBootstrap = source => {
   }
   const selectionPatch = "        const audioInteractionSequence = ++latestAudioInteractionSequence;\n        const audioInteractionStartedAt = globalThis.performance?.now?.() ?? Date.now();\n        const auditionPromise = controller.selectRenderedScoreNoteRefWithAudition(hit.target);\n        document.documentElement.dataset.stScoreSelectionDispatchMs = String(Math.max(0, (globalThis.performance?.now?.() ?? Date.now()) - audioInteractionStartedAt));\n        void auditionPromise.then(\n          (auditionResult) => {\n            if (audioInteractionSequence !== latestAudioInteractionSequence) return;\n            document.documentElement.dataset.stScoreAudioStatus = auditionResult.audioStatus.toLowerCase();\n            if (auditionResult.audioError) document.documentElement.dataset.stScoreAudioError = auditionResult.audioError.code;\n            else delete document.documentElement.dataset.stScoreAudioError;\n            document.documentElement.dataset.stScoreAudioLatencyMs = String(Math.max(0, (globalThis.performance?.now?.() ?? Date.now()) - audioInteractionStartedAt));\n          },\n          () => {\n            if (audioInteractionSequence !== latestAudioInteractionSequence) return;\n            document.documentElement.dataset.stScoreAudioStatus = 'failed';\n            document.documentElement.dataset.stScoreAudioError = 'AUDIO_AUDITION_REJECTED';\n            document.documentElement.dataset.stScoreAudioLatencyMs = String(Math.max(0, (globalThis.performance?.now?.() ?? Date.now()) - audioInteractionStartedAt));\n          }\n        );\n";
 
-  return source.replace(controllerAnchor, controllerPatch).replace(selectionNeedle, selectionPatch);
+  return source
+    .replace(controllerCreateAnchor, controllerCreatePatch)
+    .replace(controllerAnchor, controllerPatch)
+    .replace(selectionNeedle, selectionPatch);
 };
 
 const patchHtml = source => {
