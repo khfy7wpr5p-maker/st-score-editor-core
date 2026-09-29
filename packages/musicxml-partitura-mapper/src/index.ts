@@ -17,7 +17,6 @@ import type {
   KeySignature,
   MeasureNotation,
   NoteNotation,
-  Rational,
   TimeSignature,
   TupletSpec
 } from '../../notation-structure/src/index.js';
@@ -29,7 +28,7 @@ import {
   type ScoreDocumentV2
 } from '../../score-model-v2/src/index.js';
 import type { ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
-import type { SourceIdentity } from '../../score-model/src/index.js';
+import type { Rational, SourceIdentity } from '../../score-model/src/index.js';
 
 import {
   PartituraMapperValidationError,
