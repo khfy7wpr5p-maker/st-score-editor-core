@@ -81,7 +81,10 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const consoleErrors = [];
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text());
+    if (message.type() === 'error') {
+      const location = message.location();
+      consoleErrors.push(`${message.text()} @ ${location.url || 'unknown'}:${location.lineNumber ?? 0}:${location.columnNumber ?? 0}`);
+    }
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
 
