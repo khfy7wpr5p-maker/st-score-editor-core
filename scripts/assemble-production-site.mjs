@@ -70,6 +70,7 @@ const patchHtml = source => {
 export async function assembleProductionSite({
   runtimeDir,
   audioRuntimeDir,
+  correctionRuntime = null,
   outputDir = defaultOutputDir,
   refreshRendererRuntime = true
 } = {}) {
@@ -81,6 +82,7 @@ export async function assembleProductionSite({
 
   const baseManifest = await assembleStableApp09BPreviewCli({
     runtimeDir,
+    correctionRuntime,
     outputDir,
     includeIosDiagnostic: false,
     refreshRendererRuntime
@@ -104,6 +106,7 @@ export async function assembleProductionSite({
     editorSource: 'main',
     entryHtml: 'index.html',
     renderer: baseManifest.renderer,
+    correctionAnalysis: baseManifest.correctionAnalysis,
     audio: Object.freeze({
       release: AUDIO_RELEASE,
       releaseCommit: AUDIO_RELEASE_COMMIT,

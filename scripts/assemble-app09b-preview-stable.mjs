@@ -345,8 +345,8 @@ const addUniqueRestTouchFallback = (bootstrap) => {
   return bootstrap.replace(legacyOnHitBlock, restAwareOnHitBlock);
 };
 
-export async function assembleStableApp09BPreview({ runtimeDir, outputDir = defaultOutputDir } = {}) {
-  const manifest = await assembleApp09BPreview({ runtimeDir, outputDir });
+export async function assembleStableApp09BPreview({ runtimeDir, correctionRuntime = null, outputDir = defaultOutputDir } = {}) {
+  const manifest = await assembleApp09BPreview({ runtimeDir, correctionRuntime, outputDir });
   const bootstrapPath = path.join(outputDir, 'st-score-editor-app09b-bootstrap.js');
   const bootstrap = await readFile(bootstrapPath, 'utf8');
   const occurrences = bootstrap.split(movingBridge).length - 1;
@@ -388,12 +388,13 @@ async function refreshExactRendererRuntime() {
 
 export async function assembleStableApp09BPreviewCli({
   runtimeDir,
+  correctionRuntime = null,
   outputDir = defaultOutputDir,
   includeIosDiagnostic = process.env.ST_APP09B_IOS_DEVICE_DIAGNOSTIC === '1',
   refreshRendererRuntime = process.env.ST_APP09B_REFRESH_RENDERER_RUNTIME === '1'
 } = {}) {
   const exactRuntimeDir = refreshRendererRuntime ? await refreshExactRendererRuntime() : runtimeDir;
-  if (!includeIosDiagnostic) return assembleStableApp09BPreview({ runtimeDir: exactRuntimeDir, outputDir });
+  if (!includeIosDiagnostic) return assembleStableApp09BPreview({ runtimeDir: exactRuntimeDir, correctionRuntime, outputDir });
 
   await execFileAsync(
     process.execPath,
