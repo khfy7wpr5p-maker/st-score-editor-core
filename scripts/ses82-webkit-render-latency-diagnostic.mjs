@@ -132,7 +132,7 @@ try {
     const rendered = await api.renderMusicXml({
       contractVersion: '0.2.0',
       musicxml,
-      ticket: 'ses82-diagnostic-direct',
+      ticket: '900001',
       pageMode: 'continuous',
       autoResize: false,
       drawTitle: true,
