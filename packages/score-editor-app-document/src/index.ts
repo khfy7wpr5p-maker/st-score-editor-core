@@ -236,7 +236,7 @@ const blankV2 = (
 const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string> => {
   const cryptoValue = globalThis.crypto as Crypto | undefined;
   if (cryptoValue === undefined || cryptoValue.subtle === undefined) {
-    throw new ScoreEditorAppDocumentError('Web Crypto SHA-256 support is required for MusicXML source identity.', 'CRYPTO_UNAVAILABLE');
+    throw new ScoreEditorAppDocumentError('Web Crypto SHA-256 unavailable.', 'CRYPTO_UNAVAILABLE');
   }
   const bytes = new TextEncoder().encode(text);
   const digest = await cryptoValue.subtle.digest('SHA-256', bytes);
@@ -246,7 +246,7 @@ const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string
 const verifiedSha256Hex = async (text: string, provider: AppSha256Provider): Promise<string> => {
   const digest = await provider(text);
   if (!/^[\da-f]{64}$/.test(digest)) {
-    throw new ScoreEditorAppDocumentError('SHA-256 provider returned invalid digest.', 'INVALID_SHA256_RESULT');
+    throw new ScoreEditorAppDocumentError('Invalid SHA-256 digest.', 'INVALID_SHA256_RESULT');
   }
   return digest;
 };
@@ -296,7 +296,7 @@ export const exportMusicXmlScoreEditorAppDocument = (document: ScoreEditorAppDoc
   } catch (error) {
     if (error instanceof RendererContractV4Error) {
       throw new ScoreEditorAppDocumentError(
-        'Current document contains semantics that do not yet have an admitted lossless MusicXML export path.',
+        'MusicXML export unavailable for current semantics.',
         'EXPORT_UNAVAILABLE',
         { projectionStatus: document.session.renderRequest.projectionStatus, cause: error.message }
       );
