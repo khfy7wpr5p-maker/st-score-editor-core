@@ -60,6 +60,40 @@ jobs:
         env:
           ST_CE_E2E_BROWSER: chromium
         run: node scripts/ses111-correction-analysis-e2e.mjs
+      - name: Prepare deterministic production audio runtime stub
+        run: |
+          mkdir -p "$RUNNER_TEMP/st-score-audio-runtime"
+          cat > "$RUNNER_TEMP/st-score-audio-runtime/st-score-audio-engine.js" <<'EOF'
+          globalThis.STScoreAudioEngine = Object.freeze({
+            version: '0.1.2',
+            createAudioEngine() {
+              return Object.freeze({
+                prepare: async () => {},
+                setInstrument: async () => {},
+                audition: async () => Object.freeze({ ok: true })
+              });
+            }
+          });
+          EOF
+      - name: Assemble production site with exact Correction Engine runtime
+        env:
+          ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
+          ST_SCORE_AUDIO_RUNTIME_DIR: ${{ runner.temp }}/st-score-audio-runtime
+          ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR: ${{ github.workspace }}/st-omr-correction-engine/dist/browser-analysis
+        run: |
+          node --input-type=module -e "import { assembleProductionSite } from './scripts/assemble-production-site.mjs'; await assembleProductionSite({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR, correctionRuntimeDir: process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR, outputDir: 'dist/browser', refreshRendererRuntime: false });"
+      - name: Run SES-111 production WebKit correction E2E
+        env:
+          ST_CE_E2E_BROWSER: webkit
+          ST_CE_E2E_MODE: production
+          ST_CE_E2E_ENTRY: index.html
+        run: node scripts/ses111-correction-analysis-e2e.mjs
+      - name: Run SES-111 production Chromium correction E2E
+        env:
+          ST_CE_E2E_BROWSER: chromium
+          ST_CE_E2E_MODE: production
+          ST_CE_E2E_ENTRY: index.html
+        run: node scripts/ses111-correction-analysis-e2e.mjs
       - name: Upload SES-111 app and screenshots
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
