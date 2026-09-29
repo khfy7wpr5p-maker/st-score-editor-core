@@ -9,7 +9,8 @@ import {
   APP09B_OSMD_VERSION,
   APP09B_RENDERER_CONTRACT_VERSION,
   APP09B_RENDERER_SOURCE_REVISION,
-  APP09B_CORRECTION_ENGINE_SOURCE_REVISION
+  APP09B_CORRECTION_ENGINE_SOURCE_REVISION,
+  assembleApp09BPreview
 } from '../scripts/assemble-app09b-preview.mjs';
 import {
   AUDIO_RELEASE_ASSET_SHA256,
@@ -71,6 +72,21 @@ const writeCorrectionRuntime = async root => {
     sha256: createHash('sha256').update(artifact).digest('hex')
   }));
 };
+
+test('APP-09B keeps Correction Engine runtime optional', async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'stse-ce-optional-'));
+  try {
+    const runtimeDir = path.join(temp, 'renderer');
+    const outputDir = path.join(temp, 'out');
+    await writeRendererRuntime(runtimeDir);
+    const manifest = await assembleApp09BPreview({ runtimeDir, outputDir });
+    const html = await readFile(path.join(outputDir, 'st-score-editor-app09b.html'), 'utf8');
+    assert.equal(manifest.correctionAnalysis.enabled, false);
+    assert.doesNotMatch(html, /ce-analysis-browser-runtime\.js/);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
 
 test('production site pins the official Audio Engine v0.1.2 release identity', () => {
   assert.match(source, /AUDIO_RELEASE = 'v0\.1\.2'/);
