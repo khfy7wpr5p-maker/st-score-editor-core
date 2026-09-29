@@ -8,7 +8,6 @@ const harness = await openMobileWebKitArtifact({
 const { page } = harness;
 
 try {
-  await page.goto(`http://127.0.0.1:${address.port}/st-score-editor-app09b.html`, { waitUntil: 'load', timeout: 30000 });
   await page.waitForFunction(() => document.documentElement.dataset.app09bRendererReady === 'true', null, { timeout: 30000 });
   await page.waitForFunction(() => {
     const state = globalThis.STScoreEditorApp09B?.getState?.();
