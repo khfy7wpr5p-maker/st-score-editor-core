@@ -82,6 +82,8 @@ test('APP-09B optionally embeds exact read-only Correction Engine analysis runti
     assert.match(bootstrap, /measureIndex/);
     assert.match(bootstrap, /automaticApplyAuthority !== false/);
     assert.match(bootstrap, /musicXmlWriteBackAuthority !== false/);
+    assert.match(bootstrap, /unmappedFindingCount !== 0/);
+    assert.match(bootstrap, /item\.measureIndex >= analysis\.measureCount/);
     assert.match(bootstrap, /APP09B_CORRECTION_ANALYSIS_FAILED/);
   } finally {
     await rm(temp, { recursive: true, force: true });
