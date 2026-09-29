@@ -70,7 +70,7 @@ const patchHtml = source => {
 export async function assembleProductionSite({
   runtimeDir,
   audioRuntimeDir,
-  correctionRuntimeDir = null,
+  correctionRuntime = null,
   outputDir = defaultOutputDir,
   refreshRendererRuntime = true
 } = {}) {
@@ -82,7 +82,7 @@ export async function assembleProductionSite({
 
   const baseManifest = await assembleStableApp09BPreviewCli({
     runtimeDir,
-    correctionRuntimeDir,
+    correctionRuntime,
     outputDir,
     includeIosDiagnostic: false,
     refreshRendererRuntime
