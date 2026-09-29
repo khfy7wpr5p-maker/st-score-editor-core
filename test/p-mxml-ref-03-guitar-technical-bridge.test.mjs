@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { createPartituraNoteFixtureV1 } from '../scripts/lib/p-mxml-ref-03-envelope-fixture.mjs';
 import { mapPartituraImportToCanonicalV1 } from '../dist/packages/musicxml-partitura-mapper/src/index.js';
 import { joinPartituraGuitarTechnicalV1 } from '../dist/packages/musicxml-partitura-mapper/src/guitarTechnicalBridge.js';
 
@@ -19,33 +20,19 @@ const note = ({
   durationDiv = 4,
   voice = 1,
   staff = 1
-}) => ({
+}) => createPartituraNoteFixtureV1({
   sourceNoteId,
   pitch,
   step,
-  alter: 0,
   octave,
-  onsetBeat: onsetDiv / 4,
-  durationBeat: durationDiv / 4,
-  onsetQuarter: onsetDiv / 4,
-  durationQuarter: durationDiv / 4,
   onsetDiv,
   durationDiv,
   voice,
   staff,
-  divsPerQuarter: 4,
-  keyFifths: 0,
-  keyMode: null,
-  timeBeats: 4,
-  timeBeatType: 4,
-  ties: { start: false, stop: false },
-  tiePrevSourceNoteId: null,
-  tieNextSourceNoteId: null,
-  tuplet: null,
-  fingerings: [],
-  articulations: [],
-  ornaments: [],
-  isGrace: false
+  onsetBeat: onsetDiv / 4,
+  durationBeat: durationDiv / 4,
+  onsetQuarter: onsetDiv / 4,
+  durationQuarter: durationDiv / 4
 });
 
 const envelope = (notes) => ({
