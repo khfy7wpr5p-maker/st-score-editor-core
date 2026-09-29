@@ -24,7 +24,10 @@ import {
 } from '../../schema-migration-v3-v4/src/index.js';
 import type { NotationDocumentV4 } from '../../notation-structure-v4/src/index.js';
 import type { ScoreDocumentV3 } from '../../score-model-v3/src/index.js';
-import type { MusicXmlImportOptions } from '../../musicxml/src/index.js';
+import {
+  MusicXmlError,
+  type MusicXmlImportOptions
+} from '../../musicxml/src/index.js';
 
 export const MUSICXML_IMPORT_ROUTER_VERSION = '1.0.0' as const;
 
@@ -115,6 +118,23 @@ export const routeMusicXmlImportV1 = async (
   const eligibility = classifyImportFallbackEligibility(nativeFailureKind);
   if (!eligibility.eligible || options.partituraFallback === undefined) {
     throw nativeError;
+  }
+
+  const observedByteLength = new TextEncoder().encode(musicXml).byteLength;
+  if (
+    options.source.format !== 'musicxml' ||
+    options.source.byteLength === null ||
+    options.source.byteLength !== observedByteLength
+  ) {
+    throw new MusicXmlError(
+      'MusicXML fallback source identity does not match original input bytes.',
+      'SOURCE_IDENTITY_MISMATCH',
+      {
+        expected: options.source.byteLength,
+        observed: observedByteLength,
+        format: options.source.format
+      }
+    );
   }
 
   const sourceIdentity = sourceIdentityFor(options);
