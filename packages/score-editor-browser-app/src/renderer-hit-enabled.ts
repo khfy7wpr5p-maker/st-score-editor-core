@@ -20,12 +20,6 @@ import {
   GENERIC_RENDERED_EVENT_TARGET_VERSION,
   resolveRenderedScoreEventRefAddressV4
 } from '../../editor-renderer-selection-bridge-v4/src/generic-rendered-event.js';
-import {
-  createSuspiciousMeasureHighlightStateV1,
-  type SuspiciousMeasureFindingEvidenceV1,
-  type SuspiciousMeasureHighlightStateV1,
-  type SuspiciousMeasureRenderIdentityV1
-} from './correction-measure-highlight-state.js';
 
 export const RENDERER_HIT_ENABLED_BROWSER_APP_VERSION = '1.1.0' as const;
 
@@ -43,8 +37,7 @@ export type RendererSemanticHitBridgeControllerErrorCode =
   | 'RENDERER_PRESENTATION_MISMATCH'
   | 'RENDERED_NOTE_UNMAPPED'
   | 'RENDERED_EVENT_UNMAPPED'
-  | 'SELECTION_REJECTED'
-  | 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH';
+  | 'SELECTION_REJECTED';
 
 export class RendererSemanticHitBridgeControllerError extends Error {
   readonly code: RendererSemanticHitBridgeControllerErrorCode;
@@ -65,19 +58,12 @@ export interface RendererHitEnabledStandaloneScoreEditorController extends Omit<
   readonly selectRenderedScoreEventRef: (rawRef: unknown) => Readonly<ScoreEditorBrowserAppSnapshot>;
   readonly resolveRenderedScoreNoteRef: (address: SemanticAddressV3) => Readonly<RenderedScoreNoteRefV4> | null;
   readonly resolveRenderedScoreMeasureRef: (address: SemanticAddressV3) => Readonly<RenderedScoreMeasureRefV4> | null;
-  readonly getSuspiciousMeasureHighlightState: () => Readonly<SuspiciousMeasureHighlightStateV1> | null;
-  readonly setSuspiciousMeasureFindings: (input: Readonly<{
-    current: SuspiciousMeasureRenderIdentityV1;
-    findings: readonly SuspiciousMeasureFindingEvidenceV1[];
-  }>) => Promise<Readonly<SuspiciousMeasureHighlightStateV1>>;
-  readonly clearSuspiciousMeasureHighlights: () => Promise<void>;
 }
 
 export const createRendererHitEnabledStandaloneScoreEditorController = (
   options: RecoveryEnabledControllerOptions = {}
 ): Readonly<RendererHitEnabledStandaloneScoreEditorController> => {
   const base = createRendererEnabledStandaloneScoreEditorController(options);
-  let suspiciousMeasureState: Readonly<SuspiciousMeasureHighlightStateV1> | null = null;
 
   const requireCurrentPresentation = () => {
     const document = base.getDocument();
@@ -177,44 +163,6 @@ export const createRendererHitEnabledStandaloneScoreEditorController = (
     resolveRenderedScoreMeasureRef: (address: SemanticAddressV3) => {
       const current = requireCurrentPresentation();
       return resolveSemanticAddressRenderedScoreMeasureRefV4(current.score, current.request, address);
-    },
-    getSuspiciousMeasureHighlightState: () => {
-      const score = base.getDocument()?.session.history.present.score;
-      if (
-        suspiciousMeasureState !== null &&
-        (score === undefined || score.id !== suspiciousMeasureState.documentId || score.revision.id !== suspiciousMeasureState.revisionId)
-      ) suspiciousMeasureState = null;
-      return suspiciousMeasureState;
-    },
-    setSuspiciousMeasureFindings: async (input: Readonly<{
-      current: SuspiciousMeasureRenderIdentityV1;
-      findings: readonly SuspiciousMeasureFindingEvidenceV1[];
-    }>) => {
-      const current = requireCurrentPresentation();
-      if (input.current.documentId !== current.score.id || input.current.revisionId !== current.score.revision.id) {
-        throw new RendererSemanticHitBridgeControllerError(
-          'Suspicious measure evidence does not match the current presentation.',
-          'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
-        );
-      }
-      const nextState = createSuspiciousMeasureHighlightStateV1(input);
-      await base.replaceMeasureHighlights({
-        renderEpoch: input.current.renderEpoch,
-        sourceId: input.current.sourceId ?? null,
-        targets: nextState.targets
-      });
-      suspiciousMeasureState = nextState;
-      return nextState;
-    },
-    clearSuspiciousMeasureHighlights: async () => {
-      const current = suspiciousMeasureState;
-      if (current === null) return;
-      await base.replaceMeasureHighlights({
-        renderEpoch: current.renderEpoch,
-        sourceId: current.sourceId ?? null,
-        targets: []
-      });
-      suspiciousMeasureState = null;
     }
   });
   return controller;
