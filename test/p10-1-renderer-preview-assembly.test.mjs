@@ -7,7 +7,7 @@ import {
   assembleP10_1ProfessionalWorkstationRendererPreview
 } from '../scripts/assemble-p10-1-professional-workstation-renderer-preview.mjs';
 
-const rendererRevision = '90ba96f5f731c121229a0e916f85e3ab328069a7';
+const rendererRevision = 'effc13c82eb1e537773541e5a659f435ecb71583';
 
 test('P10-1 renderer qualification preview binds exact renderer runtime to the combined workstation global', async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), 'p10-1-renderer-preview-'));
