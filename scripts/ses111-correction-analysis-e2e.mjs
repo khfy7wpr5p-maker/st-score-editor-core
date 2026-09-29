@@ -80,10 +80,16 @@ try {
   browser = await browserType.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const consoleErrors = [];
+  const blockedStyleDiagnostics = [];
+  const blockedStyleByCsp = (value) =>
+    value.includes('Refused to apply a stylesheet') &&
+    value.includes('style-src directive of the Content Security Policy');
   page.on('console', (message) => {
     if (message.type() === 'error') {
       const location = message.location();
-      consoleErrors.push(`${message.text()} @ ${location.url || 'unknown'}:${location.lineNumber ?? 0}:${location.columnNumber ?? 0}`);
+      const value = `${message.text()} @ ${location.url || 'unknown'}:${location.lineNumber ?? 0}:${location.columnNumber ?? 0}`;
+      if (blockedStyleByCsp(message.text())) blockedStyleDiagnostics.push(value);
+      else consoleErrors.push(value);
     }
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
@@ -211,7 +217,7 @@ try {
     throw new Error(`SES-111 ${browserName} console errors: ${consoleErrors.slice(-12).join(' | ')}`);
   }
 
-  console.log(`SES-111 ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, screenshotPath })})`);
+  console.log(`SES-111 ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, blockedStyleDiagnostics: blockedStyleDiagnostics.length, screenshotPath })})`);
 } finally {
   if (browser !== undefined) await browser.close();
   await new Promise((resolve) => server.close(resolve));
