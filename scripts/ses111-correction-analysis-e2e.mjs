@@ -1,9 +1,8 @@
-import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
-import { createServer as createNetServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, webkit } from 'playwright';
+import { startApp09bPreviewServer } from './serve-app09b-preview.mjs';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const browserRoot = path.join(repoRoot, 'dist', 'browser');
@@ -35,68 +34,7 @@ const correctedMusicXml = overfullMusicXml.replace(
   '<note><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type></note>'
 );
 
-const allocateLoopbackPort = async () => {
-  const probe = createNetServer();
-  await new Promise((resolve, reject) => {
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', resolve);
-  });
-  const address = probe.address();
-  if (address === null || typeof address === 'string') {
-    probe.close();
-    throw new Error('SES-111 port probe did not expose a TCP port.');
-  }
-  const port = address.port;
-  await new Promise((resolve, reject) => probe.close((error) => error ? reject(error) : resolve()));
-  return port;
-};
-
-const startExistingPreviewServer = async () => {
-  const port = await allocateLoopbackPort();
-  const child = spawn(
-    process.execPath,
-    [path.join(repoRoot, 'scripts', 'serve-app09b-preview.mjs')],
-    {
-      cwd: repoRoot,
-      env: { ...process.env, PORT: String(port) },
-      stdio: ['ignore', 'pipe', 'pipe']
-    }
-  );
-  let output = '';
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`SES-111 preview server startup timeout: ${output}`)), 15000);
-    const inspect = (chunk) => {
-      output += chunk.toString();
-      if (output.includes(`APP-09B preview server listening on ${port}`)) {
-        clearTimeout(timer);
-        resolve();
-      }
-    };
-    child.stdout.on('data', inspect);
-    child.stderr.on('data', inspect);
-    child.once('error', (error) => {
-      clearTimeout(timer);
-      reject(error);
-    });
-    child.once('exit', (code) => {
-      if (code !== null && !output.includes(`APP-09B preview server listening on ${port}`)) {
-        clearTimeout(timer);
-        reject(new Error(`SES-111 preview server exited during startup: ${code} ${output}`));
-      }
-    });
-  });
-  return Object.freeze({
-    port,
-    stop: async () => {
-      if (child.exitCode !== null) return;
-      child.kill('SIGTERM');
-      await new Promise((resolve) => child.once('exit', resolve));
-    }
-  });
-};
-
-const previewServer = await startExistingPreviewServer();
-
+const previewServer = await startApp09bPreviewServer();
 let browser;
 try {
   browser = await browserType.launch({ headless: true });
@@ -274,5 +212,5 @@ try {
   console.log(`SES-111 ${qualificationMode} ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, blockedStyleDiagnostics: blockedStyleDiagnostics.length, screenshotPath })})`);
 } finally {
   if (browser !== undefined) await browser.close();
-  await previewServer.stop();
+  await previewServer.close();
 }
