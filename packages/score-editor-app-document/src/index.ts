@@ -74,7 +74,7 @@ export interface OpenMusicXmlAppDocumentOptions {
   readonly revisionId?: string;
   readonly sha256Hex?: AppSha256Provider;
   readonly rendererProfile?: RendererProfile;
-  readonly importer?: AppMusicXmlImporter;
+  readonly load?: AppMusicXmlImporter;
 }
 
 export type ScoreEditorAppDocumentErrorCode =
@@ -245,7 +245,7 @@ const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string
 
 const verifiedSha256Hex = async (text: string, provider: AppSha256Provider): Promise<string> => {
   const digest = await provider(text);
-  if (!/^[0-9a-f]{64}$/.test(digest)) {
+  if (!/^[\da-f]{64}$/.test(digest)) {
     throw new ScoreEditorAppDocumentError('SHA-256 provider returned an invalid digest.', 'INVALID_SHA256_RESULT');
   }
   return digest;
@@ -274,11 +274,11 @@ export const openMusicXmlScoreEditorAppDocument = async (
   musicXml: string,
   options: OpenMusicXmlAppDocumentOptions = {}
 ): Promise<Readonly<ScoreEditorAppDocument>> => {
-  const imported = await (options.importer || importNotationMusicXmlV2)(musicXml, {
+  const imported = await (options.load || importNotationMusicXmlV2)(musicXml, {
     source: Object.freeze({
       sha256: await verifiedSha256Hex(musicXml, options.sha256Hex ?? browserSha256Hex),
       format: 'musicxml' as const,
-      byteLength: new TextEncoder().encode(musicXml).byteLength
+      byteLength: new TextEncoder().encode(musicXml).length
     }),
     documentId: options.documentId,
     revisionId: options.revisionId
