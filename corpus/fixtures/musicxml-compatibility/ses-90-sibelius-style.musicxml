@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <identification><encoding><software>ST synthetic Sibelius-style fixture</software></encoding></identification>
+  <part-list><score-part id="P1"><part-name>Synthetic Violin</part-name></score-part></part-list>
+  <part id="P1"><measure number="1">
+    <attributes>
+      <divisions>4</divisions><key><fifths>0</fifths></key>
+      <time><beats>4</beats><beat-type>4</beat-type></time>
+      <clef><sign>G</sign><line>2</line></clef>
+    </attributes>
+    <note id="s1" default-x="20"><pitch><step>E</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type><stem default-y="0">up</stem></note>
+    <note id="s2" default-x="80"><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type><notehead filled="no">normal</notehead><notations><articulations><staccato placement="below" default-y="-35"/></articulations></notations></note>
+    <note id="s3" default-x="140"><pitch><step>G</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type></note>
+    <note id="s4" default-x="200"><pitch><step>A</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type></note>
+  </measure></part>
+</score-partwise>

@@ -47,6 +47,10 @@ export const NEW_SCORE_PRESETS = Object.freeze([
 export type NewScorePreset = typeof NEW_SCORE_PRESETS[number];
 export type AppDocumentOrigin = 'NEW' | 'MUSICXML';
 export type AppSha256Provider = (text: string) => Promise<string>;
+export type AppMusicXmlImporter = (
+  musicXml: Parameters<typeof importNotationMusicXmlV2>[0],
+  options: Parameters<typeof importNotationMusicXmlV2>[1]
+) => ReturnType<typeof importNotationMusicXmlV2> | Promise<ReturnType<typeof importNotationMusicXmlV2>>;
 
 export interface ScoreEditorAppDocument {
   readonly version: typeof SCORE_EDITOR_APP_DOCUMENT_VERSION;
@@ -70,6 +74,7 @@ export interface OpenMusicXmlAppDocumentOptions {
   readonly revisionId?: string;
   readonly sha256Hex?: AppSha256Provider;
   readonly rendererProfile?: RendererProfile;
+  readonly load?: AppMusicXmlImporter | undefined;
 }
 
 export type ScoreEditorAppDocumentErrorCode =
@@ -231,7 +236,7 @@ const blankV2 = (
 const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string> => {
   const cryptoValue = globalThis.crypto as Crypto | undefined;
   if (cryptoValue === undefined || cryptoValue.subtle === undefined) {
-    throw new ScoreEditorAppDocumentError('Web Crypto SHA-256 support is required for MusicXML source identity.', 'CRYPTO_UNAVAILABLE');
+    throw new ScoreEditorAppDocumentError('Web Crypto SHA-256 unavailable.', 'CRYPTO_UNAVAILABLE');
   }
   const bytes = new TextEncoder().encode(text);
   const digest = await cryptoValue.subtle.digest('SHA-256', bytes);
@@ -240,8 +245,8 @@ const browserSha256Hex: AppSha256Provider = async (text: string): Promise<string
 
 const verifiedSha256Hex = async (text: string, provider: AppSha256Provider): Promise<string> => {
   const digest = await provider(text);
-  if (!/^[0-9a-f]{64}$/.test(digest)) {
-    throw new ScoreEditorAppDocumentError('SHA-256 provider returned an invalid digest.', 'INVALID_SHA256_RESULT');
+  if (!/^[\da-f]{64}$/.test(digest)) {
+    throw new ScoreEditorAppDocumentError('Invalid SHA-256 digest.', 'INVALID_SHA256_RESULT');
   }
   return digest;
 };
@@ -275,7 +280,7 @@ export const openMusicXmlScoreEditorAppDocument = async (
     format: 'musicxml' as const,
     byteLength: bytes.byteLength
   });
-  const imported = importNotationMusicXmlV2(musicXml, {
+  const imported = await (options.load ?? importNotationMusicXmlV2)(musicXml, {
     source,
     ...(options.documentId === undefined ? {} : { documentId: options.documentId }),
     ...(options.revisionId === undefined ? {} : { revisionId: options.revisionId })
@@ -291,7 +296,7 @@ export const exportMusicXmlScoreEditorAppDocument = (document: ScoreEditorAppDoc
   } catch (error) {
     if (error instanceof RendererContractV4Error) {
       throw new ScoreEditorAppDocumentError(
-        'Current document contains semantics that do not yet have an admitted lossless MusicXML export path.',
+        'MusicXML export unavailable for current semantics.',
         'EXPORT_UNAVAILABLE',
         { projectionStatus: document.session.renderRequest.projectionStatus, cause: error.message }
       );

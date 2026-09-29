@@ -69,11 +69,13 @@ export {
 export {
   MUSICXML_COMPATIBILITY_POLICY_VERSION,
   classifyMusicXmlCompatibilityAttribute,
-  classifyMusicXmlCompatibilityElement
+  classifyMusicXmlCompatibilityElement,
+  importDispositionForMusicXmlCompatibilityClass
 } from './compatibilityPolicy.js';
 export type {
   MusicXmlCompatibilityClass,
-  MusicXmlCompatibilityDecision
+  MusicXmlCompatibilityDecision,
+  MusicXmlImportDisposition
 } from './compatibilityPolicy.js';
 
 export {

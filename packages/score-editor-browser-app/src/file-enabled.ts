@@ -6,6 +6,7 @@ import {
   type StandaloneScoreEditorController,
   type StandaloneScoreEditorControllerOptions
 } from './index.js';
+import type { AppMusicXmlImporter } from '../../score-editor-app-document/src/index.js';
 import {
   browserFileWorkflowCapabilities,
   readMusicXmlBrowserFile,
@@ -57,6 +58,10 @@ export class FileEnabledControllerError extends Error {
   }
 }
 
+export interface FileEnabledStandaloneScoreEditorControllerOptions extends StandaloneScoreEditorControllerOptions {
+  readonly load?: AppMusicXmlImporter | undefined;
+}
+
 export interface FileEnabledStandaloneScoreEditorController extends Omit<StandaloneScoreEditorController, 'profile' | 'mount' | 'unmount'> {
   readonly profile: typeof fileEnabledBrowserAppProfile;
   readonly mount: (root: HTMLElement) => void;
@@ -82,7 +87,7 @@ const defaultDownloadHandoff: BrowserDownloadHandoff = async (artifact) => {
   const documentValue = globalThis.document;
   const urlApi = globalThis.URL;
   if (documentValue === undefined || typeof urlApi?.createObjectURL !== 'function' || typeof urlApi.revokeObjectURL !== 'function') {
-    throw new FileEnabledControllerError('Browser download host is unavailable.', 'DOWNLOAD_HOST_UNAVAILABLE');
+    throw new FileEnabledControllerError('Download host unavailable.', 'DOWNLOAD_HOST_UNAVAILABLE');
   }
   const blob = new Blob([artifact.text], { type: artifact.mimeType });
   const url = urlApi.createObjectURL(blob);
@@ -100,7 +105,7 @@ const defaultDownloadHandoff: BrowserDownloadHandoff = async (artifact) => {
 };
 
 export const createFileEnabledStandaloneScoreEditorController = (
-  options: StandaloneScoreEditorControllerOptions = {}
+  options: FileEnabledStandaloneScoreEditorControllerOptions = {}
 ): Readonly<FileEnabledStandaloneScoreEditorController> => {
   const base = createStandaloneScoreEditorController(options);
   let fileHandle: BrowserFileHandleLike | null = null;
@@ -137,7 +142,7 @@ export const createFileEnabledStandaloneScoreEditorController = (
   const currentHandle = (): BrowserFileHandleLike | null => associatedDocumentId !== null && associatedDocumentId === documentId(base) ? fileHandle : null;
 
   const openResult = async (musicXml: string, fileName: string, handle: BrowserFileHandleLike | null): Promise<Readonly<ScoreEditorBrowserAppSnapshot>> => {
-    const result = await base.openMusicXml(musicXml, { title: fileName });
+    const result = await base.openMusicXml(musicXml, { title:fileName, load:options.load });
     if (result.error !== null) throw new FileEnabledControllerError(result.error.message, 'OPEN_FAILED', { causeCode: result.error.code });
     fileHandle = handle;
     associatedDocumentId = documentId(base);

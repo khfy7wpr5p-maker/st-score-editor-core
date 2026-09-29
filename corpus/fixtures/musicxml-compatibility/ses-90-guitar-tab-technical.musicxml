@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Synthetic Guitar</part-name></score-part></part-list>
+  <part id="P1"><measure number="1">
+    <attributes>
+      <divisions>4</divisions><key><fifths>0</fifths></key>
+      <time><beats>4</beats><beat-type>4</beat-type></time>
+      <clef><sign>G</sign><line>2</line></clef>
+      <staff-details number="1">
+        <staff-lines>6</staff-lines>
+        <staff-tuning line="1"><tuning-step>E</tuning-step><tuning-alter>0</tuning-alter><tuning-octave>4</tuning-octave></staff-tuning>
+      </staff-details>
+    </attributes>
+    <note id="g1">
+      <pitch><step>E</step><octave>4</octave></pitch>
+      <duration>4</duration><voice>1</voice><staff>1</staff><type>quarter</type>
+      <notations><technical>
+        <string>1</string><fret>0</fret>
+        <bend><bend-alter>1</bend-alter></bend>
+        <hammer-on type="start" number="1">H</hammer-on>
+        <pull-off type="stop" number="1">P</pull-off>
+        <harmonic><natural/></harmonic>
+        <pluck>p</pluck>
+        <golpe/>
+      </technical></notations>
+    </note>
+  </measure></part>
+</score-partwise>
