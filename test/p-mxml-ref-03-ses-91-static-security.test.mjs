@@ -26,7 +26,7 @@ test('SES-91 static security gate keeps fallback bounded and out of browser runt
   ]);
 
   const packageJson = JSON.parse(pkg);
-  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['saxes', 'xmlchars']);
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort((left, right) => left.localeCompare(right)), ['saxes', 'xmlchars']);
   assert.doesNotMatch(pkg, /partitura|python|axios|node-fetch|requests/i);
 
   for (const [label, source] of [
