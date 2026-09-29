@@ -11,6 +11,9 @@ import {
   MusicXmlImportRouterError
 } from '../dist/packages/musicxml-import-router/src/index.js';
 import {
+  createStandaloneScoreEditorController
+} from '../dist/packages/score-editor-browser-app/src/index.js';
+import {
   openMusicXmlScoreEditorAppDocument,
   commitAppTopologyIntent,
   navigateAppDocumentHistory
@@ -206,6 +209,7 @@ test('SES-89 app open uses the router once; later canonical edit and Undo never 
     sha256Hex: nodeSha256,
     documentId: 'doc-app-ses-89',
     revisionId: 'rev-app-ses-89',
+    musicXmlImportRouter: routeMusicXmlImportV1,
     partituraFallback: async request => {
       calls += 1;
       return envelopeFor(request.sourceIdentity);
@@ -228,4 +232,41 @@ test('SES-89 app open uses the router once; later canonical edit and Undo never 
 
   assert.equal(calls, 1);
   assert.equal(document.session.history.present.score.revision.id, 'rev-app-ses-89');
+});
+
+
+test('SES-89 browser open seam injects the router/fallback only for file-open and keeps it out of later edits', async () => {
+  let calls = 0;
+  const controller = createStandaloneScoreEditorController({
+    musicXmlImportRouter: routeMusicXmlImportV1,
+    partituraFallback: async request => {
+      calls += 1;
+      return envelopeFor(request.sourceIdentity);
+    }
+  });
+
+  const opened = await controller.openMusicXml(technicalXml, {
+    sha256Hex: nodeSha256,
+    documentId: 'doc-browser-ses-89',
+    revisionId: 'rev-browser-ses-89'
+  });
+  assert.equal(opened.error, null);
+  assert.equal(calls, 1);
+
+  const document = controller.getDocument();
+  assert.ok(document);
+  const score = document.session.history.present.score;
+  const part = score.parts[0];
+  assert.ok(part);
+  controller.commitTopology({
+    version: '1.0.0',
+    type: 'RENAME_PART_OR_INSTRUMENT',
+    target: addressEntityV3(score, part.id),
+    partName: 'Browser Imported Guitar',
+    instrumentName: 'Browser Imported Guitar',
+    instrumentShortName: 'Gtr.'
+  }, { nextRevisionId: 'rev-browser-ses-89-edit' });
+  controller.undo();
+
+  assert.equal(calls, 1);
 });
