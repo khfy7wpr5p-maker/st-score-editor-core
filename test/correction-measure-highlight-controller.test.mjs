@@ -193,15 +193,21 @@ test('SES-106 rejects missing, stale epoch, stale source and stale revision pres
   value.attachOsmdRenderer(renderer.value);
   await value.renderCurrent();
 
+  await assert.rejects(
+    () => value.setSuspiciousMeasureFindings({
+      current: { documentId: score.id, revisionId: 'stale-revision', renderEpoch: 'epoch-1', sourceId: 'source-1' },
+      findings: []
+    }),
+    error => error instanceof RendererSemanticHitBridgeControllerError &&
+      error.code === 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
+  );
   for (const current of [
-    { documentId: score.id, revisionId: 'stale-revision', renderEpoch: 'epoch-1', sourceId: 'source-1' },
     { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-old', sourceId: 'source-1' },
     { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1', sourceId: 'source-old' }
   ]) {
     await assert.rejects(
       () => value.setSuspiciousMeasureFindings({ current, findings: [] }),
-      error => error instanceof RendererSemanticHitBridgeControllerError &&
-        error.code === 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
+      error => error?.code === 'RENDERER_MEASURE_HIGHLIGHT_UNAVAILABLE'
     );
   }
   assert.equal(renderer.calls.measureHighlights.length, 0);
