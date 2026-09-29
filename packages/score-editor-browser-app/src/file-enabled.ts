@@ -6,6 +6,7 @@ import {
   type StandaloneScoreEditorController,
   type StandaloneScoreEditorControllerOptions
 } from './index.js';
+import type { AppMusicXmlImporter } from '../../score-editor-app-document/src/index.js';
 import {
   browserFileWorkflowCapabilities,
   readMusicXmlBrowserFile,
@@ -57,6 +58,10 @@ export class FileEnabledControllerError extends Error {
   }
 }
 
+export interface FileEnabledStandaloneScoreEditorControllerOptions extends StandaloneScoreEditorControllerOptions {
+  readonly musicXmlImportLoader?: AppMusicXmlImporter;
+}
+
 export interface FileEnabledStandaloneScoreEditorController extends Omit<StandaloneScoreEditorController, 'profile' | 'mount' | 'unmount'> {
   readonly profile: typeof fileEnabledBrowserAppProfile;
   readonly mount: (root: HTMLElement) => void;
@@ -100,7 +105,7 @@ const defaultDownloadHandoff: BrowserDownloadHandoff = async (artifact) => {
 };
 
 export const createFileEnabledStandaloneScoreEditorController = (
-  options: StandaloneScoreEditorControllerOptions = {}
+  options: FileEnabledStandaloneScoreEditorControllerOptions = {}
 ): Readonly<FileEnabledStandaloneScoreEditorController> => {
   const base = createStandaloneScoreEditorController(options);
   let fileHandle: BrowserFileHandleLike | null = null;
@@ -137,7 +142,10 @@ export const createFileEnabledStandaloneScoreEditorController = (
   const currentHandle = (): BrowserFileHandleLike | null => associatedDocumentId !== null && associatedDocumentId === documentId(base) ? fileHandle : null;
 
   const openResult = async (musicXml: string, fileName: string, handle: BrowserFileHandleLike | null): Promise<Readonly<ScoreEditorBrowserAppSnapshot>> => {
-    const result = await base.openMusicXml(musicXml, { title: fileName });
+    const result = await base.openMusicXml(musicXml, {
+      title: fileName,
+      ...(options.musicXmlImportLoader === undefined ? {} : { load: options.musicXmlImportLoader })
+    });
     if (result.error !== null) throw new FileEnabledControllerError(result.error.message, 'OPEN_FAILED', { causeCode: result.error.code });
     fileHandle = handle;
     associatedDocumentId = documentId(base);
