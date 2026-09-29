@@ -653,7 +653,6 @@ export async function assembleApp09BPreview({ runtimeDir, correctionRuntimeDir =
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
-  const correctionRuntimeDir = process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR ?? null;
-  const result = await assembleApp09BPreview({ runtimeDir, correctionRuntimeDir });
+  const result = await assembleApp09BPreview({ runtimeDir });
   console.log(`APP-09B preview assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, autoResize=false controlled-host)`);
 }
