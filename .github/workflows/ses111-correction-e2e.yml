@@ -52,6 +52,11 @@ jobs:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
         run: |
           node --input-type=module -e "import { readFile } from 'node:fs/promises'; import { assembleStableApp09BPreviewCli } from './scripts/assemble-app09b-preview-stable.mjs'; const manifest=JSON.parse(await readFile('st-omr-correction-engine/dist/browser-analysis/ce-analysis-browser-runtime.manifest.json','utf8')); const artifact=await readFile('st-omr-correction-engine/dist/browser-analysis/ce-analysis-browser-runtime.js'); await assembleStableApp09BPreviewCli({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, correctionRuntime: { manifest, artifact } });"
+      - name: Start existing APP-09B preview server
+        run: |
+          PORT=10080 node scripts/serve-app09b-preview.mjs > "$RUNNER_TEMP/app09b-server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/app09b-server.pid"
+          sleep 1
       - name: Run SES-111 WebKit correction E2E
         env:
           ST_CE_E2E_BROWSER: webkit
