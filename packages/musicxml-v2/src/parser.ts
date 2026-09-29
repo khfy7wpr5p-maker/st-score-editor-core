@@ -8,6 +8,7 @@ import type { MusicXmlCompatibilityEvidence } from '../../musicxml/src/compatibi
 import { createMusicXmlProcessingRuntime, type MusicXmlProcessingOptions } from '../../musicxml/src/processing.js';
 import { normalizeMusicXmlInput, type MusicXmlInput } from '../../musicxml/src/xmlSafety.js';
 import type { ParsedXmlAttribute, ParsedXmlNode } from '../../musicxml/src/parsedXml.js';
+import type { ImportFallbackFailureKindV1 } from '../../musicxml-import-contract/src/index.js';
 
 export interface ParsedMusicXmlV2Result {
   readonly inputByteLength: number;
@@ -46,12 +47,57 @@ const deepFreeze = <T>(value: T): Readonly<T> => {
   return value;
 };
 
-const unsupported = (element: string, attribute: string | null = null): never => {
+const unsupported = (
+  element: string,
+  attribute: string | null = null,
+  fallbackEligible = false
+): never => {
   throw new MusicXmlError('Unsupported MusicXML.','UNSUPPORTED_MUSICXML',{
     element,
     attribute,
-    compatibilityClass:'UNSUPPORTED_SEMANTIC_FAIL_CLOSED'
+    compatibilityClass:'UNSUPPORTED_SEMANTIC_FAIL_CLOSED',
+    fallbackFailureKind: fallbackEligible
+      ? 'NATIVE_COMPATIBILITY_REJECTION'
+      : 'UNREPRESENTABLE_SEMANTIC'
   });
+};
+
+const reviewedFallbackWrapper = (parentPath: string, name: string): boolean =>
+  (parentPath === 'score-partwise/part/measure/note/notations' && name === 'technical') ||
+  (parentPath === 'score-partwise/part/measure/attributes' && name === 'staff-details');
+
+export const classifyMusicXmlV2ImportFailure = (
+  error: unknown
+): ImportFallbackFailureKindV1 => {
+  if (!(error instanceof MusicXmlError)) return 'UNREPRESENTABLE_SEMANTIC';
+  switch (error.code) {
+    case 'INVALID_ENCODING':
+    case 'EMPTY_INPUT':
+    case 'INVALID_XML':
+      return 'MALFORMED_XML';
+    case 'UNSAFE_XML_DECLARATION':
+    case 'SOURCE_IDENTITY_MISMATCH':
+    case 'INVALID_CONFIGURATION':
+      return 'SECURITY_POLICY';
+    case 'FILE_TOO_LARGE':
+    case 'XML_DEPTH_LIMIT_EXCEEDED':
+    case 'XML_ELEMENT_LIMIT_EXCEEDED':
+    case 'XML_ATTRIBUTE_LIMIT_EXCEEDED':
+    case 'XML_TEXT_LIMIT_EXCEEDED':
+    case 'MEASURE_LIMIT_EXCEEDED':
+    case 'EVENT_LIMIT_EXCEEDED':
+    case 'PROCESSING_TIMEOUT':
+    case 'PROCESSING_ABORTED':
+    case 'SERIALIZATION_LIMIT':
+      return 'RESOURCE_LIMIT';
+    case 'UNSUPPORTED_MUSICXML':
+      return error.details.fallbackFailureKind === 'NATIVE_COMPATIBILITY_REJECTION'
+        ? 'NATIVE_COMPATIBILITY_REJECTION'
+        : 'UNREPRESENTABLE_SEMANTIC';
+    case 'INVALID_MUSICXML_SEMANTICS':
+    case 'OVERLAPPING_EVENTS':
+      return 'UNREPRESENTABLE_SEMANTIC';
+  }
 };
 
 export const parseMusicXmlV2Tree = (
@@ -91,7 +137,13 @@ export const parseMusicXmlV2Tree = (
       skip++;
       return;
     }
-    if (leafName !== '') unsupported(leafName,name);
+    if (leafName !== '') {
+      unsupported(
+        leafName,
+        name,
+        leafName === 'staff-details' && parentPath === 'score-partwise/part/measure/attributes/staff-details'
+      );
+    }
 
     const pathClass = parentPath === '' ? name : `${parentPath}/${name}`;
     const special =
@@ -105,7 +157,9 @@ export const parseMusicXmlV2Tree = (
         for (const a of attrs) if (a.uri !== '' || a.name !== 'filled' || (a.value !== 'yes' && a.value !== 'no')) unsupported(name,a.name);
       } else if (name === 'staff-details') {
         const a = attrs[0];
-        if (attrs.length !== 1 || a?.uri !== '' || a?.name !== 'print-object' || a?.value !== 'yes') unsupported(name);
+        if (attrs.length !== 1 || a?.uri !== '' || a?.name !== 'print-object' || a?.value !== 'yes') {
+          unsupported(name, null, reviewedFallbackWrapper(parentPath, name));
+        }
       } else {
         for (const a of attrs) {
           if (musicXmlCompatibilityAttributeCodeAt(parentPath,name,a.name,a.uri) !== 1) unsupported(name,a.name);
@@ -119,7 +173,7 @@ export const parseMusicXmlV2Tree = (
     }
 
     const code = musicXmlCompatibilityElementCodeAt(parentPath,name,uri);
-    if (code === 2) unsupported(name);
+    if (code === 2) unsupported(name, null, reviewedFallbackWrapper(parentPath, name));
     if (code === 1) {
       record(name,null,pathClass);
       parts.push(name);
