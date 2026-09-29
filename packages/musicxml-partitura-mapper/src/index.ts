@@ -9,6 +9,7 @@ import {
   type ArticulationKind,
   type ArticulationSpec,
   type EventNotationV2,
+  type MeasureNotationEntryV2,
   type OrnamentSpec,
   type SimpleOrnamentKind
 } from '../../notation-structure-v2/src/index.js';
@@ -354,31 +355,34 @@ const eventNotationForRest = (
         { unknown }
       );
     }
-    if (symbolic.dots !== undefined) {
+    const symbolicDots = symbolic.dots;
+    if (symbolicDots !== undefined) {
       if (
-        typeof symbolic.dots !== 'number' ||
-        !Number.isSafeInteger(symbolic.dots) ||
-        symbolic.dots < 0 ||
-        symbolic.dots > 3
+        typeof symbolicDots !== 'number' ||
+        !Number.isSafeInteger(symbolicDots) ||
+        symbolicDots < 0 ||
+        symbolicDots > 3
       ) {
         fail('Partitura rest dot count is invalid.', 'INVALID_ENVELOPE', `${path}.symbolicDuration.dots`);
       }
-      dots = symbolic.dots;
+      dots = symbolicDots;
     }
-    const actual = symbolic.actual_notes;
-    const normal = symbolic.normal_notes;
-    if (actual !== undefined || normal !== undefined) {
+    const actualRaw = symbolic.actual_notes;
+    const normalRaw = symbolic.normal_notes;
+    if (actualRaw !== undefined || normalRaw !== undefined) {
       if (
-        typeof actual !== 'number' ||
-        typeof normal !== 'number' ||
-        !Number.isSafeInteger(actual) ||
-        !Number.isSafeInteger(normal) ||
-        actual < 1 || actual > 32 ||
-        normal < 1 || normal > 32
+        typeof actualRaw !== 'number' ||
+        typeof normalRaw !== 'number' ||
+        !Number.isSafeInteger(actualRaw) ||
+        !Number.isSafeInteger(normalRaw) ||
+        actualRaw < 1 || actualRaw > 32 ||
+        normalRaw < 1 || normalRaw > 32
       ) {
         fail('Partitura rest tuplet ratio is invalid.', 'INVALID_ENVELOPE', `${path}.symbolicDuration`);
       }
-      tuplet = Object.freeze({ actualNotes: actual, normalNotes: normal, marks: Object.freeze([]) });
+      const actualNotes = actualRaw as number;
+      const normalNotes = normalRaw as number;
+      tuplet = Object.freeze({ actualNotes, normalNotes, marks: Object.freeze([]) });
     }
   }
   return Object.freeze({
@@ -679,7 +683,7 @@ const buildNotationV2 = (
   envelope: ValidatedPartituraEnvelopeV1,
   materialized: ReturnType<typeof materializeV2>
 ) => {
-  const measures = [];
+  const measures: MeasureNotationEntryV2[] = [];
   for (const [partIndex, part] of envelope.parts.entries()) {
     const p = partIndex + 1;
     for (let staff = 1; staff <= part.staffCount; staff += 1) {
