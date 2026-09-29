@@ -515,8 +515,11 @@ export const validatePartituraEnvelopeV1 = (value: unknown): Readonly<ValidatedP
     throw new PartituraMapperValidationError(
       `Normalized import envelope contract validation failed: ${error instanceof Error ? error.message : String(error)}`,
       'INVALID_ENVELOPE',
-      '
+      '$'
+    );
+  }
 
+  const sourceIdentity = nonEmpty(root.sourceIdentity, '$.sourceIdentity');
   if (base.version !== NORMALIZED_IMPORT_ENVELOPE_VERSION) {
     throw new PartituraMapperValidationError('Normalized import envelope version is unsupported.', 'INVALID_ENVELOPE', '$.version');
   }
@@ -538,7 +541,11 @@ export const validatePartituraEnvelopeV1 = (value: unknown): Readonly<ValidatedP
 
   const provenance = exact(root.provenance, ['parser','partituraVersion','sourceIdentity'], '$.provenance');
   if (provenance.parser !== 'partitura') {
-    throw new PartituraMapperValidationError('Normalized import parser provenance is not Partitura.', 'INVALID_ENVELOPE', '$.provenance.parser');
+    throw new PartituraMapperValidationError(
+      'Normalized import parser provenance is not Partitura.',
+      'INVALID_ENVELOPE',
+      '$.provenance.parser'
+    );
   }
   nonEmpty(provenance.partituraVersion, '$.provenance.partituraVersion');
   if (provenance.sourceIdentity !== sourceIdentity) {
@@ -551,59 +558,11 @@ export const validatePartituraEnvelopeV1 = (value: unknown): Readonly<ValidatedP
 
   const parts = array(root.parts, '$.parts').map(validatePart);
   if (parts.length === 0) {
-    throw new PartituraMapperValidationError('Partitura envelope must contain at least one part.', 'INVALID_TOPOLOGY', '$.parts');
-  }
-  const measures = parts[0]?.measures.length ?? 0;
-  if (parts.some(part => part.measures.length !== measures)) {
     throw new PartituraMapperValidationError(
-      'All Partitura parts must have the same measure count for canonical V3 topology.',
+      'Partitura envelope must contain at least one part.',
       'INVALID_TOPOLOGY',
       '$.parts'
     );
-  }
-
-  return Object.freeze({ sourceIdentity, parts: Object.freeze(parts) });
-};
-
-    );
-  }
-  const sourceIdentity = nonEmpty(root.sourceIdentity, '$.sourceIdentity');
-
-  if (base.version !== NORMALIZED_IMPORT_ENVELOPE_VERSION) {
-    throw new PartituraMapperValidationError('Normalized import envelope version is unsupported.', 'INVALID_ENVELOPE', '$.version');
-  }
-  if (base.preservedSymbols.length !== 0) {
-    throw new PartituraMapperValidationError(
-      'Partitura service envelope must not carry raw preserved-symbol authority.',
-      'INVALID_ENVELOPE',
-      '$.preservedSymbols'
-    );
-  }
-  if (base.diagnostics.length !== 0) {
-    throw new PartituraMapperValidationError(
-      'Unclassified upstream diagnostics require fail-closed review.',
-      'UPSTREAM_DIAGNOSTIC',
-      '$.diagnostics',
-      { count: base.diagnostics.length }
-    );
-  }
-
-  const provenance = exact(root.provenance, ['parser','partituraVersion','sourceIdentity'], '$.provenance');
-  if (provenance.parser !== 'partitura') {
-    throw new PartituraMapperValidationError('Normalized import parser provenance is not Partitura.', 'INVALID_ENVELOPE', '$.provenance.parser');
-  }
-  nonEmpty(provenance.partituraVersion, '$.provenance.partituraVersion');
-  if (provenance.sourceIdentity !== sourceIdentity) {
-    throw new PartituraMapperValidationError(
-      'Partitura provenance source identity does not match the envelope.',
-      'SOURCE_IDENTITY_MISMATCH',
-      '$.provenance.sourceIdentity'
-    );
-  }
-
-  const parts = array(root.parts, '$.parts').map(validatePart);
-  if (parts.length === 0) {
-    throw new PartituraMapperValidationError('Partitura envelope must contain at least one part.', 'INVALID_TOPOLOGY', '$.parts');
   }
   const measures = parts[0]?.measures.length ?? 0;
   if (parts.some(part => part.measures.length !== measures)) {
