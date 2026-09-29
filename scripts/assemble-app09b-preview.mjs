@@ -357,7 +357,10 @@ const previewBootstrap = `(() => {
       analysis.mode !== 'SHADOW_ONLY' ||
       analysis.automaticApplyAuthority !== false ||
       analysis.musicXmlWriteBackAuthority !== false ||
+      analysis.unmappedFindingCount !== 0 ||
       !isBoundedId(analysis.partId) ||
+      !Number.isSafeInteger(analysis.measureCount) ||
+      analysis.measureCount < 1 ||
       !Array.isArray(analysis.suspiciousMeasures)
     ) throw new Error('APP09B_CORRECTION_ANALYSIS_AUTHORITY_REJECTED');
 
@@ -372,7 +375,12 @@ const previewBootstrap = `(() => {
       ...(evidence.sourceId === null ? {} : { sourceId: evidence.sourceId })
     });
     const findings = analysis.suspiciousMeasures.map((item, index) => {
-      if (!item || !Number.isSafeInteger(item.measureIndex) || item.measureIndex < 0) {
+      if (
+        !item ||
+        !Number.isSafeInteger(item.measureIndex) ||
+        item.measureIndex < 0 ||
+        item.measureIndex >= analysis.measureCount
+      ) {
         throw new Error('APP09B_CORRECTION_MEASURE_MAPPING_INVALID');
       }
       return Object.freeze({
