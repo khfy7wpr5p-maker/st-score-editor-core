@@ -237,18 +237,17 @@ test('SES-89 app open uses the router once; later canonical edit and Undo never 
 
 test('SES-89 browser open seam injects the router/fallback only for file-open and keeps it out of later edits', async () => {
   let calls = 0;
-  const controller = createStandaloneScoreEditorController({
+  const controller = createStandaloneScoreEditorController();
+
+  const opened = await controller.openMusicXml(technicalXml, {
+    sha256Hex: nodeSha256,
+    documentId: 'doc-browser-ses-89',
+    revisionId: 'rev-browser-ses-89',
     musicXmlImportRouter: routeMusicXmlImportV1,
     partituraFallback: async request => {
       calls += 1;
       return envelopeFor(request.sourceIdentity);
     }
-  });
-
-  const opened = await controller.openMusicXml(technicalXml, {
-    sha256Hex: nodeSha256,
-    documentId: 'doc-browser-ses-89',
-    revisionId: 'rev-browser-ses-89'
   });
   assert.equal(opened.error, null);
   assert.equal(calls, 1);
