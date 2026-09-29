@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { cp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +7,9 @@ export const APP09B_RENDERER_SOURCE_REVISION = 'effc13c82eb1e537773541e5a659f435
 export const APP09B_OSMD_VERSION = '2.1.2';
 export const APP09B_RENDERER_CONTRACT_VERSION = '0.2.0';
 export const APP09B_PREVIEW_VERSION = '1.0.0';
+export const APP09B_CORRECTION_ENGINE_SOURCE_REVISION = '2584f68024d76edbaeda3155e13cf5b422bc2457';
+export const APP09B_CORRECTION_ANALYSIS_CONTRACT = 'ST_OMR_CORRECTION_ENGINE_ANALYSIS_BROWSER';
+export const APP09B_CORRECTION_ANALYSIS_CONTRACT_VERSION = '1.0.0';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const defaultOutputDir = path.join(repoRoot, 'dist', 'browser');
@@ -48,6 +52,55 @@ export function validateRendererRuntimeManifest(manifest) {
     scoreRendererContractVersion: APP09B_RENDERER_CONTRACT_VERSION,
     osmdVersion: APP09B_OSMD_VERSION,
     osmdLicense: 'BSD-3-Clause'
+  });
+}
+
+async function validateCorrectionAnalysisRuntime(runtimeDir) {
+  const manifestPath = path.join(runtimeDir, 'ce-analysis-browser-runtime.manifest.json');
+  const artifactPath = path.join(runtimeDir, 'ce-analysis-browser-runtime.js');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  if (!isRecord(manifest)) throw new TypeError('APP09B correction analysis manifest must be an object.');
+  if (
+    manifest.contract !== APP09B_CORRECTION_ANALYSIS_CONTRACT ||
+    manifest.contractVersion !== APP09B_CORRECTION_ANALYSIS_CONTRACT_VERSION ||
+    manifest.runtimeVersion !== APP09B_CORRECTION_ANALYSIS_CONTRACT_VERSION
+  ) throw new Error('APP09B correction analysis contract/version mismatch.');
+  if (manifest.engineSourceRevision !== APP09B_CORRECTION_ENGINE_SOURCE_REVISION) {
+    throw new Error('APP09B correction analysis engine revision mismatch.');
+  }
+  if (
+    manifest.artifact !== 'ce-analysis-browser-runtime.js' ||
+    manifest.global !== 'STOmrCorrectionAnalysisRuntime' ||
+    manifest.format !== 'iife' ||
+    manifest.target !== 'es2022' ||
+    manifest.externalImports !== 0
+  ) throw new Error('APP09B correction analysis export surface mismatch.');
+  for (const field of [
+    'networkCapable',
+    'persistenceCapable',
+    'authenticationAuthority',
+    'automaticApplyAuthority',
+    'learningAuthority',
+    'musicXmlWriteBackAuthority'
+  ]) {
+    if (manifest[field] !== false) throw new Error(`APP09B correction analysis forbidden authority enabled: ${field}.`);
+  }
+  const artifact = await readFile(artifactPath);
+  if (!Number.isInteger(manifest.bytes) || manifest.bytes !== artifact.byteLength) {
+    throw new Error('APP09B correction analysis artifact byte size mismatch.');
+  }
+  const digest = createHash('sha256').update(artifact).digest('hex');
+  if (manifest.sha256 !== digest) throw new Error('APP09B correction analysis artifact digest mismatch.');
+  return Object.freeze({
+    enabled: true,
+    engineSourceRevision: manifest.engineSourceRevision,
+    contract: manifest.contract,
+    contractVersion: manifest.contractVersion,
+    runtimeVersion: manifest.runtimeVersion,
+    artifact: manifest.artifact,
+    sha256: manifest.sha256,
+    automaticApplyAuthority: false,
+    musicXmlWriteBackAuthority: false
   });
 }
 
@@ -178,6 +231,7 @@ const previewBootstrap = `(() => {
   let lastAttemptRevision = null;
   let renderScheduled = false;
   let suspiciousMeasureState = null;
+  let correctionAnalysisState = null;
 
   const mark = (name, value) => {
     document.documentElement.dataset[name] = value;
@@ -268,6 +322,90 @@ const previewBootstrap = `(() => {
     configurable: false
   });
 
+  const waitForCurrentRender = async (revisionId) => {
+    const started = Date.now();
+    while (Date.now() - started <= 15000) {
+      const renderer = controller.getRendererState?.();
+      if (
+        renderer?.renderedRevisionId === revisionId &&
+        renderer?.status?.code === 'RENDERED_CURRENT_REVISION' &&
+        renderEvidence !== null
+      ) return renderEvidence;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    throw new Error('APP09B_CORRECTION_RENDER_TIMEOUT');
+  };
+
+  const analyzeMusicXmlAndHighlight = async (musicxml) => {
+    const runtime = globalThis.STOmrCorrectionAnalysisRuntime;
+    if (!runtime || typeof runtime.analyzeMusicXmlSuspiciousMeasures !== 'function') {
+      throw new Error('APP09B_CORRECTION_ANALYSIS_RUNTIME_UNAVAILABLE');
+    }
+    const analysis = runtime.analyzeMusicXmlSuspiciousMeasures({
+      musicxml,
+      sourceId: 'app09b-current-musicxml'
+    });
+    if (
+      !analysis ||
+      analysis.mode !== 'SHADOW_ONLY' ||
+      analysis.automaticApplyAuthority !== false ||
+      analysis.musicXmlWriteBackAuthority !== false ||
+      !isBoundedId(analysis.partId) ||
+      !Array.isArray(analysis.suspiciousMeasures)
+    ) throw new Error('APP09B_CORRECTION_ANALYSIS_AUTHORITY_REJECTED');
+
+    const documentState = controller.getDocument?.();
+    const score = documentState?.session?.history?.present?.score;
+    const evidence = renderEvidence;
+    if (!score || evidence === null) throw new Error('APP09B_CORRECTION_PRESENTATION_UNAVAILABLE');
+    const current = Object.freeze({
+      documentId: score.id,
+      revisionId: score.revision.id,
+      renderEpoch: evidence.renderEpoch,
+      ...(evidence.sourceId === null ? {} : { sourceId: evidence.sourceId })
+    });
+    const findings = analysis.suspiciousMeasures.map((item, index) => {
+      if (!item || !Number.isSafeInteger(item.measureIndex) || item.measureIndex < 0) {
+        throw new Error('APP09B_CORRECTION_MEASURE_MAPPING_INVALID');
+      }
+      return Object.freeze({
+        findingId: Array.isArray(item.findingIds) && isBoundedId(item.findingIds[0])
+          ? item.findingIds[0]
+          : 'ce-measure-' + item.measureIndex + '-' + index,
+        ...current,
+        measureTargets: Object.freeze([Object.freeze({
+          partId: analysis.partId,
+          measureIndex: item.measureIndex
+        })])
+      });
+    });
+    const presentation = await applySuspiciousMeasureFindings({ current, findings });
+    correctionAnalysisState = Object.freeze({ analysis, presentation });
+    mark('app09bCorrectionStatus', 'applied');
+    return correctionAnalysisState;
+  };
+
+  const openMusicXmlWithCorrectionAnalysis = async (musicxml, options = {}) => {
+    const openResult = await controller.openMusicXml(musicxml, options);
+    if (openResult?.error) return Object.freeze({ openResult, analysis: null, analysisError: null });
+    const revisionId = controller.getSnapshot().revisionId;
+    try {
+      scheduleRenderCurrent();
+      await waitForCurrentRender(revisionId);
+      const analysis = await analyzeMusicXmlAndHighlight(musicxml);
+      return Object.freeze({ openResult, analysis, analysisError: null });
+    } catch (error) {
+      correctionAnalysisState = null;
+      mark('app09bCorrectionStatus', 'APP09B_CORRECTION_ANALYSIS_FAILED');
+      try { await clearSuspiciousMeasureHighlights(); } catch {}
+      return Object.freeze({
+        openResult,
+        analysis: null,
+        analysisError: String(error?.message ?? error)
+      });
+    }
+  };
+
   const scheduleRenderCurrent = () => {
     const revision = controller.getSnapshot().revisionId;
     if (revision === null || revision === lastRenderedRevision || revision === lastAttemptRevision || renderScheduled || rendererApi === null) return;
@@ -313,6 +451,7 @@ const previewBootstrap = `(() => {
           }
           renderEvidence = Object.freeze({ renderEpoch: result.renderEpoch, sourceId: result.sourceId ?? null });
           suspiciousMeasureState = null;
+          correctionAnalysisState = null;
           lastLoadSucceeded = true;
         },
         render() {
@@ -331,6 +470,7 @@ const previewBootstrap = `(() => {
         clear() {
           renderEvidence = null;
           suspiciousMeasureState = null;
+          correctionAnalysisState = null;
           lastLoadSucceeded = false;
           lastRenderedRevision = null;
           frame.style.visibility = 'hidden';
@@ -386,11 +526,15 @@ const previewBootstrap = `(() => {
       ...EXPECTED,
       releaseGatePassed: false,
       seslitabCutoverAuthorized: false,
+      analyzeMusicXmlAndHighlight,
+      openMusicXmlWithCorrectionAnalysis,
+      clearCorrectionHighlights: clearSuspiciousMeasureHighlights,
       getState: () => Object.freeze({
         snapshot: controller.getSnapshot(),
         renderer: controller.getRendererState(),
         renderEvidence,
-        suspiciousMeasures: suspiciousMeasureState
+        suspiciousMeasures: suspiciousMeasureState,
+        correctionAnalysis: correctionAnalysisState
       })
     }),
     writable: false,
@@ -399,7 +543,7 @@ const previewBootstrap = `(() => {
 })();
 `;
 
-const previewHtml = `<!doctype html>
+const previewHtml = (correctionEnabled) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -411,12 +555,13 @@ const previewHtml = `<!doctype html>
 <body>
 <div id="st-score-editor-app-root"></div>
 <script src="./st-score-editor-app.js"></script>
+${correctionEnabled ? '<script src="./correction-runtime/ce-analysis-browser-runtime.js"></script>' : ''}
 <script src="./st-score-editor-app09b-bootstrap.js"></script>
 </body>
 </html>
 `;
 
-export async function assembleApp09BPreview({ runtimeDir, outputDir = defaultOutputDir } = {}) {
+export async function assembleApp09BPreview({ runtimeDir, correctionRuntimeDir = null, outputDir = defaultOutputDir } = {}) {
   if (typeof runtimeDir !== 'string' || runtimeDir.length === 0) {
     throw new TypeError('APP09B renderer runtime directory is required.');
   }
@@ -430,8 +575,19 @@ export async function assembleApp09BPreview({ runtimeDir, outputDir = defaultOut
   await rm(rendererTarget, { recursive: true, force: true });
   await cp(runtimeDir, rendererTarget, { recursive: true });
 
+  let correctionAnalysis = Object.freeze({ enabled: false });
+  const correctionTarget = path.join(outputDir, 'correction-runtime');
+  await rm(correctionTarget, { recursive: true, force: true });
+  if (correctionRuntimeDir !== null) {
+    if (typeof correctionRuntimeDir !== 'string' || correctionRuntimeDir.length === 0) {
+      throw new TypeError('APP09B correction runtime directory must be a non-empty string when provided.');
+    }
+    correctionAnalysis = await validateCorrectionAnalysisRuntime(correctionRuntimeDir);
+    await cp(correctionRuntimeDir, correctionTarget, { recursive: true });
+  }
+
   await writeFile(path.join(outputDir, 'st-score-editor-app09b-bootstrap.js'), previewBootstrap, 'utf8');
-  await writeFile(path.join(outputDir, 'st-score-editor-app09b.html'), previewHtml, 'utf8');
+  await writeFile(path.join(outputDir, 'st-score-editor-app09b.html'), previewHtml(correctionAnalysis.enabled), 'utf8');
   await writeFile(path.join(outputDir, 'app09b-touch-test.musicxml'), sampleMusicXml, 'utf8');
 
   const previewManifest = Object.freeze({
@@ -442,6 +598,7 @@ export async function assembleApp09BPreview({ runtimeDir, outputDir = defaultOut
     sampleMusicXml: 'app09b-touch-test.musicxml',
     rendererRuntimeDirectory: 'renderer-runtime',
     renderer,
+    correctionAnalysis,
     rendererProfileOverride: Object.freeze({
       family: 'osmd', packageName: 'opensheetmusicdisplay', packageVersion: APP09B_OSMD_VERSION, license: 'BSD-3-Clause'
     }),
@@ -462,6 +619,7 @@ export async function assembleApp09BPreview({ runtimeDir, outputDir = defaultOut
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const runtimeDir = process.env.ST_SCORE_RENDERER_RUNTIME_DIR;
-  const result = await assembleApp09BPreview({ runtimeDir });
+  const correctionRuntimeDir = process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR ?? null;
+  const result = await assembleApp09BPreview({ runtimeDir, correctionRuntimeDir });
   console.log(`APP-09B preview assembly: PASS (${result.renderer.rendererSourceRevision}, OSMD ${result.renderer.osmdVersion}, autoResize=false controlled-host)`);
 }
