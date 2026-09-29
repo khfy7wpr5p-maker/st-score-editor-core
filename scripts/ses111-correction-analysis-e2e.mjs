@@ -9,6 +9,8 @@ const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const browserRoot = path.join(repoRoot, 'dist', 'browser');
 const artifactRoot = path.join(repoRoot, 'artifacts', 'ses-111');
 const browserName = process.env.ST_CE_E2E_BROWSER ?? 'webkit';
+const qualificationMode = process.env.ST_CE_E2E_MODE ?? 'preview';
+const entryHtml = process.env.ST_CE_E2E_ENTRY ?? 'st-score-editor-app09b.html';
 const browserType = browserName === 'chromium' ? chromium : browserName === 'webkit' ? webkit : null;
 if (browserType === null) throw new Error('ST_CE_E2E_BROWSER must be chromium or webkit.');
 
@@ -94,7 +96,7 @@ try {
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
 
-  await page.goto(`http://127.0.0.1:${address.port}/st-score-editor-app09b.html`, {
+  await page.goto(`http://127.0.0.1:${address.port}/${entryHtml}`, {
     waitUntil: 'load',
     timeout: 30000
   });
@@ -192,7 +194,7 @@ try {
   }
 
   await mkdir(artifactRoot, { recursive: true });
-  const screenshotPath = path.join(artifactRoot, `ses-111-${browserName}-red-measure.png`);
+  const screenshotPath = path.join(artifactRoot, `ses-111-${qualificationMode}-${browserName}-red-measure.png`);
   await page.screenshot({ path: screenshotPath, fullPage: true });
 
   const cleared = await page.evaluate(async (musicxml) => {
@@ -246,10 +248,10 @@ try {
   }
 
   if (consoleErrors.length > 0) {
-    throw new Error(`SES-111 ${browserName} console errors: ${consoleErrors.slice(-12).join(' | ')}`);
+    throw new Error(`SES-111 ${qualificationMode} ${browserName} console errors: ${consoleErrors.slice(-12).join(' | ')}`);
   }
 
-  console.log(`SES-111 ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, blockedStyleDiagnostics: blockedStyleDiagnostics.length, screenshotPath })})`);
+  console.log(`SES-111 ${qualificationMode} ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, blockedStyleDiagnostics: blockedStyleDiagnostics.length, screenshotPath })})`);
 } finally {
   if (browser !== undefined) await browser.close();
   await new Promise((resolve) => server.close(resolve));
