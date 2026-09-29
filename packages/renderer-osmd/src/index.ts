@@ -9,10 +9,28 @@ export type AdmittedOsmdIntegrationVersion =
   | typeof OSMD_INTEGRATION_VERSION
   | typeof OSMD_ST_RENDERING_LAYER_INTEGRATION_VERSION;
 
+export interface OsmdMeasureHighlightTarget {
+  readonly partId: string;
+  readonly measureIndex: number;
+}
+
+export interface OsmdMeasureHighlightRequest {
+  readonly target: OsmdMeasureHighlightTarget;
+  readonly className?: string;
+}
+
+export interface OsmdRenderEvidence {
+  readonly renderEpoch: string;
+  readonly sourceId: string | null;
+}
+
 export interface OsmdHostInstance {
   load(content: string): Promise<unknown>;
   render(): void;
   clear?(): void;
+  getRenderEvidence?(): Readonly<OsmdRenderEvidence> | null;
+  highlightMeasure?(highlight: Readonly<OsmdMeasureHighlightRequest>): Promise<void>;
+  clearMeasureHighlights?(): Promise<void>;
 }
 
 export interface OsmdRendererHost {
