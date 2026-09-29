@@ -3,8 +3,12 @@ import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 
 import {
-  runPartituraIsolationQualification
+  runPartituraIsolationQualification,
+  createSes91V2FallbackLoader
 } from '../scripts/p-mxml-ref-03-release-qualification.mjs';
+import {
+  createFileEnabledStandaloneScoreEditorController
+} from '../dist/packages/score-editor-browser-app/src/file-enabled.js';
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -57,4 +61,31 @@ test('SES-91 release qualification keeps Partitura isolated and release physical
   assert.doesNotMatch(packageText, /partitura|python|axios|node-fetch/i);
   assert.doesNotMatch(appText, /from ['"]\.\.\/\.\.\/musicxml-import-router\/src\/index\.js['"]/);
   assert.doesNotMatch(browserText, /partitura|python|render\.com|axios|node-fetch/i);
+});
+
+
+test('SES-91 real file-enabled open path forwards the configured fallback loader exactly once', async () => {
+  const xml = await read('corpus/fixtures/musicxml-compatibility/ses-90-guitar-tab-technical.musicxml');
+  let calls = 0;
+  const loader = createSes91V2FallbackLoader(() => { calls += 1; });
+  const controller = createFileEnabledStandaloneScoreEditorController({
+    musicXmlImportLoader: loader
+  });
+  const file = {
+    name: 'ses-91-guitar.musicxml',
+    size: new TextEncoder().encode(xml).byteLength,
+    type: 'application/vnd.recordare.musicxml+xml',
+    text: async () => xml
+  };
+
+  const opened = await controller.openLocalFile(file);
+  assert.equal(opened.error, null);
+  assert.equal(opened.origin, 'MUSICXML');
+  assert.equal(calls, 1);
+
+  const before = calls;
+  controller.undo();
+  controller.redo();
+  controller.exportMusicXml();
+  assert.equal(calls, before);
 });
