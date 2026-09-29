@@ -104,6 +104,37 @@ try {
     { timeout: 30000 }
   );
 
+  await page.evaluate(() => {
+    const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
+    const child = frame instanceof HTMLIFrameElement ? frame.contentDocument : null;
+    const childWindow = frame instanceof HTMLIFrameElement ? frame.contentWindow : null;
+    if (!child || !childWindow) throw new Error('SES111_RENDERER_DOCUMENT_UNAVAILABLE');
+    childWindow.__SES111_STYLE_MUTATIONS__ = [];
+    const observer = new childWindow.MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes' && mutation.target instanceof childWindow.Element) {
+          childWindow.__SES111_STYLE_MUTATIONS__.push({
+            kind: 'attribute',
+            tag: mutation.target.tagName,
+            style: mutation.target.getAttribute('style'),
+            html: mutation.target.outerHTML.slice(0, 500)
+          });
+        }
+        for (const node of mutation.addedNodes ?? []) {
+          if (node instanceof childWindow.HTMLStyleElement) {
+            childWindow.__SES111_STYLE_MUTATIONS__.push({
+              kind: 'style-element',
+              text: node.textContent?.slice(0, 500) ?? '',
+              html: node.outerHTML.slice(0, 700)
+            });
+          }
+        }
+      }
+    });
+    observer.observe(child, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+    childWindow.__SES111_STYLE_OBSERVER__ = observer;
+  });
+
   const result = await page.evaluate(async (musicxml) => {
     const api = globalThis.STScoreEditorApp09B;
     if (!api || typeof api.openMusicXmlWithCorrectionAnalysis !== 'function') {
@@ -137,7 +168,8 @@ try {
         automaticApplyAuthority: state?.correctionAnalysis?.analysis?.automaticApplyAuthority ?? null,
         musicXmlWriteBackAuthority: state?.correctionAnalysis?.analysis?.musicXmlWriteBackAuthority ?? null,
       },
-      presentationInvariant: state?.correctionAnalysis?.presentationInvariant ?? null
+      presentationInvariant: state?.correctionAnalysis?.presentationInvariant ?? null,
+      rendererStyleMutations: frame?.contentWindow?.__SES111_STYLE_MUTATIONS__ ?? []
     };
   });
 
