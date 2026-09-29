@@ -51,7 +51,7 @@ jobs:
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
         run: |
-          node --input-type=module -e "import { assembleStableApp09BPreviewCli } from './scripts/assemble-app09b-preview-stable.mjs'; await assembleStableApp09BPreviewCli({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, correctionRuntimeDir: 'st-omr-correction-engine/dist/browser-analysis' });"
+          node --input-type=module -e "import { readFile } from 'node:fs/promises'; import { assembleStableApp09BPreviewCli } from './scripts/assemble-app09b-preview-stable.mjs'; const manifest=JSON.parse(await readFile('st-omr-correction-engine/dist/browser-analysis/ce-analysis-browser-runtime.manifest.json','utf8')); const artifact=await readFile('st-omr-correction-engine/dist/browser-analysis/ce-analysis-browser-runtime.js'); await assembleStableApp09BPreviewCli({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, correctionRuntime: { manifest, artifact } });"
       - name: Run SES-111 WebKit correction E2E
         env:
           ST_CE_E2E_BROWSER: webkit
@@ -80,7 +80,7 @@ jobs:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
           ST_SCORE_AUDIO_RUNTIME_DIR: ${{ runner.temp }}/st-score-audio-runtime
         run: |
-          node --input-type=module -e "import { assembleProductionSite } from './scripts/assemble-production-site.mjs'; await assembleProductionSite({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR, correctionRuntimeDir: 'st-omr-correction-engine/dist/browser-analysis', outputDir: 'dist/browser', refreshRendererRuntime: false });"
+          node --input-type=module -e "import { readFile } from 'node:fs/promises'; import { assembleProductionSite } from './scripts/assemble-production-site.mjs'; const manifest=JSON.parse(await readFile('st-omr-correction-engine/dist/browser-analysis/ce-analysis-browser-runtime.manifest.json','utf8')); const artifact=await readFile('st-omr-correction-engine/dist/browser-analysis/ce-analysis-browser-runtime.js'); await assembleProductionSite({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR, correctionRuntime: { manifest, artifact }, outputDir: 'dist/browser', refreshRendererRuntime: false });"
       - name: Run SES-111 production WebKit correction E2E
         env:
           ST_CE_E2E_BROWSER: webkit
