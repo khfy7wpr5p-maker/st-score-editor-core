@@ -1,9 +1,11 @@
-import { mkdir } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import { mkdir, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, webkit } from 'playwright';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
+const browserRoot = path.join(repoRoot, 'dist', 'browser');
 const artifactRoot = path.join(repoRoot, 'artifacts', 'ses-111');
 const browserName = process.env.ST_CE_E2E_BROWSER ?? 'webkit';
 const qualificationMode = process.env.ST_CE_E2E_MODE ?? 'preview';
@@ -32,6 +34,78 @@ const correctedMusicXml = overfullMusicXml.replace(
   '<note><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type></note>'
 );
 
+const contentTypes = new Map([
+  ['.html', 'text/html; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'],
+  ['.mjs', 'text/javascript; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'],
+  ['.xml', 'application/xml; charset=utf-8'],
+  ['.musicxml', 'application/vnd.recordare.musicxml+xml; charset=utf-8'],
+  ['.svg', 'image/svg+xml'],
+  ['.css', 'text/css; charset=utf-8']
+]);
+
+const loadBrowserArtifacts = async () => {
+  const files = new Map();
+  const visit = async (directory, relativePrefix = '') => {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const relative = relativePrefix ? `${relativePrefix}/${entry.name}` : entry.name;
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await visit(absolute, relative);
+      } else if (entry.isFile()) {
+        files.set(`/${relative.split(path.sep).join('/')}`, Object.freeze({
+          body: await readFile(absolute),
+          contentType: contentTypes.get(path.extname(entry.name).toLowerCase()) ?? 'application/octet-stream'
+        }));
+      }
+    }
+  };
+  await visit(browserRoot);
+  return files;
+};
+
+const startLoopbackServer = async () => {
+  const files = await loadBrowserArtifacts();
+  const server = createServer((request, response) => {
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      response.writeHead(405, { Allow: 'GET, HEAD', 'Cache-Control': 'no-store' }).end();
+      return;
+    }
+    const pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname;
+    const asset = files.get(pathname === '/' ? `/${entryHtml}` : pathname);
+    if (!asset) {
+      response.writeHead(404, { 'Cache-Control': 'no-store' }).end('not found');
+      return;
+    }
+    response.writeHead(200, {
+      'Content-Type': asset.contentType,
+      'Content-Length': asset.body.byteLength,
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer'
+    });
+    request.method === 'HEAD' ? response.end() : response.end(asset.body);
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === 'string') {
+    await new Promise(resolve => server.close(resolve));
+    throw new Error('SES-111 loopback server did not expose a TCP port.');
+  }
+  return Object.freeze({
+    port: address.port,
+    close: () => new Promise((resolve, reject) => {
+      server.close(error => error ? reject(error) : resolve());
+    })
+  });
+};
+
+const previewServer = await startLoopbackServer();
+
 let browser;
 try {
   browser = await browserType.launch({ headless: true });
@@ -51,7 +125,7 @@ try {
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
 
-  await page.goto(`http://127.0.0.1:10080/${entryHtml}`, {
+  await page.goto(`http://127.0.0.1:${previewServer.port}/${entryHtml}`, {
     waitUntil: 'load',
     timeout: 30000
   });
@@ -209,4 +283,5 @@ try {
   console.log(`SES-111 ${qualificationMode} ${browserName} correction E2E: PASS (${JSON.stringify({ probe, failureProbe, blockedStyleDiagnostics: blockedStyleDiagnostics.length, screenshotPath })})`);
 } finally {
   if (browser !== undefined) await browser.close();
+  await previewServer.close();
 }
