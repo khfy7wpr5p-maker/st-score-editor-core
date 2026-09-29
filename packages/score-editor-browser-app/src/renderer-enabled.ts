@@ -125,7 +125,11 @@ export const createRendererEnabledStandaloneScoreEditorController = (
       clearRenderedIdentity();
       status = Object.freeze({ code: 'RENDERER_DETACHED', message: 'Renderer host detached.' });
     },
-    replaceMeasureHighlights: async (input) => {
+    replaceMeasureHighlights: async (input: Readonly<{
+      renderEpoch: string;
+      sourceId: string | null;
+      targets: readonly OsmdMeasureHighlightTarget[];
+    }>) => {
       const activeHost = host;
       const document = base.getDocument();
       const evidence = activeHost?.instance.getRenderEvidence?.() ?? null;
