@@ -50,8 +50,8 @@ jobs:
       - name: Assemble stable APP-09B correction preview
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
-          ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR: ${{ github.workspace }}/st-omr-correction-engine/dist/browser-analysis
-        run: node scripts/assemble-app09b-preview-stable.mjs
+        run: |
+          node --input-type=module -e "import { assembleStableApp09BPreviewCli } from './scripts/assemble-app09b-preview-stable.mjs'; await assembleStableApp09BPreviewCli({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, correctionRuntimeDir: 'st-omr-correction-engine/dist/browser-analysis' });"
       - name: Run SES-111 WebKit correction E2E
         env:
           ST_CE_E2E_BROWSER: webkit
@@ -79,9 +79,8 @@ jobs:
         env:
           ST_SCORE_RENDERER_RUNTIME_DIR: ${{ runner.temp }}/st-score-rendering-layer/dist/workstation-runtime
           ST_SCORE_AUDIO_RUNTIME_DIR: ${{ runner.temp }}/st-score-audio-runtime
-          ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR: ${{ github.workspace }}/st-omr-correction-engine/dist/browser-analysis
         run: |
-          node --input-type=module -e "import { assembleProductionSite } from './scripts/assemble-production-site.mjs'; await assembleProductionSite({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR, correctionRuntimeDir: process.env.ST_OMR_CORRECTION_ANALYSIS_RUNTIME_DIR, outputDir: 'dist/browser', refreshRendererRuntime: false });"
+          node --input-type=module -e "import { assembleProductionSite } from './scripts/assemble-production-site.mjs'; await assembleProductionSite({ runtimeDir: process.env.ST_SCORE_RENDERER_RUNTIME_DIR, audioRuntimeDir: process.env.ST_SCORE_AUDIO_RUNTIME_DIR, correctionRuntimeDir: 'st-omr-correction-engine/dist/browser-analysis', outputDir: 'dist/browser', refreshRendererRuntime: false });"
       - name: Run SES-111 production WebKit correction E2E
         env:
           ST_CE_E2E_BROWSER: webkit
