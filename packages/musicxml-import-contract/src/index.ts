@@ -130,7 +130,7 @@ export const validateNormalizedImportEnvelopeV1 = (
     version: NORMALIZED_IMPORT_ENVELOPE_VERSION,
     sourceIdentity,
     parts: Object.freeze([...value.parts]),
-    preservedSymbols: Object.freeze(value.preservedSymbols.map(item => validatePreservedSymbol(item))),
+    preservedSymbols: Object.freeze(value.preservedSymbols.map(validatePreservedSymbol)),
     diagnostics: Object.freeze([...value.diagnostics])
   });
 };
