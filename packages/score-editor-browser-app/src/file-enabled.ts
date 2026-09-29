@@ -59,7 +59,7 @@ export class FileEnabledControllerError extends Error {
 }
 
 export interface FileEnabledStandaloneScoreEditorControllerOptions extends StandaloneScoreEditorControllerOptions {
-  readonly musicXmlImportLoader?: AppMusicXmlImporter;
+  readonly load?: AppMusicXmlImporter | undefined;
 }
 
 export interface FileEnabledStandaloneScoreEditorController extends Omit<StandaloneScoreEditorController, 'profile' | 'mount' | 'unmount'> {
@@ -142,10 +142,7 @@ export const createFileEnabledStandaloneScoreEditorController = (
   const currentHandle = (): BrowserFileHandleLike | null => associatedDocumentId !== null && associatedDocumentId === documentId(base) ? fileHandle : null;
 
   const openResult = async (musicXml: string, fileName: string, handle: BrowserFileHandleLike | null): Promise<Readonly<ScoreEditorBrowserAppSnapshot>> => {
-    const result = await base.openMusicXml(musicXml, {
-      title: fileName,
-      ...(options.musicXmlImportLoader === undefined ? {} : { load: options.musicXmlImportLoader })
-    });
+    const result = await base.openMusicXml(musicXml, { title:fileName, load:options.load });
     if (result.error !== null) throw new FileEnabledControllerError(result.error.message, 'OPEN_FAILED', { causeCode: result.error.code });
     fileHandle = handle;
     associatedDocumentId = documentId(base);
