@@ -192,6 +192,22 @@ test('SES-89 never falls back for malformed, resource-limit, or fundamentally un
   assert.equal(calls, 0);
 });
 
+test('SES-89 blocks fallback when source byte identity does not match the eligible MusicXML input', async () => {
+  let calls = 0;
+  const source = sourceFor(technicalXml);
+  await assert.rejects(
+    () => routeMusicXmlImportV1(technicalXml, {
+      source: { ...source, byteLength: source.byteLength + 1 },
+      partituraFallback: async request => {
+        calls += 1;
+        return envelopeFor(request.sourceIdentity);
+      }
+    }),
+    error => error instanceof MusicXmlError && error.code === 'SOURCE_IDENTITY_MISMATCH'
+  );
+  assert.equal(calls, 0);
+});
+
 test('SES-89 rejects an invalid fallback result after one call and never retries', async () => {
   let calls = 0;
   await assert.rejects(
