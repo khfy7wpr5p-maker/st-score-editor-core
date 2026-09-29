@@ -4,9 +4,9 @@ import { webcrypto } from 'node:crypto';
 import { addressEntityV3 } from '../dist/packages/addressing-v3/src/index.js';
 import { rendererProfileForIntegration } from '../dist/packages/renderer-contract/src/index.js';
 import {
-  createCorrectionHighlightEnabledStandaloneScoreEditorController,
-  CorrectionMeasureHighlightControllerError
-} from '../dist/packages/score-editor-browser-app/src/correction-highlight-enabled.js';
+  createRendererHitEnabledStandaloneScoreEditorController,
+  RendererSemanticHitBridgeControllerError
+} from '../dist/packages/score-editor-browser-app/src/renderer-hit-enabled.js';
 
 if (!globalThis.crypto) {
   Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
@@ -41,7 +41,7 @@ const host = () => ({
   instance: { async load() {}, render() {}, clear() {} }
 });
 
-const controller = () => createCorrectionHighlightEnabledStandaloneScoreEditorController({
+const controller = () => createRendererHitEnabledStandaloneScoreEditorController({
   rendererProfile: integrationProfile,
   store: memoryStore(),
   autosaveDelayMs: 60_000,
@@ -135,7 +135,7 @@ test('SES-106 rejects evidence that does not match the accepted current presenta
       current: { documentId: score.id, revisionId: score.revision.id, renderEpoch: 'epoch-1' },
       findings: []
     }),
-    error => error instanceof CorrectionMeasureHighlightControllerError && error.code === 'NO_CURRENT_RENDER_PRESENTATION'
+    error => error instanceof RendererSemanticHitBridgeControllerError && error.code === 'NO_CURRENT_RENDER_PRESENTATION'
   );
 
   value.attachOsmdRenderer(host());
@@ -145,7 +145,7 @@ test('SES-106 rejects evidence that does not match the accepted current presenta
       current: { documentId: score.id, revisionId: 'stale-revision', renderEpoch: 'epoch-1' },
       findings: []
     }),
-    error => error instanceof CorrectionMeasureHighlightControllerError && error.code === 'PRESENTATION_IDENTITY_MISMATCH'
+    error => error instanceof RendererSemanticHitBridgeControllerError && error.code === 'SUSPICIOUS_MEASURE_PRESENTATION_MISMATCH'
   );
   value.unmount();
 });
