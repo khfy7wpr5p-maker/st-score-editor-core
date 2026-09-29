@@ -158,3 +158,12 @@ test('production assembly emits a root index that wires exact renderer plus non-
     await rm(temp, { recursive: true, force: true });
   }
 });
+
+
+test('SES-105 production bootstrap forwards an optional external MusicXML importer without hardcoding a provider endpoint', () => {
+  assert.match(source, /STScoreEditorMusicXmlImporter/);
+  assert.match(source, /typeof externalMusicXmlImporter === 'function'/);
+  assert.match(source, /load: externalMusicXmlImporter/);
+  assert.doesNotMatch(source, /https?:\/\/[^'"`]*partitura/i);
+  assert.doesNotMatch(source, /render\.com[^'"`]*/i);
+});
