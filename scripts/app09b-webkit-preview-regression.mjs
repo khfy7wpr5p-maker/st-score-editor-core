@@ -129,6 +129,122 @@ try {
     throw new Error(`render epoch evidence missing: ${JSON.stringify(initial)}`);
   }
 
+  const suspiciousMeasureProbe = await page.evaluate(async () => {
+    const bridge = globalThis.STScoreCorrectionHighlightBridge;
+    const controller = globalThis.STScoreEditorAppController;
+    const appState = globalThis.STScoreEditorApp09B?.getState?.() ?? null;
+    const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
+    if (
+      !bridge ||
+      typeof bridge.applyFindings !== 'function' ||
+      typeof bridge.clear !== 'function' ||
+      !controller ||
+      !(frame instanceof HTMLIFrameElement) ||
+      !frame.contentDocument
+    ) {
+      throw new Error('APP09B_SUSPICIOUS_MEASURE_BRIDGE_MISSING');
+    }
+    const documentState = controller.getDocument?.();
+    const score = documentState?.session?.history?.present?.score;
+    const history = documentState?.session?.history;
+    const evidence = appState?.renderEvidence;
+    if (!score || !history || !evidence) throw new Error('APP09B_SUSPICIOUS_MEASURE_EVIDENCE_MISSING');
+    const before = {
+      revisionId: score.revision.id,
+      past: history.past.length,
+      future: history.future.length
+    };
+    const current = {
+      documentId: score.id,
+      revisionId: score.revision.id,
+      renderEpoch: evidence.renderEpoch,
+      ...(evidence.sourceId === null ? {} : { sourceId: evidence.sourceId })
+    };
+    const exactFinding = (id) => ({
+      findingId: id,
+      ...current,
+      measureTargets: [{ partId: 'P1', measureIndex: 0 }]
+    });
+    const state = await bridge.applyFindings({
+      current,
+      findings: [
+        exactFinding('f1'),
+        exactFinding('f2'),
+        {
+          findingId: 'ambiguous',
+          ...current,
+          measureTargets: [
+            { partId: 'P1', measureIndex: 0 },
+            { partId: 'P1', measureIndex: 1 }
+          ]
+        },
+        {
+          findingId: 'stale',
+          ...current,
+          renderEpoch: 'stale-epoch',
+          measureTargets: [{ partId: 'P1', measureIndex: 0 }]
+        }
+      ]
+    });
+    const child = frame.contentDocument;
+    const overlay = child.querySelector('[data-st-score-measure-highlight="true"]');
+    const noteColored = child.querySelector('[data-st-score-highlight="true"]') !== null;
+    const afterDocument = controller.getDocument?.();
+    const afterHistory = afterDocument?.session?.history;
+    const afterScore = afterHistory?.present?.score;
+    let staleRejected = false;
+    try {
+      await bridge.applyFindings({
+        current: { ...current, renderEpoch: 'stale-epoch' },
+        findings: []
+      });
+    } catch {
+      staleRejected = true;
+    }
+    const overlayAfterStale = child.querySelectorAll('[data-st-score-measure-highlight="true"]').length;
+    await bridge.clear();
+    const overlayAfterClear = child.querySelectorAll('[data-st-score-measure-highlight="true"]').length;
+    return {
+      targets: state?.targets ?? null,
+      overlayCount: overlay ? child.querySelectorAll('[data-st-score-measure-highlight="true"]').length : 0,
+      overlayClass: overlay?.classList.contains('st-score-suspicious-measure') ?? false,
+      overlayPartId: overlay?.getAttribute('data-st-score-measure-part-id') ?? null,
+      overlayMeasureIndex: overlay?.getAttribute('data-st-score-measure-index') ?? null,
+      rectCount: overlay?.querySelectorAll('rect').length ?? 0,
+      noteColored,
+      staleRejected,
+      overlayAfterStale,
+      overlayAfterClear,
+      revisionUnchanged: afterScore?.revision?.id === before.revisionId,
+      historyUnchanged: afterHistory?.past?.length === before.past && afterHistory?.future?.length === before.future
+    };
+  });
+
+  if (JSON.stringify(suspiciousMeasureProbe.targets) !== JSON.stringify([{ partId: 'P1', measureIndex: 0 }])) {
+    throw new Error(`suspicious measure aggregation failed: ${JSON.stringify(suspiciousMeasureProbe)}`);
+  }
+  if (
+    suspiciousMeasureProbe.overlayCount !== 1 ||
+    suspiciousMeasureProbe.overlayClass !== true ||
+    suspiciousMeasureProbe.overlayPartId !== 'P1' ||
+    suspiciousMeasureProbe.overlayMeasureIndex !== '0' ||
+    suspiciousMeasureProbe.rectCount < 1
+  ) {
+    throw new Error(`suspicious measure visual highlight failed: ${JSON.stringify(suspiciousMeasureProbe)}`);
+  }
+  if (suspiciousMeasureProbe.noteColored) {
+    throw new Error(`suspicious measure highlight recolored notes: ${JSON.stringify(suspiciousMeasureProbe)}`);
+  }
+  if (!suspiciousMeasureProbe.staleRejected || suspiciousMeasureProbe.overlayAfterStale !== 1) {
+    throw new Error(`stale suspicious measure evidence did not fail closed: ${JSON.stringify(suspiciousMeasureProbe)}`);
+  }
+  if (suspiciousMeasureProbe.overlayAfterClear !== 0) {
+    throw new Error(`suspicious measure clear failed: ${JSON.stringify(suspiciousMeasureProbe)}`);
+  }
+  if (!suspiciousMeasureProbe.revisionUnchanged || !suspiciousMeasureProbe.historyUnchanged) {
+    throw new Error(`suspicious measure presentation mutated canonical history: ${JSON.stringify(suspiciousMeasureProbe)}`);
+  }
+
   const exactTargetProbe = await page.evaluate(async () => {
     const frame = document.querySelector('iframe[data-app09b-renderer-frame="true"]');
     if (!(frame instanceof HTMLIFrameElement)) throw new Error('APP09B_RENDERER_FRAME_MISSING');
